@@ -71,7 +71,10 @@ TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
 # Teaching_Packs prefixes), accepted 7 September 2026 (HC6 §11). Re-pin only
 # with a reviewed diff of that file. GC1 adds 128 rows on 12 September 2026;
 # all 296 existing rows and all seven subject groups are retained unchanged.
-TEACHING_PACK_ADDITIONS_SHA256 = '4b18739b6c0114ad4da0d01a4bb590af6f6b6eb75a39cd415819546f1d3debcf'
+# io-3 window W1 (ruling rd, rd-6 (b') and the decision under rd; jp-3 pin move ruled there; 12 October 2026): the 36
+# download rows of the three Humanities Autumn 2 Week 1 lessons join the Humanities prefix (825 -> 861 rows, in the built
+# order); all 825 reviewed rows are kept unchanged and in order, and no other prefix moves. 4b18739b -> de015e74.
+TEACHING_PACK_ADDITIONS_SHA256 = 'de015e748e5c86c51678b151634c9afd409479284b06bb38676b5c21751f5a3c'
 
 
 GC1_PREFIX = '/Lessons/ICT/Teaching_Packs/GROW_Computing/'
@@ -110,6 +113,7 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix):
 # provenance refresh that moves it. The re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
     '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757',   # os-4 patch set A25 after the refresh: 1357 rows
+    '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 window W1 (ruling rd): 1417 rows, the 60 Art download rows join
 )
 
 
@@ -209,6 +213,11 @@ def registry_errors(output):
     # joined, 0 removed, the order unchanged, and exactly 21 rows changed.
     # Every previous digest, the pre-refresh registry, a planted row, a removed row, a reordering and a
     # change to any other field are red (self_test).
+    # io-3, window W1 (12 October 2026, ruling rd, rd-6 (b') as decided under rd): a TRANSITION PAIR while the landing is in
+    # flight: 59a81265 (Lessons main b0b214e7, 1357 retained rows) and 16195414 (the io-3 head add3051f, 1417 rows: the 60
+    # download rows of the five Art Autumn 2 Week 1 lessons join, BUILD 24, GROW 24, LAUNCH 12; all 1357 kept, in order;
+    # no row anywhere in the combined registry removed or changed). Measured from built bytes of Site main 04ed9252 with
+    # each Lessons commit. It collapses in a later window.
     baseline_shas = REGISTRY_BASELINES
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
