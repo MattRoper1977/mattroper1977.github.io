@@ -472,3 +472,37 @@ Appearance: shared cream/navy family, quieter search/pillars, rounded filters, r
 - `dy4-sci-launch-a1-w08-l3-amylase-rate-graph-and-topic-1-consolidation` · lesson · LAUNCH · Amylase Rate, Graph and Topic 1 Consolidation
 
 </details>
+
+### os-4 patch set A25 window W2 — K2-style refresh, 12 October 2026 (ruling qx (qx-5))
+
+| Surface | This window |
+|---|---|
+| Mirror `data/source-manifests/lessons-resources.json` (1005 rows, Lessons 96620472) | REFRESHED K2-style: byte copy of `resources.json` at Lessons 52c99679 (the squash merge of Lessons #694), 1026 rows: +21 (21 lessons, by pathway: 9 BUILD, 5 GROW, 7 LAUNCH), 0 removed, 0 changed; `provenance.json` commit/entries derived by code |
+| `data/mbm-search-index.json` (1089 entries) | REGENERATED: 1110 entries (lesson 692, resource 300, game 72, app 24, tool 13, page 9): 21 added (21 lessons), 0 removed, 0 changed, declared leaf by leaf to `--write` (27 declarations: the 21 added entries, the two counts, and the Lessons source hash, provenance hash, commit and entries) |
+| Retained usage registry (the separation fence) | 1357 -> 1357 rows, 0 joined, 0 removed, order unchanged; exactly 21 rows changed; the fence collapses to this one digest (`check_education_separation.py`) |
+
+<details><summary>The 21 rows added to the mirror</summary>
+
+- `sw38-61674d52aee0` · lesson · BUILD Art · Autumn 1 · Week 1
+- `sw38-ce81cc132c2d` · lesson · BUILD Art · Autumn 1 · Week 2
+- `sw38-d55e56b61ccd` · lesson · BUILD Art · Autumn 1 · Week 3
+- `sw38-346d782e08f6` · lesson · BUILD Art · Autumn 1 · Week 4
+- `sw38-04d205a4c451` · lesson · BUILD Art · Autumn 1 · Week 5
+- `sw38-7967b25aadba` · lesson · BUILD Art · Autumn 1 · Week 6
+- `sw38-86985c728116` · lesson · BUILD Art · Autumn 1 · Week 7
+- `sw38-c3571c6d6e11` · lesson · GROW Art · Autumn 1 · Week 2
+- `sw38-7db7e1dda089` · lesson · GROW Art · Autumn 1 · Week 3
+- `sw38-c81b546899e1` · lesson · GROW Art · Autumn 1 · Week 4
+- `sw38-14c2d923112d` · lesson · GROW Art · Autumn 1 · Week 5
+- `sw38-ff832b150f65` · lesson · LAUNCH Art · Autumn 1 · Week 1
+- `sw38-d3b208e4d2f5` · lesson · LAUNCH Art · Autumn 1 · Week 2
+- `sw38-74bd2ec3e456` · lesson · LAUNCH Art · Autumn 1 · Week 3
+- `sw38-787c81a543ea` · lesson · LAUNCH Art · Autumn 1 · Week 4
+- `sw38-1e7c33bea3e4` · lesson · LAUNCH Art · Autumn 1 · Week 6
+- `sw38-1063a1085609` · lesson · LAUNCH Art · Autumn 1 · Week 7
+- `sw38-d2171674b341` · lesson · LAUNCH Humanities · Autumn 1 · Week 3
+- `sw38-bca44de417ab` · lesson · BUILD RE · Autumn 1 · Week 1
+- `sw38-ebcb9db3b46f` · lesson · BUILD RE · Autumn 1 · Week 3
+- `sw38-c58a5d1e9cfa` · lesson · GROW RE · Autumn 1 · Week 3
+
+</details>
