@@ -193,7 +193,12 @@ jobs:
           # names-fix PR 9 carriers); with this pin the one path Site #465 (window W1) admitted builds to its pending digest, so this
           # discharges the EQUAL declaration this pin carries. It moves WITH its Apps companion below, per STANDING RULE L31. Derived with git
           # rev-parse on the Lessons checkout, never typed.
-          ref: ed55c3be55263e3163f0a3e63bb4276e0970d08f
+          # Moved 2026-10-12 (os-4 patch set A25 window W2, ruling qx (qx-5)): the Lessons pin ed55c3be -> 52c99679ea7645c725c0d20ff357007a7ee3a30f, the squash
+          # merge of Lessons #694, which moves 86 published paths (0 added, 86 changed: 83 Lessons files and 3
+          # education-site files), all admitted by Sites #467, #468, #469; its publication run 38197636197 published them, and a full build of
+          # this pin gives exactly the admitted pending digest on all 86; so this discharges the EQUAL declaration this pin carries.
+          # It moves WITH its Apps companion below, per STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: 52c99679ea7645c725c0d20ff357007a7ee3a30f
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -282,7 +287,10 @@ jobs:
           # a24e63ea -> ec959709d8462cf55bb9f657f4bddb5dd6718d98, the squash merge of Apps #200 (Apps #199, the gate copy for the Lessons
           # pure carrier, is in its history). Both gate copies byte-identical there at 026e105ad1a3.
           # Derived with git rev-parse on the Apps checkout, never typed.
-          ref: ec959709d8462cf55bb9f657f4bddb5dd6718d98
+          # Moved 2026-10-12 (os-4 patch set A25 window W2) WITH the Lessons pin above, per L31: the Apps pin
+          # ec959709 -> ed28514952b7cacd331cef2a752219a112bbd266, the squash merge of Apps #201, which changes only the gate copy (no published path).
+          # Both gate copies byte-identical there at 441f3b54533b. Derived with git rev-parse on the Apps checkout, never typed.
+          ref: ed28514952b7cacd331cef2a752219a112bbd266
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
