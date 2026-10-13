@@ -198,7 +198,13 @@ jobs:
           # education-site files), all admitted by Sites #467, #468, #469; its publication run 38197636197 published them, and a full build of
           # this pin gives exactly the admitted pending digest on all 86; so this discharges the EQUAL declaration this pin carries.
           # It moves WITH its Apps companion below, per STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: 52c99679ea7645c725c0d20ff357007a7ee3a30f
+          # Moved 2026-10-13 (io-3 Autumn 2 Week 1 window W2, ruling rf-3): the Lessons pin 52c99679 -> 127ad77578aee1391e9df593737a2c6b6ba781b7, the squash
+          # merge of Lessons #697, which moves 111 published paths (110 added, 1 changed: 0 Lessons files and 1
+          # education-site file), all admitted by Site #471; Lessons #695 and #696 between the pins move no published path. Its publication run
+          # 38402438211 published them, and a full build of this pin gives exactly the admitted pending digest on all 111; so this
+          # discharges the EQUAL declaration this pin carries. It moves WITH its Apps companion below, per STANDING RULE L31, and
+          # to the commit education-publication.yml's pin already holds (Site #472). Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: 127ad77578aee1391e9df593737a2c6b6ba781b7
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -290,7 +296,10 @@ jobs:
           # Moved 2026-10-12 (os-4 patch set A25 window W2) WITH the Lessons pin above, per L31: the Apps pin
           # ec959709 -> ed28514952b7cacd331cef2a752219a112bbd266, the squash merge of Apps #201, which changes only the gate copy (no published path).
           # Both gate copies byte-identical there at 441f3b54533b. Derived with git rev-parse on the Apps checkout, never typed.
-          ref: ed28514952b7cacd331cef2a752219a112bbd266
+          # Moved 2026-10-13 (io-3 Autumn 2 Week 1 window W2) WITH the Lessons pin above, per L31: the Apps pin
+          # ed285149 -> ddd0733155619d34340311f52d3720442efc6e91, the squash merge of Apps #203 (Apps #202 is in its history), which changes only the gate copy
+          # (no published path). Both gate copies byte-identical there at e24fa25aeaec. Derived with git rev-parse on the Apps checkout, never typed.
+          ref: ddd0733155619d34340311f52d3720442efc6e91
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
