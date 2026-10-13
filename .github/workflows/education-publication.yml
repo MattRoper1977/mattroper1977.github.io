@@ -181,7 +181,15 @@ jobs:
           # education-site files), all admitted by Sites #467, #468, #469; its publication run 38197636197 published them, and a full build of
           # this pin gives exactly the admitted pending digest on all 86; so this discharges the EQUAL declaration this pin carries.
           # It moves WITH its Apps companion below, per STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '52c99679ea7645c725c0d20ff357007a7ee3a30f' }}
+          # Moved 2026-10-13 (io-3 Autumn 2 Week 1, ruling rd, as decided under rd, (c') as resumed under rf-2): the Lessons pin 52c99679 -> 127ad77578aee1391e9df593737a2c6b6ba781b7, the squash
+          # merge of Lessons #697, which adds the 110 io-3 lesson files; with the one education-site file its build changes
+          # (its usage registry) that is 111 published paths, all admitted by Site #471 (window W1: 110 ARRIVING rows and 1
+          # transition pair); its publication run 38402438211 published them. Lessons #695 (tools only: the lesson-order builder and the gate)
+          # and Lessons #696 (workflow only: one concurrency group per kind of cross-estate run) are in its history. The EQUAL-declared
+          # pins move in part 2 of rd-6 ((b), ruling rf-3), so this move does not yet discharge an EQUAL declaration.
+          # It moves WITH its Apps companion below, per STANDING RULE L31. Read with git rev-parse on Lessons main after the merge and
+          # passed to the carrier tool's Site mode, which refuses unless the old pin is 52c99679.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '127ad77578aee1391e9df593737a2c6b6ba781b7' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -275,7 +283,13 @@ jobs:
           # Moved 2026-10-12 (os-4 patch set A25 window W2) WITH the Lessons pin above, per L31: the Apps pin
           # ec959709 -> ed28514952b7cacd331cef2a752219a112bbd266, the squash merge of Apps #201, which changes only the gate copy (no published path).
           # Both gate copies byte-identical there at 441f3b54533b. Derived with git rev-parse on the Apps checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'ed28514952b7cacd331cef2a752219a112bbd266' }}
+          # Moved 2026-10-13 (io-3 Autumn 2 Week 1, ruling rd, as decided under rd, (c') as resumed under rf-2) WITH the Lessons pin above, per STANDING RULE L31: the Apps pin
+          # ed285149 -> ddd0733155619d34340311f52d3720442efc6e91, the squash merge of Apps #203, which changes only the gate copy (Apps #202, the gate copy for Lessons #695,
+          # is in its history; neither moves a published path; Lessons #696 does not touch the gate and has no Apps companion).
+          # Both gate copies byte-identical there at e24fa25aeaec (sha256, measured on both mains after the merges).
+          # Read with git rev-parse on Apps main after the merge and passed to the carrier tool's Site mode, which refuses unless
+          # the old pin is ed285149.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'ddd0733155619d34340311f52d3720442efc6e91' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
