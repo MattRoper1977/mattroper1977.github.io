@@ -75,36 +75,6 @@ TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
 # download rows of the three Humanities Autumn 2 Week 1 lessons join the Humanities prefix (825 -> 861 rows, in the built
 # order); all 825 reviewed rows are kept unchanged and in order, and no other prefix moves. 4b18739b -> de015e74.
 TEACHING_PACK_ADDITIONS_SHA256 = 'de015e748e5c86c51678b151634c9afd409479284b06bb38676b5c21751f5a3c'
-# io-3 window W1 (decision under ruling rd, STOP 1 option (A); jp-2 and jp-3 ruled there): the transition form of the
-# reviewed list. While the io-3 landing is in flight the Site still builds its pinned Lessons (825 Humanities rows) and
-# the Lessons publication builds io-3 (861), so a prefix with a declared pending set passes with EITHER its reviewed rows
-# OR those rows minus exactly the pending set, and in no other state (while the pack index is installed). The pending set is the 36 download rows of the
-# three Humanities Autumn 2 Week 1 lessons, pinned by digest below; part 2's collapse window removes it.
-TEACHING_PACK_PENDING = HERE/'teaching-packs-download-usage-pending.json'
-TEACHING_PACK_PENDING_SHA256 = 'ce79a59479432e9ee34feefa943c5ad4bbe427f4e7158ca5ce72413007331425'
-
-
-IO3_PENDING_STEMS = ('HUM_BUILD_A2_W01', 'HUM_GROW_A2_W01', 'HUM_LAUNCH_A2_W01')
-
-def pending_set_problems(pending, approved):
-    """Self-test helper (four-lens review item 1, decision under rd): the declared pending set must be one prefix of
-    exactly 36 distinct rows, 12 under each io-3 lesson stem, each of them present exactly once among the reviewed rows,
-    so that none is present in the reviewed rows minus the pending set. Returns the problems found (empty = sound)."""
-    problems = []
-    if len(pending) != 1: problems.append('pending set is not one prefix')
-    for prefix, rows in pending.items():
-        keys = [json.dumps(r, sort_keys=True) for r in rows]
-        if len(rows) != 36: problems.append('pending set holds %d rows, not 36' % len(rows))
-        if len(set(keys)) != len(keys): problems.append('pending rows are not distinct')
-        for stem in IO3_PENDING_STEMS:
-            n = sum(1 for r in rows if '/' + stem + '_' in r['route'])
-            if n != 12: problems.append('%d pending rows under %s, not 12' % (n, stem))
-        reviewed = [json.dumps(r, sort_keys=True) for r in approved.get(prefix, [])]
-        for k in set(keys):
-            if reviewed.count(k) != 1: problems.append('a pending row is present %d times among the reviewed rows' % reviewed.count(k))
-        minus = [x for x in reviewed if x not in set(keys)]
-        if len(minus) != len(reviewed) - len(set(keys)): problems.append('reviewed rows minus the pending set is not exactly the rest')
-    return problems
 
 
 GC1_PREFIX = '/Lessons/ICT/Teaching_Packs/GROW_Computing/'
@@ -121,37 +91,28 @@ def installed_gc1_rows(approved, installed):
     return approved if installed else [r for r in approved if not r['route'].startswith(GC1_PREFIX)]
 
 
-def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by_prefix=None):
+def registry_partition(rows, approved_by_prefix, installed_by_prefix):
     """Pure rule, so the self-test can plant rows against it.
 
     Every reviewed Teaching_Packs prefix contributes exactly its approved rows
     when its pack index is installed and nothing when it is not; every other
-    row is a frozen installed record. A prefix with a declared pending set (io-3 W1)
-    may instead contribute its approved rows minus exactly that set, in order.
-    Returns the error names."""
+    row is a frozen installed record. Returns the error names."""
     errors = []
     retained = list(rows)
-    pending_by_prefix = pending_by_prefix or {}
     for prefix, approved in approved_by_prefix.items():
         extensions = [r for r in rows if r['route'].startswith(prefix)]
         retained = [r for r in retained if not r['route'].startswith(prefix)]
-        allowed = [approved if installed_by_prefix.get(prefix) else []]
-        pending = pending_by_prefix.get(prefix)
-        if pending and installed_by_prefix.get(prefix):
-            allowed.append([r for r in approved if r not in pending])
-        if extensions not in allowed:
+        if extensions != (approved if installed_by_prefix.get(prefix) else []):
             errors.append('Download additions differ from the reviewed installed pack: '+prefix)
     return errors, retained
 
 
-# The retained-registry digests this fence accepts: frozen from the built bytes and pinned here. The first, taken on
-# 12 October 2026 (os-4 patch set A25, window W2, ruling qx (qx-5)), is what the Site's pinned Lessons builds; the
-# second is the io-3 landing's (window W1, ruling rd as decided under rd), held as a TRANSITION PAIR while that landing
-# is in flight, as every W1 before it did; its W2 collapses the pair to one value. The re-freeze record, with its proof,
-# is the comment block in registry_errors().
+# The retained-registry digest this fence accepts: frozen from the built bytes and pinned here. io-3 window W1
+# (ruling rd) held a transition pair while that landing was in flight; the io-3 collapse window (ruling rf-4) collapses
+# it to its second half, the state every Site pin and every publication now builds (no refresh moves it). The
+# re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
-    '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757',   # os-4 patch set A25 after the refresh: 1357 rows
-    '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 window W1 (ruling rd): 1417 rows, the 60 Art download rows join
+    '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 Autumn 2 Week 1 landed: 1417 rows
 )
 
 
@@ -255,7 +216,13 @@ def registry_errors(output):
     # flight: 59a81265 (Lessons main b0b214e7, 1357 retained rows) and 16195414 (the io-3 head add3051f, 1417 rows: the 60
     # download rows of the five Art Autumn 2 Week 1 lessons join, BUILD 24, GROW 24, LAUNCH 12; all 1357 kept, in order;
     # no row anywhere in the combined registry removed or changed). Measured from built bytes of Site main 04ed9252 with
-    # each Lessons commit. It collapses in a later window.
+    # each Lessons commit.
+    # The io-3 collapse window (ruling rf-4, after the Lessons merge 127ad775, the publisher pair (c') and W2 put every Site
+    # pin on 127ad775) collapses the pair to its second half, 16195414, with no refresh: proved by a full build of the
+    # collapse base with Lessons 127ad775 (reproduces 16195414 exactly, 1417 rows) and red on the first half (a build of
+    # Lessons b0b214e7: the Humanities prefix lacks the 36 io-3 rows, and its digest 59a81265 is no longer accepted).
+    # The pending transition form (teaching-packs-download-usage-pending.json, its digest pin and both reads) is removed
+    # in the same change.
     baseline_shas = REGISTRY_BASELINES
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
@@ -269,18 +236,12 @@ def registry_errors(output):
         return ['Unreviewed teaching-pack download registration metadata']
     approved = {'/Lessons/Science_Teesside/Teaching_Packs/': json.loads(additions_path.read_text())}
     approved.update(json.loads(TEACHING_PACK_ADDITIONS.read_text()))
-    if sha256(TEACHING_PACK_PENDING.read_bytes()).hexdigest() != TEACHING_PACK_PENDING_SHA256:
-        return ['Unreviewed teaching-pack pending metadata']
-    pending = json.loads(TEACHING_PACK_PENDING.read_text())
-    for prefix, rows_pending in pending.items():
-        if prefix not in approved or any(r not in approved[prefix] for r in rows_pending):
-            return ['Pending teaching-pack rows are not all reviewed rows: '+prefix]
     rows = json.loads((output/'usage-registry.json').read_text())
     lessons = output/'education-lessons'
     ict = '/Lessons/ICT/Teaching_Packs/'
     approved[ict] = installed_gc1_rows(approved[ict], (lessons/GC1_HUB).is_file())
     installed = {prefix: (lessons/prefix[len('/Lessons/'):]/'index.html').is_file() for prefix in approved}
-    errors, retained = registry_partition(rows, approved, installed, pending)
+    errors, retained = registry_partition(rows, approved, installed)
     if not retained_admitted(retained, baseline_shas):
         errors.append('Installed combined registry records changed')
     return errors
@@ -408,36 +369,20 @@ def self_test():
         errors,retained=registry_partition(rows,approved,installed)
         passed=len(errors)==expected and retained==other; ok=ok and passed
         print(f"  [{'ok' if passed else 'FAIL'}] registry partition: {len(rows)} rows, installed={list(installed.values())[0]} -> {len(errors)} error(s), retained {len(retained)}")
-    # io-3 W1 (decision under rd, STOP 1 (A)): the pending transition form, proved on planted rows. With reviewed rows
-    # a, b, c, d and pending c, d, exactly two states pass: all four, and the reviewed rows minus the pending set.
+    # io-3 collapse (ruling rf-4): the pending transition form is gone. The reviewed rows minus a subset are red, on
+    # planted rows and on the real list (the 861 Humanities rows minus the 36 io-3 rows, the shape Lessons b0b214e7 builds).
     pp='/Lessons/Careers/Teaching_Packs/'; a,b,c,d=(row(pp+'BUILD/downloads/'+x+'.zip') for x in 'abcd')
-    pend_cases=[  # (label, rows under the prefix, expected error count)
-        ('the reviewed rows (the landing)', [a,b,c,d], 0),
-        ('the reviewed rows minus exactly the pending set (Lessons today)', [a,b], 0),
-        ('a changed row', [a,{**b,'kind':'planted'},c,d], 1),
-        ('a removed reviewed row', [a,c,d], 1),
-        ('a removed reviewed row beside the pending ones', [a], 1),
-        ('a third state: half the pending set', [a,b,c], 1),
-        ('a third state: a planted row', [a,b,c,d,row(pp+'BUILD/downloads/planted.zip')], 1),
-        ('the pending rows in another order', [a,b,d,c], 1),
-    ]
-    for label,rs,expected in pend_cases:
-        errors,retained=registry_partition(other+rs,{pp:[a,b,c,d]},{pp:True},{pp:[c,d]})
+    for label,rs,expected in [('the reviewed rows',[a,b,c,d],0),('the reviewed rows minus two (the retired form)',[a,b],1),
+                              ('the reviewed rows reordered',[a,b,d,c],1),('a changed row',[a,{**b,'kind':'planted'},c,d],1)]:
+        errors,retained=registry_partition(other+rs,{pp:[a,b,c,d]},{pp:True})
         passed=len(errors)==expected and retained==other; ok=ok and passed
-        print(f"  [{'ok' if passed else 'FAIL'}] pending transition: {label} -> {'passes' if expected==0 else 'red'}")
-    errors,retained=registry_partition(other+[a,b],{pp:[a,b,c,d]},{pp:True})
-    passed=len(errors)==1; ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] without a pending set the shorter state is red (the form is opt-in per prefix)")
-    real_pending=json.loads(TEACHING_PACK_PENDING.read_text()); real_add=json.loads(TEACHING_PACK_ADDITIONS.read_text())
-    probs=pending_set_problems(real_pending, real_add)
-    passed=sha256(TEACHING_PACK_PENDING.read_bytes()).hexdigest()==TEACHING_PACK_PENDING_SHA256 and not probs
-    ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the pending set is one prefix, 36 distinct rows, 12 under each io-3 lesson stem, each once among the reviewed rows, at its pinned digest")
-    # the helper itself rejects a planted pending set: one row swapped for a row from the earlier reviewed list
-    hp=next(iter(real_pending)); earlier=[r for r in real_add[hp] if r not in real_pending[hp]]
-    planted={hp:real_pending[hp][:-1]+[earlier[0]]}
-    passed=bool(pending_set_problems(planted, real_add)); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] CONTROL: a pending set with one row from the earlier reviewed list is rejected")
+        print(f"  [{'ok' if passed else 'FAIL'}] no transition form: {label} -> {'passes' if expected==0 else 'red'}")
+    real_add=json.loads(TEACHING_PACK_ADDITIONS.read_text())
+    hp=next(p for p in real_add if p.startswith('/Lessons/Humanities'))
+    io3=[r for r in real_add[hp] if any('/'+s+'_' in r['route'] for s in ('HUM_BUILD_A2_W01','HUM_GROW_A2_W01','HUM_LAUNCH_A2_W01'))]
+    errors,_=registry_partition([r for r in real_add[hp] if r not in io3],{hp:real_add[hp]},{hp:True})
+    passed=len(io3)==36 and len(real_add[hp])==861 and len(errors)==1; ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the real Humanities rows minus the 36 io-3 rows are red ({len(real_add[hp])} reviewed, {len(io3)} io-3)")
     # LAND-A2 W2, Science Week 8 W2 and os-4 patch set A25 W2: the collapsed fence, proved on planted registries shaped like the real
     # change (both refreshes only add each landed lesson's own search-index entry id to source_ids). The
     # refreshed registry is admitted; the pre-refresh state (the second half of the old pair), a planted
@@ -465,31 +410,14 @@ def self_test():
         passed=retained_admitted(rs,one)==expected; ok=ok and passed
         print(f"  [{'ok' if passed else 'FAIL'}] collapsed fence: {label} -> {'admitted' if expected else 'red'}")
     # The previous digests are no longer accepted: both halves of the LAND-A2 W1 pair (25 September 2026), both
-    # halves of the Science Week 8 W1 pair (4 October 2026) and both halves of the os-4 patch set A25 W1 pair (11 October 2026).
+    # halves of the Science Week 8 W1 pair (4 October 2026), both halves of the os-4 patch set A25 W1 pair (11 October 2026)
+    # and the first half of the io-3 W1 pair (12 October 2026; its second half is the one accepted digest).
     previous=('a6e96f297f62458dba23a71ed14e9dc4db06dad650ef602efb3050556620631a','2969dfef4f050cb1a6b1b5dba0a8e954e6efa49570d02fae7a7e1da4dbd00a17',
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d',
-              'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb')
-    passed=REGISTRY_BASELINES[0]=='59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757' and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence keeps the os-4 patch set A25 digest as its first half, and no half of any earlier W1 pair")
-    # io-3 W1 (ruling rd): the transition pair, proved on planted registries, the os-4 W1 form. Exactly two digests are
-    # accepted; a third state, a removed row or a changed row is red on either side of the pair.
-    before=[{**row('/Lessons/Art/a.html'),'title':'A'},{**row('/Lessons/Humanities/b.html'),'title':'B'}]
-    after=before+[{**row('/Lessons/Art/c.pdf'),'title':'C','kind':'download'}]
-    pair=(digest(before),digest(after))
-    pair_cases=[
-        ('the live registry (first of the pair)', before, True),
-        ('the landing registry (second of the pair)', after, True),
-        ('a third state: one more row than the landing', after+[row('/Lessons/Art/planted.pdf')], False),
-        ('a row removed from the landing registry', after[1:], False),
-        ('a row removed from the live registry', before[:1], False),
-        ('a row changed in one field', [before[0],{**before[1],'title':'B planted'}]+after[2:], False),
-        ('the same rows reordered', [after[1],after[0],after[2]], False),
-    ]
-    for label,rs,expected in pair_cases:
-        passed=retained_admitted(rs,pair)==expected; ok=ok and passed
-        print(f"  [{'ok' if passed else 'FAIL'}] transition pair: {label} -> {'admitted' if expected else 'red'}")
-    passed=len(set(REGISTRY_BASELINES))==len(REGISTRY_BASELINES)==2; ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly two distinct digests while the io-3 landing is in flight")
+              'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',
+              '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757')
+    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',) and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the io-3 digest, and no half of any earlier W1 pair nor the io-3 pair's first half")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
