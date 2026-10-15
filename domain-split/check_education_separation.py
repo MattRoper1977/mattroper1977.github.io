@@ -74,7 +74,10 @@ TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
 # io-3 window W1 (ruling rd, rd-6 (b') and the decision under rd; jp-3 pin move ruled there; 12 October 2026): the 36
 # download rows of the three Humanities Autumn 2 Week 1 lessons join the Humanities prefix (825 -> 861 rows, in the built
 # order); all 825 reviewed rows are kept unchanged and in order, and no other prefix moves. 4b18739b -> de015e74.
-TEACHING_PACK_ADDITIONS_SHA256 = 'de015e748e5c86c51678b151634c9afd409479284b06bb38676b5c21751f5a3c'
+# Humanities Spring 1 window W1 (rulings sb, sb-2, and sc, sc-3; 15 October 2026): the 15 lesson rows of the reviewed
+# Spring 1 Humanities BUILD, GROW and LAUNCH Weeks 2-6 join the Humanities prefix (861 -> 876 rows, in the built order);
+# all 861 reviewed rows are kept unchanged and in order, and no other prefix moves. de015e74 -> d56d0844.
+TEACHING_PACK_ADDITIONS_SHA256 = 'd56d0844bfc8cabcb31947b7cb9f763850f7865213b3c489155c48e12a892ff1'
 
 
 GC1_PREFIX = '/Lessons/ICT/Teaching_Packs/GROW_Computing/'
@@ -370,7 +373,8 @@ def self_test():
         passed=len(errors)==expected and retained==other; ok=ok and passed
         print(f"  [{'ok' if passed else 'FAIL'}] registry partition: {len(rows)} rows, installed={list(installed.values())[0]} -> {len(errors)} error(s), retained {len(retained)}")
     # io-3 collapse (ruling rf-4): the pending transition form is gone. The reviewed rows minus a subset are red, on
-    # planted rows and on the real list (the 861 Humanities rows minus the 36 io-3 rows, the shape Lessons b0b214e7 builds).
+    # planted rows and on the real list (the 876 Humanities rows minus the 36 io-3 rows). The 876 below pins the approved
+    # list's length: it moves only by ruling, with the list (sc-3; 861 -> 876 with the Spring 1 window W1).
     pp='/Lessons/Careers/Teaching_Packs/'; a,b,c,d=(row(pp+'BUILD/downloads/'+x+'.zip') for x in 'abcd')
     for label,rs,expected in [('the reviewed rows',[a,b,c,d],0),('the reviewed rows minus two (the retired form)',[a,b],1),
                               ('the reviewed rows reordered',[a,b,d,c],1),('a changed row',[a,{**b,'kind':'planted'},c,d],1)]:
@@ -381,7 +385,7 @@ def self_test():
     hp=next(p for p in real_add if p.startswith('/Lessons/Humanities'))
     io3=[r for r in real_add[hp] if any('/'+s+'_' in r['route'] for s in ('HUM_BUILD_A2_W01','HUM_GROW_A2_W01','HUM_LAUNCH_A2_W01'))]
     errors,_=registry_partition([r for r in real_add[hp] if r not in io3],{hp:real_add[hp]},{hp:True})
-    passed=len(io3)==36 and len(real_add[hp])==861 and len(errors)==1; ok=ok and passed
+    passed=len(io3)==36 and len(real_add[hp])==876 and len(errors)==1; ok=ok and passed
     print(f"  [{'ok' if passed else 'FAIL'}] the real Humanities rows minus the 36 io-3 rows are red ({len(real_add[hp])} reviewed, {len(io3)} io-3)")
     # LAND-A2 W2, Science Week 8 W2 and os-4 patch set A25 W2: the collapsed fence, proved on planted registries shaped like the real
     # change (both refreshes only add each landed lesson's own search-index entry id to source_ids). The
