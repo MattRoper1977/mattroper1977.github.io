@@ -77,7 +77,41 @@ TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
 # Humanities Spring 1 window W1 (rulings sb, sb-2, and sc, sc-3; 15 October 2026): the 15 lesson rows of the reviewed
 # Spring 1 Humanities BUILD, GROW and LAUNCH Weeks 2-6 join the Humanities prefix (861 -> 876 rows, in the built order);
 # all 861 reviewed rows are kept unchanged and in order, and no other prefix moves. de015e74 -> d56d0844.
-TEACHING_PACK_ADDITIONS_SHA256 = 'd56d0844bfc8cabcb31947b7cb9f763850f7865213b3c489155c48e12a892ff1'
+# RE Spring 1 window W1 (ruling sr, sr-3 step 1; 17 October 2026): the 216 download rows of the three reviewed RE Spring 1
+# pack roots join the Humanities prefix (876 -> 1092 rows, in the built order); all 876 reviewed rows are kept unchanged
+# and in order, and no other prefix moves. d56d0844 -> 88870c0d.
+TEACHING_PACK_ADDITIONS_SHA256 = '88870c0da698612a781cfe88b3bf1b61764f44476da326e41854900e61cb8e5e'
+# RE Spring 1 window W1 (ruling ss, ss-2: option A, the io-3 shape of #471; 17 October 2026): the transition form of the
+# reviewed list. While the RE Spring 1 landing is in flight the Site still builds its pinned Lessons (876 Humanities rows) and
+# the Lessons publication builds the landing (1092), so a prefix with a declared pending set passes with EITHER its reviewed
+# rows OR those rows minus exactly the pending set, and in no other state (while the pack index is installed). The pending
+# set is the 216 download rows of the three reviewed RE Spring 1 pack roots (72 under each), pinned by digest below; a later
+# collapse window removes it.
+TEACHING_PACK_PENDING = HERE/'teaching-packs-download-usage-pending.json'
+TEACHING_PACK_PENDING_SHA256 = 'ee7cb1b9595e0c1b45cdac95e148170c5913c1f055203752c0b45ce51f94bbcb'
+
+
+RE_S1_PENDING_ROOTS = ('RE_Spring_1_BUILD_Reviewed', 'RE_Spring_1_GROW_Reviewed', 'RE_Spring_1_LAUNCH_Reviewed')
+
+def pending_set_problems(pending, approved):
+    """Self-test helper (ruling ss, ss-2; the io-3 helper of #471): the declared pending set must be one prefix of exactly
+    216 distinct rows, 72 under each RE Spring 1 pack root, each of them present exactly once among the reviewed rows, so
+    that none is present in the reviewed rows minus the pending set. Returns the problems found (empty = sound)."""
+    problems = []
+    if len(pending) != 1: problems.append('pending set is not one prefix')
+    for prefix, rows in pending.items():
+        keys = [json.dumps(r, sort_keys=True) for r in rows]
+        if len(rows) != 216: problems.append('pending set holds %d rows, not 216' % len(rows))
+        if len(set(keys)) != len(keys): problems.append('pending rows are not distinct')
+        for root in RE_S1_PENDING_ROOTS:
+            n = sum(1 for r in rows if '/' + root + '/' in r['route'])
+            if n != 72: problems.append('%d pending rows under %s, not 72' % (n, root))
+        reviewed = [json.dumps(r, sort_keys=True) for r in approved.get(prefix, [])]
+        for k in set(keys):
+            if reviewed.count(k) != 1: problems.append('a pending row is present %d times among the reviewed rows' % reviewed.count(k))
+        minus = [x for x in reviewed if x not in set(keys)]
+        if len(minus) != len(reviewed) - len(set(keys)): problems.append('reviewed rows minus the pending set is not exactly the rest')
+    return problems
 
 
 GC1_PREFIX = '/Lessons/ICT/Teaching_Packs/GROW_Computing/'
@@ -94,18 +128,25 @@ def installed_gc1_rows(approved, installed):
     return approved if installed else [r for r in approved if not r['route'].startswith(GC1_PREFIX)]
 
 
-def registry_partition(rows, approved_by_prefix, installed_by_prefix):
+def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by_prefix=None):
     """Pure rule, so the self-test can plant rows against it.
 
     Every reviewed Teaching_Packs prefix contributes exactly its approved rows
     when its pack index is installed and nothing when it is not; every other
-    row is a frozen installed record. Returns the error names."""
+    row is a frozen installed record. A prefix with a declared pending set (RE Spring 1 W1, ruling ss)
+    may instead contribute its approved rows minus exactly that set, in order.
+    Returns the error names."""
     errors = []
     retained = list(rows)
+    pending_by_prefix = pending_by_prefix or {}
     for prefix, approved in approved_by_prefix.items():
         extensions = [r for r in rows if r['route'].startswith(prefix)]
         retained = [r for r in retained if not r['route'].startswith(prefix)]
-        if extensions != (approved if installed_by_prefix.get(prefix) else []):
+        allowed = [approved if installed_by_prefix.get(prefix) else []]
+        pending = pending_by_prefix.get(prefix)
+        if pending and installed_by_prefix.get(prefix):
+            allowed.append([r for r in approved if r not in pending])
+        if extensions not in allowed:
             errors.append('Download additions differ from the reviewed installed pack: '+prefix)
     return errors, retained
 
@@ -116,6 +157,7 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix):
 # re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
     '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 Autumn 2 Week 1 landed: 1417 rows
+    '08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd',   # RE Spring 1 window W1 (ruling sr, sr-3 step 1): the candidate 018e8494, 1348 rows
 )
 
 
@@ -226,6 +268,10 @@ def registry_errors(output):
     # Lessons b0b214e7: the Humanities prefix lacks the 36 io-3 rows, and its digest 59a81265 is no longer accepted).
     # The pending transition form (teaching-packs-download-usage-pending.json, its digest pin and both reads) is removed
     # in the same change.
+    # RE Spring 1, window W1 (17 October 2026, rulings sr (sr-3) and ss (ss-2, option A)): a TRANSITION PAIR while the landing
+    # is in flight: 16195414 (the Site's pinned Lessons 9ed44bdf) and the landing's digest (the Lessons candidate 018e8494),
+    # measured from built bytes of Site main a82d4d5b with each Lessons commit; with the pending transition form above it.
+    # It collapses in a later window.
     baseline_shas = REGISTRY_BASELINES
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
@@ -239,12 +285,18 @@ def registry_errors(output):
         return ['Unreviewed teaching-pack download registration metadata']
     approved = {'/Lessons/Science_Teesside/Teaching_Packs/': json.loads(additions_path.read_text())}
     approved.update(json.loads(TEACHING_PACK_ADDITIONS.read_text()))
+    if sha256(TEACHING_PACK_PENDING.read_bytes()).hexdigest() != TEACHING_PACK_PENDING_SHA256:
+        return ['Unreviewed teaching-pack pending metadata']
+    pending = json.loads(TEACHING_PACK_PENDING.read_text())
+    for prefix, rows_pending in pending.items():
+        if prefix not in approved or any(r not in approved[prefix] for r in rows_pending):
+            return ['Pending teaching-pack rows are not all reviewed rows: '+prefix]
     rows = json.loads((output/'usage-registry.json').read_text())
     lessons = output/'education-lessons'
     ict = '/Lessons/ICT/Teaching_Packs/'
     approved[ict] = installed_gc1_rows(approved[ict], (lessons/GC1_HUB).is_file())
     installed = {prefix: (lessons/prefix[len('/Lessons/'):]/'index.html').is_file() for prefix in approved}
-    errors, retained = registry_partition(rows, approved, installed)
+    errors, retained = registry_partition(rows, approved, installed, pending)
     if not retained_admitted(retained, baseline_shas):
         errors.append('Installed combined registry records changed')
     return errors
@@ -374,7 +426,8 @@ def self_test():
         print(f"  [{'ok' if passed else 'FAIL'}] registry partition: {len(rows)} rows, installed={list(installed.values())[0]} -> {len(errors)} error(s), retained {len(retained)}")
     # io-3 collapse (ruling rf-4): the pending transition form is gone. The reviewed rows minus a subset are red, on
     # planted rows and on the real list (the 876 Humanities rows minus the 36 io-3 rows). The 876 below pins the approved
-    # list's length: it moves only by ruling, with the list (sc-3; 861 -> 876 with the Spring 1 window W1).
+    # list's length: it moves only by ruling, with the list (sc-3; 861 -> 876 with the Spring 1 window W1; ruling sr, sr-3:
+    # 876 -> 1092 with the RE Spring 1 window W1).
     pp='/Lessons/Careers/Teaching_Packs/'; a,b,c,d=(row(pp+'BUILD/downloads/'+x+'.zip') for x in 'abcd')
     for label,rs,expected in [('the reviewed rows',[a,b,c,d],0),('the reviewed rows minus two (the retired form)',[a,b],1),
                               ('the reviewed rows reordered',[a,b,d,c],1),('a changed row',[a,{**b,'kind':'planted'},c,d],1)]:
@@ -385,8 +438,40 @@ def self_test():
     hp=next(p for p in real_add if p.startswith('/Lessons/Humanities'))
     io3=[r for r in real_add[hp] if any('/'+s+'_' in r['route'] for s in ('HUM_BUILD_A2_W01','HUM_GROW_A2_W01','HUM_LAUNCH_A2_W01'))]
     errors,_=registry_partition([r for r in real_add[hp] if r not in io3],{hp:real_add[hp]},{hp:True})
-    passed=len(io3)==36 and len(real_add[hp])==876 and len(errors)==1; ok=ok and passed
+    passed=len(io3)==36 and len(real_add[hp])==1092 and len(errors)==1; ok=ok and passed
     print(f"  [{'ok' if passed else 'FAIL'}] the real Humanities rows minus the 36 io-3 rows are red ({len(real_add[hp])} reviewed, {len(io3)} io-3)")
+    # RE Spring 1 W1 (ruling ss, ss-2: option A): the pending transition form, proved on planted rows, as io-3's was. With
+    # reviewed rows a, b, c, d and pending c, d, exactly two states pass: all four, and the reviewed rows minus the pending set.
+    pp='/Lessons/Careers/Teaching_Packs/'; a,b,c,d=(row(pp+'BUILD/downloads/'+x+'.zip') for x in 'abcd')
+    pend_cases=[  # (label, rows under the prefix, expected error count)
+        ('the reviewed rows (the landing)', [a,b,c,d], 0),
+        ('the reviewed rows minus exactly the pending set (the Site pin today)', [a,b], 0),
+        ('a changed row', [a,{**b,'kind':'planted'},c,d], 1),
+        ('a removed reviewed row', [a,c,d], 1),
+        ('a removed reviewed row beside the pending ones', [a], 1),
+        ('a third state: half the pending set', [a,b,c], 1),
+        ('a third state: a planted row', [a,b,c,d,row(pp+'BUILD/downloads/planted.zip')], 1),
+        ('the pending rows in another order', [a,b,d,c], 1),
+    ]
+    for label,rs,expected in pend_cases:
+        errors,retained=registry_partition(other+rs,{pp:[a,b,c,d]},{pp:True},{pp:[c,d]})
+        passed=len(errors)==expected and retained==other; ok=ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] pending transition: {label} -> {'passes' if expected==0 else 'red'}")
+    errors,retained=registry_partition(other+[a,b],{pp:[a,b,c,d]},{pp:True})
+    passed=len(errors)==1; ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] without a pending set the shorter state is red (the form is opt-in per prefix)")
+    real_pending=json.loads(TEACHING_PACK_PENDING.read_text())
+    probs=pending_set_problems(real_pending, real_add)
+    passed=sha256(TEACHING_PACK_PENDING.read_bytes()).hexdigest()==TEACHING_PACK_PENDING_SHA256 and not probs
+    ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the pending set is one prefix, 216 distinct rows, 72 under each RE Spring 1 root, each once among the reviewed rows, at its pinned digest")
+    errors,_=registry_partition([r for r in real_add[hp] if r not in real_pending[hp]],{hp:real_add[hp]},{hp:True},real_pending)
+    passed=not errors and len(real_add[hp])-len(real_pending[hp])==876; ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the real reviewed rows minus the pending set pass with the form ({len(real_add[hp])-len(real_pending[hp])} rows, the Site pin's)")
+    earlier=[r for r in real_add[hp] if r not in real_pending[hp]]
+    planted={hp:real_pending[hp][:-1]+[earlier[0]]}
+    passed=bool(pending_set_problems(planted, real_add)); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] CONTROL: a pending set with one row from the earlier reviewed list is rejected")
     # LAND-A2 W2, Science Week 8 W2 and os-4 patch set A25 W2: the collapsed fence, proved on planted registries shaped like the real
     # change (both refreshes only add each landed lesson's own search-index entry id to source_ids). The
     # refreshed registry is admitted; the pre-refresh state (the second half of the old pair), a planted
@@ -420,8 +505,8 @@ def self_test():
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d',
               'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',
               '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757')
-    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',) and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the io-3 digest, and no half of any earlier W1 pair nor the io-3 pair's first half")
+    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd') and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the io-3 digest and the RE Spring 1 W1 pair's second half, and no half of any earlier W1 pair nor the io-3 pair's first half")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
