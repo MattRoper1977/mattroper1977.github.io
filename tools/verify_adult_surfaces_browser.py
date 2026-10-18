@@ -21,6 +21,13 @@ What it asserts, on the DOM after the platform script has run:
   * every page that is NOT declared receives none of them
   * the chooser carries no account or members route at all, which is the ruling
     the static gate cannot check
+  * PA6, the menu drawer (ruling tm): every navigation surface the publisher
+    renders, opened in a browser with the shared navigation script running,
+    shows the drawer's account and mailing entries only if it is declared, shows
+    them if it is, and keeps the Privacy entry. Self-served, the surfaces are
+    the publisher's own refresh() output over a stub tree (the same one PA6 in
+    verify_adult_surfaces.py reads statically); with MBM_BASE_URL they are the
+    deployed pages at the same routes.
 
 Both feature flags are forced ON by intercepting /site.json. Without that, a
 stand-down of features.accounts.enabled would make this suite green for the
@@ -287,12 +294,107 @@ def measure(overrides: dict[str, bytes] | None = None) -> tuple[list[str], int]:
     return failures, checks
 
 
+DRAWER_PROBE = """(() => {
+  const groups = Array.prototype.slice.call(document.querySelectorAll('.mbm-menu-group'))
+    .filter(g => (g.querySelector('h2') || {}).textContent === 'Your account');
+  const count = h => groups.reduce((n, g) => n + g.querySelectorAll('a[href="' + h + '"]').length, 0);
+  return {groups: groups.length, account: count('/account/'), mailing: count('/mailing-list/'),
+          privacy: count('/privacy/')};
+})()"""
+
+
+class TreeHandler(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, *args: Any) -> None:  # noqa: D102
+        return
+
+
+def measure_drawer(navigation: str | None = None) -> tuple[list[str], int]:
+    """PA6 in the browser: the drawer as rendered, on every navigation surface."""
+    import shutil
+    import sys
+    import tempfile
+    from playwright.sync_api import sync_playwright
+
+    sys.path.insert(0, str(ROOT / "tools"))
+    import verify_adult_surfaces as static
+
+    declared = set(static.declared_surfaces(ROOT))
+    failures: list[str] = []
+    checks = 0
+
+    def ok(cond: bool, label: str) -> None:
+        nonlocal checks
+        checks += 1
+        if not cond:
+            failures.append(label)
+
+    external = os.environ.get("MBM_BASE_URL", "").strip()
+    work = Path(tempfile.mkdtemp(prefix="pa6-browser-"))
+    server = None
+    try:
+        overrides = {static.NAV: navigation} if navigation else None
+        rendered = static.builder_drawers(ROOT, overrides, keep=work)
+        if external:
+            base = external.rstrip("/")
+        else:
+            site = work / "output" / "education-site"
+            # One origin, as deployed: the Lessons and Apps trees sit under their
+            # own prefixes beside the site root.
+            for route, d in rendered.items():
+                part = str(d["file"]).split("/", 1)[0]
+                if part != "education-site":
+                    prefix = route.strip("/").split("/", 1)[0]
+                    link = site / prefix
+                    if not link.exists():
+                        link.symlink_to(work / "output" / part)
+            for asset in ["shared-navigation.css", "shared-navigation.js"]:
+                if not (site / "assets" / asset).is_file():
+                    shutil.copyfile(ROOT / "domain-split" / asset, site / "assets" / asset)
+            handler = functools.partial(TreeHandler, directory=str(site))
+            socketserver.TCPServer.allow_reuse_address = True
+            server = socketserver.TCPServer(("127.0.0.1", 0), handler)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            base = f"http://127.0.0.1:{server.server_address[1]}"
+        with sync_playwright() as pw:
+            binary = os.environ.get("MBM_CHROMIUM", "").strip()
+            browser = pw.chromium.launch(executable_path=binary) if binary else pw.chromium.launch()
+            page = browser.new_page(viewport={"width": 1280, "height": 900})
+            for route, d in sorted(rendered.items()):
+                try:
+                    page.goto(base + route, wait_until="load", timeout=25000)
+                    page.wait_for_timeout(300)
+                    dom = page.evaluate(DRAWER_PROBE)
+                except Exception as err:  # noqa: BLE001
+                    ok(False, f"drawer: {route} could not be measured ({str(err)[:70]})")
+                    continue
+                ok(dom["groups"] == 1, f"drawer: {route} shows {dom['groups']} 'Your account' groups in the rendered DOM")
+                if d["page"] in declared:
+                    ok(dom["account"] >= 1 and dom["mailing"] >= 1,
+                       f"drawer: {route} is declared adult but the rendered drawer shows account "
+                       f"{dom['account']}, mailing {dom['mailing']}")
+                else:
+                    ok(dom["account"] == 0 and dom["mailing"] == 0,
+                       f"drawer: {route} is not declared adult but the rendered drawer shows account "
+                       f"{dom['account']}, mailing {dom['mailing']}. Undeclared = privacy-only.")
+                ok(dom["privacy"] == 1, f"drawer: {route} shows {dom['privacy']} Privacy entries; every drawer keeps one")
+            browser.close()
+    finally:
+        if server is not None:
+            server.shutdown()
+            server.server_close()
+        shutil.rmtree(work, ignore_errors=True)
+    return failures, checks
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
 
     failures, checks = measure()
+    drawer_failures, drawer_checks = measure_drawer()
+    failures += drawer_failures
+    checks += drawer_checks
     for item in failures:
         print("  -", item)
     print(f"{checks - len(failures)} passed · {len(failures)} failed")
@@ -348,7 +450,25 @@ def main() -> int:
                           f"commerce={caught_shop})")
                     problems += 1
 
+            # PA6's browser control: the publisher grants the full account list
+            # to a surface the record does not declare, and the rendered drawer
+            # must show it.
+            navigation = (ROOT / "domain-split" / "shared_navigation.py").read_text(encoding="utf-8")
+            grafted_nav = navigation.replace("'/Lessons/subject.html', False)", "'/Lessons/subject.html', True)", 1)
+            if grafted_nav == navigation:
+                print("[FAIL] drawer control fixture could not be created")
+                problems += 1
+            else:
+                drawn, _ = measure_drawer(grafted_nav)
+                if any("drawer: /Lessons/subject.html is not declared adult" in f for f in drawn):
+                    print("[PASS] positive control: an undeclared surface given the full account list is caught "
+                          "in the rendered drawer")
+                else:
+                    print("[FAIL] positive control not detected: drawer account list on an undeclared surface")
+                    problems += 1
+
             after, _ = measure()
+            after += measure_drawer()[0]
             if after != failures:
                 print("[FAIL] the tree does not measure the same way after the controls")
                 problems += 1
