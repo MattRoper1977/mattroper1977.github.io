@@ -93,6 +93,9 @@ HUB_LINKS = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
 ACCOUNT = [('/account/', 'Account and members'), ('/mailing-list/', 'Teacher updates'),
            ('/privacy/', 'Privacy and statistics')]
 ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]
+# The surfaces whose footer never carried the canonical link group (see refresh()).
+SHARED_FOOTER = {'/for/pupils/', '/resources/', '/stats/', '/stats/on-this-device/',
+                 '/Lessons/subject.html', '/Lessons/primary/'}
 SITE_PAGES = ['index.html', 'main/index.html', 'account/index.html', 'account/admin/index.html',
               'members/index.html', 'mailing-list/index.html', 'privacy/index.html',
               'stats/index.html', 'owner/stats/index.html', 'tools/index.html',
@@ -272,30 +275,40 @@ def refresh(output, site_source):
     site = output / 'education-site'
     audiences = json.loads((site_source / 'data/audience-homepages.json').read_text())['audiences']
     rows = audience_rows(site_source)
+    # The drawer follows the record (ruling tm): a surface gets the full "Your
+    # account" list - account, mailing, privacy - only if data/adult-surfaces.json
+    # declares it. Undeclared = privacy-only. The record declares Site pages, so
+    # every Lessons and Apps surface below is privacy-only, and the generated
+    # adult front doors (governors, owner statistics, commission) are declared
+    # there rather than listed here. tools/verify_adult_surfaces.py PA6 runs this
+    # function and fails on any drawer the record does not allow.
     adult_pages = {x['page'] for x in json.loads((site_source / 'data/adult-surfaces.json').read_text())['adultSurfaces']}
-    # The published learning homepage supersedes the old source chooser. These
-    # generated adult front doors already expose their account links explicitly.
-    adult_pages.update({'index.html', 'for/governors-trustees/index.html', 'owner/stats/index.html', 'commission/index.html'})
     site_pages = SITE_PAGES + [route.strip('/') + '/index.html' for route, _ in rows]
     pages = [(site / p, '/' + p.removesuffix('index.html'), p in adult_pages) for p in site_pages]
-    pages += [(output / 'education-lessons/index.html', '/Lessons/', True),
+    pages += [(output / 'education-lessons/index.html', '/Lessons/', False),
               # Subject pages serve teachers and pupils; keep account controls
               # out of their shared menu and leave the source catalogue intact.
               (output / 'education-lessons/subject.html', '/Lessons/subject.html', False),
               (output / 'education-lessons/primary/index.html', '/Lessons/primary/', False),
-              (output / 'education-apps/index.html', '/Matt-s-Apps-/', True)]
-    # Auth controls remain server-side. These mixed teaching catalogues expose
-    # the same relevant adult shortcuts as the established teacher front door.
+              (output / 'education-apps/index.html', '/Matt-s-Apps-/', False)]
+    # Auth controls remain server-side. These mixed teaching catalogues are not
+    # declared adult surfaces, so they take the privacy-only drawer, as the
+    # subject pages do: undeclared = privacy-only.
     for relative in ['Science_Teesside/index.html','Humanities_Teesside/index.html',
                      'Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html']:
-        pages.append((output/'education-lessons'/relative,'/Lessons/'+relative.removesuffix('index.html'),True))
+        pages.append((output/'education-lessons'/relative,'/Lessons/'+relative.removesuffix('index.html'),False))
     inserted = {'/asdan/','/uas/'}
-    pages += [(site/route.strip('/')/'index.html',route,True) for route in sorted(inserted)]
+    pages += [(site/route.strip('/')/'index.html',route,route.strip('/')+'/index.html' in adult_pages) for route in sorted(inserted)]
     pack_hub = output/'education-lessons/Science_Teesside/Teaching_Packs/index.html'
     if pack_hub.is_file():
         pack_route = '/Lessons/Science_Teesside/Teaching_Packs/'
-        pages.append((pack_hub, pack_route, True))
+        pages.append((pack_hub, pack_route, False))
         inserted.add(pack_route)
+    # Ruling tm moves the drawer, not the footer. adopt_palette() appends the
+    # canonical footer link group on adult pages; keep that group exactly where
+    # it was before the drawer followed the record (every surface except the six
+    # that were already privacy-only) until a ruling says the footer moves too.
+    footer_links = {route for _, route, _ in pages} - SHARED_FOOTER
     changed = []
     searches = {}
     for path, route, adult in pages:
@@ -326,7 +339,7 @@ def refresh(output, site_source):
             text=text.replace(old,'').replace('href="/main/#about"','href="/main/"')
         text = complete_chrome(text)
         from education_palette import adopt_palette
-        text = adopt_palette(text, route, adult, chrome_template)
+        text = adopt_palette(text, route, adult or route in footer_links, chrome_template)
         text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-navigation.css">'
                             '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         path.write_text(text)
