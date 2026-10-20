@@ -280,7 +280,13 @@ async function chromeFocus(control,surface,label,redProof=false) {
         const box = await finalLink.boundingBox();
         assert(box.width >= 44 && box.height >= 44 && box.y >= 0 && box.y + box.height <= viewport.height + 1, 'Last link remains reachable in a short viewport');
       }
+      // The drawer follows the adult-surfaces record: '/' is undeclared, so its account group is Privacy only,
+      // and the Account journey starts from a declared adult surface.
       await page.goto(origin + '/');
+      await page.locator(menu + ' > summary').click();
+      await page.locator(panel + ' a[href="/privacy/"]').click();
+      assert.equal(new URL(page.url()).pathname, '/privacy/');
+      await page.goto(origin + '/main/');
       await page.locator(menu + ' > summary').click();
       await page.locator(panel + ' a[href="/account/"]').click();
       assert.equal(new URL(page.url()).pathname, '/account/');

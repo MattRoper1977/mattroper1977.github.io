@@ -15,8 +15,10 @@ exports.verify = async ({page, origin, rules, record}) => {
   for(const width of [320,390,900,1280]) for(const route of ['/','/for/teachers/','/for/pupils/']) {
     if(width===320&&route!=='/')continue; // New narrow-screen coverage is for the changed homepage.
     await page.setViewportSize({width,height:900}); await page.goto(origin+route); await page.waitForLoadState('networkidle');
+    // A visually hidden element (absolute, 1px box, clipped to nothing, e.g. the card separator .fd-sep) paints
+    // nothing, so its scroll width is not overflow anyone can see; everything else is still measured.
     const measure = async () => page.evaluate(() => ({
-      overflow:[document.documentElement,...document.querySelectorAll('main *')].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=='inline'&&e.clientWidth>0&&e.scrollWidth>e.clientWidth+1).filter(e=>{const s=getComputedStyle(e);return !(e.matches('#added-rail .acard p')&&s.textOverflow==='ellipsis'&&s.overflowX==='hidden'&&s.whiteSpace==='nowrap'&&e.getBoundingClientRect().height<=parseFloat(s.lineHeight)+1)}).map(e=>e.id||e.className||e.tagName),
+      overflow:[document.documentElement,...document.querySelectorAll('main *')].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=='inline'&&e.clientWidth>0&&e.scrollWidth>e.clientWidth+1).filter(e=>{const s=getComputedStyle(e);return !(e.matches('#added-rail .acard p')&&s.textOverflow==='ellipsis'&&s.overflowX==='hidden'&&s.whiteSpace==='nowrap'&&e.getBoundingClientRect().height<=parseFloat(s.lineHeight)+1)}).filter(e=>{const s=getComputedStyle(e),b=e.getBoundingClientRect();return !(s.position==='absolute'&&s.overflowX==='hidden'&&s.clipPath==='inset(50%)'&&b.width<=1&&b.height<=1)}).map(e=>e.id||e.className||e.tagName),
       small:[...document.querySelectorAll('main a[href],main button,main summary,main input')].filter(e=>e.getClientRects().length&&!e.disabled).filter(e=>{const b=e.getBoundingClientRect();return b.width<44||b.height<44}).map(e=>e.textContent.trim().slice(0,45)),
       broken:[...document.images].filter(i=>i.getClientRects().length&&(!i.complete||!i.naturalWidth)).map(i=>i.src),
       // Search asset references, not encoded JPEG bytes: a real PDF preview's
