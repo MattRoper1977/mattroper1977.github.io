@@ -164,12 +164,12 @@
   },
   {
    "route": "/apexkick/",
-   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "verifier": "tools/verify_apexkick_v10.mjs",
    "gates": [
-    "single self-contained AAA V4 payload with zero script src dependencies",
-    "generated inline way out is keyboard- and touch-reachable"
+    "single self-contained V10 payload: zero network requests beyond the page and its vendored three.js r128",
+    "generated inline way out resolves to /games/"
    ],
-   "note": "World Stage AAA V4 is delivered as a standalone one-file game; its way out remains inline rather than introducing /hud.js."
+   "note": "Apex Kick: World Stage V10 (AK10, 2026-10-21) is a standalone one-file game with one vendored script; its way out remains inline rather than introducing /hud.js."
   },
   {
    "route": "/auroralinks/",
