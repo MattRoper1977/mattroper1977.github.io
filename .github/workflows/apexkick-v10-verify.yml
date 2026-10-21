@@ -1,0 +1,54 @@
+name: Apex Kick V10 route gate
+
+# Gates /apexkick/ (Apex Kick: World Stage V10, ruling AK10-O). It replaces the
+# retired Apex Kick runtime gate, whose checks read code V10 no longer serves.
+on:
+  pull_request:
+    paths:
+      - 'apexkick/**'
+      - 'tools/verify_apexkick_v10.mjs'
+      - 'data/as1-storage-registry.json'
+      - '.github/workflows/apexkick-v10-verify.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apexkick/**'
+      - 'tools/verify_apexkick_v10.mjs'
+      - 'data/as1-storage-registry.json'
+      - '.github/workflows/apexkick-v10-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apexkick-v10-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Nine modes, holds, storage, network and way out
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install the browser this gate drives
+        run: |
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Record what is under test
+        run: |
+          wc -c apexkick/index.html apexkick/vendor/three.min.js
+          sha256sum apexkick/index.html apexkick/vendor/three.min.js
+
+      - name: CONTROLS — four planted defects, each must turn the gate RED
+        run: node tools/verify_apexkick_v10.mjs --self-test
+
+      - name: The shipped /apexkick/ bytes
+        run: node tools/verify_apexkick_v10.mjs

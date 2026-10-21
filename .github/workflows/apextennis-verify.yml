@@ -32,10 +32,6 @@ jobs:
         run: |
           printf 'Apex Pool bytes: '; wc -c < apexpool/index.html
           printf 'Apex Pool sha256: '; sha256sum apexpool/index.html | cut -d' ' -f1
-          node tools/verify_apexkick.js | tee /tmp/apexkick.log
-          checks=$(grep -E '^[[:space:]]+(PASS|FAIL)[[:space:]]' /tmp/apexkick.log | wc -l)
-          printf 'Apex Kick measured checks: %s\n' "$checks"
-          test "$checks" -eq 25
       - name: Run all Apex Tennis gates
         env:
           AT_REQUIRE_BROWSER: '1'
