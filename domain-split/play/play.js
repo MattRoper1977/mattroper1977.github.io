@@ -1,6 +1,8 @@
 /* Play discovery only. These exact keys never contain or clear game saves.
  * The page is complete without this file: every Play link is in the markup.
- * This adds the lanes, live filtering, the Filters drawer and the game sheet. */
+ * This adds the spotlight's Next control, the shelves' previous/next controls,
+ * live filtering (search, category and input chips), the Filters drawer and the
+ * game sheet (deep links and Surprise me only; cards never open it). */
 (() => {
   'use strict';
   const data = JSON.parse(document.getElementById('play-data').textContent);
@@ -29,41 +31,45 @@
     catch (_) { durable = false; storageNotice(); }
   }
   const grid = $('game-grid'), status = $('result-count'), query = $('query'), dialog = $('game-dialog'), filters = $('filters');
-  const cards = [...grid.querySelectorAll('[data-card]')].map(el => ({el, ids: el.dataset.games.split(' ')}));
+  const cards = [...grid.querySelectorAll('[data-card]')].map(el => ({el, ids: el.dataset.games.split(' '), shown: el.dataset.card}));
+  const activityCards = [...grid.querySelectorAll('[data-activity]')].map(el => ({el, g: byId.get(el.dataset.activity)}));
   const normalize = v => String(v).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  // Search is scoped to catalogue titles and descriptions.
-  const searchable = new Map(games.map(g => [g.id, normalize([g.title, g.displayTitle || '', g.series || '', g.description].join(' '))]));
+  // Search covers title, category and the one-line descriptions (TX (b)).
+  const searchable = new Map(games.map(g => [g.id, normalize([g.title, g.displayTitle || '', g.series || '', g.genre, g.line || '', g.description].join(' '))]));
   const state = {q: '', mood: '', genre: '', control: '', mode: '', list: ''};
   let activeGame = null, returnFocus = null, cameFromGame = false, filtersOpener = null;
 
-  /* ---- lanes: rendered from the same data the grid was built from ---- */
-  function favouriteButton(g) {
-    return '<button type="button" class="favourite" data-favourite="' + esc(g.id) + '" aria-pressed="false" aria-label="Favourite: ' + esc(title(g)) + '">♡<span class="sr-only"> Favourite</span></button>';
+  /* ---- spotlight: one featured game at a time, advanced only by Next ---- */
+  const spots = [...document.querySelectorAll('[data-spot]')];
+  let spotIndex = 0;
+  function showSpot(i) {
+    spotIndex = (i + spots.length) % spots.length;
+    spots.forEach((el, k) => { el.hidden = k !== spotIndex; });
+    $('spot-status').textContent = (spotIndex + 1) + ' of ' + spots.length;
   }
-  function tile(g, meta, removable = false) {
-    const img = g.media && g.media.poster || g.image;
-    return '<li class="tile"><button type="button" class="card-open" data-info="' + esc(g.id) + '" aria-haspopup="dialog"><span class="thumb' + (img ? '' : ' thumb-empty') + '">' + (img ? '<img src="' + esc(img) + '" alt="" loading="lazy" width="640" height="360">' : '') + '</span><span class="card-title">' + esc(title(g)) + '</span></button>' +
-      (meta ? '<span class="tile-meta">' + esc(meta) + '</span>' : '') +
-      '<div class="card-actions"><a class="play small" data-play="' + esc(g.id) + '" href="' + esc(g.route) + '">Play<span class="sr-only"> ' + esc(title(g)) + '</span></a>' + favouriteButton(g) + '</div>' + (removable ? '<button type="button" class="remove-recent" data-remove-recent="' + esc(g.id) + '" aria-label="Remove from recently opened: ' + esc(title(g)) + '">Remove</button>' : '') + '</li>';
+  if (spots.length > 1) {
+    $('spot-next').hidden = false; $('spot-status').hidden = false; showSpot(0);
+    $('spot-next').addEventListener('click', () => showSpot(spotIndex + 1));
   }
-  function lane(id, heading, extra, items) {
-    return '<section class="lane" id="lane-' + id + '" aria-labelledby="lane-' + id + '-title"><div class="lane-head"><h2 id="lane-' + id + '-title">' + heading + '</h2>' + extra + '</div><ul class="lane-track">' + items.join('') + '</ul></section>';
+  /* ---- shelves: 44px previous/next scroll each horizontal track ---- */
+  const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const shelves = [...document.querySelectorAll('[data-shelf]')].map(el => ({el, track: el.querySelector('.shelf-track'), nav: el.querySelector('.shelf-nav'), count: el.querySelector('[data-shelf-count]'), base: el.querySelector('[data-shelf-count]').textContent}));
+  function paintShelfNav(s) {
+    const t = s.track, overflow = t.scrollWidth > t.clientWidth + 1;
+    s.nav.hidden = !overflow;
+    const [prev, next] = s.nav.querySelectorAll('[data-shelf-step]');
+    prev.disabled = t.scrollLeft <= 1; next.disabled = t.scrollLeft + t.clientWidth >= t.scrollWidth - 1;
   }
-  function renderLanes() {
-    const played = recent.map(id => byId.get(id)).filter(g => g && g.group === 'games').slice(0, 12);
-    $('lane-continue').innerHTML = played.length ? lane('continue', 'Recently played', '<p class="muted">Launched in this browser on this device; not saved progress.</p><button type="button" id="clear-recent" data-clear-recent>Clear recently opened</button>', played.map(g => tile(g, g.genre, true))) : '';
-    const updated = catalogue.filter(g => g.updated).sort((a, b) => b.updated.date < a.updated.date ? -1 : b.updated.date > a.updated.date ? 1 : 0);
-    $('lane-updated').innerHTML = updated.length ? lane('updated', 'New and updated', '', updated.map(g => tile(g, g.updated.label))) : '';
-    $('lanes-genre').innerHTML = data.genres.filter(x => x.count >= 3).map(x => {
-      const members = catalogue.filter(g => g.genre === x.name);
-      return lane('genre-' + x.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), esc(x.name), '<a class="see-all" data-genre="' + esc(x.name) + '" href="?genre=' + encodeURIComponent(x.name) + '#all-games">See all ' + members.length + ' →</a>', members.slice(0, 8).map(g => tile(g, g.genre)));
-    }).join('');
-    bindImages($('lanes'));
-  }
+  shelves.forEach(s => {
+    s.nav.addEventListener('click', e => { const b = e.target.closest('[data-shelf-step]'); if (!b) return; s.track.scrollBy({left: Number(b.dataset.shelfStep) * Math.max(160, s.track.clientWidth * 0.9), behavior: reduced() ? 'auto' : 'smooth'}); });
+    s.track.addEventListener('scroll', () => paintShelfNav(s), {passive: true});
+  });
+  const paintShelves = () => shelves.forEach(paintShelfNav);
+  window.addEventListener('resize', paintShelves);
   function bindImages(root) {
     root.querySelectorAll('.thumb img').forEach(img => {
       if (img.dataset.bound) return; img.dataset.bound = '1';
-      const failed = () => img.closest('.thumb').classList.add('failed');
+      const failed = () => { const t = img.closest('.thumb'), card = t.closest('[data-card],[data-activity],[data-spot]'), name = card && card.querySelector('.card-title,.feature-title'); t.className = 'thumb thumb-block failed'; t.innerHTML = '<span class="thumb-title">' + esc(name ? name.textContent : '') + '</span>'; };
       img.addEventListener('error', failed); if (img.complete && !img.naturalWidth && img.src) failed();
     });
   }
@@ -94,7 +100,7 @@
   function paintControls() {
     query.value = state.q; ['genre', 'control', 'mode', 'list'].forEach(k => { $(k).value = state[k]; });
     document.querySelectorAll('.chip-button').forEach(b => {
-      const on = b.dataset.mood === state.mood;
+      const on = b.dataset.chip === 'genre' ? state.genre === b.dataset.genre : b.dataset.chip === 'control' ? state.control === b.dataset.control : !state.genre && !state.control && !state.mood;
       b.setAttribute('aria-pressed', String(on));
     });
   }
@@ -107,18 +113,16 @@
       if (hits.length) {
         shown += hits.length; visibleCards++;
         // A series card must launch a matching edition, not its unfiltered lead.
-        const g = hits[0], open = card.el.querySelector('.card-open'), play = card.el.querySelector('.card-actions [data-play]');
-        const changedEdition = open.dataset.info !== g.id;
-        open.dataset.info = g.id; open.querySelector('.card-title').textContent = active() ? title(g) : (g.series || title(g));
+        const g = hits[0], play = card.el.querySelector('.card-actions [data-play]');
+        const changedEdition = card.shown !== g.id; card.shown = g.id;
+        card.el.querySelector('.card-title').textContent = active() ? title(g) : (g.series || title(g));
+        card.el.querySelector('.card-line').textContent = g.line || g.genre;
         play.dataset.play = g.id; play.href = g.route; play.querySelector('.sr-only').textContent = ' ' + title(g);
-        // The card's Play anchor above is repointed at the matching edition, but the static
-        // edition list is built as every edition EXCEPT the card's lead (build.py:69,
-        // "other CATALOGUE editions' Play anchors are in the markup for no-JS use"). Left alone
-        // it would then carry the edition the Play anchor just took, so that edition appeared
-        // twice on the card and the lead's own link vanished. The list is therefore derived here
-        // rather than left static: it is exactly card.ids minus whoever the Play anchor holds, in
-        // the markup's order. That is idempotent, so returning to the unfiltered lead restores the
-        // original list, and it keeps the card's distinct hrefs equal to its full edition set.
+        // The card's Play anchor above is repointed at the matching edition, so the static
+        // edition list is derived here too: exactly card.ids minus whoever the Play anchor
+        // holds, in the markup's order. That is idempotent, so returning to the unfiltered
+        // lead restores the original list, and the card's distinct hrefs always equal its
+        // full edition set.
         const others = card.ids.filter(id => id !== g.id);
         card.el.querySelectorAll('[data-editions] > li').forEach((li, i) => {
           const edition = byId.get(others[i]), anchor = li.querySelector('a[data-play]');
@@ -129,19 +133,30 @@
         });
         card.el.querySelector('[data-favourite]').dataset.favourite = g.id;
         if (changedEdition) {
-          const source = g.media && g.media.poster || g.image, thumb = open.querySelector('.thumb');
-          thumb.className = 'thumb' + (source ? '' : ' thumb-empty');
-          thumb.innerHTML = source ? '<img src="' + esc(source) + '" alt="" loading="lazy" width="640" height="360">' : '';
-          card.el.querySelector('.card-meta').innerHTML = '<span class="chip">' + esc(g.genre) + '</span>' + (card.ids.length > 1 ? '<span class="chip">' + card.ids.length + ' editions</span>' : '') + (needsKeyboard(g) ? '<span class="chip warn" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>Needs a keyboard</span>' : '');
-          bindImages(open);
+          const source = g.media && g.media.poster || g.image, thumb = card.el.querySelector('.thumb');
+          thumb.className = 'thumb' + (source ? '' : ' thumb-block');
+          thumb.innerHTML = source ? '<img src="' + esc(source) + '" alt="" loading="lazy" width="640" height="360">' : '<span class="thumb-title">' + esc(title(g)) + '</span>';
+          if (source) thumb.removeAttribute('aria-hidden'); else thumb.setAttribute('aria-hidden', 'true');
+          card.el.querySelector('.card-meta').innerHTML = (card.ids.length > 1 ? '<span class="chip">' + card.ids.length + ' editions</span>' : '') + (g.updated ? '<span class="chip">Updated ' + esc(g.updated.label) + '</span>' : '') + (needsKeyboard(g) ? '<span class="chip warn" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>Needs a keyboard</span>' : '');
+          bindImages(card.el);
         }
-        const watch = card.el.querySelector('[data-watch]');
-        if (watch) { watch.dataset.watch = g.id; watch.hidden = !(g.media && g.media.video); }
       }
     }
-    const ordered = state.list === 'recent' ? [...cards].sort((a, b) => Math.min(...a.ids.map(i => (recent.indexOf(i) + 1 || 1e9))) - Math.min(...b.ids.map(i => (recent.indexOf(i) + 1 || 1e9)))) : cards;
-    ordered.forEach((card, index) => { if (grid.children[index] !== card.el) grid.insertBefore(card.el, grid.children[index] || null); });
-    $('empty-state').hidden = visibleCards !== 0;
+    // Activities live on the Classroom shelf: shown for All, the Classroom chip and a search.
+    const activityState = !state.mood && !state.control && !state.mode && !state.list && (!state.genre || state.genre === 'Classroom');
+    const words = normalize(state.q).split(/\s+/).filter(Boolean);
+    let shownActivities = 0;
+    for (const a of activityCards) { const on = activityState && words.every(w => searchable.get(a.g.id).includes(w)); a.el.hidden = !on; if (on) shownActivities++; }
+    // Recently opened orders cards within each shelf; every card keeps its own shelf.
+    for (const s of shelves) {
+      const own = cards.filter(c => c.el.parentElement === s.track);
+      const ordered = state.list === 'recent' ? [...own].sort((a, b) => Math.min(...a.ids.map(i => (recent.indexOf(i) + 1 || 1e9))) - Math.min(...b.ids.map(i => (recent.indexOf(i) + 1 || 1e9)))) : own;
+      ordered.forEach((card, index) => { if (s.track.children[index] !== card.el) s.track.insertBefore(card.el, s.track.children[index] || null); });
+      const visibleHere = [...s.track.children].filter(el => !el.hidden);
+      s.el.hidden = visibleHere.length === 0;
+      if (active()) { const n = visibleHere.filter(el => el.dataset.card).reduce((t, el) => t + cards.find(c => c.el === el).ids.filter(id => matches(byId.get(id))).length, 0), m = visibleHere.length - visibleHere.filter(el => el.dataset.card).length; s.count.textContent = n + (n === 1 ? ' game' : ' games') + (m ? ' · ' + m + ' activities' : ''); } else s.count.textContent = s.base;
+    }
+    $('empty-state').hidden = visibleCards + shownActivities !== 0;
     const selected = state.list === 'favourites' ? favourites : state.list === 'recent' ? recent : null;
     $('empty-description').textContent = selected && selected.length === 0 ? (state.list === 'favourites' ? 'Press the heart on a game card to start your favourites.' : 'Games appear here when you open them from this collection.') : 'Try a different word or clear a filter.';
     status.textContent = active() ? shown + ' of ' + data.catalogue + ' games' : data.catalogue + ' games';
@@ -151,7 +166,7 @@
     $('surprise-status').textContent = '';
     grid.querySelectorAll('[data-remove-recent]').forEach(b => b.remove());
     if (state.list === 'recent') for (const card of cards.filter(c => !c.el.hidden)) {
-      const g = byId.get(card.el.querySelector('.card-open').dataset.info), button = document.createElement('button');
+      const g = byId.get(card.shown), button = document.createElement('button');
       button.type = 'button'; button.className = 'remove-recent'; button.dataset.removeRecent = g.id;
       button.textContent = 'Remove'; button.setAttribute('aria-label', 'Remove from recently opened: ' + title(g)); card.el.append(button);
     }
@@ -160,7 +175,8 @@
     document.querySelectorAll('[data-collection]').forEach(a => { if (a.dataset.collection === state.list) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     paintFavourite();
     if (url) syncUrl();
-    if (focusedCard && !dialog.open) { if (!focusedCard.hidden && focused.isConnected) focused.focus(); else (grid.querySelector('[data-card]:not([hidden]) .card-open') || $('empty-reset')).focus(); }
+    paintShelves();
+    if (focusedCard && !dialog.open) { if (!focusedCard.hidden && focused.isConnected) focused.focus(); else focusResults(); }
   }
   function reset() { fields.forEach(k => { state[k] = ''; }); paintControls(); render(); }
   function choose(patch, scroll) {
@@ -231,11 +247,11 @@
     });
     $('dialog-remove-recent').hidden = !activeGame || !recent.includes(activeGame.id);
   }
-  function focusResults() { (grid.querySelector('[data-card]:not([hidden]) .card-open') || $('empty-reset')).focus(); }
+  function focusResults() { (grid.querySelector('[data-shelf]:not([hidden]) :is([data-card],[data-activity]):not([hidden]) .card-actions a[data-play]') || $('empty-reset')).focus(); }
   function changeRecent(id) {
     const opener = document.activeElement, inSheet = dialog.open;
     recent = id ? recent.filter(x => x !== id) : []; saveList('recent', recent);
-    renderLanes(); render({url: false});
+    render({url: false});
     storageNotice((id ? 'Removed from recently opened.' : 'Recently opened cleared.') + ' Game saves were not changed.' + (durable ? '' : ' Storage is unavailable.'));
     if (inSheet) $('dialog-close').focus();
     else if (!opener.isConnected || !opener.getClientRects().length) focusResults();
@@ -287,9 +303,13 @@
     const collection = e.target.closest('a[data-collection]');
     if (collection && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { e.preventDefault(); choose({q: '', mood: '', genre: '', control: '', mode: '', list: collection.dataset.collection}, true); $('all-games-title').focus({preventScroll: true}); return; }
     const chip = e.target.closest('.chip-button');
-    if (chip) { choose({mood: chip.dataset.mood}, Boolean(chip.dataset.mood)); return; }
-    const seeAll = e.target.closest('a.see-all');
-    if (seeAll && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { e.preventDefault(); choose({mood: '', genre: seeAll.dataset.genre, list: ''}, true); return; }
+    if (chip) {
+      const kind = chip.dataset.chip;
+      if (kind === 'genre') choose({genre: state.genre === chip.dataset.genre ? '' : chip.dataset.genre}, true);
+      else if (kind === 'control') choose({control: state.control === chip.dataset.control ? '' : chip.dataset.control}, true);
+      else choose({mood: '', genre: '', control: ''}, false);
+      return;
+    }
     if (e.target.closest('[data-clear-recent]')) { changeRecent(); return; }
     const remove = e.target.closest('[data-remove-recent]');
     if (remove) { changeRecent(remove.dataset.removeRecent); return; }
@@ -314,20 +334,18 @@
   document.querySelector('.menu').addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.currentTarget.open = false; e.currentTarget.querySelector('summary').focus(); } });
   document.querySelectorAll('.menu a').forEach(a => a.addEventListener('click', () => { document.querySelector('.menu').open = false; }));
   window.addEventListener('pagehide', () => { rememberPosition(); stopMedia(); });
-  window.addEventListener('pageshow', event => { if (durable) { favourites = readList('favourites'); recent = readList('recent'); } renderLanes(); render({url: false}); restorePosition(event); });
+  window.addEventListener('pageshow', event => { if (durable) { favourites = readList('favourites'); recent = readList('recent'); } render({url: false}); restorePosition(event); });
   window.addEventListener('popstate', () => { if (dialog.open) closeInfo(); applyUrl(); render({url: false}); });
-  window.addEventListener('storage', e => { if (e.key === keys.favourites || e.key === keys.recent) { favourites = readList('favourites'); recent = readList('recent'); renderLanes(); render({url: false}); } });
+  window.addEventListener('storage', e => { if (e.key === keys.favourites || e.key === keys.recent) { favourites = readList('favourites'); recent = readList('recent'); render({url: false}); } });
 
   /* ---- first paint ---- */
-  document.querySelectorAll('[data-editions]').forEach(list => { list.hidden = true; });  // the sheet's Editions row takes over
-  if (typeof dialog.showModal === 'function') document.querySelectorAll('[data-watch]').forEach(b => { b.hidden = false; });
   if (coarse()) document.querySelectorAll('[data-needs-keyboard]').forEach(chip => { chip.hidden = false; });
   bindImages(document);
   const previous = browseSnapshot();
   if (previous) {
     try { const from = new URL(document.referrer), path = u => decodeURIComponent(u).replace(/index\.html$/, '').replace(/\/$/, ''); cameFromGame = from.origin === location.origin && games.some(g => path(g.route) === path(from.pathname)); const explicit = fields.some(k => new URLSearchParams(location.search).has(k)); if (cameFromGame && !explicit) history.replaceState({}, '', location.pathname + previous.search + location.hash); } catch (_) {}
   }
-  applyUrl(); renderLanes(); render({url: false}); storageNotice(); restorePosition();
+  applyUrl(); render({url: false}); storageNotice(); restorePosition();
   const deepLink = new URLSearchParams(location.search).get('game');
-  if (deepLink && byId.has(deepLink)) openInfo(byId.get(deepLink), document.querySelector('#game-grid [data-info="' + CSS.escape(deepLink) + '"], #classroom [data-info="' + CSS.escape(deepLink) + '"]') || $('all-games-title'));
+  if (deepLink && byId.has(deepLink)) openInfo(byId.get(deepLink), document.querySelector('#game-grid a[data-play="' + CSS.escape(deepLink) + '"]') || $('all-games-title'));
 })();

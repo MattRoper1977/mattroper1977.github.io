@@ -29,15 +29,14 @@
 <main>
 <section class="intro" aria-labelledby="intro-title"><div class="intro-head"><div class="intro-copy"><p class="eyebrow">YOUR NEXT GAME STARTS HERE.</p><h1 id="intro-title">Pick a game. <span>Make it yours.</span></h1><p class="lede">Race, explore, build or work out your next move. Find your favourite or try something unexpected—play straight in your browser.</p></div>@@HEROART@@</div>
 <form id="discovery-form" action="/" method="get" role="search"><label for="query">Search games</label><div class="search-row"><input id="query" name="q" type="search" maxlength="160" placeholder="Search games" autocomplete="off"><button type="button" id="filters-open" aria-haspopup="dialog" aria-expanded="false">Filters</button></div></form>
-<div class="mood-tools"><div class="chip-row" role="group" aria-label="Play style">@@CHIPS@@</div><button type="button" id="surprise" aria-haspopup="dialog" hidden>Surprise me</button></div><p class="mood-note">Mood picks are reviewed selections. All includes every game.</p></section>
-<div id="lanes"><div id="lane-continue"></div>@@FEATURED@@<div id="lane-updated"></div><div id="lanes-genre"></div></div>
+<div class="mood-tools"><div class="chip-row" role="group" aria-label="Categories">@@CHIPS@@</div><button type="button" id="surprise" aria-haspopup="dialog" hidden>Surprise me</button></div><p class="mood-note">Categories come from the game catalogue. Keyboard and Touch list only games whose controls have been checked.</p></section>
+<div id="lanes">@@FEATURED@@</div>
 <section id="all-games" aria-labelledby="all-games-title"><div class="section-head"><h2 id="all-games-title" tabindex="-1">All games</h2><p id="result-count" role="status" aria-live="polite">@@COUNT@@</p><button type="button" id="clear-favourites" hidden>Clear favourites</button><button type="button" id="clear-recent-list" data-clear-recent hidden>Clear recently opened</button></div>
 <p id="list-note" class="muted" hidden>These are launches from this browser on this device, not saved games or resumable progress.</p><p id="surprise-status" role="status"></p>
 <p id="storage-status" role="status"></p>
-<noscript><p class="notice">All games are listed below. Search, filters and favourites need JavaScript; direct Play links work without it.</p></noscript>
+<noscript><p class="notice">All games are listed below. Search, filters and favourites need JavaScript; direct Play links work without it.</p></noscript>@@NOSCRIPT@@
 <div id="empty-state" class="empty-state" hidden><h3>No games found</h3><p id="empty-description">Try a different word or clear a filter.</p><button type="button" id="empty-reset">Show all games</button></div>
-<div id="game-grid" class="game-grid">@@GRID@@</div></section>
-@@CLASSROOM@@
+<div id="game-grid" class="shelves">@@GRID@@</div></section>
 </main>
 </div>
 <footer><nav aria-label="Footer"><a href="/privacy/">Privacy and saved progress</a><span aria-hidden="true">·</span><a href="mailto:contactmadebymatt@gmail.com">Report a problem</a><span aria-hidden="true">·</span><a class="education-return" href="https://madebymatt.uk/">Made by Matt Education ↗</a></nav><p class="brand-line"><a class="footer-brand" href="/">@@FOOTERLOGO@@<span>Made by Matt Play</span></a></p><p class="footer-motto">Play • Explore • Escape</p></footer>
