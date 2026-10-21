@@ -15,7 +15,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   review:
-    runs-on: ubuntu-latest
+    # Runner pin (ruling tx, as tr-1 did for #478's jobs): ubuntu-latest moved to 26.04, where the
+    # pinned Playwright cannot install its browser; 24.04 is where it installs.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -56,6 +58,10 @@ jobs:
           python domain-split/play/prepare.py --lessons .sources/Lessons --output .play-review/output
           node domain-split/check_game_saves.cjs
           node --check domain-split/play/play.js
+          # TX play shelf navigation v1: card hrefs on disk, every manifest game once,
+          # spotlight == featured flag, no invented category. --self-test plants one
+          # defect per limb and requires each to go red.
+          python domain-split/play/check_shelf_navigation.py --output .play-review/output --self-test
           node domain-split/play/serve.cjs .play-review/output/games 4173 > .play-review/server.log 2>&1 &
       - name: Capture fresh gameplay through ordinary player inputs
         if: github.event_name == 'workflow_dispatch' && inputs.capture_new

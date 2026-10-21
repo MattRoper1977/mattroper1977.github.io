@@ -1,5 +1,11 @@
 'use strict';
 // UX2: catalogue games are grouped by series; classroom/staff retain separate rows.
+// TX play shelf navigation v1 (ruling tx): the served shelf may be either shape across the
+// release window -- the UX2 grid (#game-grid > .game-card, #classroom .class-row, mood chips,
+// one Featured card) or the TX shelves (#game-grid [data-shelf] tracks, activities as
+// [data-activity] cards on the Classroom shelf, category + Keyboard/Touch chips, a Spotlight of
+// every featured row). shelfShape() reads which one is served and every limb asserts the
+// contract of THAT shape, each derived from the same independent data as before.
 // Derive complete membership independently from Games main and the accepted W7 census.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -142,25 +148,32 @@ function ux2Cards(actual, groups, label, match) {
   }
 }
 async function readUx2Cards(page, visible = false) {
-  return page.locator('#game-grid > .game-card' + (visible ? ':visible' : '')).evaluateAll(nodes => nodes.map(card => ({
+  return page.locator('#game-grid .game-card[data-card]' + (visible ? ':visible' : '')).evaluateAll(nodes => nodes.map(card => ({
     id: card.dataset.card, ids: (card.dataset.games || '').split(' '),
     title: card.querySelector('.card-title')?.textContent || '',
-    genre: card.querySelector('.card-meta .chip')?.textContent || '',
+    // TX shelves name the category on the shelf, not as a chip on every card.
+    genre: card.closest('[data-shelf]')?.dataset.shelf || card.querySelector('.card-meta .chip')?.textContent || '',
     links: [...card.querySelectorAll('a[data-play]')].map(a => ({href:a.href, id:a.dataset.play, title:a.querySelector('.sr-only')?.textContent.trim() || ''})),
   })));
 }
-async function classroomRows(page, activities) {
-  const rows = await page.locator('#classroom .class-row').evaluateAll(nodes => nodes.map(row => ({
-    id:row.dataset.row, title:row.querySelector('.row-open')?.textContent,
-    label:row.querySelector('.row-label')?.textContent, visible:!!row.getClientRects().length,
+async function shelfShape(page) {
+  return (await page.locator('#game-grid [data-shelf]').count()) > 0 ? 'tx' : 'ux2';
+}
+// `shown` says whether the activities should be visible in the current filter state. UX2 rows
+// are always visible; on the TX shelves activities follow All, the Classroom chip and search.
+async function classroomRows(page, activities, shown = true) {
+  const rows = await page.locator('#classroom .class-row, #classroom [data-activity]').evaluateAll(nodes => nodes.map(row => ({
+    tx: row.hasAttribute('data-activity'), id:row.dataset.row || row.dataset.activity,
+    title:(row.querySelector('.row-open') || row.querySelector('.card-title'))?.textContent,
+    label:(row.querySelector('.row-label') || row.querySelector('.card-meta .chip'))?.textContent, visible:!!row.getClientRects().length,
     links:[...row.querySelectorAll('a[data-play]')].map(a => ({id:a.dataset.play, href:a.href})),
   })));
   members(rows.map(r => r.id), activities.map(g => g.id), 'Separate classroom/staff rows');
   for (const row of rows) {
     const game = activities.find(g => g.id === row.id);
-    assert(row.visible, 'Classroom/staff row is hidden');
+    assert.equal(row.visible, row.tx ? shown : true, row.tx ? 'Activity visibility differs from the filter state' : 'Classroom/staff row is hidden');
     assert.equal(row.title, shownTitle(game), 'Activity title');
-    assert.equal(row.label, game.group === 'staff' ? 'Staff' : 'Classroom', 'Visible audience boundary');
+    assert.equal(row.label, row.tx ? (game.group === 'staff' ? 'Staff activity' : 'Classroom activity') : (game.group === 'staff' ? 'Staff' : 'Classroom'), 'Visible audience boundary');
     assert.equal(row.links.length, 1, 'Activity play link count');
     assert.equal(row.links[0].id, game.id, 'Activity play identity');
     assert.equal(route(row.links[0].href), route(game.route), 'Activity destination');
@@ -169,11 +182,12 @@ async function classroomRows(page, activities) {
 async function renderedControls(page, groups, activities) {
   // Mutate real DOM, including a collapsed edition. Each defect must be caught
   // by the same checker used above; restore the exact DOM after each mutation.
+  const tx = (await shelfShape(page)) === 'tx';
   const mutations = [
     {selector:'#game-grid .card-editions a[data-play]', kind:'remove'},
-    {selector:'#classroom .class-row', kind:'remove'},
-    {selector:'#game-grid .game-card', kind:'identity'},
-    {selector:'#classroom .row-label', kind:'audience'},
+    {selector: tx ? '#classroom [data-activity]' : '#classroom .class-row', kind:'remove'},
+    {selector:'#game-grid .game-card[data-card]', kind:'identity'},
+    {selector: tx ? '#classroom [data-activity] .card-meta .chip' : '#classroom .row-label', kind:'audience'},
   ];
   for (const mutation of mutations) {
     assert.equal(await page.locator(mutation.selector).first().count(), 1, 'Missing mutation target');
@@ -237,8 +251,18 @@ async function verify({ href }) {
         // from the served data. The mood chips are asserted too, so the control that
         // replaced the old row is covered as well - strictly more than before.
         const genres = [...new Set(games.map(g => g.genre))];
-        members(await page.locator('[data-chip="mood"]').evaluateAll(ns => ns.map(n => n.dataset.mood)),
+        const shape = await shelfShape(page);
+        if (shape === 'ux2') members(await page.locator('[data-chip="mood"]').evaluateAll(ns => ns.map(n => n.dataset.mood)),
           ['Calm', 'Fast', 'Thinky', 'Together'], 'Mood controls');
+        else {
+          // TX (c): the chips are the served categories (Classroom first) plus Keyboard/Touch.
+          members(await page.locator('[data-chip="genre"]').evaluateAll(ns => ns.map(n => n.dataset.genre)), [...new Set(['Classroom', ...genres])], 'Category controls');
+          members(await page.locator('[data-chip="control"]').evaluateAll(ns => ns.map(n => n.dataset.control)),
+            ['keyboard', 'touch'].filter(v => games.some(g => (g.controls || []).includes(v))), 'Input controls');
+          // TX (d): one shelf per category, every lead card on exactly one shelf.
+          const shelves = await page.locator('#game-grid [data-shelf]').evaluateAll(ns => ns.map(n => n.dataset.shelf));
+          members(shelves, [...new Set(['Classroom', ...genres])], 'Category shelves');
+        }
         await page.locator('#filters-open').click();
         await page.locator('#genre').waitFor({state: 'visible'});
         members(await page.locator('#genre option').evaluateAll(ns => ns.map(n => n.value).filter(Boolean)),
@@ -246,7 +270,7 @@ async function verify({ href }) {
         for (const genre of genres) {
           await page.locator('#genre').selectOption(genre);
           ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(g => g.genre === genre)), 'Genre results', g => g.genre === genre);
-          await checkCount(games.filter(g => g.genre === genre).length); await classroomRows(page, activities);
+          await checkCount(games.filter(g => g.genre === genre).length); await classroomRows(page, activities, genre === 'Classroom');
         }
         // The empty "All genres" option is how the drawer clears a genre.
         await page.locator('#genre').selectOption('');
@@ -262,28 +286,49 @@ async function verify({ href }) {
         // exactly as the retired per-genre chip loop did. The chip SET is asserted above
         // against the four reviewed moods; this loop walks the moods actually present in the
         // data, so a reviewed mood carrying no games can never red this as a phantom empty.
-        const moods = [...new Set(games.flatMap(g => g.moods || []))];
-        assert(moods.length > 0, 'Mood controls: no served game carries a reviewed mood');
-        for (const mood of moods) {
-          const inMood = g => (g.moods || []).includes(mood);
-          await page.locator('[data-chip="mood"][data-mood="' + mood + '"]').click();
-          ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(inMood)), 'Mood results', inMood);
-          await checkCount(games.filter(inMood).length); await classroomRows(page, activities);
+        if (shape === 'ux2') {
+          const moods = [...new Set(games.flatMap(g => g.moods || []))];
+          assert(moods.length > 0, 'Mood controls: no served game carries a reviewed mood');
+          for (const mood of moods) {
+            const inMood = g => (g.moods || []).includes(mood);
+            await page.locator('[data-chip="mood"][data-mood="' + mood + '"]').click();
+            ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(inMood)), 'Mood results', inMood);
+            await checkCount(games.filter(inMood).length); await classroomRows(page, activities);
+          }
+        } else {
+          // Each category chip is clicked and the shelf, count and activities are checked.
+          for (const genre of [...new Set(['Classroom', ...genres])]) {
+            const inGenre = g => g.genre === genre;
+            await page.locator('[data-chip="genre"][data-genre="' + genre + '"]').click();
+            ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(inGenre)), 'Category results', inGenre);
+            await checkCount(games.filter(inGenre).length); await classroomRows(page, activities, genre === 'Classroom');
+            await page.locator('[data-chip="all"]').click();
+          }
         }
         await page.locator('[data-chip="all"]').click(); await checkCount(total, false);
         ux2Cards(await readUx2Cards(page, true), groups, 'Clearing mood');
-        const features = await page.locator('.featured a[data-play]').evaluateAll(ns => ns.map(a => ({id:a.dataset.play,href:a.href})));
-        const featured = games.find(g => g.featured);
-        assert(featured, 'Independent featured game missing'); assert.equal(features.length, 1, 'Featured game count');
-        assert.equal(features[0].id, featured.id); assert.equal(route(features[0].href), route(featured.route));
+        const featuredRows = games.filter(g => g.featured), featured = featuredRows[0];
+        assert(featured, 'Independent featured game missing');
+        if (shape === 'ux2') {
+          const features = await page.locator('.featured a[data-play]').evaluateAll(ns => ns.map(a => ({id:a.dataset.play,href:a.href})));
+          assert.equal(features.length, 1, 'Featured game count');
+          assert.equal(features[0].id, featured.id); assert.equal(route(features[0].href), route(featured.route));
+        } else {
+          // TX (a): the Spotlight is every featured row, in served order, one shown at a time.
+          const spots = await page.locator('#spotlight [data-spot]').evaluateAll(ns => ns.map(n => ({id:n.dataset.spot, href:n.querySelector('a[data-play]')?.href, shown:!!n.getClientRects().length})));
+          assert.deepEqual(spots.map(x => x.id), featuredRows.map(g => g.id), 'Spotlight differs from the featured flag');
+          for (const x of spots) assert.equal(route(x.href), route(featuredRows.find(g => g.id === x.id).route), 'Spotlight destination');
+          assert.deepEqual(spots.filter(x => x.shown).map(x => x.id), [featured.id], 'Spotlight shows one featured game at a time');
+        }
         const normalize = text => text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
         const words = normalize(selected.title).split(/\s+/).filter(Boolean);
-        const hits = games.filter(g => words.every(w => normalize([g.title,g.displayTitle || '',g.series || '',g.description].join(' ')).includes(w)));
+        // TX (b) search also covers the category and the one-line description.
+        const hits = games.filter(g => words.every(w => normalize([g.title,g.displayTitle || '',g.series || '',...(shape === 'tx' ? [g.genre, g.line || ''] : []),g.description].join(' ')).includes(w)));
         await page.locator('#query').fill(selected.title);
         ux2Cards(await readUx2Cards(page, true), groups.filter(gs => gs.some(g => hits.includes(g))), 'Search results', g => hits.includes(g));
         assert(hits.some(g => route(g.route) === target), 'Search lost selected game'); await checkCount(hits.length);
         await page.locator('#query').fill('mbm-no-such-game-verification');
-        assert.equal(await page.locator('#game-grid > .game-card:visible').count(), 0, 'Nonmatching search is not empty');
+        assert.equal(await page.locator('#game-grid .game-card:visible').count(), 0, 'Nonmatching search is not empty');
         assert(await page.locator('#empty-state').isVisible(), 'Empty state missing'); await checkCount(0);
         await page.locator('#query').fill('');
         ux2Cards(await readUx2Cards(page, true), groups, 'Clearing search'); await classroomRows(page, activities);
@@ -300,7 +345,7 @@ async function verify({ href }) {
     try {
       const page=await context.newPage(); const response=await page.goto(ORIGIN+'/',{waitUntil:'load'}); assert.equal(response.status(),200);
       ux2Cards(await readUx2Cards(page,true),groups,'No-JS complete grid'); await classroomRows(page,activities);
-      const links=await page.locator('#game-grid a[data-play]:visible').evaluateAll(ns=>ns.map(a=>a.href));
+      const links=await page.locator('#game-grid .game-card[data-card] a[data-play]:visible').evaluateAll(ns=>ns.map(a=>a.href));
       members(links.map(route),expectedGames,'No-JS visible edition links'); report.noJavaScript='PASS';
     } finally {await context.close();}
     assert.equal(report.pageErrors.length,0,'Published shelf script error');

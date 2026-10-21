@@ -42,7 +42,9 @@ jobs:
       github.event_name != 'deployment_status' ||
       (github.event.deployment_status.state == 'success' &&
        github.event.deployment.environment == 'github-pages')
-    runs-on: ubuntu-latest
+    # Runner pin (ruling tx, as tr-1 did for #478's jobs): ubuntu-latest moved to 26.04, where the
+    # pinned Playwright cannot install its browser; 24.04 is where it installs.
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4

@@ -10,7 +10,8 @@ const report={date:new Date().toISOString(),expectedClips:games.length,proofs:[]
   const context=await browser.newContext({viewport:{width,height:844},isMobile:width===390,hasTouch:width===390}),page=await context.newPage();page.setDefaultTimeout(15000);let requested=[];page.on('request',r=>{if(/\.(mp4|webm)(\?|$)/.test(r.url()))requested.push(r.url());});
   await page.goto(base);assert.equal(requested.length,0,'Collection downloaded video before user request');
   for(const g of games){try{
-   await page.locator('#query').fill(g.title);const trigger=page.locator('#game-grid [data-watch="'+g.id+'"]');if(width===390)await trigger.tap();else await trigger.click();
+   // TX play shelf navigation v1: cards carry Play only, so a preview opens from the game's own ?game= sheet.
+   await page.goto(base+'?game='+g.id);const watch=page.locator('#dialog-watch'),trigger=page.locator('#game-grid a[data-play="'+g.id+'"]').first();if(width===390)await watch.tap();else await watch.click();
    const video=page.locator('#game-dialog video');await page.waitForFunction(()=>{const v=document.querySelector('video');return v&&v.currentTime>.4&&!v.paused&&v.readyState>=2;},null,{timeout:10000});
    const frames=await video.evaluate(v=>new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('No decoded frame')),5000);if(v.requestVideoFrameCallback)v.requestVideoFrameCallback((_,meta)=>{clearTimeout(t);resolve({presentedFrames:meta.presentedFrames,width:v.videoWidth,height:v.videoHeight});});else{clearTimeout(t);resolve({width:v.videoWidth,height:v.videoHeight,time:v.currentTime});}}));assert(frames.width>0&&frames.height>0);
    const duration=await video.evaluate(v=>v.duration);assert(duration>=12&&duration<=25);

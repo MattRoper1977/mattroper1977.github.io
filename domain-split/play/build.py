@@ -18,6 +18,7 @@ import hashlib
 import html
 import json
 from pathlib import Path
+import re
 import shutil
 from urllib.parse import unquote, urlparse, quote
 if __package__:
@@ -59,49 +60,99 @@ def keyboard_chip(row):
         return '<span class="chip warn" data-needs-keyboard hidden>Needs a keyboard</span>'
     return ''
 
+META_DESCRIPTION = re.compile(r'<meta\s[^>]*name\s*=\s*["\']description["\'][^>]*>', re.I)
+SENTENCE = re.compile(r'^(.+?[.!?…])(?=\s|$)', re.S)
+
+def first_sentence(text):
+    """The text up to its first sentence boundary, verbatim (whitespace folded)."""
+    text = ' '.join(str(text).split())
+    m = SENTENCE.match(text)
+    return m.group(1) if m else text
+
+def what_you_do(payload_bytes):
+    """TX (e): the game's OWN meta description, cut at a sentence boundary.
+    Read from the exact payload bytes this build publishes; None when absent."""
+    head = payload_bytes[:200000].decode('utf-8', 'replace')
+    for tag in META_DESCRIPTION.findall(head):
+        m = re.search(r'content\s*=\s*(["\'])(.*?)\1', tag, re.S)
+        if m and m.group(2).strip():
+            return first_sentence(html.unescape(m.group(2)))
+    return None
+
+def thumb(row, image, title):
+    # Art: the existing captured thumbnail, else a tokened colour block carrying the title.
+    if image:
+        return '<span class="thumb"><img src="' + esc(image) + '" alt="" loading="lazy" width="640" height="360"></span>'
+    return '<span class="thumb thumb-block" aria-hidden="true"><span class="thumb-title">' + esc(title) + '</span></span>'
+
+def badges(row, members):
+    out = ''
+    if len(members) > 1:
+        out += '<span class="chip">' + str(len(members)) + ' editions</span>'
+    if row.get('updated'):
+        out += '<span class="chip">Updated ' + esc(date_label(row['updated']['date'])) + '</span>'
+    return out + keyboard_chip(row)
+
 def card(row, members, by_id):
-    """One grid card. `members` are every edition (ids) when the row leads a
-    series, else just the row; the card's Play anchor is the lead's and the
-    other CATALOGUE editions' Play anchors are in the markup for no-JS use."""
+    """One shelf card: art, title, the one-line "what you do", badges for data
+    that exists, and Play. `members` are every edition (ids) when the row leads
+    a series; the other CATALOGUE editions' Play anchors stay on the card, so
+    every catalogue game is reachable from exactly one card. No modal, no
+    preview: the card's only actions are links (and the existing favourite)."""
     media = row.get('media', {})
     image = media.get('poster') or row.get('image', '')
     title = row['series'] if row.get('series') else shown_title(row)
     editions = [by_id[i] for i in members if i != row['id']]
     catalogue_editions = [e for e in editions if e['group'] == 'games']
-    picture = ('<span class="thumb"><img src="' + esc(image) + '" alt="" loading="lazy" width="640" height="360"></span>') if image else '<span class="thumb thumb-empty" aria-hidden="true"></span>'
-    chips = '<span class="chip">' + esc(row['genre']) + '</span>'
-    if len(members) > 1:
-        chips += '<span class="chip">' + str(len(members)) + ' editions</span>'
-    chips += keyboard_chip(row)
-    watch = '<button type="button" class="watch-pill" data-watch="' + esc(row['id']) + '" hidden>Watch gameplay</button>' if media.get('video') else ''
     more = ''
     if catalogue_editions:
         more = '<ul class="card-editions" data-editions>' + ''.join('<li>' + play_link(e, small=True) + '<span class="edition-name">' + esc(shown_title(e)) + '</span></li>' for e in catalogue_editions) + '</ul>'
     return ('<article class="game-card" data-card="' + esc(row['id']) + '" data-games="' + esc(' '.join(i for i in members if by_id[i]['group'] == 'games')) + '">'
-            '<button type="button" class="card-open" data-info="' + esc(row['id']) + '" aria-haspopup="dialog">' + picture + '<span class="card-title">' + esc(title) + '</span></button>'
-            + watch + '<div class="card-meta">' + chips + '</div><div class="card-actions">' + play_link(row) + favourite_button(row) + '</div>' + more + '</article>')
+            + thumb(row, image, title) + '<h4 class="card-title">' + esc(title) + '</h4><p class="card-line">' + esc(row['line']) + '</p>'
+            '<div class="card-meta">' + badges(row, members) + '</div><div class="card-actions">' + play_link(row) + favourite_button(row) + '</div>' + more + '</article>')
 
-def feature(row):
-    media = row.get('media', {})
-    image = media.get('poster') or row.get('image', '')
-    watch = '<button type="button" class="button" data-watch="' + esc(row['id']) + '" hidden>Watch gameplay</button>' if media.get('video') else ''
-    picture = ('<span class="thumb"><img src="' + esc(image) + '" alt="" fetchpriority="high" width="640" height="360"></span>') if image else ''
-    return ('<section class="featured" aria-labelledby="featured-title"><h2 id="featured-title">Featured</h2>'
-            '<article class="feature-card" data-feature="' + esc(row['id']) + '">'
-            '<button type="button" class="card-open feature-picture" data-info="' + esc(row['id']) + '" aria-haspopup="dialog" aria-label="View details: ' + esc(shown_title(row)) + '">' + picture + '</button>'
-            '<div class="feature-body"><p class="feature-kicker">IN THE SPOTLIGHT</p><h3 class="feature-title">' + esc(shown_title(row)) + '</h3><div class="card-meta"><span class="chip">' + esc(row['genre']) + '</span>' + keyboard_chip(row) + '</div><p>' + esc(row['description']) + '</p>'
-            '<div class="card-actions">' + play_link(row) + '<button type="button" class="feature-details" data-info="' + esc(row['id']) + '" aria-haspopup="dialog">View details</button>' + watch + '</div></div></article></section>')
+def activity_card(row):
+    image = row.get('image', '')
+    label = 'Staff activity' if row['group'] == 'staff' else 'Classroom activity'
+    return ('<article class="game-card activity-card" data-activity="' + esc(row['id']) + '">'
+            + thumb(row, image, shown_title(row)) + '<h4 class="card-title">' + esc(shown_title(row)) + '</h4><p class="card-line">' + esc(row['line']) + '</p>'
+            '<div class="card-meta"><span class="chip">' + label + '</span></div><div class="card-actions">' + play_link(row) + '</div></article>')
 
-def classroom(rows):
-    items = ''.join('<li class="class-row" data-row="' + esc(r['id']) + '"><span class="row-label">' + ('Staff' if r['group'] == 'staff' else 'Classroom') + '</span>'
-                    '<button type="button" class="row-open" data-info="' + esc(r['id']) + '" aria-haspopup="dialog">' + esc(shown_title(r)) + '</button>' + play_link(r, small=True) + '</li>' for r in rows)
-    return ('<section id="classroom" aria-labelledby="classroom-title"><h2 id="classroom-title">For your classroom</h2>'
-            '<p class="muted">Whole-class quizzes and a staff training activity. Not part of the games catalogue.</p><ul class="class-rows">' + items + '</ul></section>')
+def shelf_id(name):
+    return 'classroom' if name == 'Classroom' else 'shelf-' + re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
+
+def shelf(name, cards, count_text, note=''):
+    """TX (d): one horizontal, scroll-snapped shelf per category. The 44px
+    previous/next controls are inert markup until play.js wires them."""
+    sid = shelf_id(name)
+    return ('<section class="shelf" id="' + sid + '" data-shelf="' + esc(name) + '" aria-labelledby="' + sid + '-title">'
+            '<div class="shelf-head"><h3 id="' + sid + '-title">' + esc(name) + '</h3><p class="shelf-count" data-shelf-count>' + esc(count_text) + '</p>'
+            '<div class="shelf-nav" hidden><button type="button" class="shelf-step" data-shelf-step="-1" aria-controls="' + sid + '-track" aria-label="Previous ' + esc(name) + ' games">‹</button>'
+            '<button type="button" class="shelf-step" data-shelf-step="1" aria-controls="' + sid + '-track" aria-label="Next ' + esc(name) + ' games">›</button></div></div>'
+            + (('<p class="muted shelf-note">' + esc(note) + '</p>') if note else '') +
+            '<div class="shelf-track" id="' + sid + '-track">' + ''.join(cards) + '</div></section>')
+
+def spotlight(rows):
+    """TX (a): every featured row, manifest order, one shown at a time once
+    play.js runs. A visible Next control; nothing advances on its own; no video."""
+    items = ''.join('<li class="spot-card feature-card" data-spot="' + esc(r['id']) + '">' + thumb(r, (r.get('media') or {}).get('poster') or r.get('image', ''), shown_title(r)).replace(' loading="lazy"', '')
+                    + '<div class="feature-body"><p class="feature-kicker">IN THE SPOTLIGHT</p><h3 class="feature-title">' + esc(shown_title(r)) + '</h3>'
+                    '<p class="card-line">' + esc(r['line']) + '</p><div class="card-meta"><span class="chip">' + esc(r['genre']) + '</span>' + keyboard_chip(r) + '</div>'
+                    '<div class="card-actions">' + play_link(r) + '</div></div></li>' for r in rows)
+    return ('<section class="spotlight" id="spotlight" aria-labelledby="spotlight-title"><div class="spotlight-head"><h2 id="spotlight-title">Spotlight</h2>'
+            '<p id="spot-status" class="muted" aria-live="polite" hidden></p><button type="button" class="button" id="spot-next" hidden>Next<span class="sr-only"> spotlight game</span> <span aria-hidden="true">→</span></button></div>'
+            '<ol class="spot-list">' + items + '</ol></section>')
+
+def noscript_list(rows):
+    """TX (b) fallback: every game and activity as a plain link, A to Z."""
+    ordered = sorted(rows, key=lambda r: shown_title(r).casefold())
+    return ('<noscript><section class="az-list" aria-labelledby="az-title"><h3 id="az-title">Every game, A to Z</h3><ul>'
+            + ''.join('<li><a href="' + esc(r['route']) + '">' + esc(shown_title(r)) + '</a></li>' for r in ordered) + '</ul></section></noscript>')
 
 def slim(row):
     """The inline dataset play.js reads: what the lanes, filters and sheet need, nothing else."""
     out = OrderedDict()
-    for k in ('id', 'title', 'displayTitle', 'description', 'route', 'image', 'imageCaption', 'genre', 'group', 'controls', 'modes', 'instructions', 'moods', 'moodReason', 'details', 'series', 'editions', 'featured', 'chapter'):
+    for k in ('id', 'title', 'displayTitle', 'description', 'line', 'route', 'image', 'imageCaption', 'genre', 'group', 'controls', 'modes', 'instructions', 'moods', 'moodReason', 'details', 'series', 'editions', 'featured', 'chapter'):
         if k in row and row[k] not in (None, '', [], False):
             out[k] = row[k]
     m = row.get('media') or {}
@@ -131,6 +182,12 @@ def refresh(output, review=False, source_revisions=None):
     clips_by_route = {}
     for x in media.get('clips', []):
         if x.get('status') == 'accepted': clips_by_route.setdefault(key(x['route']), []).append(x)
+    # Lines whose first sentence fails the lane names gate fall back to the category word.
+    withheld_digests = set(read('line-withheld.json', {'routeKeySha256': []})['routeKeySha256'])
+    withheld = {k for k in (key(e['route']) for g in ('games', 'activities', 'staff') for e in catalogue[g])
+                if hashlib.sha256(k.encode()).hexdigest() in withheld_digests}
+    if len(withheld) != len(withheld_digests):
+        raise ValueError('line-withheld.json names a route that is not published')
     rows, omitted_discovery = [], []
     labels = {'games':'Catalogue game','activities':'Classroom activity','staff':'Staff activity'}
     for group in labels:
@@ -161,6 +218,11 @@ def refresh(output, review=False, source_revisions=None):
                    'instructions':extra.get('instructions', 'Open the game and follow its own instructions. Controls and device support have not yet been independently verified.'),
                    'evidence':[{'scope':'source-inspected'}] if extra.get('evidence') else [], 'updated':extra.get('updated'),
                    'featured': entry.get('featured') is True, 'media':{}}
+            # TX (e): "what you do" is the game's own meta description, verbatim to a
+            # sentence boundary. No game carries a guide link, so the fallback is the
+            # category word.
+            line = None if key(path) in withheld else what_you_do(payload.read_bytes())
+            row.update(line=line or row['genre'], lineSource='meta' if line else ('withheld' if key(path) in withheld else 'category'))
             candidates = clips_by_route.get(key(path), [])
             if candidates:
                 built = hashlib.sha256(payload.read_bytes()).hexdigest()
@@ -270,22 +332,45 @@ def refresh(output, review=False, source_revisions=None):
     activities = [r for r in rows if r['group'] != 'games']
     genre_counts = Counter(r['genre'] for r in games)
     genres = sorted(genre_counts, key=lambda g: (-genre_counts[g], g))
-    chips = '<button type="button" class="chip-button" data-chip="all" data-mood="" aria-pressed="true">All</button>' + ''.join('<button type="button" class="chip-button" data-chip="mood" data-mood="' + m + '" aria-pressed="false">' + m + '</button>' for m in ('Calm','Fast','Thinky','Together'))
+    # TX (d): shelf order -- Classroom first (the classroom need), then the page's
+    # existing categories by size. The categories are the catalogue's own genre
+    # values; nothing is invented. Activities join the Classroom shelf.
+    shelf_names = ['Classroom'] + [g for g in genres if g != 'Classroom']
+    # TX (c): chips are those categories plus Keyboard / Touch, which filter only
+    # on DECLARED controls (a game with no verified controls matches neither).
+    declared = {c for r in games for c in r['controls']}
+    input_chips = [(v, label) for v, label in (('keyboard', 'Keyboard'), ('touch', 'Touch')) if v in declared]
+    chips = ('<button type="button" class="chip-button" data-chip="all" aria-pressed="true">All</button>'
+             + ''.join('<button type="button" class="chip-button" data-chip="genre" data-genre="' + esc(g) + '" aria-pressed="false">' + esc(g) + '</button>' for g in shelf_names)
+             + ''.join('<button type="button" class="chip-button" data-chip="control" data-control="' + v + '" aria-pressed="false">' + label + '</button>' for v, label in input_chips))
     genre_options = '<option value="">All genres</option>' + ''.join('<option value="' + esc(g) + '">' + esc(g) + '</option>' for g in genres)
-    # Featured: the canonical shelf's featured flag, first true row in shelf
-    # order. (The education Arcade's CURATION rail is a different record and
-    # is deliberately not read here.)
-    featured = next((r for r in games if r['featured']), None)
-    cards, covered = [], []
+    # TX (a): the spotlight is every row the manifest flags featured, in manifest
+    # order. That flag is the single truth; no other list is read here.
+    featured = [r for r in games if r['featured']]
+    by_shelf, covered = OrderedDict((n, []) for n in shelf_names), []
     for r in games:
         members = r.get('editions') or [r['id']]
         lead = next(i for i in members if by_id[i]['group'] == 'games')
         if r['id'] != lead:
             continue  # not the lead of its series: its Play anchor rides on the lead card
-        cards.append(card(r, members, by_id))
+        by_shelf[r['genre']].append(card(r, members, by_id))
         covered += [i for i in members if by_id[i]['group'] == 'games']
     if sorted(covered) != sorted(r['id'] for r in games) or len(covered) != len(set(covered)):
-        raise ValueError('grid does not cover every catalogue game exactly once')
+        raise ValueError('shelves do not cover every catalogue game exactly once')
+    cards = [c for v in by_shelf.values() for c in v]
+    shelf_report = OrderedDict()
+    shelves_html = ''
+    for name, items in by_shelf.items():
+        members = [r for r in games if r['genre'] == name]
+        extra = [activity_card(r) for r in activities] if name == 'Classroom' else []
+        if not items and not extra:
+            continue
+        count = str(len(members)) + (' game' if len(members) == 1 else ' games')
+        if extra:
+            count += ' · ' + str(len(extra)) + ' activities'
+        note = 'Classroom games, whole-class quizzes and a staff training activity.' if name == 'Classroom' else ''
+        shelves_html += shelf(name, items + extra, count, note)
+        shelf_report[name] = {'cards': len(items) + len(extra), 'games': len(members), 'activities': len(extra)}
     template = (HERE/'index.html').read_text()
     # Use the exact supplied mark approved by the user, with a checked file hash.
     brand = read('brand.json', {})
@@ -321,8 +406,8 @@ def refresh(output, review=False, source_revisions=None):
                     +'" decoding="async" fetchpriority="low" data-hero-source="'+esc(hero['sourceSha256'])+'" data-hero-sha="'+esc(hero['sha256'])+'">')
     data = {'counts': counts, 'catalogue': len(games), 'genres': [{'name': g, 'count': genre_counts[g]} for g in genres],
             'series': series, 'games': [slim(r) for r in rows]}
-    substitutions = {'@@LOGO@@':logo, '@@FOOTERLOGO@@':footer_logo, '@@HEROART@@':hero_art, '@@CHIPS@@':chips, '@@GENRES@@':genre_options, '@@FEATURED@@': feature(featured) if featured else '',
-        '@@COUNT@@': str(len(games)) + ' games', '@@GRID@@': ''.join(cards), '@@CLASSROOM@@': classroom(activities),
+    substitutions = {'@@LOGO@@':logo, '@@FOOTERLOGO@@':footer_logo, '@@HEROART@@':hero_art, '@@CHIPS@@':chips, '@@GENRES@@':genre_options, '@@FEATURED@@': spotlight(featured) if featured else '',
+        '@@COUNT@@': str(len(games)) + ' games', '@@GRID@@': shelves_html, '@@NOSCRIPT@@': noscript_list(rows),
         '@@DATA@@':json.dumps(data,ensure_ascii=False).replace('<','\\u003c')}
     for a,b in substitutions.items(): template = template.replace(a,b)
     assert '@@' not in template
@@ -332,7 +417,8 @@ def refresh(output, review=False, source_revisions=None):
     report={'counts':counts,'total':len(rows),'catalogue_sha256':hashlib.sha256(original).hexdigest(),
             'brand_status':brand.get('status','original-asset-unresolved'), 'accepted_clips':len(clips_by_route),
             'grid_cards':len(cards),'series':{k:len(v) for k,v in series.items()},'genres':genres,
-            'featured':featured['route'] if featured else None,
+            'featured':[r['route'] for r in featured], 'shelves':shelf_report,
+            'line_sources':dict(Counter(r['lineSource'] for r in rows)),
             'changed_game_payloads':0,'canonical_origin':ORIGIN,'shared_runtime_changed':False,
             'omitted_discovery':omitted_discovery}
     (Path(output)/'play-discovery-report.json').write_text(json.dumps(report,indent=2)+'\n')
