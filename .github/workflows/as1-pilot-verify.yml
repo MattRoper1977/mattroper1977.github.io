@@ -30,7 +30,9 @@ jobs:
       - run: node tools/as1/storage-verify.cjs --self-test
       - run: node tools/as1/storage-verify.cjs data/as1-storage-registry.json
   probe:
-    runs-on: ubuntu-latest
+    # Runner pin (ruling tx, as tr-1): ubuntu-latest moved to 26.04, where Playwright 1.55
+    # cannot install its browser; 24.04 is where it installs.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -77,7 +79,9 @@ jobs:
           retention-days: 7
   legacy-stages:
     name: Existing six-stage checker on current and baseline
-    runs-on: ubuntu-latest
+    # Runner pin (ruling tx, as tr-1): ubuntu-latest moved to 26.04, where Playwright 1.55
+    # cannot install its browser; 24.04 is where it installs.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -96,7 +100,9 @@ jobs:
 
   source-gates:
     name: AS1 regression and rendered-placeholder gates
-    runs-on: ubuntu-latest
+    # Runner pin (ruling tx, as tr-1): ubuntu-latest moved to 26.04, where Playwright 1.55
+    # cannot install its browser; 24.04 is where it installs.
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
