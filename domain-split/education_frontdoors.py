@@ -199,7 +199,8 @@ def try_lesson_slide(feature, index, total, first):
     return ('<li class="fd-try-slide" data-try-slide="' + esc(feature['packId']) + '" aria-roledescription="slide" aria-label="' + esc(label) + '"' + ('' if first else ' hidden') + '>'
             + '<div class="fd-pack-copy"><h2>' + esc(feature['displayTitle']) + '</h2><p>' + esc(feature['description']) + '</p>'
             + '<div class="fd-chips"><span class="fd-chip ' + feature['pathway'].lower() + '">' + esc(feature['pathway']) + '</span>'
-            + '<span class="fd-feature-meta">' + esc(feature['subject']) + ' · ' + esc(feature['duration']) + '</span></div>'
+            # tm-4(c): a screen reader hears "BUILD · Science", not "BUILDScience".
+            + '<span class="fd-sep"> · </span><span class="fd-feature-meta">' + esc(feature['subject']) + ' · ' + esc(feature['duration']) + '</span></div>'
             + '<p class="fd-muted">Reference: ' + esc(feature['reference']) + '</p>'
             + action(feature['lessonRoute'], 'Try this lesson →')
             + '<a class="fd-feature-pack-link" href="' + esc(feature['packRoute']) + '">Get the teaching pack →</a></div>'

@@ -37,6 +37,12 @@ on:
       - 'tools/verify_adult_surfaces.py'
       - 'tools/verify_adult_surfaces_browser.py'
       - 'tools/verify_games_audience_faces.py'
+      - 'domain-split/shared_navigation.py'
+      - 'domain-split/education_expansion.py'
+      - 'domain-split/education_palette.py'
+      - 'domain-split/structural_html.py'
+      - 'tools/chrome/**'
+      - 'data/audience-homepages.json'
       - '.github/workflows/verify-adult-surfaces.yml'
   pull_request:
     paths:
@@ -49,6 +55,12 @@ on:
       - 'tools/verify_adult_surfaces.py'
       - 'tools/verify_adult_surfaces_browser.py'
       - 'tools/verify_games_audience_faces.py'
+      - 'domain-split/shared_navigation.py'
+      - 'domain-split/education_expansion.py'
+      - 'domain-split/education_palette.py'
+      - 'domain-split/structural_html.py'
+      - 'tools/chrome/**'
+      - 'data/audience-homepages.json'
       - '.github/workflows/verify-adult-surfaces.yml'
   schedule:
     # 06:40 Mondays UTC. Off the hour on purpose: GitHub sheds scheduled runs at
@@ -74,12 +86,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Fail-closed default, declaration matches the tree, controls run
+      # PA6 runs the publisher's own refresh(), which parses with lxml - the
+      # same pin the publication installs.
+      - run: python3 -m pip install --disable-pip-version-check lxml==6.0.1
+      - name: Fail-closed default, declaration matches the tree, the drawer follows the record, controls run
         run: python3 tools/verify_adult_surfaces.py --self-test
 
   browser:
     name: What a browser actually renders
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -88,7 +103,7 @@ jobs:
           python-version: '3.11'
       - name: Install Playwright
         run: |
-          python3 -m pip install --disable-pip-version-check playwright==1.54.0
+          python3 -m pip install --disable-pip-version-check playwright==1.54.0 lxml==6.0.1
           python3 -m playwright install --with-deps chromium
-      - name: No undeclared page receives an injected adult affordance
+      - name: No undeclared page receives an injected adult affordance or the drawer's account list
         run: python3 tools/verify_adult_surfaces_browser.py --self-test

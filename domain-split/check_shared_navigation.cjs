@@ -109,8 +109,10 @@ async function chromeFocus(control,surface,label,redProof=false) {
           const full = [['/account/', 'Account and members'], ['/mailing-list/', 'Teacher updates'], ['/privacy/', 'Privacy and statistics']];
           const adultPages = new Set(JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/adult-surfaces.json'), 'utf8')).adultSurfaces.map(x => '/' + x.page.replace(/index\.html$/, '')));
           if (restricted.includes(route)) assert.deepEqual(account, ['/privacy/'], 'Pupil/shared subset of the account group: ' + route);
-          else if (adultPages.has(route) || ['/', '/for/governors-trustees/', '/owner/stats/', '/commission/', '/Lessons/', '/Matt-s-Apps-/'].includes(route)) assert.deepEqual(groups[2], full, 'Account group on a declared adult page: ' + route);
-          else assert(JSON.stringify(groups[2]) === JSON.stringify(full) || JSON.stringify(account) === JSON.stringify(['/privacy/']), 'Account group is the full set or the shared subset: ' + route);
+          // Ruling tm: the drawer follows data/adult-surfaces.json. Declared = the full
+          // account group; undeclared = privacy-only, with no third answer.
+          else if (adultPages.has(route)) assert.deepEqual(groups[2], full, 'Account group on a declared adult page: ' + route);
+          else assert.deepEqual(account, ['/privacy/'], 'Undeclared = privacy-only account group: ' + route);
           const hrefs = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => new URL(a.getAttribute('href'), location.href).pathname === '/Lessons/' ? '/Lessons/' : a.getAttribute('href')));
           assert.deepEqual(hrefs.filter(h => /[?]|\.html$|#/.test(h)), [], 'No deep links in the menu: ' + route);
           const last = page.locator(panel + ' a').last();
@@ -278,7 +280,13 @@ async function chromeFocus(control,surface,label,redProof=false) {
         const box = await finalLink.boundingBox();
         assert(box.width >= 44 && box.height >= 44 && box.y >= 0 && box.y + box.height <= viewport.height + 1, 'Last link remains reachable in a short viewport');
       }
+      // The drawer follows the adult-surfaces record: '/' is undeclared, so its account group is Privacy only,
+      // and the Account journey starts from a declared adult surface.
       await page.goto(origin + '/');
+      await page.locator(menu + ' > summary').click();
+      await page.locator(panel + ' a[href="/privacy/"]').click();
+      assert.equal(new URL(page.url()).pathname, '/privacy/');
+      await page.goto(origin + '/main/');
       await page.locator(menu + ' > summary').click();
       await page.locator(panel + ' a[href="/account/"]').click();
       assert.equal(new URL(page.url()).pathname, '/account/');

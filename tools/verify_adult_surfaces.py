@@ -25,6 +25,21 @@ PA5  lives in verify_adult_surfaces_browser.mjs, because the defect that
      motivated it is invisible to every static check in this file: the chooser's
      source carries zero /account/ hrefs and passes its gate, while the browser
      shows one, injected after load. A static gate cannot see an injected link.
+PA6  the menu drawer follows the record (ruling tm). The drawer's "Your account"
+     group is written by the publisher (domain-split/shared_navigation.py), not
+     by mbm-platform.js, so PA1-PA5 never saw it: its account and mailing
+     entries were on undeclared pages, the homepage and the Learning index among
+     them, while every check here stayed green. PA6 runs the publisher's own
+     refresh() over a throwaway stub tree and reads the drawer it renders on
+     every surface: the account and mailing entries appear only on declared
+     pages, every declared page it renders gets them, and every drawer keeps the
+     Privacy entry. Undeclared = privacy-only.
+
+A record entry may say "generated": "publication" for a page the publisher
+builds that does not exist in this tree (the governors face, the owner's
+statistics page, the commissioning page). PA2 cannot read a marker on a file
+that is not here, so for those it asserts the opposite instead - the page is
+NOT in the tree - and PA6 asserts the publisher renders it.
 
 Run with --self-test to run the mutation controls, which prove each check can
 actually go red. A gate nobody has seen fail is a gate nobody should trust.
@@ -34,12 +49,18 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import sys
+import tempfile
+import types
 from collections.abc import Mapping
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RECORD = "data/adult-surfaces.json"
+NAV = "domain-split/shared_navigation.py"
+GENERATED_AT = "publication"
+DRAWER_GROUP = re.compile(r'<section class="mbm-menu-group"><h2>Your account</h2>(.*?)</section>', re.S)
 PLATFORM = "assets/mbm-platform.js"
 MARKER = "data-mbm-adult-features"
 
@@ -75,6 +96,118 @@ def declared_surfaces(root: Path, overrides: Mapping[str, str] | None = None) ->
     return [str(entry["page"]) for entry in record["adultSurfaces"]]
 
 
+def generated_surfaces(root: Path, overrides: Mapping[str, str] | None = None) -> set[str]:
+    record = json.loads(read(root, RECORD, overrides))
+    return {str(e["page"]) for e in record["adultSurfaces"] if e.get("generated") == GENERATED_AT}
+
+
+def builder_drawers(root: Path, overrides: Mapping[str, str] | None = None,
+                    keep: Path | None = None) -> dict[str, dict[str, object]]:
+    """The drawer the publisher actually renders, per surface.
+
+    Not a re-implementation of the publisher's rule: its own refresh() is run
+    against a throwaway output tree of stub pages, so what is measured is what
+    it would write. The stub tree is discovered, not listed - every surface the
+    publisher asks for and finds missing is added and the run repeated - so a
+    surface added to the publisher tomorrow is measured without anyone
+    extending a list here. Under a fixture, the data files and the publisher's
+    source are taken from the overrides.
+    """
+    overrides = overrides or {}
+    work = keep or Path(tempfile.mkdtemp(prefix="pa6-"))
+    try:
+        source, output = work / "source", work / "output"
+        source.mkdir(parents=True, exist_ok=True)
+        for child in root.iterdir():
+            if child.name not in {".git", "data"}:
+                (source / child.name).symlink_to(child)
+        shutil.copytree(root / "data", source / "data")
+        for rel, text in overrides.items():
+            if rel.startswith("data/"):
+                (source / rel).write_text(text, encoding="utf-8")
+        builder = read(root, NAV, overrides)
+        here = str(root / "domain-split")
+        if here not in sys.path:
+            sys.path.insert(0, here)
+        module = types.ModuleType("pa6_shared_navigation")
+        module.__file__ = str(root / NAV)
+        exec(compile(builder, str(root / NAV), "exec"), module.__dict__)  # noqa: S102 - our own publisher
+        # The legacy stats page must carry the one handler the publisher strips.
+        legacy = re.search(r'''old="(document\.getElementById\('menu'\)[^"]*)"''', builder)
+        stub = ('<!doctype html><html lang="en-GB"><head><title>PA6 stub</title></head><body>'
+                '<header></header><main></main><script>' + (legacy.group(1) if legacy else "")
+                + '</script></body></html>')
+        (output / "education-site" / "assets").mkdir(parents=True, exist_ok=True)
+        # Surfaces the publisher renders only when their file exists are named in
+        # its source as output/'...' literals; offer every one of them.
+        stubs = {output / rel for rel in re.findall(r"output\s*/\s*'([^']+\.html)'", builder)}
+        for _ in range(200):
+            for page in stubs:
+                page.parent.mkdir(parents=True, exist_ok=True)
+                page.write_text(stub, encoding="utf-8")
+            try:
+                module.refresh(output, source)
+                break
+            except ValueError as err:
+                missing = re.match(r"Missing navigation surface: (.+)$", str(err))
+                if not missing:
+                    raise
+                stubs.add(Path(missing.group(1)))
+        else:
+            raise RuntimeError("the publisher kept asking for surfaces")
+        apps = re.search(r"education-apps/index\.html',\s*'([^']+)'", builder)
+        prefix = {"education-site": "/", "education-lessons": "/Lessons/",
+                  "education-apps": apps.group(1) if apps else "/apps/"}
+        rendered: dict[str, dict[str, object]] = {}
+        for page in sorted(stubs):
+            part, _, tail = page.relative_to(output).as_posix().partition("/")
+            route = prefix[part] + tail
+            route = route[: -len("index.html")] if route.endswith("index.html") else route
+            group = DRAWER_GROUP.search(page.read_text(encoding="utf-8"))
+            items = group.group(1) if group else ""
+            rendered[route] = {
+                "page": tail if part == "education-site" else None,
+                "file": page.relative_to(output).as_posix(),
+                "account": items.count('href="/account/"'),
+                "mailing": items.count('href="/mailing-list/"'),
+                "privacy": items.count('href="/privacy/"'),
+            }
+        return rendered
+    finally:
+        if keep is None:
+            shutil.rmtree(work, ignore_errors=True)
+
+
+def check_drawer(root: Path = ROOT, overrides: Mapping[str, str] | None = None) -> list[str]:
+    """PA6: the drawer's account and mailing entries appear only on declared pages."""
+    errors: list[str] = []
+    declared = set(declared_surfaces(root, overrides))
+    try:
+        rendered = builder_drawers(root, overrides)
+    except Exception as err:  # noqa: BLE001 - a publisher that cannot be measured is red, not skipped
+        return [f"{NAV}: PA6 could not run the publisher's refresh() ({type(err).__name__}: {str(err)[:120]})"]
+    if not rendered:
+        return [f"{NAV}: PA6 found no navigation surface at all; the measurement is blind"]
+    seen = set()
+    for route, d in sorted(rendered.items()):
+        page = d["page"]
+        full = bool(d["account"] or d["mailing"])
+        if page in declared:
+            seen.add(page)
+            if not (d["account"] and d["mailing"]):
+                errors.append(f"{route}: declared adult in {RECORD} but its drawer withholds the account "
+                              f"or mailing entry (account {d['account']}, mailing {d['mailing']})")
+        elif full:
+            errors.append(f"{route}: the drawer renders the account and mailing entries (account "
+                          f"{d['account']}, mailing {d['mailing']}) but the page is not declared in "
+                          f"{RECORD}. Undeclared = privacy-only.")
+        if d["privacy"] != 1:
+            errors.append(f"{route}: the drawer carries {d['privacy']} Privacy entries; every drawer keeps exactly one")
+    for page in sorted(generated_surfaces(root, overrides) - seen):
+        errors.append(f"{page}: declared as generated at {GENERATED_AT}, but the publisher renders no such surface")
+    return errors
+
+
 def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) -> list[str]:
     errors: list[str] = []
 
@@ -107,7 +240,16 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
     declared = declared_surfaces(root, overrides)
     if len(declared) != len(set(declared)):
         errors.append(f"{RECORD}: lists the same page twice")
+    generated = generated_surfaces(root, overrides)
     for rel in declared:
+        if rel in generated:
+            # Built by the publisher, so there is no file here to carry a marker.
+            # A page that IS here must be marked like any other; PA6 proves the
+            # publisher renders the generated ones.
+            if (root / rel).is_file() or (overrides and rel in overrides):
+                errors.append(f"{RECORD}: marks {rel} as generated at {GENERATED_AT}, but it exists in "
+                              "this tree; drop the flag so PA2 reads its marker")
+            continue
         try:
             page = read(root, rel, overrides)
         except FileNotFoundError:
@@ -171,6 +313,8 @@ def check_tree(root: Path = ROOT, overrides: Mapping[str, str] | None = None) ->
                     "adult surface. Those two rulings cannot both be right."
                 )
 
+    # ---- PA6: the drawer follows the record --------------------------------
+    errors.extend(check_drawer(root, overrides))
     return errors
 
 
@@ -259,6 +403,42 @@ def self_test(baseline: set[str]) -> int:
         {PLATFORM: mutate(platform, f"doc.body.getAttribute('{MARKER}')==='on'", "true",
                           "mechanism removal")},
         f"adultFeaturesAllowed() no longer reads {MARKER}",
+    )
+
+    # PA6: the publisher's drawer against the record, in both directions, plus
+    # the Privacy entry and the generated-page flag. Each mutation is to text the
+    # publisher carries whether or not the drawer already follows the record.
+    navigation = read(ROOT, NAV)
+    control(
+        "the publisher grants the full account list to a privacy-only surface",
+        {NAV: mutate(navigation, "'/Lessons/subject.html', False)", "'/Lessons/subject.html', True)",
+                     "subject.html adult graft")},
+        "/Lessons/subject.html: the drawer renders the account and mailing entries",
+    )
+    control(
+        "the publisher withholds the account list everywhere",
+        {NAV: mutate(navigation, "account = ACCOUNT if adult else ACCOUNT_SHARED", "account = ACCOUNT_SHARED",
+                     "account list withheld")},
+        "declared adult in data/adult-surfaces.json but its drawer withholds",
+    )
+    control(
+        "the Privacy entry dropped from the shared drawer",
+        {NAV: mutate(navigation, "ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]", "ACCOUNT_SHARED = []",
+                     "privacy entry removal")},
+        "Privacy entries; every drawer keeps exactly one",
+    )
+    control(
+        "a generated page declared that the publisher never renders",
+        {RECORD: mutate(record, '"adultSurfaces": [',
+                        '"adultSurfaces": [\n    { "page": "for/nobody/index.html", "reason": "control", "generated": "publication" },',
+                        "generated graft")},
+        "for/nobody/index.html: declared as generated at publication, but the publisher renders no such surface",
+    )
+    control(
+        "the generated flag put on a page that is in the tree",
+        {RECORD: mutate(record, '"page": "privacy/index.html"', '"page": "privacy/index.html", "generated": "publication"',
+                        "generated flag on a source page")},
+        "marks privacy/index.html as generated at publication, but it exists in this tree",
     )
 
     restored = set(check_tree(ROOT))
