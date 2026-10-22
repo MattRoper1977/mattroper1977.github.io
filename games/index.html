@@ -683,7 +683,7 @@ function drawGrid(){
   : (n+" games across "+genreCount+" genres. Open a genre, or filter by feel above.");
  $("countline").textContent=filtering
   ? ("Showing "+hits.length+" of "+n+" games."+(state.feel?" Feel: "+feelLabel(state.feel)+".":""))
-  : (CURATED.length+" top picks of "+n+" games \u2014 every one free, single-file and offline-friendly.");
+  : (topOf(all).length+" top picks of "+n+" games \u2014 every one free, single-file and offline-friendly.");
 }
 $("q").addEventListener("input",function(){state.q=this.value;syncURL();drawGrid()});
 $("sort").addEventListener("change",function(){state.sort=this.value;drawGrid()});

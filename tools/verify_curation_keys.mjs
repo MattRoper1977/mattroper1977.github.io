@@ -633,6 +633,13 @@ if (!chromium) {
   check(!!live.topSub && live.topSub.painted && live.topSub.text === wantSub,
     'the Top Picks sub-line is painted as the wording of record with the featured count (ruling ug add.3)',
     live.topSub ? `"${live.topSub.text}"${live.topSub.painted ? '' : ' (not painted)'}` : 'no #topSub on the page');
+  /* Pre-merge review (23 Oct): the shelf count line under the grid still counted the take list
+     as "top picks" after every other Top Picks surface moved to the featured flag. It counts
+     the featured flag too. */
+  const wantCount = `${wantTop.length} top picks of ${games.length} games`;
+  check(live.countline.startsWith(wantCount),
+    'the shelf count line counts Top Picks from the featured flag, like the rail, the badges and the explore button',
+    `"${live.countline.slice(0, wantCount.length + 2)}" vs "${wantCount}"`);
   const takeOfHref = h => (record.curation.find(c => norm(c.href) === h) || {}).take || '';
   const lineOfHref = h => { const k = lineKeys.find(x => norm(x) === h); return k ? lines.games[k].line : ''; };
   check(live.picks.every(p => p.painted && (p.take ? (!p.line && p.take === takeOfHref(p.href)) : (p.line && !p.hasTake))),
@@ -841,16 +848,22 @@ if (!chromium) {
       && !!zero.railShown && zero.railShown.hidden && !zero.railShown.painted && zero.cards === games.length,
     'CONTROL (browser): with no featured games the sub-line is omitted and the rail is hidden, and the shelf still paints every game',
     `${zero.picks.length} picks; sub ${zero.topSub ? (zero.topSub.painted ? 'PAINTED' : 'hidden') : 'missing'}; rail ${zero.railShown ? (zero.railShown.painted ? 'PAINTED' : 'hidden') : 'missing'}; ${zero.cards}/${games.length} shelf cards`);
-  const renamed = scratchManifest(gs => { gs.find(g => g.href === RENAME_HREF).title = RENAMED_TITLE; });
-  const after = await railOf(renamed);
-  check(after.picks.length === live.picks.length,
-    'CONTROL (browser): a rename of a railed game leaves the rail its full length',
-    `${live.picks.length} -> ${after.picks.length} cards (title-keying took it 4 -> 3)`);
-  const slot = after.picks.find(p => p.href === RENAME_HREF);
-  const before = painted.get(RENAME_HREF);
-  check(!!slot && slot.title === RENAMED_TITLE && slot.take === before,
-    'CONTROL (browser): the renamed game keeps its slot AND its take, byte-identical — the take followed the href, not the title',
-    slot ? `"${slot.title}" · take ${Buffer.byteLength(slot.take)}B, was ${Buffer.byteLength(before || '')}B` : 'slot vanished');
+  /* A featured game without a take is a legitimate state (ruling ug add.2). If no featured game
+     has a take, this control has no take to follow: it stands down by name instead of throwing. */
+  if (!RENAME_HREF) {
+    console.log('  [SKIP] CONTROL (browser): rename keeps the take — no featured game has a take to follow (ruling ug add.2)');
+  } else {
+    const renamed = scratchManifest(gs => { gs.find(g => norm(g.href) === RENAME_HREF).title = RENAMED_TITLE; });
+    const after = await railOf(renamed);
+    check(after.picks.length === live.picks.length,
+      'CONTROL (browser): a rename of a railed game leaves the rail its full length',
+      `${live.picks.length} -> ${after.picks.length} cards (title-keying took it 4 -> 3)`);
+    const slot = after.picks.find(p => p.href === RENAME_HREF);
+    const before = painted.get(RENAME_HREF);
+    check(!!slot && slot.title === RENAMED_TITLE && slot.take === before,
+      'CONTROL (browser): the renamed game keeps its slot AND its take, byte-identical — the take followed the href, not the title',
+      slot ? `"${slot.title}" · take ${Buffer.byteLength(slot.take)}B, was ${Buffer.byteLength(before || '')}B` : 'slot vanished');
+  }
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
