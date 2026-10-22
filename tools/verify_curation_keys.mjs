@@ -561,7 +561,8 @@ if (!chromium) {
     const page = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
     await page.goto(`http://127.0.0.1:${server.address().port}/games/`, { waitUntil: 'domcontentloaded', timeout: 45000 });
     for (let i = 0; i < 60; i++) {
-      if (await page.evaluate(() => document.querySelectorAll('a.pick').length).catch(() => 0)) break;
+      /* a.gcard too: with no featured games (ruling ug add.3) the rail is empty by design. */
+      if (await page.evaluate(() => document.querySelectorAll('a.pick,a.gcard').length).catch(() => 0)) break;
       await page.waitForTimeout(250);
     }
     await page.waitForTimeout(500);
@@ -601,6 +602,8 @@ if (!chromium) {
           .filter(a => /NEW\s*·/.test(a.innerText))
           .map(a => n(a.getAttribute('href'))),
         badges: [...document.querySelectorAll('#genreSections .gcard .mini')].filter(vis).length,
+        topSub: (e => e ? { text: e.textContent, hidden: e.hidden, painted: vis(e) } : null)(document.getElementById('topSub')),
+        railShown: (e => e ? { hidden: e.hidden, painted: vis(e) } : null)(document.getElementById('topRail')),
         shelfSub: (document.getElementById('shelfSub') || {}).textContent || '',
         countline: (document.getElementById('countline') || {}).textContent || '',
         feels: [...document.querySelectorAll('#feels .chip')].map(c => c.textContent.trim())
@@ -623,6 +626,13 @@ if (!chromium) {
   check(sha12(JSON.stringify(live.picks.map(p => p.href))) === RAIL_FP,
     'the painted rail\'s fingerprint equals the manifest\'s featured fingerprint',
     `${sha12(JSON.stringify(live.picks.map(p => p.href)))} painted vs ${RAIL_FP} featured`);
+  /* Ruling ug add.3: the sub-line is site copy with no typed number, painted as the
+     wording of record with the featured count filled in. */
+  const SUB_OF_RECORD = 'Our featured games \u2014 {n} right now, chosen by hand.';
+  const wantSub = SUB_OF_RECORD.replace('{n}', String(wantTop.length));
+  check(!!live.topSub && live.topSub.painted && live.topSub.text === wantSub,
+    'the Top Picks sub-line is painted as the wording of record with the featured count (ruling ug add.3)',
+    live.topSub ? `"${live.topSub.text}"${live.topSub.painted ? '' : ' (not painted)'}` : 'no #topSub on the page');
   const takeOfHref = h => (record.curation.find(c => norm(c.href) === h) || {}).take || '';
   const lineOfHref = h => { const k = lineKeys.find(x => norm(x) === h); return k ? lines.games[k].line : ''; };
   check(live.picks.every(p => p.painted && (p.take ? (!p.line && p.take === takeOfHref(p.href)) : (p.line && !p.hasTake))),
@@ -823,6 +833,14 @@ if (!chromium) {
     blocking.map(t => `${t.tag} ${t.w}x${t.h} "${t.text}"`).join('; ')
       || `0 under 44px; ${probe.targets.length} inline-in-sentence link(s) exempt under WCAG 2.5.8: ${probe.targets.map(t => `"${t.text}"`).join(', ')}`);
 
+  /* Ruling ug add.3: at n = 0 the sub-line is omitted and the rail is hidden, while the
+     shelf below still paints every game. */
+  const none = scratchManifest(gs => { gs.forEach(g => { g.featured = false; }); });
+  const zero = await railOf(none);
+  check(zero.picks.length === 0 && !!zero.topSub && zero.topSub.hidden && !zero.topSub.painted
+      && !!zero.railShown && zero.railShown.hidden && !zero.railShown.painted && zero.cards === games.length,
+    'CONTROL (browser): with no featured games the sub-line is omitted and the rail is hidden, and the shelf still paints every game',
+    `${zero.picks.length} picks; sub ${zero.topSub ? (zero.topSub.painted ? 'PAINTED' : 'hidden') : 'missing'}; rail ${zero.railShown ? (zero.railShown.painted ? 'PAINTED' : 'hidden') : 'missing'}; ${zero.cards}/${games.length} shelf cards`);
   const renamed = scratchManifest(gs => { gs.find(g => g.href === RENAME_HREF).title = RENAMED_TITLE; });
   const after = await railOf(renamed);
   check(after.picks.length === live.picks.length,

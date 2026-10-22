@@ -64,6 +64,7 @@ a{color:inherit}
 .gx-watch figcaption b{color:var(--navy)}
 .gx-watchnote{max-width:40rem;margin:1.3rem auto 0;text-align:center;font-size:.8rem;line-height:1.55;color:#4A5170}
 .rail{display:flex;gap:.8rem;overflow-x:auto;padding:.3rem .1rem 1rem;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.rail[hidden],body.mbm-games-hub #topRail[hidden]{display:none}/* ruling ug add.3: no featured games, no rail; outranks the hub sheet's desktop grid */
 .rail::-webkit-scrollbar{height:8px}
 .rail::-webkit-scrollbar-thumb{background:#D9CDB2;border-radius:99px}
 .pick{scroll-snap-align:start;flex:0 0 236px;background:var(--card);border:1.5px solid #E0D6C0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;text-decoration:none;transition:transform .16s ease,box-shadow .16s ease}
@@ -197,7 +198,7 @@ html[data-theme="highlumen"] .line1,html[data-theme="highlumen"] .line2{color:#3
 
 <section class="sec" id="picks"><div class="wrap">
 <h2>Made by Matt's Top Picks</h2>
-<p class="sub">The eight I'd put in front of anyone first — and one line each on why.</p>
+<p class="sub" id="topSub" data-sub="Our featured games — {n} right now, chosen by hand." hidden></p>
 <div class="rail" id="topRail" aria-label="Made by Matt's Top Picks"></div>
 </div></section>
 
@@ -589,6 +590,12 @@ function render(){
     silent skip is exactly what let a rename shrink this rail unnoticed.
     tools/verify_curation_keys.mjs reds before a build ever gets here. */
  topOf(gs).forEach(function(g,i){rail.appendChild(pickCard(g,i===0))});
+ /* Ruling ug add.3: the sub-line is site copy with no typed number. Its wording of record
+    sits in data-sub with an {n} slot, filled here from the same featured set the rail
+    paints. With no featured games the sub-line is omitted and the rail is hidden. */
+ var nTop=topOf(gs).length,sub=$("topSub");
+ sub.textContent=nTop?sub.getAttribute("data-sub").replace("{n}",String(nTop)):"";
+ sub.hidden=rail.hidden=(nTop===0);
  /* feel filters. Derived from FEEL_ORDER and counted from the record, so a
     feel nobody uses shows 0 rather than quietly not existing. */
  var fh=$("feels");fh.textContent="";

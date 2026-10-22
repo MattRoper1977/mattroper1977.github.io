@@ -15,10 +15,10 @@ if(self){
   ['rail-returns','sports-declared-once-as-a-genre',t=>t.replace('<div id="genreSections"></div>','<div id="genreSections"></div><div class="rail" id="sportsRail"></div>')],
   ['baked-count','no-genre-count-is-written-into-the-markup',t=>t.replace('sm.querySelector(".gnum").textContent=members.length+" game"','sm.querySelector(".gnum").textContent="8 game"')],
   ['bespoke-card','sports-uses-the-same-card-system-as-every-genre',t=>t.replace('members.forEach(function(g){c.appendChild(gCard(g,false))});','members.forEach(function(g){c.appendChild(document.createElement("a"))});')],
-  /* H3.3. The number limb had no mutation case, so nothing proved it could fail.
-     Drop a rail slot and leave the sentence saying "eight": seven slots, eight
-     claimed. */
-  ['rail-count','top-copy-number-matches-the-rail',t=>t.replace(/(<section class="sec" id="picks">[\s\S]*?<p class="sub">)[^<]*/,'$1The handful I would put in front of anyone first.')]
+  /* Ruling ug add.3: the sub-line is the wording of record with an {n} slot. A typed
+     number must red, and so must a page that stops hiding it at zero. */
+  ['typed-number','top-copy-count-is-the-featured-flag',t=>t.replace('{n} right now','ten right now')],
+  ['zero-shows','top-copy-count-is-the-featured-flag',t=>t.replace('sub.hidden=rail.hidden=(nTop===0);','sub.hidden=false;')]
  ];let missed=0;
  for(let i=0;i<cases.length;i++){const [family,expected,mut]=cases[i],changed=mut(html),p=path.join(root,i+'.html');fs.writeFileSync(p,changed);const r=spawnSync(process.execPath,[__filename,p],{encoding:'utf8'}),out=(r.stdout||'')+(r.stderr||'');if(changed!==html&&r.status!==0&&out.includes('FAIL  '+expected))console.log('  PASS  '+family+' tamper rejected');else{console.log('  FAIL  '+family+' tamper escaped');missed++;}}
  fs.rmSync(root,{recursive:true,force:true});console.log(missed?`${cases.length-missed} detected, ${missed} missed`:`ALL ${cases.length} PLANTED FAILURES WERE DETECTED`);process.exit(missed?1:0);
@@ -53,27 +53,30 @@ ok('the-rail-is-the-featured-flag',
  && /topOf\(gs\)\.forEach\(function\(g,i\)\{rail\.appendChild\(pickCard\(g,i===0\)\)\}\);/.test(html)
  && !/\brail:\s*\d+/.test(html),
  'topOf() filters the shelf on featured, the rail paints topOf(), and no rail:N slot remains');
-/* H3. The line above fuses two values with different owners: Matt's prose, which
-   data/takes-pin.json owns and which this limb still detects (proved by mutating
-   the page and watching it fire), and the NUMBER WORD, whose real owner is the
-   set of rail:N slots in CURATION. Nothing derived that number, so the rail could
-   go to seven or nine while the sentence still said "eight" and every check here
-   passed — the exact failure the limb is named for and could not catch. Counted
-   from the slots now, never read from the word. A zero count fails rather than
-   satisfying anything, so an empty rail cannot read as a pass. */
-/* Since ruling ug-4 the number's owner is the manifest's `featured` flag (the rail paints
-   exactly those games), so it is counted from the manifest. The sentence itself is the
-   owner's prose (data/takes-pin.json): if the count moves, the sentence must be re-issued
-   by the owner, and until then this limb is red rather than quietly wrong. */
+/* Ruling ug add.3 (22 Oct 2026): the Top Picks sub-line is site copy, not a take, and
+   carries no typed number. Its wording of record is held once, in the page, with an {n}
+   slot; the rail render fills {n} from topOf(gs).length, the same featured set the rail
+   paints. With no featured games the sub-line is omitted and the rail is hidden.
+   Until add.3 this limb counted the featured games and looked for that number WORD in a
+   hand-written sentence; a typed number is now itself the defect. */
 const MANIFEST=JSON.parse(fs.readFileSync(path.join(__dirname,'..','data','source-manifests','games.json'),'utf8'));
 const RAIL_SLOTS=(MANIFEST.games||MANIFEST).filter(g=>g.featured===true).length;
 const NUMWORD=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+const SUB_OF_RECORD='Our featured games — {n} right now, chosen by hand.';
 const PICKS=(html.match(/<section class="sec" id="picks">[\s\S]*?<\/section>/)||[''])[0];
-const RAIL_WORD=NUMWORD[RAIL_SLOTS];
-ok('top-copy-number-matches-the-rail',
- RAIL_SLOTS>0 && !!RAIL_WORD && PICKS.includes(RAIL_WORD),
- RAIL_SLOTS===0?'no featured games in the manifest — refusing to pass on nothing'
-  :`${RAIL_SLOTS} featured games on the rail; the sub-line ${RAIL_WORD&&PICKS.includes(RAIL_WORD)?'says':'does NOT say'} "${RAIL_WORD||'?'}"`);
+const SUB=(PICKS.match(/<p class="sub" id="topSub" data-sub="([^"]*)" hidden><\/p>/)||[])[1];
+const TYPED=new RegExp('\\b('+NUMWORD.join('|')+')\\b|\\d','i');
+const TYPED_IN=(PICKS.replace(/<[^>]*>/g,' ')+' '+(SUB||'').replace('{n}',''));
+ok('top-copy-count-is-the-featured-flag',
+ SUB===SUB_OF_RECORD
+ && !TYPED.test(TYPED_IN)
+ && /var nTop=topOf\(gs\)\.length,sub=\$\("topSub"\);/.test(html)
+ && /sub\.textContent=nTop\?sub\.getAttribute\("data-sub"\)\.replace\("\{n\}",String\(nTop\)\):"";/.test(html)
+ && /sub\.hidden=rail\.hidden=\(nTop===0\);/.test(html),
+ SUB===undefined?'no <p class="sub" id="topSub" data-sub="…" hidden> in the picks section'
+  :SUB!==SUB_OF_RECORD?`the sub-line is not the wording of record: "${SUB}"`
+  :TYPED.test(TYPED_IN)?`a typed number in the picks copy: "${(TYPED_IN.match(TYPED)||[''])[0]}"`
+  :`wording of record with {n}, filled from topOf(gs).length (${RAIL_SLOTS} featured today); omitted, rail hidden, at 0`);
 ok('every-genre-draws-from-the-complete-manifest',
  /var members=sortGames\(all\.filter\(function\(g\)\{return genreOf\(g\)===gname\}\)\);/.test(html)
  && /var all=state\.games/.test(html)
