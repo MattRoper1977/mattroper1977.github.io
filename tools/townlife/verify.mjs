@@ -281,7 +281,7 @@ async function verifyGame(browser, origin, engine) {
   }
 }
 
-async function verifyShelves(browser, origin, engine, expectedGames) {
+async function verifyShelves(browser, origin, engine, expectedGames, railGames) {
   const context = await browser.newContext({ viewport: VIEWPORT, reducedMotion: 'reduce' });
   const page = await context.newPage();
   const errors = [];
@@ -318,7 +318,7 @@ async function verifyShelves(browser, origin, engine, expectedGames) {
     assert.ok(imageStats.colours >= 6 && imageStats.opaque > 100,
       `Town Life card rendered like a blank rectangle: ${JSON.stringify(imageStats)}`);
     const arcadeCards = await page.locator('a.pick, a.gcard').count();
-    assert.equal(arcadeCards, expectedGames + 8, `arcade card count is not N + 8 (${expectedGames + 8})`);
+    assert.equal(arcadeCards, expectedGames + railGames, `arcade card count is not N + rail (${expectedGames + railGames})`);
 
     await page.goto(`${origin}/for/pupils/`, { waitUntil: 'load' });
     const pupilCard = page.locator('article.mf-pupil-game').filter({ has: page.locator('a[href="/townlife/"]') });
@@ -330,9 +330,9 @@ async function verifyShelves(browser, origin, engine, expectedGames) {
       `Town Life pupil card escapes 390px viewport: ${JSON.stringify(pupilBox)}`);
     assert.ok((await pupilCard.textContent()).includes(STATUS), 'pupil card omits exact preview status');
     const pupilCards = await page.locator('article.mf-pupil-game').count();
-    assert.equal(pupilCards, expectedGames + 8, `pupil card count is not N + 8 (${expectedGames + 8})`);
+    assert.equal(pupilCards, expectedGames + railGames, `pupil card count is not N + rail (${expectedGames + railGames})`);
     assert.deepEqual(errors, [], `shelf page errors observed: ${JSON.stringify(errors)}`);
-    console.log(`${engine}: SHELVES GREEN — ${arcadeCards}/${pupilCards} cards (N + 8); Town Life inside 390px boxes; SVG ${imageStats.naturalWidth}×${imageStats.naturalHeight}, ${imageStats.colours} sampled colours`);
+    console.log(`${engine}: SHELVES GREEN — ${arcadeCards}/${pupilCards} cards (N + rail ${railGames}); Town Life inside 390px boxes; SVG ${imageStats.naturalWidth}×${imageStats.naturalHeight}, ${imageStats.colours} sampled colours`);
   } finally {
     await context.close();
   }
@@ -347,6 +347,10 @@ assert.equal(town.length, 1, 'mirror must contain exactly one Town Life record')
 assert.equal(town[0].desc.endsWith(STATUS), true, 'mirror status sentence differs');
 assert.equal(town[0].featured, false, 'Town Life must remain uncurated');
 assert.equal(town[0].hero, false, 'Town Life must not become hero');
+// Ruling ug-4: both Top Picks rails render from the manifest's featured flag, so the rail
+// adds one card per featured game (10 today), not a fixed eight.
+const railGames = manifest.games.filter(game => game.featured === true).length;
+assert.ok(railGames > 0, 'manifest features no games, so the Top Picks rail would be empty');
 console.log(`STATIC GREEN — route sha256 ${sha256(html)}; card sha256 ${sha256(svg)}; ${manifest.games.length} canonical mirror records`);
 
 const headingControlHtml = html.replace('<h1>Town Life</h1>', '<h2 data-heading-negative-control>Town Life</h2>');
@@ -362,7 +366,7 @@ try {
     try {
       await verifyHeadingNegativeControl(browser, origin, engine);
       await verifyGame(browser, origin, engine);
-      await verifyShelves(browser, origin, engine, manifest.games.length);
+      await verifyShelves(browser, origin, engine, manifest.games.length, railGames);
     } finally {
       await browser.close();
     }

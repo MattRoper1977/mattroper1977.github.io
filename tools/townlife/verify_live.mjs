@@ -250,8 +250,11 @@ provenance.canonical = { gamesMergeSha: canonical.sha, bytes: canonical.bytes.le
 
 const browser = await observeBrowser();
 const count = canonical.document.games.length;
-assert.equal(browser.games.count, count + 8, `/games/ expected ${count + 8} cards`);
-assert.equal(browser.pupils.count, count + 8, `/for/pupils/ expected ${count + 8} cards`);
+// Ruling ug-4: both Top Picks rails render from the featured flag, one card per featured game.
+const rail = canonical.document.games.filter(game => game.featured === true).length;
+assert(rail > 0, 'canonical manifest features no games, so the Top Picks rail would be empty');
+assert.equal(browser.games.count, count + rail, `/games/ expected ${count + rail} cards`);
+assert.equal(browser.pupils.count, count + rail, `/for/pupils/ expected ${count + rail} cards`);
 assert(browser.consumers['/games/'].length > 0, '/games/ runtime manifest request was not observed');
 assert(browser.consumers['/main/'].length > 0, '/main/ runtime manifest request was not observed');
 assert.equal(browser.consumers['/for/pupils/'].length, 0, '/for/pupils/ unexpectedly fetched a games manifest');
@@ -284,7 +287,7 @@ const routes = Object.fromEntries([gamesRoute, pupilsRoute, manifestRoute, mirro
   bytes: item.bytes.length,
   sha256: item.sha256,
 }]));
-const report = { expectedSha, deployment, routes, headerSets, provenance, browser, cache, counts: { canonical: count, gamesCards: browser.games.count, pupilCards: browser.pupils.count } };
+const report = { expectedSha, deployment, routes, headerSets, provenance, browser, cache, counts: { canonical: count, rail, gamesCards: browser.games.count, pupilCards: browser.pupils.count } };
 fs.mkdirSync(path.join(ROOT, 'artifacts/townlife'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'artifacts/townlife/live.json'), JSON.stringify(report, null, 2) + '\n');
 console.log('LIVE_JSON ' + JSON.stringify(report));
@@ -292,4 +295,4 @@ for (const [route, headers] of Object.entries(headerSets)) console.log(`HEADERS 
 console.log(`B0 — /games/ and /main/ fetch /Games/games.json at runtime; /for/pupils/ does not; owner: ${cache.renderer}`);
 console.log(`B1 — manifest header lifetime ${cache.manifestHeaderLifetimeSeconds}s; /games/ HTML ${cache.gamesHtmlHeaderLifetimeSeconds}s; effective manifest lifetime ${cache.effectiveManifestLifetimeSeconds}s (${cache.reason})`);
 console.log(cache.verdict);
-console.log(`PUBLICATION GREEN — deployment ${deployment.deploymentId}; Site ${expectedSha}; Games ${canonical.sha}; ${count}+8=${count + 8} cards on both shelves`);
+console.log(`PUBLICATION GREEN — deployment ${deployment.deploymentId}; Site ${expectedSha}; Games ${canonical.sha}; ${count}+${rail}=${count + rail} cards on both shelves`);
