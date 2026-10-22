@@ -156,9 +156,8 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by
 # it to its second half, the state every Site pin and every publication now builds (no refresh moves it). The
 # re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
-    '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 Autumn 2 Week 1 landed: 1417 rows; built by the Site fallback Lessons 9ed44bdf and by Lessons main
-    '08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd',   # RE Spring 1 window W1 (ruling sr, sr-3 step 1): the candidate 018e8494, 1348 rows; legacy, retired at follow-up (built by nothing)
-    '60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b',   # tq in flight (rulings tq add.3/add.4): built by the Lessons candidate f7bdebb8, 1468 rows
+    '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 Autumn 2 Week 1 landed: 1417 rows; built by the Site fallback Lessons 9ed44bdf
+    '60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b',   # tq landed (Lessons #708, 262ae59b): built by Lessons main, 1468 rows
 )
 
 
@@ -279,6 +278,9 @@ def registry_errors(output):
     # measured from built bytes of
     # Site main 60383e2e with that candidate. Held beside the pair only while tq is in flight; after the Lessons merge a
     # follow-up on the same transaction drops 08c427b8 and the fence is a pair again. The collapse window is unchanged.
+    # tq follow-up (22 October 2026, ruling tq add.4 note): Lessons #708 merged (262ae59b), so 60e0cd4c is what Lessons main
+    # builds and 08c427b8 (the old RE Spring 1 half, built by nothing) is dropped; it joins the previous digests below. The
+    # fence is the pair 16195414 (the Site fallback Lessons 9ed44bdf) and 60e0cd4c (Lessons main). The collapse window is unchanged.
     baseline_shas = REGISTRY_BASELINES
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
@@ -511,9 +513,9 @@ def self_test():
     previous=('a6e96f297f62458dba23a71ed14e9dc4db06dad650ef602efb3050556620631a','2969dfef4f050cb1a6b1b5dba0a8e954e6efa49570d02fae7a7e1da4dbd00a17',
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d',
               'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',
-              '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757')
-    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd','60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b') and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly 16195414 (built by the Site fallback Lessons 9ed44bdf and by Lessons main), 08c427b8 (legacy, retired at follow-up: the old RE Spring 1 half, built by nothing) and 60e0cd4c (tq in flight, rulings tq add.3/add.4: built by the Lessons tq candidate); no half of any earlier W1 pair nor the io-3 pair's first half")
+              '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd')
+    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b') and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the pair 16195414 (built by the Site fallback Lessons 9ed44bdf) and 60e0cd4c (built by Lessons main since tq landed, Lessons #708); 08c427b8 retired at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
