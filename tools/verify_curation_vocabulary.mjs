@@ -60,7 +60,9 @@ const BASE = `http://127.0.0.1:${server.address().port}/`;
 /* ---- derive the canonical vocabulary from the page that owns it ---------- */
 const hub = readFileSync(join(ROOT, 'games/index.html'), 'utf8');
 const railHeading = (hub.match(/<section class="sec" id="picks">[\s\S]*?<h2>([^<]+)<\/h2>/) || [])[1];
-const railBlurb = (hub.match(/<section class="sec" id="picks">[\s\S]*?<p class="sub">([^<]+)<\/p>/) || [])[1];
+/* Ruling ug add.3: the blurb's wording of record sits in data-sub with an {n} slot that the
+   rail render fills from the featured flag; the static element itself is empty until then. */
+const railBlurb = (hub.match(/<section class="sec" id="picks">[\s\S]*?<p class="sub" id="topSub" data-sub="([^"]+)"/) || [])[1];
 const badge = (hub.match(/<span class="badge">([^<]+)<\/span>/) || [])[1];
 if (!railHeading || !railBlurb || !badge)
   throw new Error('cannot derive the curation vocabulary from games/index.html');
