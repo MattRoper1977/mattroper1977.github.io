@@ -77,6 +77,7 @@ a{color:inherit}
 .tagc{align-self:flex-start;font-size:.64rem;font-weight:700;color:var(--mint-deep);background:#E4F0E8;border-radius:999px;padding:.18rem .55rem}
 .take{margin-top:auto;background:#FBF3DE;border:1.5px solid #ECD9A8;border-radius:10px;padding:.5rem .6rem;font-size:.72rem;line-height:1.45;color:#5A4A1E}
 .take b{color:var(--gold);letter-spacing:.04em}
+.pline{margin-top:auto;font-size:.78rem;line-height:1.45;color:var(--mut)}
 /* toolbar */
 .bar2{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin:.2rem 0 .8rem}
 .search{flex:1;min-width:220px;display:flex;background:var(--card);border:2px solid var(--navy);border-radius:999px;overflow:hidden}
@@ -289,27 +290,26 @@ html[data-theme="highlumen"] .line1,html[data-theme="highlumen"] .line2{color:#3
    so keying on it needs no new field and no schema change — the stable-id
    question stays open rather than being forced by this file.
 
-   `featured` was derived, not guessed, before being dropped from curation:
-   NOTHING renders from it. The site's app.js reads a `featured` on a DIFFERENT
-   dataset (the resources catalogue), and games.json's own copy has no reader
-   on either repo — it survives only as a required schema key that eight gates
-   in the Games repository assert on, which is why it is left exactly where it
-   is rather than removed. tools/verify_curation_keys.mjs re-measures that
-   claim on every run, so if anything ever starts reading it, this comment
-   stops being true out loud instead of quietly.
+   `featured` IS the rail (ruling ug-4, 22 Oct 2026). The Top Picks rail on this page
+   and on /for/pupils/ is every game the shelf manifest flags `featured`, in manifest
+   order, and nothing else: there is no hand-written rail list any more. Which games
+   are featured is the owner's choice, made in the manifest. A featured game with a take
+   shows the take; one without shows the game's own one-line description, the same
+   line the play shelf uses (data/featured-lines.json, derived by
+   tools/render_featured_lines.py from the play build), styled as a description.
 
    take  — Matt's voice. Nothing in this repo may write or edit one.
-   rail  — position on Top Picks, 1-based. Omit to be curated but not railed.
-           A rail slot without a take is a RED, not an empty quote mark. */
+   A take, if present, must resolve to exactly one shelf game; a featured game
+   without one is not a defect. */
 var CURATION=[
- {href:"/emberwild/",                                   rail:1, take:"Madebymatt meets creature collecting - shh, you know the one."},
- {href:"/olympics/",                                    rail:2, take:"The weather's too hot and you're not a pro - enjoy athletics at home."},
- {href:"/apexkick/",                                    rail:3, take:"The physics are the game. Bend one round the wall and you\u2019ll see it."},
- {href:"/apexpool/",                                    rail:4, take:"Good at pool - be great with Apex Pool"},
- {href:"/relicforge/",                                  rail:5, take:"Be a warrior and solve the quest."},
- {href:"/voxel/",                                       rail:6, take:"An endless world from a seed. Ten minutes becomes an evening."},
- {href:"/auroralinks/",                                 rail:7, take:"Can't afford your own clubs - the realism means you don't need any."},
- {href:"/offbrand/",                                    rail:8, take:"Six shapes, one impostor, zero eliminations. Clara-approved."},
+ {href:"/emberwild/",                                   take:"Madebymatt meets creature collecting - shh, you know the one."},
+ {href:"/olympics/",                                    take:"The weather's too hot and you're not a pro - enjoy athletics at home."},
+ {href:"/apexkick/",                                    take:"The physics are the game. Bend one round the wall and you\u2019ll see it."},
+ {href:"/apexpool/",                                    take:"Good at pool - be great with Apex Pool"},
+ {href:"/relicforge/",                                  take:"Be a warrior and solve the quest."},
+ {href:"/voxel/",                                       take:"An endless world from a seed. Ten minutes becomes an evening."},
+ {href:"/auroralinks/",                                 take:"Can't afford your own clubs - the realism means you don't need any."},
+ {href:"/offbrand/",                                    take:"Six shapes, one impostor, zero eliminations. Clara-approved."},
  {href:"/trailrunner/",                                          take:"The perfect reset between lessons."},
  {href:"/Lessons/Games/Glitch_Clash.html",                      take:"Deeper than it looks. Build the trio, read the clash — pure masterclass."},
  {href:"/Lessons/Games/Hold_the_Mark.html",                     take:"Our brand as a game. The Focus meter is the whole philosophy."},
@@ -321,7 +321,10 @@ var CURATION=[
  {href:"/Lessons/Games/Neon_Garden.html",                       take:"Ambience and pace. The calm one."},
  {href:"/Lessons/Games/Neon_Siege.html",                        take:"Place early, think earlier."}
 ];
-/* The rail carries eight, which is what it was always meant to carry. It sat
+/* HISTORY, kept as written: the paragraphs below describe the hand-written
+   rail that ruling ug-4 retired. The rail is now the featured flag (above).
+
+   The rail carries eight, which is what it was always meant to carry. It sat
    at four for one reason only: five of the intended eight had no take, a take
    is Matt's voice, and this file may not invent one. The five arrived, so the
    rail is full.
@@ -511,17 +514,16 @@ function localHref(h){/* keep every game on the madebymatt.uk origin so the HUD'
    a reference reaching upward into a temporal dead zone is the exact trap this
    estate has been bitten by before. */
 function keyOf(g){return localHref(g&&g.href)}
-var TAKE={},CURATED=[],TOP=[];
+var TAKE={},CURATED=[];
 (function(){
- var railed=[];
- CURATION.forEach(function(c){
-  var k=localHref(c.href);
-  TAKE[k]=c.take; CURATED.push(k);
-  if(c.rail)railed.push({k:k,at:c.rail});
- });
- railed.sort(function(a,b){return a.at-b.at});
- TOP=railed.map(function(r){return r.k});
+ CURATION.forEach(function(c){var k=localHref(c.href);TAKE[k]=c.take;CURATED.push(k);});
 })();
+/* Ruling ug-4: the Top Picks rail is the shelf's `featured` flag, in manifest order.
+   LINES holds the play shelf's own one-line description for each featured game
+   (data/featured-lines.json), shown where a featured game has no take. */
+function topOf(gs){return gs.filter(function(g){return g.featured===true})}
+var LINES={};
+function lineOf(g){var r=LINES[keyOf(g)];return (r&&r.line)||""}
 function takeOf(g){return TAKE[keyOf(g)]||""}
 /* Taxonomy lookups, derived from TAXONOMY exactly as TAKE/TOP are derived from
    CURATION — same key, same normalisation, no second copy of the mapping. */
@@ -534,22 +536,24 @@ function pickCard(g,lead){
  var a=document.createElement("a");a.className="pick"+(lead?" lead":"");a.href=localHref(g.href);
  var art=g.art?'<div class="art"><img src="'+esc(g.art)+'" width="640" height="360" loading="eager" decoding="async" alt=""></div>'
               :'<div class="art" style="background:'+tint(g.hue)+'">'+(g.icon||"🎮")+'</div>';
+ var tk=takeOf(g),ln=tk?"":lineOf(g);
  a.innerHTML=art+
  '<div class="bd"><span class="badge">TOP PICK</span><h3></h3><span class="tagc"></span>'+
- '<div class="take"><b>Matt\u2019s take:</b> <span></span></div></div>';
+ (tk?'<div class="take"><b>Matt\u2019s take:</b> <span></span></div>':(ln?'<p class="pline"></p>':''))+'</div>';
  a.querySelector("h3").textContent=g.title;
  /* The genre record, not the manifest `tag`. They disagree — Apex Kick is
     tagged Physics and its genre is Sports — and a page showing one label
     while browsing by the other is two taxonomies in front of a visitor. */
  a.querySelector(".tagc").textContent=genreOf(g);
- a.querySelector(".take span").textContent="\u201C"+takeOf(g)+"\u201D";
+ if(tk)a.querySelector(".take span").textContent="\u201C"+tk+"\u201D";
+ else if(ln)a.querySelector(".pline").textContent=ln;
  var im=a.querySelector("img");if(im)im.alt=g.title+" — a moment from play";
  return a;
 }
 function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
 function gCard(g,withTake){
  var a=document.createElement("a");a.className="gcard";a.href=localHref(g.href);a.style.borderLeftColor=g.hue||"#C9C0AB";
- var badge=CURATED.indexOf(keyOf(g))>=0?'<span class="mini">TOP PICK</span>':"";
+ var badge=g.featured===true?'<span class="mini">TOP PICK</span>':"";
  /* Card art. Every entry in games.json carries an `art` path — a real captured
     frame where the game could be driven to one, a generated card where it could
     not — so this never renders an empty slot. The emoji stays as the fallback
@@ -584,7 +588,7 @@ function render(){
  /* No `if(g)`: a TOP href that resolves to nothing is a defect, and the old
     silent skip is exactly what let a rename shrink this rail unnoticed.
     tools/verify_curation_keys.mjs reds before a build ever gets here. */
- TOP.forEach(function(h,i){var g=gs.find(function(x){return keyOf(x)===h});if(g)rail.appendChild(pickCard(g,i===0))});
+ topOf(gs).forEach(function(g,i){rail.appendChild(pickCard(g,i===0))});
  /* feel filters. Derived from FEEL_ORDER and counted from the record, so a
     feel nobody uses shows 0 rather than quietly not existing. */
  var fh=$("feels");fh.textContent="";
@@ -598,7 +602,7 @@ function render(){
   fh.appendChild(b);
  });
  drawGrid();
- $("exploreBtn").textContent="EXPLORE TOP PICKS ("+CURATED.length+" of "+gs.length+" curated)";
+ $("exploreBtn").textContent="EXPLORE TOP PICKS ("+topOf(gs).length+" of "+gs.length+")";
 }
 function sortGames(list){
  var out=list.slice();
@@ -685,6 +689,11 @@ if(state.q)$("q").value=state.q;
 /* /Games/games.json lives in another repo, so this repo cannot content-hash it.
    Forced revalidation rather than an invented version — see tools/stamp-data.py. */
 var gjs=window.MBM_STAMP?window.MBM_STAMP("/Games/games.json"):{url:"/Games/games.json",opts:{cache:"no-cache"}};
+var flj=window.MBM_STAMP?window.MBM_STAMP("/data/featured-lines.json"):{url:"/data/featured-lines.json",opts:{cache:"no-cache"}};
+fetch(flj.url,flj.opts).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){
+ var gm=(d&&d.games)||{};Object.keys(gm).forEach(function(h){LINES[localHref(h)]=gm[h]});
+ if(state.games&&state.games.length)render();
+}).catch(function(){});
 fetch(gjs.url,gjs.opts).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){
  state.games=(d&&d.games)||[];render();
 }).catch(function(){

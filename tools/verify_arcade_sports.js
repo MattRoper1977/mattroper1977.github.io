@@ -7,7 +7,7 @@ let pass=0,fail=0;function ok(n,c,d=''){console.log((c?'  PASS  ':'  FAIL  ')+n+
 if(self){
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'arcade-catalogue-'));
  const cases=[
-  ['top','apex-kick-remains-in-top',t=>t.replace('{href:"/apexkick/",','{href:"/apexkick-MOVED/",')],
+  ['top','the-rail-is-the-featured-flag',t=>t.replace('function topOf(gs){return gs.filter(function(g){return g.featured===true})}','function topOf(gs){return gs.slice(0,8)}')],
   ['shelf','every-genre-draws-from-the-complete-manifest',t=>t.replace('var all=state.games, n=all.length;','var all=state.games.filter(function(g){return g.collection!=="Sports"}), n=all.length;')],
   ['grouping','sports-membership-comes-from-the-genre-record',t=>t.replace('function genreOf(g){return GENRE[keyOf(g)]||""}','function genreOf(g){return g.collection==="Sports"?"Sports":(GENRE[keyOf(g)]||"")}')],
   ['count','total-count-derived-from-manifest',t=>t.replace('var all=state.games, n=all.length;','var all=state.games, n=52;')],
@@ -18,7 +18,7 @@ if(self){
   /* H3.3. The number limb had no mutation case, so nothing proved it could fail.
      Drop a rail slot and leave the sentence saying "eight": seven slots, eight
      claimed. */
-  ['rail-count','top-copy-number-matches-the-rail',t=>t.replace('rail:8,','')]
+  ['rail-count','top-copy-number-matches-the-rail',t=>t.replace(/(<section class="sec" id="picks">[\s\S]*?<p class="sub">)[^<]*/,'$1The handful I would put in front of anyone first.')]
  ];let missed=0;
  for(let i=0;i<cases.length;i++){const [family,expected,mut]=cases[i],changed=mut(html),p=path.join(root,i+'.html');fs.writeFileSync(p,changed);const r=spawnSync(process.execPath,[__filename,p],{encoding:'utf8'}),out=(r.stdout||'')+(r.stderr||'');if(changed!==html&&r.status!==0&&out.includes('FAIL  '+expected))console.log('  PASS  '+family+' tamper rejected');else{console.log('  FAIL  '+family+' tamper escaped');missed++;}}
  fs.rmSync(root,{recursive:true,force:true});console.log(missed?`${cases.length-missed} detected, ${missed} missed`:`ALL ${cases.length} PLANTED FAILURES WERE DETECTED`);process.exit(missed?1:0);
@@ -46,9 +46,13 @@ ok('sports-membership-comes-from-the-genre-record',
  && !/g\.collection==="Sports"/.test(html)
  && !/g\.tag==="Sport"/.test(html),
  'membership is the declared genre, not manifest collection and not tag');
-ok('apex-kick-remains-in-top',/\{href:"\/apexkick\/",\s*rail:\d+/.test(html),
- 'still a rail slot, now href-keyed');
-ok('top-copy-still-eight',html.includes("The eight I'd put in front of anyone first"));
+/* Ruling ug-4 (22 Oct 2026): the Top Picks rail is the shelf manifest's `featured` flag,
+   in manifest order. No hand-written rail slot may survive in CURATION. */
+ok('the-rail-is-the-featured-flag',
+ /function topOf\(gs\)\{return gs\.filter\(function\(g\)\{return g\.featured===true\}\)\}/.test(html)
+ && /topOf\(gs\)\.forEach\(function\(g,i\)\{rail\.appendChild\(pickCard\(g,i===0\)\)\}\);/.test(html)
+ && !/\brail:\s*\d+/.test(html),
+ 'topOf() filters the shelf on featured, the rail paints topOf(), and no rail:N slot remains');
 /* H3. The line above fuses two values with different owners: Matt's prose, which
    data/takes-pin.json owns and which this limb still detects (proved by mutating
    the page and watching it fire), and the NUMBER WORD, whose real owner is the
@@ -57,14 +61,19 @@ ok('top-copy-still-eight',html.includes("The eight I'd put in front of anyone fi
    passed — the exact failure the limb is named for and could not catch. Counted
    from the slots now, never read from the word. A zero count fails rather than
    satisfying anything, so an empty rail cannot read as a pass. */
-const RAIL_SLOTS=(html.match(/\brail:\s*\d+/g)||[]).length;
+/* Since ruling ug-4 the number's owner is the manifest's `featured` flag (the rail paints
+   exactly those games), so it is counted from the manifest. The sentence itself is the
+   owner's prose (data/takes-pin.json): if the count moves, the sentence must be re-issued
+   by the owner, and until then this limb is red rather than quietly wrong. */
+const MANIFEST=JSON.parse(fs.readFileSync(path.join(__dirname,'..','data','source-manifests','games.json'),'utf8'));
+const RAIL_SLOTS=(MANIFEST.games||MANIFEST).filter(g=>g.featured===true).length;
 const NUMWORD=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
 const PICKS=(html.match(/<section class="sec" id="picks">[\s\S]*?<\/section>/)||[''])[0];
 const RAIL_WORD=NUMWORD[RAIL_SLOTS];
 ok('top-copy-number-matches-the-rail',
  RAIL_SLOTS>0 && !!RAIL_WORD && PICKS.includes(RAIL_WORD),
- RAIL_SLOTS===0?'no rail:N slots found — refusing to pass on nothing'
-  :`${RAIL_SLOTS} rail slots; the sub-line ${RAIL_WORD&&PICKS.includes(RAIL_WORD)?'says':'does NOT say'} "${RAIL_WORD||'?'}"`);
+ RAIL_SLOTS===0?'no featured games in the manifest — refusing to pass on nothing'
+  :`${RAIL_SLOTS} featured games on the rail; the sub-line ${RAIL_WORD&&PICKS.includes(RAIL_WORD)?'says':'does NOT say'} "${RAIL_WORD||'?'}"`);
 ok('every-genre-draws-from-the-complete-manifest',
  /var members=sortGames\(all\.filter\(function\(g\)\{return genreOf\(g\)===gname\}\)\);/.test(html)
  && /var all=state\.games/.test(html)

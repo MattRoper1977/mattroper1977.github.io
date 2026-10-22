@@ -128,16 +128,11 @@ const manifest = JSON.parse(fs.readFileSync(path.join(GAMES, 'games.json'), 'utf
 /* DERIVED expectations — read from the manifest, never typed here. */
 const expectTotal = manifest.games.length;
 const expectNewHolder = manifest.games.find(g => String(g.title).startsWith('NEW · '));
-/* The current shelf's top rail is owned by Site curation, not by the Games
-   manifest's `collection` field. Reuse the estate's AST-backed curation
-   extractor rather than maintaining a second parser or pinning a count here. */
-const curationRecord = JSON.parse(execFileSync(process.execPath,
-  [path.join(HERE, 'verify_curation_keys.mjs'), '--emit'], { encoding: 'utf8' }));
-const expectRailHrefs = curationRecord.curation
-  .filter(c => Number.isInteger(c.rail))
-  .sort((a, b) => a.rail - b.rail)
-  .map(c => c.href);
+/* Ruling ug-4 (22 Oct 2026): the Top Picks rail is the manifest's `featured` flag, in
+   manifest order — derived here from the manifest the page is served, never typed. */
+const expectRailHrefs = manifest.games.filter(g => g.featured === true).map(g => g.href);
 const expectRail = expectRailHrefs.length;
+const OLY_FEATURED = manifest.games.some(g => g.href === HREF && g.featured === true);
 
 console.log('Global Games — arcade render\n');
 console.log(`  derived records: ${expectTotal} manifest entries · ${expectRail} Site top picks · marker "${expectNewHolder ? expectNewHolder.title : 'none'}"\n`);
@@ -150,10 +145,10 @@ for (const vp of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'phone'
   t(`A1 [${vp.name}] every manifest entry reaches the page`,
     r.distinctGames === expectTotal,
     `${r.distinctGames} distinct games rendered across ${r.totalCards} cards, ${expectTotal} in the manifest`);
-  t(`A2 [${vp.name}] the Top Picks rail renders the AST-derived curation in order`,
+  t(`A2 [${vp.name}] the Top Picks rail renders the manifest's featured games in order`,
     JSON.stringify(r.railHrefs) === JSON.stringify(expectRailHrefs),
     `${r.railCount} rail cards; ${r.railHrefs.join(' · ')}`);
-  t(`A2 [${vp.name}] Global Games is ON the rendered Top Picks rail`, r.railHasOlympics === true,
+  t(`A2 [${vp.name}] Global Games is on the rendered Top Picks rail exactly when the manifest features it`, r.railHasOlympics === OLY_FEATURED,
     r.railTitles.join(' · ').slice(0, 110));
   t(`A3 [${vp.name}] rail cards are visually distinct`,
     new Set(r.railTitles).size === r.railTitles.length && new Set(r.railArt).size === r.railArt.length,
@@ -170,17 +165,18 @@ for (const vp of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'phone'
 }
 
 /* CONTROL — the gate must be shown able to fail, or its greens are opinions.
-   Remove Global Games from the manifest. The renderer's Site-owned curation
-   then loses that card, and the exact same A2 href comparison must go red. */
+   Un-feature the first featured game in the manifest the page is served. The rail
+   follows the flag, so it loses that card, and the same A2 comparison must see it. */
 srv.close();
 const tampered = JSON.parse(JSON.stringify(manifest));
-tampered.games = tampered.games.filter(g => g.href !== HREF);
+const dropped = tampered.games.find(g => g.featured === true);
+dropped.featured = false;
 const srv2 = await serve(tampered);
 const base2 = `http://127.0.0.1:${srv2.address().port}`;
 const c = await readArcade(base2, { width: 1280, height: 900 });
-t('A2 [control] a curated game missing from the manifest IS caught by the same check',
-  c.railCount === expectRail - 1 && c.railHasOlympics === false,
-  `rail rendered ${c.railCount} instead of ${expectRail}, Global Games present=${c.railHasOlympics}`);
+t('A2 [control] a game un-featured in the manifest leaves the rail, and the same check sees it',
+  c.railCount === expectRail - 1 && !c.railHrefs.includes(dropped.href) && JSON.stringify(c.railHrefs) !== JSON.stringify(expectRailHrefs),
+  `rail rendered ${c.railCount} instead of ${expectRail}; the un-featured game present=${c.railHrefs.includes(dropped.href)}`);
 srv2.close();
 
 console.log(red === 0 ? '\nARCADE RENDER VERIFIED' : `\n${red} FAILED`);

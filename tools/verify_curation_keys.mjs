@@ -67,6 +67,8 @@ const EMIT = process.argv.includes('--emit');
 const ROOT = process.argv.slice(2).find(a => !a.startsWith('--')) || path.join(HERE, '..');
 const PAGE = path.join(ROOT, 'games', 'index.html');
 const MANIFEST = path.join(ROOT, 'data', 'source-manifests', 'games.json');
+/* Ruling ug-4: the featured games' shelf lines, shown where a featured game has no take. */
+const LINES_FILE = path.join(ROOT, 'data', 'featured-lines.json');
 
 /* ---------------- extraction (AST only) ---------------- */
 
@@ -246,17 +248,37 @@ check(orph.length === 0, 'every curated / rail / theme key resolves to exactly o
 const dupes = record.curation.map(c => norm(c.href)).filter((h, i, a) => a.indexOf(h) !== i);
 check(dupes.length === 0, 'no href appears twice in the record', dupes.join(', ') || `${record.curation.length} distinct`);
 
-const rails = record.curation.filter(c => c.rail).map(c => c.rail).sort((a, b) => a - b);
-check(JSON.stringify(rails) === JSON.stringify(rails.map((_, i) => i + 1)),
-  'rail positions are 1..N with no gap and no tie', `[${rails.join(', ')}]`);
+/* Ruling ug-4 (22 Oct 2026): the Top Picks rail is the shelf manifest's `featured`
+   flag, in manifest order. A hand-written rail slot left in the record would be a
+   second roster drifting from the first, which is the defect the ruling ends. */
+const railSlots = record.curation.filter(c => c.rail != null);
+check(railSlots.length === 0, 'no hand-written rail slot is left in the record — the rail is the featured flag (ruling ug-4)',
+  railSlots.map(c => `${c.href} rail:${c.rail}`).join(', ') || `${record.curation.length} curated entries, 0 rail slots`);
+const featuredGames = games.filter(g => g.featured === true);
+check(featuredGames.length > 0, 'the manifest flags at least one featured game, so the rail cannot paint empty',
+  `${featuredGames.length} featured of ${games.length}`);
+const sha12 = s => crypto.createHash('sha256').update(s).digest('hex').slice(0, 12);
+const RAIL_FP = sha12(JSON.stringify(featuredGames.map(g => norm(g.href))));
+console.log(`  rail fingerprint (featured hrefs, manifest order): ${RAIL_FP}`);
+const lines = fs.existsSync(LINES_FILE) ? JSON.parse(fs.readFileSync(LINES_FILE, 'utf8')) : null;
+const lineKeys = lines ? Object.keys(lines.games || {}) : [];
+check(!!lines && JSON.stringify(lineKeys) === JSON.stringify(featuredGames.map(g => g.href)),
+  'data/featured-lines.json covers exactly the featured games, in manifest order',
+  lines ? `${lineKeys.length} lines for ${featuredGames.length} featured` : 'data/featured-lines.json is missing');
+check(!!lines && lineKeys.every(h => String(lines.games[h].line || '').trim()),
+  'and every one of those lines is non-empty', lines ? `${lineKeys.length} lines` : 'missing');
 
 const emptyTake = record.curation.filter(c => !String(c.take || '').trim());
 check(emptyTake.length === 0, 'every curated entry carries a non-empty take',
   emptyTake.map(c => c.href).join(', ') || `${record.curation.length} takes`);
 
-const railNoTake = record.curation.filter(c => c.rail && !String(c.take || '').trim());
-check(railNoTake.length === 0, 'no rail slot without a take — the rail may not paint empty quotation marks',
-  railNoTake.map(c => c.href).join(', ') || `${rails.length} rail slots, ${rails.length} takes`);
+/* A take, if present, resolves to exactly one shelf game (the orphan limb above);
+   a featured game WITHOUT a take is not a defect (ruling ug-4) — its card shows
+   the shelf's one-line description instead, and nothing in this repository may
+   write a take to fill the gap. */
+const featuredNoTake = featuredGames.filter(g => !record.curation.some(c => norm(c.href) === norm(g.href)));
+check(true, 'featured games without a take are allowed and counted, never filled in',
+  `${featuredGames.length - featuredNoTake.length} featured with a take, ${featuredNoTake.length} without`);
 
 /* ---------------- the taxonomy ---------------- */
 
@@ -357,8 +379,9 @@ const unparsed = scans.flatMap(s => s.unparsed.map(u => `${s.f} ${u}`));
 check(unparsed.length === 0, 'every JS block in those pages parsed; non-JS blocks are named, not silently dropped',
   unparsed.join('; ') || `${scans.reduce((n, s) => n + s.blocks, 0)} JS blocks parsed, ${scans.reduce((n, s) => n + s.skipped.length, 0)} non-JS skipped [${scans.flatMap(s => s.skipped).join(', ') || 'none'}]`);
 const totalReads = scans.reduce((n, s) => n + s.reads, 0);
-check(totalReads === 0,
-  'no shelf-fetching page reads `featured` (AST, so the record\'s own comment does not count)',
+const gamesReads = (scans.find(s => s.f === 'games/index.html') || { reads: 0 }).reads;
+check(gamesReads > 0 && totalReads === gamesReads,
+  'the rail reads `featured` on /games/ and no other shelf-fetching page reads it (ruling ug-4; AST, so comments do not count)',
   scans.map(s => `${s.f}=${s.reads}`).join(' '));
 
 /* --- cross-process determinism --- */
@@ -395,7 +418,7 @@ const scratchManifest = (mutate) => {
     return orphans(record, manifestFrom(f)).filter(x => x.key === href);
   });
   const kinds = new Set(found.map(x => x.kind.split(':')[0]));
-  check(found.length > 0 && kinds.has('curated') && kinds.has('rail') && kinds.has('genre'),
+  check(found.length > 0 && kinds.has('curated') && kinds.has('genre'),
     'CONTROL: move a game\'s href and the gate goes RED — on every kind of key it holds',
     found.map(x => `${x.kind} ${x.key} -> ${x.matches}`).join('; ') || 'stayed green — the gate is a no-op');
 }
@@ -485,7 +508,7 @@ const scratchManifest = (mutate) => {
   check(after > before, 'CONTROL: the injection is real, not a no-op replace', `${before} B -> ${after} B`);
   /* Through the SHIPPING scanner, not a re-implementation of it. */
   const probe = featuredReadsIn(path.join(dir, 'games', 'index.html'));
-  check(probe.reads === 1, 'CONTROL: with one `g.featured` read injected, the shipping scanner finds exactly 1',
+  check(probe.reads === gamesReads + 1, 'CONTROL: with one more `g.featured` read injected, the shipping scanner finds exactly one more',
     `${probe.reads} found (shipped tree: ${totalReads})`);
   const out = execFileSync(process.execPath, [fileURLToPath(import.meta.url), dir, '--emit'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   check(probe.unparsed.length === 0 && out.length > 0,
@@ -559,6 +582,8 @@ if (!chromium) {
             title: (a.querySelector('h3') || {}).textContent || '',
             href: n(a.getAttribute('href')),
             take: ((a.querySelector('.take span') || {}).textContent || '').replace(/[\u201C\u201D"]/g, '').trim(),
+            hasTake: !!a.querySelector('.take'),
+            line: ((a.querySelector('.pline') || {}).textContent || '').trim(),
             label: (a.querySelector('.tagc') || {}).textContent || '',
             painted: b.width > 0 && b.height > 0
           };
@@ -586,17 +611,29 @@ if (!chromium) {
   }
 
   console.log('\n=== RENDERED ===\n');
-  const wantTop = record.curation.filter(c => c.rail).sort((a, b) => a.rail - b.rail).map(c => c.href);
+  const wantTop = featuredGames.map(g => norm(g.href));
   const live = await railOf(MANIFEST);
-  live.picks.forEach((p, i) => console.log(`  ${i + 1}. ${p.title.padEnd(18)} ${String(p.href).padEnd(36)} take=${p.take ? 'yes' : 'EMPTY'}`));
+  live.picks.forEach((p, i) => console.log(`  ${i + 1}. ${p.title.padEnd(18)} ${String(p.href).padEnd(36)} ${p.take ? 'take' : (p.line ? 'line' : 'EMPTY')}`));
   console.log();
 
-  check(live.picks.length === wantTop.length, 'the painted rail has one card per rail slot',
-    `${live.picks.length} painted, ${wantTop.length} declared`);
+  check(live.picks.length === wantTop.length, 'the painted rail has one card per featured game',
+    `${live.picks.length} painted, ${wantTop.length} featured`);
   check(JSON.stringify(live.picks.map(p => p.href)) === JSON.stringify(wantTop),
-    'and they are the declared hrefs, in the declared order', live.picks.map(p => p.href).join(' · '));
-  check(live.picks.every(p => p.painted && p.take), 'every painted card occupies space and carries a take',
-    `${live.picks.filter(p => p.painted).length} painted, ${live.picks.filter(p => p.take).length} with takes`);
+    'and they are the featured hrefs, in manifest order', live.picks.map(p => p.href).join(' · '));
+  check(sha12(JSON.stringify(live.picks.map(p => p.href))) === RAIL_FP,
+    'the painted rail\'s fingerprint equals the manifest\'s featured fingerprint',
+    `${sha12(JSON.stringify(live.picks.map(p => p.href)))} painted vs ${RAIL_FP} featured`);
+  const takeOfHref = h => (record.curation.find(c => norm(c.href) === h) || {}).take || '';
+  const lineOfHref = h => { const k = lineKeys.find(x => norm(x) === h); return k ? lines.games[k].line : ''; };
+  check(live.picks.every(p => p.painted && (p.take ? (!p.line && p.take === takeOfHref(p.href)) : (p.line && !p.hasTake))),
+    'every painted card occupies space and shows its take, or — with no take — a description line and no take box',
+    `${live.picks.filter(p => p.painted).length} painted, ${live.picks.filter(p => p.take).length} takes, ${live.picks.filter(p => !p.take && p.line).length} lines`);
+  check(live.picks.filter(p => !p.take).every(p => p.line === lineOfHref(p.href)),
+    'each description line is the play shelf\'s own line for that game (data/featured-lines.json)',
+    live.picks.filter(p => !p.take).map(p => `${p.href}=${p.line === lineOfHref(p.href) ? 'same' : 'DIFFERS'}`).join(' '));
+  check(live.picks.filter(p => takeOfHref(p.href)).every(p => p.take === takeOfHref(p.href)),
+    'every featured game that has a take shows that take, not a line',
+    `${live.picks.filter(p => takeOfHref(p.href)).length} with takes`);
   /* DERIVED, never pinned. This read `=== 60 && === 52`, which was true for
      exactly as long as the shelf held 52 games — it reds on the next game
      shipped rather than on a defect, and that is what it did. The invariant is
@@ -636,9 +673,9 @@ if (!chromium) {
   check(labelDrift.length === 0, 'every genre\'s heading count is recomputed from the record, not written down',
     labelDrift.map(g => `${g.name} shows "${g.label}" for ${g.cards}`).join('; ')
       || live.genres.map(g => `${g.name}=${g.cards}`).join(' '));
-  check(live.badges === record.curation.length,
-    'one TOP PICK badge per curated game in the genre sections',
-    `${live.badges} badges, ${record.curation.length} curated entries`);
+  check(live.badges === featuredGames.length,
+    'one TOP PICK badge per featured game in the genre sections — the badge follows the rail',
+    `${live.badges} badges, ${featuredGames.length} featured`);
   check(live.picks.every(p => p.label && record.genreOrder.includes(p.label)),
     'each pick card labels itself with its GENRE, not the manifest tag',
     live.picks.map(p => p.label).join(' · '));
@@ -659,8 +696,11 @@ if (!chromium) {
     ['/auroralinks/', "Can't afford your own clubs - the realism means you don't need any."]
   ];
   const painted = new Map(live.picks.map(p => [p.href, p.take]));
-  const drift = AUTHORED.filter(([h, t]) => painted.get(h) !== t);
-  check(drift.length === 0, 'each of the five new takes is on the page character-for-character as authored',
+  /* Since ug-4 a take is painted only when its game is featured; an unfeatured game's take
+     is still the owner's words and is still compared, byte-for-byte, in the record. */
+  const shown = h => painted.has(h) ? painted.get(h) : takeOfHref(h);
+  const drift = AUTHORED.filter(([h, t]) => shown(h) !== t);
+  check(drift.length === 0, 'each of the five new takes is, character-for-character as authored, on the page where its game is featured and in the record otherwise',
     drift.length
       /* H4. This message used to print BOTH sides — authored "<old>" vs painted
          "<new>" — which handed the reader the exact replacement string. The
@@ -672,7 +712,7 @@ if (!chromium) {
          belongs, and DO NOT print the painted text. If you want to see what is
          on the page, open the page. */
       ? drift.map(([h]) => `${h}: the take painted on the card is not the authored one` +
-          ` (differs by ${Math.abs(Buffer.byteLength(painted.get(h) || '') - Buffer.byteLength(AUTHORED.find(a => a[0] === h)[1]))}B).` +
+          ` (differs by ${Math.abs(Buffer.byteLength(shown(h) || '') - Buffer.byteLength(AUTHORED.find(a => a[0] === h)[1]))}B).` +
           ` That take is Matt's, and games/index.html's CURATION block owns it —` +
           ` data/takes-pin.json is the reference, not this file. If the wording changed ON PURPOSE,` +
           ` edit the take in games/index.html and re-pin with` +
@@ -689,15 +729,18 @@ if (!chromium) {
     check(Buffer.byteLength(tidied) === Buffer.byteLength(t) + 1 && tidied !== t,
       'CONTROL: the mutation is real — one full stop added to the take that has none',
       `${Buffer.byteLength(t)}B -> ${Buffer.byteLength(tidied)}B`);
-    check(painted.get(h) !== tidied,
+    check(shown(h) !== tidied && shown(h) === t,
       'CONTROL: and the comparison rejects it, so a helpful tidy-up cannot pass',
-      `painted ${Buffer.byteLength(painted.get(h) || '')}B differs from tidied ${Buffer.byteLength(tidied)}B — rejected`);
+      `shown ${Buffer.byteLength(shown(h) || '')}B differs from tidied ${Buffer.byteLength(tidied)}B — rejected`);
   }
 
   /* Rename a game that is ON the rail — renaming one that has left it would
      prove nothing about the rail, and this control first failed for exactly
      that reason when Trail Runner moved off in favour of the intended eight. */
-  const RENAME_HREF = '/apexkick/';
+  /* Ruling ug-4: the first FEATURED game that has a take, derived, so the control
+     always renames a game that is on the rail and shows a take. */
+  const RENAME_HREF = wantTop.find(h => takeOfHref(h)) || '';
+  const RENAMED_TITLE = 'Railed game RENAMED';
   /* Feel filters. The rule they exist to keep: a filter may change WHICH cards
      show, and may never give any single game a second card. The old page broke
      exactly this — four rails each drew their own copy — and the first version
@@ -780,14 +823,14 @@ if (!chromium) {
     blocking.map(t => `${t.tag} ${t.w}x${t.h} "${t.text}"`).join('; ')
       || `0 under 44px; ${probe.targets.length} inline-in-sentence link(s) exempt under WCAG 2.5.8: ${probe.targets.map(t => `"${t.text}"`).join(', ')}`);
 
-  const renamed = scratchManifest(gs => { gs.find(g => g.href === RENAME_HREF).title = 'Apex Kick RENAMED'; });
+  const renamed = scratchManifest(gs => { gs.find(g => g.href === RENAME_HREF).title = RENAMED_TITLE; });
   const after = await railOf(renamed);
   check(after.picks.length === live.picks.length,
     'CONTROL (browser): a rename of a railed game leaves the rail its full length',
     `${live.picks.length} -> ${after.picks.length} cards (title-keying took it 4 -> 3)`);
   const slot = after.picks.find(p => p.href === RENAME_HREF);
   const before = painted.get(RENAME_HREF);
-  check(!!slot && slot.title === 'Apex Kick RENAMED' && slot.take === before,
+  check(!!slot && slot.title === RENAMED_TITLE && slot.take === before,
     'CONTROL (browser): the renamed game keeps its slot AND its take, byte-identical — the take followed the href, not the title',
     slot ? `"${slot.title}" · take ${Buffer.byteLength(slot.take)}B, was ${Buffer.byteLength(before || '')}B` : 'slot vanished');
 }
