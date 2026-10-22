@@ -156,8 +156,9 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by
 # it to its second half, the state every Site pin and every publication now builds (no refresh moves it). The
 # re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
-    '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 Autumn 2 Week 1 landed: 1417 rows
-    '08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd',   # RE Spring 1 window W1 (ruling sr, sr-3 step 1): the candidate 018e8494, 1348 rows
+    '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 Autumn 2 Week 1 landed: 1417 rows; built by the Site fallback Lessons 9ed44bdf and by Lessons main
+    '08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd',   # RE Spring 1 window W1 (ruling sr, sr-3 step 1): the candidate 018e8494, 1348 rows; legacy, retired at follow-up (built by nothing)
+    '60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b',   # tq in flight (rulings tq add.3/add.4): built by the Lessons candidate f7bdebb8, 1468 rows
 )
 
 
@@ -272,6 +273,12 @@ def registry_errors(output):
     # is in flight: 16195414 (the Site's pinned Lessons 9ed44bdf) and the landing's digest (the Lessons candidate 018e8494),
     # measured from built bytes of Site main a82d4d5b with each Lessons commit; with the pending transition form above it.
     # It collapses in a later window.
+    # tq in flight (22 October 2026, ruling tq add.3, tq-Q5 (a)): TQ Week 8 pack reachability adds 51 download rows (the
+    # seven Week 8 Science pages now link all 12 pack members), so its candidate's retained registry is a third state,
+    # 60e0cd4c (Lessons candidate f7bdebb8, 1468 rows: 1407 kept, 10 retitled by the labels of record, 51 joined),
+    # measured from built bytes of
+    # Site main 60383e2e with that candidate. Held beside the pair only while tq is in flight; after the Lessons merge a
+    # follow-up on the same transaction drops 08c427b8 and the fence is a pair again. The collapse window is unchanged.
     baseline_shas = REGISTRY_BASELINES
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
@@ -505,8 +512,8 @@ def self_test():
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d',
               'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',
               '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757')
-    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd') and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the io-3 digest and the RE Spring 1 W1 pair's second half, and no half of any earlier W1 pair nor the io-3 pair's first half")
+    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd','60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b') and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly 16195414 (built by the Site fallback Lessons 9ed44bdf and by Lessons main), 08c427b8 (legacy, retired at follow-up: the old RE Spring 1 half, built by nothing) and 60e0cd4c (tq in flight, rulings tq add.3/add.4: built by the Lessons tq candidate); no half of any earlier W1 pair nor the io-3 pair's first half")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
