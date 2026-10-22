@@ -156,9 +156,9 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by
 # it to its second half, the state every Site pin and every publication now builds (no refresh moves it). The
 # re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
-    '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 Autumn 2 Week 1 landed: 1417 rows
-    '08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd',   # RE Spring 1 window W1 (ruling sr, sr-3 step 1): the candidate 018e8494, 1348 rows
-    '60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b',   # tq in flight (ruling tq add.3): the Lessons candidate f7bdebb8, 1468 rows
+    '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 Autumn 2 Week 1 landed: 1417 rows; built by the Site fallback Lessons 9ed44bdf and by Lessons main
+    '08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd',   # RE Spring 1 window W1 (ruling sr, sr-3 step 1): the candidate 018e8494, 1348 rows; legacy, retired at follow-up (built by nothing)
+    '60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b',   # tq in flight (rulings tq add.3/add.4): built by the Lessons candidate f7bdebb8, 1468 rows
 )
 
 
@@ -513,7 +513,7 @@ def self_test():
               'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',
               '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757')
     passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd','60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b') and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the io-3 digest (built by the Site fallback Lessons 9ed44bdf and by Lessons main), the RE Spring 1 W1 pair's second half (built by neither now; dropped after the Lessons merge) and, tq in flight (ruling tq add.3), the tq candidate's digest; no half of any earlier W1 pair nor the io-3 pair's first half")
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly 16195414 (built by the Site fallback Lessons 9ed44bdf and by Lessons main), 08c427b8 (legacy, retired at follow-up: the old RE Spring 1 half, built by nothing) and 60e0cd4c (tq in flight, rulings tq add.3/add.4: built by the Lessons tq candidate); no half of any earlier W1 pair nor the io-3 pair's first half")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
