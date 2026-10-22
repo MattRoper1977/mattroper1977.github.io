@@ -220,7 +220,7 @@ jobs:
 
   browser-matrix:
     name: Same-origin mobile, desktop, accessibility and privacy proof
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -349,7 +349,7 @@ jobs:
     #
     # It waits for the deployment itself (72 attempts, below), so the ordering
     # bought nothing its own readiness loop does not already provide.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4

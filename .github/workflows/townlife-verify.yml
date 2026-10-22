@@ -60,7 +60,7 @@ concurrency:
 jobs:
   benchmark:
     name: Serial comparative and splash performance
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -236,7 +236,7 @@ jobs:
     # isolation either. `!cancelled()` keeps the order and runs anyway on an upstream
     # red, while still standing down on a real cancellation.
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -314,7 +314,7 @@ jobs:
     # Same reasoning as `verify` above. This is the gate that costs most when it
     # silently does not run: six surfaces, three engines, ten-minute idles.
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
