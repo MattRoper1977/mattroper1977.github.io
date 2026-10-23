@@ -137,7 +137,7 @@ jobs:
   browser:
     name: Chromium, Android, Firefox and WebKit
     needs: static
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
@@ -181,7 +181,7 @@ jobs:
     name: Pinned 30-second before and after samples
     if: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.live != true) }}
     needs: static
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4

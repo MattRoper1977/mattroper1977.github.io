@@ -35,6 +35,9 @@ on:
       - 'tools/verify_genre_participants.mjs'
       - 'tools/verify_curation_vocabulary.mjs'
       - 'data/audience-homepages.json'
+      - 'data/featured-lines.json'
+      - 'tools/render_featured_lines.py'
+      - 'tools/render_audience_homepages.py'
       - '.github/workflows/curation-keys-verify.yml'
   push:
     branches: [main]
@@ -46,6 +49,9 @@ on:
       - 'tools/verify_genre_participants.mjs'
       - 'tools/verify_curation_vocabulary.mjs'
       - 'data/audience-homepages.json'
+      - 'data/featured-lines.json'
+      - 'tools/render_featured_lines.py'
+      - 'tools/render_audience_homepages.py'
       - '.github/workflows/curation-keys-verify.yml'
   # A path filter fires only on a change to a file this repository owns, and an
   # orphan can arrive from the canonical side without any file here moving.
@@ -65,7 +71,7 @@ concurrency:
 jobs:
   keys:
     name: Every curated and rail key resolves to exactly one entry
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4

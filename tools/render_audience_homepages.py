@@ -311,6 +311,9 @@ def hero_copy(audience: dict[str, Any]) -> str:
 # /games/, which tools/verify_pupil_genres.mjs proves by doing exactly that.
 GAMES_PAGE = ROOT / "games" / "index.html"
 GAMES_MANIFEST = ROOT / "data" / "source-manifests" / "games.json"
+# Ruling ug-4: the play shelf's own one-line description for each featured game
+# (written by tools/render_featured_lines.py), shown where a featured game has no take.
+FEATURED_LINES = ROOT / "data" / "featured-lines.json"
 
 
 def _js_array(src: str, name: str) -> str:
@@ -355,10 +358,10 @@ def games_record() -> dict[str, Any]:
     return {"order": order, "tax": tax, "rail": rail, "shelf": shelf, "by_href": by_href}
 
 
-def _game_card(game: dict[str, Any], take: str = "") -> str:
+def _game_card(game: dict[str, Any], take: str = "", line: str = "") -> str:
     href = game["href"]
     art = game.get("art") or ""
-    desc = (game.get("desc") or "").replace("NEW · ", "")
+    desc = line or (game.get("desc") or "").replace("NEW · ", "")
     title = (game.get("title") or "").replace("NEW · ", "")
     track = recent_attrs(None, href)
     if art:
@@ -378,10 +381,22 @@ def _game_card(game: dict[str, Any], take: str = "") -> str:
 
 
 def toppicks_body(section: dict[str, Any]) -> str:
-    """The Top Picks rail, from the SAME rail slots /games/ paints."""
+    """The Top Picks rail: the shelf's featured games, in manifest order (ruling ug-4).
+
+    The same roster /games/ paints, because both read the one `featured` flag. A
+    featured game with a take shows it; one without shows the play shelf's own
+    one-line description as its description, and no take box.
+    """
     rec = games_record()
-    picks = sorted([(v["rail"], h, v["take"]) for h, v in rec["rail"].items() if v["rail"]])
-    cards = "".join(_game_card(rec["by_href"][h], take) for _, h, take in picks)
+    lines = json.loads(FEATURED_LINES.read_text(encoding="utf-8"))["games"]
+    featured = [g for g in rec["shelf"] if g.get("featured") is True]
+    missing = [g["href"] for g in featured if g["href"] not in lines]
+    if missing:
+        raise SystemExit("featured games with no shelf line in data/featured-lines.json: %s" % missing)
+    cards = "".join(
+        _game_card(g, (rec["rail"].get(g["href"]) or {}).get("take", ""),
+                   "" if (rec["rail"].get(g["href"]) or {}).get("take") else lines[g["href"]]["line"])
+        for g in featured)
     return ('%s<div class="mf-pupil-rail" data-mbm-pupil-rail>%s</div>'
             % (section_head(section), cards))
 

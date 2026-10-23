@@ -2,10 +2,10 @@ name: Domain split publication
 on:
   pull_request:
     branches: [main]
-    paths: ['domain-split/**', 'supabase/**', '.github/workflows/domain-split-verify.yml']
+    paths: ['domain-split/**', 'supabase/**', '.github/workflows/domain-split-verify.yml', 'data/featured-lines.json', 'tools/render_featured_lines.py', 'data/source-manifests/games.json']
   push:
     branches: [main]
-    paths: ['domain-split/**', 'supabase/**', '.github/workflows/domain-split-verify.yml']
+    paths: ['domain-split/**', 'supabase/**', '.github/workflows/domain-split-verify.yml', 'data/featured-lines.json', 'tools/render_featured_lines.py', 'data/source-manifests/games.json']
   workflow_dispatch:
 permissions:
   contents: read
@@ -317,6 +317,10 @@ jobs:
         run: python -m pip install lxml==6.0.1
       - name: Build all games with local dependencies
         run: python domain-split/build_publications.py --lessons .sources/Lessons
+      - name: Top Picks lines equal the play shelf's own lines (ruling ug-4)
+        run: |
+          python tools/render_featured_lines.py --self-test
+          python tools/render_featured_lines.py --discovery domain-split/output/games/data/play-discovery.json --check
       - name: Check out the previously released Lessons pin for independent-release controls
         uses: actions/checkout@v4
         with:
