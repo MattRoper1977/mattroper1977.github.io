@@ -70,7 +70,7 @@ permissions:
 jobs:
   negative_control:
     name: Prove every limb can exit non-zero
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - name: Check out the site
@@ -101,7 +101,7 @@ jobs:
   live:
     name: The live estate, as served
     needs: negative_control
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       # TWO trees, deliberately. The instrument must come from THIS ref (it is
