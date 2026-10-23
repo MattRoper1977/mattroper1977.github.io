@@ -282,7 +282,7 @@ def registry_errors(output):
     # tq follow-up (22 October 2026, ruling tq add.4 note): Lessons #708 merged (262ae59b), so 60e0cd4c is what Lessons main
     # builds and 08c427b8 (the old RE Spring 1 half, built by nothing) is dropped; it joins the previous digests below. The
     # fence is the pair 16195414 (the Site fallback Lessons 9ed44bdf) and 60e0cd4c (Lessons main). The collapse window is unchanged.
-    # uf in flight (23 October 2026, PROPOSED under the uf letters, awaiting its ruling): the two Assembly pages add 2 lesson
+    # uf in flight (23 October 2026, ruling uf add.3, uf-S3, the tq add.3 form): the two Assembly pages add 2 lesson
     # rows, so the candidate's retained registry is a third state, 1a358a41 (Lessons candidate 79258323, 1470 rows: the
     # 1468 of 60e0cd4c kept in order and unchanged, 2 joined), measured from built bytes of Site c85ff191 with that
     # candidate. Held beside the pair only while uf is in flight; after the Lessons merge a follow-up drops 60e0cd4c
