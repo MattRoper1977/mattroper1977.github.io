@@ -91,6 +91,36 @@ TEACHING_PACK_PENDING = HERE/'teaching-packs-download-usage-pending.json'
 TEACHING_PACK_PENDING_SHA256 = 'ee7cb1b9595e0c1b45cdac95e148170c5913c1f055203752c0b45ce51f94bbcb'
 
 
+# um window W1 (rulings um, um add.1 (ii) and answer B, um-4 (a); 24 October 2026): the io-3 transition form again, as a
+# second declared set beside the RE one. The Lessons um landing removes the 42 format collections a unit ZIP fully contains
+# and keeps the 336 earlier-version Science pack members in the repository but out of the publication, so their 378
+# download rows retire: 42 ZIP rows over eight Teaching_Packs prefixes and 336 Science document rows. While um is in flight
+# a prefix passes with its reviewed rows OR those rows minus exactly its retiring rows (and, for Humanities, OR minus the RE
+# pending set), in no other state; a follow-up after the Lessons merge removes the rows from the reviewed lists and this set.
+TEACHING_PACK_RETIRING = HERE/'teaching-packs-download-usage-retiring.json'
+# Pinned by digest: the 378-row retiring set above, as measured from the um candidate build on 24 October 2026.
+TEACHING_PACK_RETIRING_SHA256 = '85f575621313902dc3580b8b6796dbe5647123c1497793a061d0898ac4e50305'
+
+
+def retiring_set_problems(retiring, approved):
+    """Self-test helper (ruling um): the retiring set holds 378 distinct rows, 42 ZIP rows and 336 Science document rows,
+    each present exactly once among its prefix's reviewed rows. Returns the problems found (empty = sound)."""
+    problems = []
+    rows = [r for rs in retiring.values() for r in rs]
+    if len(rows) != 378: problems.append('retiring set holds %d rows, not 378' % len(rows))
+    if sum(r['route'].endswith('.zip') for r in rows) != 42: problems.append('retiring set does not hold the 42 ZIP rows')
+    for prefix, rs in retiring.items():
+        if prefix not in approved: problems.append('retiring prefix is not reviewed: ' + prefix); continue
+        keys = [json.dumps(r, sort_keys=True) for r in rs]
+        if len(set(keys)) != len(keys): problems.append('retiring rows are not distinct: ' + prefix)
+        reviewed = [json.dumps(r, sort_keys=True) for r in approved[prefix]]
+        for k in keys:
+            if reviewed.count(k) != 1: problems.append('a retiring row is present %d times among the reviewed rows' % reviewed.count(k))
+        if not prefix.startswith('/Lessons/Science') and any(not r['route'].endswith('.zip') for r in rs):
+            problems.append('a retiring row outside Science is not a ZIP: ' + prefix)
+    return problems
+
+
 RE_S1_PENDING_ROOTS = ('RE_Spring_1_BUILD_Reviewed', 'RE_Spring_1_GROW_Reviewed', 'RE_Spring_1_LAUNCH_Reviewed')
 
 def pending_set_problems(pending, approved):
@@ -128,17 +158,19 @@ def installed_gc1_rows(approved, installed):
     return approved if installed else [r for r in approved if not r['route'].startswith(GC1_PREFIX)]
 
 
-def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by_prefix=None):
+def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by_prefix=None, retiring_by_prefix=None):
     """Pure rule, so the self-test can plant rows against it.
 
     Every reviewed Teaching_Packs prefix contributes exactly its approved rows
     when its pack index is installed and nothing when it is not; every other
     row is a frozen installed record. A prefix with a declared pending set (RE Spring 1 W1, ruling ss)
-    may instead contribute its approved rows minus exactly that set, in order.
+    may instead contribute its approved rows minus exactly that set, in order. A prefix with retiring rows (um) may
+    likewise contribute its approved rows minus exactly those; the two sets are never subtracted together.
     Returns the error names."""
     errors = []
     retained = list(rows)
     pending_by_prefix = pending_by_prefix or {}
+    retiring_by_prefix = retiring_by_prefix or {}
     for prefix, approved in approved_by_prefix.items():
         extensions = [r for r in rows if r['route'].startswith(prefix)]
         retained = [r for r in retained if not r['route'].startswith(prefix)]
@@ -146,6 +178,9 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by
         pending = pending_by_prefix.get(prefix)
         if pending and installed_by_prefix.get(prefix):
             allowed.append([r for r in approved if r not in pending])
+        retiring = retiring_by_prefix.get(prefix)
+        if retiring and installed_by_prefix.get(prefix):
+            allowed.append([r for r in approved if r not in retiring])
         if extensions not in allowed:
             errors.append('Download additions differ from the reviewed installed pack: '+prefix)
     return errors, retained
@@ -316,12 +351,18 @@ def registry_errors(output):
     for prefix, rows_pending in pending.items():
         if prefix not in approved or any(r not in approved[prefix] for r in rows_pending):
             return ['Pending teaching-pack rows are not all reviewed rows: '+prefix]
+    if sha256(TEACHING_PACK_RETIRING.read_bytes()).hexdigest() != TEACHING_PACK_RETIRING_SHA256:
+        return ['Unreviewed teaching-pack retiring metadata']
+    retiring = json.loads(TEACHING_PACK_RETIRING.read_text())
+    for prefix, rows_retiring in retiring.items():
+        if prefix not in approved or any(r not in approved[prefix] for r in rows_retiring):
+            return ['Retiring teaching-pack rows are not all reviewed rows: '+prefix]
     rows = json.loads((output/'usage-registry.json').read_text())
     lessons = output/'education-lessons'
     ict = '/Lessons/ICT/Teaching_Packs/'
     approved[ict] = installed_gc1_rows(approved[ict], (lessons/GC1_HUB).is_file())
     installed = {prefix: (lessons/prefix[len('/Lessons/'):]/'index.html').is_file() for prefix in approved}
-    errors, retained = registry_partition(rows, approved, installed, pending)
+    errors, retained = registry_partition(rows, approved, installed, pending, retiring)
     if not retained_admitted(retained, baseline_shas):
         errors.append('Installed combined registry records changed')
     return errors
@@ -497,6 +538,34 @@ def self_test():
     planted={hp:real_pending[hp][:-1]+[earlier[0]]}
     passed=bool(pending_set_problems(planted, real_add)); ok=ok and passed
     print(f"  [{'ok' if passed else 'FAIL'}] CONTROL: a pending set with one row from the earlier reviewed list is rejected")
+    # um W1 (ruling um): the retiring form beside the pending one, on planted rows. Reviewed a, b, c, d, e; pending d, e;
+    # retiring b, c. Exactly three states pass: all five, minus the pending set, minus the retiring set.
+    rp='/Lessons/Careers/Teaching_Packs/'; ra,rb,rc,rd,re_=(row(rp+'BUILD/downloads/'+x+'.zip') for x in 'abcde')
+    ret_cases=[
+        ('the reviewed rows (the Site fallback Lessons)', [ra,rb,rc,rd,re_], 0),
+        ('minus exactly the pending set', [ra,rb,rc], 0),
+        ('minus exactly the retiring set (the um landing)', [ra,rd,re_], 0),
+        ('minus both sets together', [ra], 1),
+        ('half the retiring set', [ra,rc,rd,re_], 1),
+        ('a retired row back beside a removed reviewed row', [rb,rd,re_], 1),
+        ('a planted row beside the retiring state', [ra,rd,re_,row(rp+'BUILD/downloads/planted.zip')], 1),
+    ]
+    for label,rs,expected in ret_cases:
+        errors,retained=registry_partition(other+rs,{rp:[ra,rb,rc,rd,re_]},{rp:True},{rp:[rd,re_]},{rp:[rb,rc]})
+        passed=len(errors)==expected and retained==other; ok=ok and passed
+        print(f"  [{'ok' if passed else 'FAIL'}] retiring transition: {label} -> {'passes' if expected==0 else 'red'}")
+    real_retiring=json.loads(TEACHING_PACK_RETIRING.read_text())
+    sci_add=json.loads((HERE/'science-download-usage-additions.json').read_text())
+    real_all=dict(real_add); real_all[next(iter(k for k in real_retiring if k.startswith('/Lessons/Science')))]=sci_add
+    probs=retiring_set_problems(real_retiring, real_all)
+    passed=sha256(TEACHING_PACK_RETIRING.read_bytes()).hexdigest()==TEACHING_PACK_RETIRING_SHA256 and not probs and len(real_retiring)==8
+    ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the retiring set is 378 distinct reviewed rows over 8 prefixes (42 ZIP, 336 Science documents), each once, at its pinned digest {probs[:2]}")
+    passed=all(not registry_partition([r for r in real_all[p] if r not in rs],{p:real_all[p]},{p:True},None,{p:rs})[0] for p,rs in real_retiring.items()); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] each real prefix minus its retiring rows passes with the form")
+    planted={k:list(v) for k,v in real_retiring.items()}; k0=next(iter(planted)); planted[k0]=planted[k0][:-1]+[row(k0+'planted.zip')]
+    passed=bool(retiring_set_problems(planted, real_all)); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] CONTROL: a retiring set with a row the reviewed list does not hold is rejected")
     # LAND-A2 W2, Science Week 8 W2 and os-4 patch set A25 W2: the collapsed fence, proved on planted registries shaped like the real
     # change (both refreshes only add each landed lesson's own search-index entry id to source_ids). The
     # refreshed registry is admitted; the pre-refresh state (the second half of the old pair), a planted

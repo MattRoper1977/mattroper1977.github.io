@@ -52,6 +52,28 @@ REVIEWED_ARCHIVE_DOCUMENTS = {
     '_finish/build_estate/BUILD_ASDAN__CLAIMS_AND_SAFETY_READBACK.md': '4135dd1c9f522881f4b9f3d2af39a2d712a1138003f99caad9533e11eb89f0da',
 }
 
+# um-4 (a), um add.1 answer B (2026-10-24): earlier-version pack members the Lessons repository
+# keeps but does not publish. The list is the Lessons repository's own record; its pages link each
+# file to the repository download at the pinned commit. A listed file whose bytes are not the
+# recorded ones stops the build, so the download a page links is the file the record names.
+LESSONS_ARCHIVE = 'tools/catalogue/PUBLICATION_ARCHIVE.json'
+ARCHIVE_BASE = re.compile(r'https://github\.com/MattRoper1977/Lessons/raw/[0-9a-f]{40}/')
+
+def lessons_archive(root):
+    record = Path(root) / LESSONS_ARCHIVE
+    if not record.is_file():
+        return {}
+    data = json.loads(record.read_text(encoding='utf-8'))
+    if not ARCHIVE_BASE.fullmatch(data.get('base', '')) or data['base'] != f"https://github.com/MattRoper1977/Lessons/raw/{data.get('commit', '')}/":
+        raise ValueError('Publication archive download is not pinned to a full commit: ' + str(data.get('base')))
+    files = data['files']
+    for relative, digest in files.items():
+        p = Path(root) / relative
+        if not p.is_file() or hashlib.sha256(p.read_bytes()).hexdigest() != digest:
+            raise ValueError('Archived file changed or missing; review before publication: ' + relative)
+    return files
+
+
 def normal(value):
     return unquote(urlparse(value).path).removesuffix('index.html').rstrip('/') or '/'
 
@@ -105,6 +127,22 @@ def self_test():
     control('run 2: a tools directory index other than the hub is NOT public', not public_file('tools/artsaward/index.html'))
     control('run 3: with SLOTS.json removed from the allowlist the same path is refused (the rule, not the extension, admits it)',
             not public_file('tools/artsaward/SLOTS.json', public_tool_files={'tools/index.html'}))
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp); (root / 'tools/catalogue').mkdir(parents=True); (root / 'a.pdf').write_bytes(b'archived')
+        commit = '0' * 40
+        def record(digest, base=f'https://github.com/MattRoper1977/Lessons/raw/{commit}/'):
+            (root / LESSONS_ARCHIVE).write_text(json.dumps({'commit': commit, 'base': base, 'files': {'a.pdf': digest}}))
+        def refused():
+            try: lessons_archive(root); return False
+            except ValueError: return True
+        control('um-4 (a): no archive record archives nothing', lessons_archive(root) == {})
+        record(hashlib.sha256(b'archived').hexdigest())
+        control('um-4 (a): a listed file with its recorded bytes is archived', set(lessons_archive(root)) == {'a.pdf'})
+        record('0' * 64)
+        control('um-4 (a): a listed file whose bytes differ is refused', refused())
+        record(hashlib.sha256(b'archived').hexdigest(), 'https://github.com/MattRoper1977/Lessons/raw/main/')
+        control('um-4 (a): a download on a moving branch is refused', refused())
     print('self-test', 'PASS' if ok else 'FAIL')
     return ok
 
@@ -238,8 +276,10 @@ def build(output, lessons, apps=None, allow_sparse=False):
         dest.mkdir(parents=True)
         report['sources'][name]=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
         migrated=[]; copied=[]; changed=[]
+        archived=lessons_archive(root) if name == 'lessons' else {}
         for relative in tracked(root):
             if name == 'site' and relative in SITE_GENERATOR_INPUTS: continue
+            if relative in archived: continue  # um-4 (a): kept in the repository, served from it
             if not public_file(relative) or excluded_asset((prefix or '/')+relative):continue
             p=root/relative
             if not p.is_file():
@@ -311,7 +351,7 @@ def build(output, lessons, apps=None, allow_sparse=False):
         write(dest,'.nojekyll','')
         for relative in migrated:
             assert 'data-game-moved' in (dest/relative).read_text()
-        report['publications'][name]={'root':str(dest),'source_files':len(copied),'moved_game_pages':migrated,'transformed_discovery_files':changed,'output_files':sum(p.is_file() for p in dest.rglob('*'))}
+        report['publications'][name]={'root':str(dest),'source_files':len(copied),'archived_not_published':len(archived),'moved_game_pages':migrated,'transformed_discovery_files':changed,'output_files':sum(p.is_file() for p in dest.rglob('*'))}
     if report['missing_source_files']:
         report['status']='PARTIAL_SPARSE_REVIEW_ONLY'
         if not allow_sparse:raise ValueError('Full source checkout required; missing '+str(len(report['missing_source_files']))+' files')
