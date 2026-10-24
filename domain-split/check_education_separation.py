@@ -98,6 +98,7 @@ TEACHING_PACK_PENDING_SHA256 = 'ee7cb1b9595e0c1b45cdac95e148170c5913c1f055203752
 # a prefix passes with its reviewed rows OR those rows minus exactly its retiring rows (and, for Humanities, OR minus the RE
 # pending set), in no other state; a follow-up after the Lessons merge removes the rows from the reviewed lists and this set.
 TEACHING_PACK_RETIRING = HERE/'teaching-packs-download-usage-retiring.json'
+# Pinned by digest: the 378-row retiring set above, as measured from the um candidate build on 24 October 2026.
 TEACHING_PACK_RETIRING_SHA256 = '85f575621313902dc3580b8b6796dbe5647123c1497793a061d0898ac4e50305'
 
 
