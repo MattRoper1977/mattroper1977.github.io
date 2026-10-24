@@ -157,8 +157,7 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by
 # re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
     '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 Autumn 2 Week 1 landed: 1417 rows; built by the Site fallback Lessons 9ed44bdf
-    '1a358a41168f6d1205a3d3bd855753a6c6400855626c6660cf652e3947b89a57',   # uf landed (Lessons #709, 6b6bbe9a): built by Lessons main, 1470 rows; retired at the uj follow-up
-    '5c4fc9892e60f5e50ae7712a1fe44f5c6ab355e7f0a872c8143d3e612af66c9b',   # uj in flight: built by the Lessons candidate e0372310, 1503 rows
+    '5c4fc9892e60f5e50ae7712a1fe44f5c6ab355e7f0a872c8143d3e612af66c9b',   # uj landed (Lessons #710, f7d692cc): built by Lessons main, 1503 rows
 )
 
 
@@ -295,6 +294,9 @@ def registry_errors(output):
     # rows: the 1470 of 1a358a41 kept in order and unchanged, 33 joined), measured from built bytes of Site 9130f406 with that
     # candidate. Held beside the pair only while uj is in flight; after the Lessons merge a follow-up drops 1a358a41 and the
     # fence is a pair again (16195414, 5c4fc989). The collapse window is unchanged.
+    # uj follow-up (23 October 2026, ruling uj add.4): Lessons #710 merged (f7d692cc), so 5c4fc989 is what Lessons main builds and
+    # 1a358a41 (the uf state, built by nothing now) is dropped; it joins the previous digests below. The fence is the pair 16195414
+    # (the Site fallback Lessons 9ed44bdf) and 5c4fc989 (Lessons main). The collapse window is unchanged.
     baseline_shas = REGISTRY_BASELINES
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
@@ -527,9 +529,9 @@ def self_test():
     previous=('a6e96f297f62458dba23a71ed14e9dc4db06dad650ef602efb3050556620631a','2969dfef4f050cb1a6b1b5dba0a8e954e6efa49570d02fae7a7e1da4dbd00a17',
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d',
               'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',
-              '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd','60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b')
-    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','1a358a41168f6d1205a3d3bd855753a6c6400855626c6660cf652e3947b89a57','5c4fc9892e60f5e50ae7712a1fe44f5c6ab355e7f0a872c8143d3e612af66c9b') and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly 16195414 (built by the Site fallback Lessons 9ed44bdf), 1a358a41 (built by Lessons main since uf landed, Lessons #709; retired at the uj follow-up) and 5c4fc989 (uj in flight: built by the Lessons candidate e0372310); 60e0cd4c retired at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
+              '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd','60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b','1a358a41168f6d1205a3d3bd855753a6c6400855626c6660cf652e3947b89a57')
+    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','5c4fc9892e60f5e50ae7712a1fe44f5c6ab355e7f0a872c8143d3e612af66c9b') and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the pair 16195414 (built by the Site fallback Lessons 9ed44bdf) and 5c4fc989 (built by Lessons main since uj landed, Lessons #710); 1a358a41 retired at the uj follow-up, 60e0cd4c at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
