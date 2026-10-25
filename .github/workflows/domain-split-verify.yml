@@ -328,11 +328,15 @@ jobs:
           ref: 1a8e3b29ee4c5d306b9ce0fe0f601dacf3443a98
           path: .sources/Previous-Lessons
           persist-credentials: false
+      # J93 (B1): this control proves Play output only, and its checker reads only build-report.json and
+      # the games tree. At the legacy builder 0c1fd6c6 the --publication games build of this pin emits a
+      # games tree and build-report.json byte-identical to the default build's, so scoping it changes no
+      # checked byte; it only stops the education homepage binding (a newer Lessons contract) from running.
       - name: Prove every registered revision route and reject planted bytes
         run: |
           mkdir -p audit-output/source-revisions
           python domain-split/play/check_source_revision_controls.py --lessons .sources/Lessons --output domain-split/output > audit-output/source-revisions/current.json
-          python domain-split/build_publications.py --lessons .sources/Previous-Lessons --output .previous-play-output
+          python domain-split/build_publications.py --lessons .sources/Previous-Lessons --output .previous-play-output --publication games
           python domain-split/play/check_source_revision_controls.py --lessons .sources/Previous-Lessons --output .previous-play-output > audit-output/source-revisions/previous.json
       - name: Check out the exact reviewed Glitch receiver candidate
         uses: actions/checkout@v4
@@ -341,9 +345,13 @@ jobs:
           ref: 95146202d7f876800605b489de4231efe28928b9
           path: .sources/Receiver-Lessons
           persist-credentials: false
+      # J93 (B1): this control proves Play output only, and its checker reads only build-report.json and
+      # the games tree. At the legacy builder 0c1fd6c6 the --publication games build of this pin emits a
+      # games tree and build-report.json byte-identical to the default build's, so scoping it changes no
+      # checked byte; it only stops the education homepage binding (a newer Lessons contract) from running.
       - name: Prove the receiver publication and every registered byte guard
         run: |
-          python domain-split/build_publications.py --lessons .sources/Receiver-Lessons --output .receiver-play-output
+          python domain-split/build_publications.py --lessons .sources/Receiver-Lessons --output .receiver-play-output --publication games
           python domain-split/play/check_source_revision_controls.py --lessons .sources/Receiver-Lessons --output .receiver-play-output > audit-output/source-revisions/receiver.json
       - name: Verify preview and save-transfer boundaries
         run: |

@@ -27,9 +27,13 @@ jobs:
       - run: python -m pip install lxml
       - name: Prove non-route allowlist and manifest-link controls
         run: python tools/verify_as1_play_manifest.py --self-test
+      # J93 (B1): this step proves Play output only, and its checker and upload read only the games tree.
+      # At the legacy builder 0c1fd6c6 the --publication games build of this pin emits a games tree
+      # byte-identical to the default build's, so scoping it changes no checked byte; it only stops the
+      # education homepage binding (a newer Lessons contract) from running.
       - name: Build unchanged game routes and verify emitted Play manifest
         run: |
-          python domain-split/build_publications.py --lessons .sources/Lessons --output /tmp/as1-publication
+          python domain-split/build_publications.py --lessons .sources/Lessons --output /tmp/as1-publication --publication games
           python tools/verify_as1_play_manifest.py --output /tmp/as1-publication/games
       - uses: actions/upload-artifact@v4
         with:
