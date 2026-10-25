@@ -27,8 +27,9 @@ async function start(page,id){
    if(i>3)break;await wait(500);
   }
  }else if(id==='apexkick'){
-  if(!await optional(page,'#bPractice')){await optional(page,'#bModes');await page.locator('#mPractice').click();}
-  await wait(4000);await optional(page,'#v6SkipFlyin');
+  // V10 (AK10-T): Keeper Glove Mode from the hub, through its own buttons. Its camera faces out of the
+  // goal, so no stadium board text is in frame.
+  await page.locator('.mode-card[data-mode="keeper"]').click();await page.locator('#btn-start-match').click();await wait(400);
  }else if(id==='voxel'){
   await page.locator('[data-mode="creative"]').click();const b=await page.locator('#start').boundingBox();page.capturePointer={x:b.x+b.width/2,y:b.y+b.height/2};await page.locator('#start').click();await wait(1800);if(!await page.evaluate(()=>!!document.pointerLockElement))await page.locator('#start').click();await page.waitForFunction(()=>!!document.pointerLockElement);
  }else if(id==='offbrand'){
@@ -53,9 +54,16 @@ async function action(page,id){
   return 'Restore a companion at the hearth, then walk from Wayfinder’s Rest into the village.';
  }
  if(id==='apexkick'){
-  await page.locator('canvas').first().click({position:{x:500,y:200}});
-  for(let i=0;i<3;i++){await press(page,'ArrowRight',230);await page.keyboard.press('q');await page.keyboard.press('Space');await wait(4400);}
-  return 'Aim and take practice free kicks, showing the real ball flight and result.';
+  // Read each run-up and dive with the game's own A/S/D keys the moment the striker shoots (the
+  // GET SET banner clears on the strike). Observations only; no state is written.
+  const shown=()=>page.evaluate(()=>document.getElementById('center-banner').classList.contains('show'));
+  for(const key of ['a','d','s','d','a']){
+   const t0=Date.now();while(await shown()&&Date.now()-t0<6000)await wait(40);
+   await wait(120);await page.keyboard.press(key);
+   const t1=Date.now();while(!await shown()&&Date.now()-t1<6000)await wait(60);
+   await wait(1700);
+  }
+  return 'Keeper Glove Mode: read the striker’s run-up and dive left, right or centre to save the shot.';
  }
  if(id==='voxel'){
   const point=page.capturePointer;await page.mouse.move(point.x,point.y+380,{steps:12});await wait(700);await page.keyboard.press('7');
