@@ -210,6 +210,7 @@
     }
     $('lanes').hidden = active();
     grid.classList.toggle('is-filtering', active()); // J92 R18: the shelves unroll into a grid while filtering (CSS only)
+    requestAnimationFrame(paintShelves); // the toggle relays the tracks without a scroll or resize event: repaint their controls once layout has settled
     paintActiveFilters();
     $('filters-open').setAttribute('aria-pressed', String(Boolean(state.genre || state.control || state.mode || state.list)));
     document.querySelectorAll('[data-collection]').forEach(a => { if (a.dataset.collection === state.list) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
