@@ -38,20 +38,30 @@ Where each slot comes from (uz-6 (b)):
   HUB_LINKS carries it; /tools/ is kept only while the Site page it serves
   (tools/index.html) exists. A card whose route is not served is omitted, never
   left empty. The four <template> slots stay inert.
-* What's new (uz-6 (f)): there is no Education updated feed, so the whole
-  section#whats-new is omitted. Play data is never bound and never read.
+* What's new (uz-6 (f), vd-1 (a)): there is no Education updated feed, so no
+  item has a route of record and the whole section#whats-new is omitted: the
+  bound page carries neither the section nor its heading (hidden by omission,
+  never an empty heading). Play data is never bound and never read.
 * owner.makerNote and the door and pathway bylines (uz-6 (g), vb-3 (h)) are
   the owner's words of spec section 6, verbatim; each is confirmed by digest,
   never retyped.
 * PLAY_ROOT/ (masthead and footer) becomes shared_navigation.PLAY, the Play
   root the stamped menu already links (lane decision LD5).
-* No JSON-LD and no Person block (uz-6 (g)); no qualification badges and no
-  awarding-body or exam-board text (vb-3 (d)).
+* SEO-1 (vd-1 (b), which rules the README section 10 block that uz-6 (g) had
+  left out): one JSON-LD block, a WebSite and a Person, stamped before </head>.
+  Both are named with the owner's brand line: the part of the draft's typed
+  <title> after its last ' · ', confirmed equal (ignoring case) to the chrome's
+  brand credit. The WebSite carries url origin + '/', the draft's html lang and
+  the Person as publisher; the Person carries only its @id (origin + '/#about',
+  the Meet section) and the name. No contact details of any kind (no email,
+  telephone, address, contactPoint, sameAs, url or similar on the Person).
+* No qualification badges and no awarding-body or exam-board text (vb-3 (d)).
 
 data-sample is dropped from every element the build fills; every other
 attribute and all other markup is kept. The self-test proves that the output
 differs from the draft only by slot values, the regenerated badge lists, the
-omitted section and cards, PLAY_ROOT and the dropped data-sample.
+omitted section and cards, PLAY_ROOT, the dropped data-sample and the stamped
+SEO-1 block.
 
 A slot that cannot be filled stops the build: the page is never published
 half-filled.
@@ -126,6 +136,10 @@ TEXT_SLOT = re.compile(r'(<(\w+)\b([^>]*?)\sdata-slot="([^"]+)"([^>]*)>)([^<]*)(
 START_TAG = re.compile(r'<(\w+)\b[^>]*>')
 ATTR_SLOT = re.compile(r'\sdata-slot-attr="(\w+):([^"]+)"')
 SAMPLE = ' data-sample="none"'
+# vd-1 (b): the stamped SEO-1 line, and the keys a contact detail would use (none may appear).
+LD_LINE = re.compile(r'<script type="application/ld\+json">[^\n]*</script>\n')
+CONTACT_KEYS = {'email', 'telephone', 'faxNumber', 'address', 'contactPoint', 'sameAs', 'url', 'contactType',
+                'areaServed', 'location', 'homeLocation', 'workLocation', 'image'}
 # encodeURI's reserved set, so a path is linked the way the hub's safeHref links it.
 URI_SAFE = "/;,?:@&=+$-_.!~*'()#"
 
@@ -371,6 +385,29 @@ def pack_list(match, sources):
     return head + ''.join(out) + tail
 
 
+def seo_json_ld(text, sources):
+    """SEO-1 (vd-1 (b)): the WebSite and Person block, named with the owner's brand line; no contact details."""
+    title = re.findall(r'<title data-slot="seo.title">([^<]*)</title>', text)
+    if len(title) != 1 or ' · ' not in html.unescape(title[0]):
+        raise ValueError('The draft title carries no brand line after " · "')
+    brand = html.unescape(title[0]).rsplit(' · ', 1)[1].strip()
+    if not brand or brand.casefold() != sources['credit'].casefold():
+        raise ValueError('The brand line of the title is not the chrome brand credit')
+    lang = re.findall(r'<html lang="([^"]+)">', text)
+    if len(lang) != 1:
+        raise ValueError('The draft has no single html lang')
+    origin = sources['origin']
+    person = {'@type': 'Person', '@id': origin + '/#about', 'name': brand}
+    data = {'@context': 'https://schema.org', '@graph': [
+        {'@type': 'WebSite', '@id': origin + '/#website', 'url': origin + '/', 'name': brand, 'inLanguage': lang[0],
+         'publisher': {'@id': person['@id']}},
+        person]}
+    if CONTACT_KEYS & set(person):
+        raise ValueError('The Person block carries a contact detail')
+    block = json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+    return '<script type="application/ld+json">' + block + '</script>\n'
+
+
 def bind(template, sources, check_digest=True):
     """The filled page. Refuses, rather than returning a half-filled page."""
     if check_digest and sha256(template) != TEMPLATE_SHA256:
@@ -457,10 +494,14 @@ def bind(template, sources, check_digest=True):
         raise ValueError('The draft does not carry PLAY_ROOT/ twice (masthead and footer)')
     text = text.replace(PLAY_ROOT, sources['play'])
     for needle, why in ((SAMPLE, 'an unfilled data-sample'), ('data-sample', 'a data-sample'),
-                        ('id="whats-new"', "the What's new section"), ('application/ld+json', 'JSON-LD'),
+                        ('id="whats-new"', "the What's new section"), ('application/ld+json', 'JSON-LD of its own'),
                         ('data-mailing-link', 'a mailing link'), ('PLAY_ROOT', 'PLAY_ROOT')):
         if needle in text:
             raise ValueError('The bound page still carries ' + why)
+    # vd-1 (b): SEO-1 stamped at build, once, before </head>.
+    if text.count('</head>') != 1:
+        raise ValueError('The draft has no single </head>')
+    text = text.replace('</head>', seo_json_ld(text, sources) + '</head>', 1)
     return text
 
 
@@ -481,6 +522,7 @@ def neutral(text):
     """The page with every bindable thing blanked, so draft and output compare
     byte for byte: slot values, badge lists, PLAY, What's new, data-sample."""
     text = WHATS_NEW.sub('', text)
+    text = LD_LINE.sub('', text)
     text = PACK_LIST.sub(lambda m: m.group(1) + m.group(3).splitlines(keepends=True)[0] + '§PACK§\n' + m.group(4), text)
     text = TEXT_SLOT.sub(lambda m: m.group(1).replace(SAMPLE, '') + '§' + m.group(7), text)
 
@@ -572,7 +614,31 @@ def self_test(lessons_root=None):
                 len(play_titles) == 6 and not any(t in page for t in play_titles))
         control('PLAY_ROOT/ becomes shared_navigation.PLAY twice; no data-sample is left',
                 page.count('href="' + play + '"') == 2 and 'data-sample' not in page and 'PLAY_ROOT' not in page)
-        control('no JSON-LD and no mailing link', 'ld+json' not in page and 'data-mailing-link' not in page)
+        control('no mailing link (vd-1 (c))', 'data-mailing-link' not in page)
+        blocks = LD_LINE.findall(page)
+        ld = json.loads(blocks[0].split('>', 1)[1].rsplit('</script>', 1)[0]) if len(blocks) == 1 else {}
+        graph = {g.get('@type'): g for g in ld.get('@graph', [])}
+
+        def keys(o):
+            return set(o) | {k for v in o.values() if isinstance(v, dict) for k in keys(v)} if isinstance(o, dict) else set()
+        brand = html.unescape(re.findall(r'<title data-slot="seo.title">([^<]*)</title>', template)[0]).rsplit(' · ', 1)[1]
+        control('SEO-1 (vd-1 (b)): exactly one JSON-LD block, before </head>, a WebSite and a Person',
+                len(blocks) == 1 and page.index(blocks[0]) < page.index('</head>') < page.index('<body')
+                and sorted(graph) == ['Person', 'WebSite'] and ld.get('@context') == 'https://schema.org')
+        control("SEO-1: both named with the owner's brand line (the title's, = the chrome credit ignoring case)",
+                graph.get('WebSite', {}).get('name') == graph.get('Person', {}).get('name') == brand
+                and brand.casefold() == base['credit'].casefold())
+        control('SEO-1: WebSite url is origin + "/", publisher is the Person; the Person carries no contact detail',
+                graph.get('WebSite', {}).get('url') == origin + '/'
+                and graph.get('WebSite', {}).get('publisher', {}).get('@id') == graph.get('Person', {}).get('@id') == origin + '/#about'
+                and not (CONTACT_KEYS & keys(graph.get('Person', {}))) and set(graph.get('Person', {})) == {'@type', '@id', 'name'})
+        retitled = re.sub(r'( · )[^<"]*(</title>)', r'\1Another brand\2', template, count=1)
+        retitled = re.sub(r'(<meta property="og:title"[^>]*content="[^"]*· )[^"]*(")', r'\1Another brand\2', retitled, count=1)
+        control('SEO-1 plant: a title brand line that is not the chrome credit is refused',
+                'brand line' in refusal(bind, retitled, base, check_digest=False))
+        own_ld = template.replace('</head>', '<script type="application/ld+json">{}</script>\n</head>', 1)
+        control('SEO-1 plant: a draft carrying JSON-LD of its own is refused',
+                'JSON-LD of its own' in refusal(bind, own_ld, base, check_digest=False))
         badges = [len(re.findall(r'<li class="home-pack-badge', m.group(3))) for m in PACK_LIST.finditer(page)]
         control('badges per card = 1 lesson + the folder minus the page, approved-mark.jpg and images',
                 badges == [1 + len(samples[i][2:]) // 2 for i in range(3)] == [9, 9, 9], str(badges))
@@ -663,7 +729,10 @@ def self_test(lessons_root=None):
             control('real: the output differs from the draft only where the build fills it',
                     neutral(real_page.replace(play, PLAY_ROOT)) == neutral(template))
             control('real: no Play file is read', not any('/play/' in r or 'evidence.json' in r for r in reads), f'{len(reads)} reads')
-            before, after = WHATS_NEW.sub('', template).splitlines(), real_page.splitlines()
+            control('real: one SEO-1 block, named with the brand line, no contact detail',
+                    len(LD_LINE.findall(real_page)) == 1 and not any('"' + k + '"' in LD_LINE.findall(real_page)[0]
+                                                                  for k in CONTACT_KEYS - {'url'}))
+            before, after = WHATS_NEW.sub('', template).splitlines(), LD_LINE.sub('', real_page).splitlines()
             moved = [i for i, (a, b) in enumerate(zip(before, after)) if a != b]
             control('real: every line that moved is a slot line or a PLAY_ROOT line',
                     len(before) == len(after) and all('data-slot' in before[i] or PLAY_ROOT in before[i] for i in moved),
