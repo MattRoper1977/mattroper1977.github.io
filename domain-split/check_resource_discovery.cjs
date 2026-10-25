@@ -150,7 +150,11 @@ async function responsiveChecks(browser) {
       for (const [target, name] of [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/Matt-s-Apps-/', 'Apps & tools']]) {
         // SW2 H retires the duplicate place cards. The native menu preserves all three destinations.
         const menu = page.locator('.mbm-unified-menu');
-        if (!(await menu.locator('nav').isVisible())) await menu.locator('summary').click();
+        // J93 (uz-6 (c)): the menu panel nests its own Display options <details>, so a bare
+        // 'summary' matches two. The toggle is the menu's OWN summary: its direct child, exactly one.
+        const ownSummary = menu.locator(':scope > summary');
+        assert.equal(await ownSummary.count(), 1, `${home} menu needs exactly one summary of its own`);
+        if (!(await menu.locator('nav').isVisible())) await ownSummary.click();
         const link = menu.getByRole('link', {name, exact:true});
         assert.equal(await link.count(), 1, `${home} lacks the ${name} place`);
         assert.equal(routeOf(await link.getAttribute('href'), home), routeOf(target));
