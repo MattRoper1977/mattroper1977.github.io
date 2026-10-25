@@ -148,7 +148,7 @@ def audience_doors(site_source):
 def render_doors(doors):
     start, end = FILLED['audience-doors']
     cards = ''.join('<a class="door-card door-' + esc(key) + '" href="' + esc(route) + '"><strong>'
-                    + esc(label) + '</strong><span>' + esc(description) + '</span></a>\n'
+                    + esc(label) + '</strong> <span>' + esc(description) + '</span></a>\n'
                     for key, route, label, description in doors)
     return start + '\n' + cards + end
 
