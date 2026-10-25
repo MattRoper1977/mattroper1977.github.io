@@ -621,6 +621,17 @@ def verify_once(
             errors.append(f"{path}: request failed: {exc}")
             pages[path] = {"error": str(exc)}
 
+    # The transition form accepts the J93 page or the legacy page, but ONE of them: / and /main/
+    # are the same homepage, so a publication serving legacy on one and J93 on the other is a
+    # half-landed state, not a transition (as check_completion.cjs:86 asserts on the built tree).
+    # A route that is neither, or that failed, has already been reported above.
+    if publication == "education":
+        forms = {route: pages.get(route, {}).get("served_home") for route in J93_HOME_ROUTES}
+        if None not in forms.values() and len(set(forms.values())) > 1:
+            errors.append("/ and /main/ serve different homepages ("
+                          + ", ".join(f"{route} = {form}" for route, form in forms.items())
+                          + "); both must be the same form")
+
     asset_paths = EDUCATION_ASSETS if publication == "education" else ASSETS
     for path, local_path in asset_paths.items():
         expected = local_path.read_bytes()
