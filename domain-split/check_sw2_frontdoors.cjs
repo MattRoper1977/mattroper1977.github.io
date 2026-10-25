@@ -21,6 +21,8 @@ const HOME_DRAFT = fs.readFileSync(path.join(__dirname, 'home/home.html'), 'utf8
 const CHROME_HEADER = fs.readFileSync(path.join(__dirname, '..', 'tools/chrome/header.html'), 'utf8');
 const EMBLEM = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'assets/brand/approved-mark-provenance.json'), 'utf8'));
 const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+// G1 (gates review F1): the flagship of record and its spec fallback, pinned in the fixture (never taken from the page).
+const FLAGSHIP_OF_RECORD = JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/appendix-a-site.json'), 'utf8')).homeFlagship;
 const squash = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
 exports.verify = async ({page, origin, rules, record}) => {
   const rows = await (await page.request.get(origin+'/Lessons/resources.json')).json();
@@ -44,7 +46,7 @@ exports.verify = async ({page, origin, rules, record}) => {
   const weekLabel = flagshipView[0]?.week, flagshipSlug = (flagshipView[0]?.link || '').split('subject=')[1];
   assert(weekLabel && flagshipSlug, 'J93 flagship cards are present (week label and subject hub link)');
   await page.goto(origin+'/Lessons/subject.html?subject='+encodeURIComponent(flagshipSlug)); await page.waitForLoadState('networkidle');
-  const hub = await page.evaluate(async ({slugs, flagshipSlug, weekLabel, pathways}) => {
+  const hub = await page.evaluate(async ({slugs, flagshipSlug, weekLabel, pathways, specs}) => {
     const H = window.MBM_HUB; if (!H) return null;
     const state = await H.loadAll(), cards = H.cardsFromRows(state.rows), card = q => cards.find(c => c.slug === H.slugForQuery(q));
     const registry = new Set((await (await fetch('resources.json')).json()).map(r => r.file || r.url));
@@ -52,12 +54,26 @@ exports.verify = async ({page, origin, rules, record}) => {
     const fc = card(flagshipSlug);
     return {terms: H.HALF_TERMS.slice(), counts: Object.fromEntries(slugs.map(q => [q, card(q) ? H.distinctLessons(card(q).rows) : null])),
       flagship: pathways.map(t => (fc ? fc.rows : []).filter(H.isLesson).filter(r => registry.has(r._path) && String(r._tier) === t).flatMap(r =>
-        ((entries[r._path] && entries[r._path].weeks) || []).filter(w => w && w.label === weekLabel).map(w => ({file: r._path, title: H.displayTitle(r), desc: r.desc == null ? null : String(r.desc), term: w.term, week: w.week}))))};
-  }, {slugs: ['science','humanities-re','art-studio','lifeskills'], flagshipSlug, weekLabel, pathways: PATHWAYS});
+        ((entries[r._path] && entries[r._path].weeks) || []).filter(w => w && w.label === weekLabel).map(w => ({file: r._path, title: H.displayTitle(r), desc: r.desc == null ? null : String(r.desc), term: w.term, week: w.week})))),
+      // G1: how each week of record resolves on the hub, by term and week number (never by the page's label).
+      pageSlug: H.slugForQuery(flagshipSlug), recordSlugs: specs.map(s => H.slugForQuery(s.subject)),
+      ofRecord: specs.map(s => pathways.map(t => (card(s.subject) ? card(s.subject).rows : []).filter(H.isLesson).filter(r => registry.has(r._path) && String(r._tier) === t).flatMap(r =>
+        ((entries[r._path] && entries[r._path].weeks) || []).filter(w => w && w.term === s.term && w.week === s.week).map(w => ({file: r._path, label: w.label})))))};
+  }, {slugs: ['science','humanities-re','art-studio','lifeskills'], flagshipSlug, weekLabel, pathways: PATHWAYS, specs: [FLAGSHIP_OF_RECORD.ofRecord, FLAGSHIP_OF_RECORD.fallback]});
   assert(hub, 'MEASUREMENT INVALID: the Lessons hub (window.MBM_HUB) did not load');
   assert.deepEqual(hub.flagship.map(f => f.length), [1, 1, 1], 'The flagship week resolves to exactly one registry lesson per pathway on the hub');
   const flagship = hub.flagship.map(f => f[0]);
   assert.equal(new Set(flagship.map(f => f.term + ':' + f.week)).size, 1, 'The three flagship lessons are one week of the lesson order');
+  // G1: the homepage flagship is the week of record (Science, Autumn 2 Week 6) whenever that week resolves on the hub to
+  // one registry lesson per pathway under one label; only otherwise the spec fallback (Humanities & RE, Autumn 2 Week 1).
+  const resolves = weeks => weeks.every(p => p.length === 1) && new Set(weeks.map(p => p[0].label)).size === 1;
+  const due = resolves(hub.ofRecord[0]) ? 0 : resolves(hub.ofRecord[1]) ? 1 : -1;
+  assert(due >= 0, 'Neither the flagship of record nor its spec fallback resolves on the Lessons hub');
+  const spec = due === 0 ? FLAGSHIP_OF_RECORD.ofRecord : FLAGSHIP_OF_RECORD.fallback;
+  assert.equal(hub.pageSlug, hub.recordSlugs[due], 'The homepage flagship subject is the subject of record (' + spec.subject + ')');
+  assert.deepEqual(flagship.map(f => f.term + ':' + f.week), PATHWAYS.map(() => spec.term + ':' + spec.week), 'The homepage flagship week is the week of record (' + spec.term + ' Week ' + spec.week + ')');
+  assert.equal(weekLabel, hub.ofRecord[due][0][0].label, 'The homepage flagship week label is the hub label of the week of record');
+  assert.deepEqual(flagship.map(f => f.file), hub.ofRecord[due].map(p => p[0].file), 'The three flagship lessons are the registry lessons of the week of record');
   for (const f of flagship) { const r = rows.find(r => (r.file || r.url) === f.file); assert(r, 'Flagship lesson is a registry row'); f.row = r; f.href = '/Lessons/' + encodeURI(f.file); f.served = (await page.request.get(origin + f.href)).ok(); }
   for(const width of [320,390,900,1280]) for(const route of ['/','/for/teachers/','/for/pupils/']) {
     if(width===320&&route!=='/')continue; // New narrow-screen coverage is for the changed homepage.
