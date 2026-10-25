@@ -9,7 +9,7 @@
   const games = data.games, byId = new Map(games.map(g => [g.id, g]));
   const catalogue = games.filter(g => g.group === 'games');
   const keys = {favourites:'mbm_play_favourites_v1',recent:'mbm_play_recently_opened_v1',position:'mbm_play_browse_position_v1'};
-  const fields = ['q', 'mood', 'genre', 'control', 'mode', 'list'];
+  const fields = ['q', 'mood', 'genre', 'control', 'mode', 'list', 'facet'];
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const title = g => g.displayTitle || g.title;
@@ -34,9 +34,18 @@
   const cards = [...grid.querySelectorAll('[data-card]')].map(el => ({el, ids: el.dataset.games.split(' '), shown: el.dataset.card}));
   const activityCards = [...grid.querySelectorAll('[data-activity]')].map(el => ({el, g: byId.get(el.dataset.activity)}));
   const normalize = v => String(v).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  // Search covers title, category and the one-line descriptions (TX (b)).
-  const searchable = new Map(games.map(g => [g.id, normalize([g.title, g.displayTitle || '', g.series || '', g.genre, g.line || '', g.description].join(' '))]));
-  const state = {q: '', mood: '', genre: '', control: '', mode: '', list: ''};
+  // Search covers title, category and the one-line descriptions (TX (b)); J92 R3/R18
+  // adds the landed sub-genre, pitch and "what you do" lines, each field kept apart
+  // so a hit can say where it matched.
+  const searchFields = [['Title', g => [g.title, g.displayTitle || '', g.series || '']], ['Category', g => [g.genre]], ['Sub-genre', g => [g.subGenre || '']],
+    ['Pitch', g => [g.pitch || '']], ['Description', g => [g.line || '', g.description]], ['What you do', g => g.whatYouDo || []]];
+  const searchable = new Map(games.map(g => [g.id, searchFields.map(([label, pick]) => [label, normalize(pick(g).join(' '))])]));
+  const searchWords = () => normalize(state.q).split(/\s+/).filter(Boolean);
+  const searchHit = (g, words) => words.every(w => searchable.get(g.id).some(([, text]) => text.includes(w)));
+  const matchedIn = g => { const words = searchWords(); if (!words.length) return ''; const field = searchable.get(g.id).find(([, text]) => words.some(w => text.includes(w))); return field ? 'Matched in ' + field[0] : ''; };
+  const state = {q: '', mood: '', genre: '', control: '', mode: '', list: '', facet: ''};
+  const facetNames = (data.facets || []).map(f => f.name);
+  const bandLabel = g => (g.sessionBand && data.bandLabels && data.bandLabels[g.sessionBand]) || '';
   let activeGame = null, returnFocus = null, cameFromGame = false, filtersOpener = null;
 
   /* ---- spotlight: one featured game at a time, advanced only by Next ---- */
@@ -46,25 +55,32 @@
     spotIndex = (i + spots.length) % spots.length;
     spots.forEach((el, k) => { el.hidden = k !== spotIndex; });
     $('spot-status').textContent = (spotIndex + 1) + ' of ' + spots.length;
+    // J92 R17: the dots and the playlist mark the shown row; they select, never advance.
+    document.querySelectorAll('[data-spot-select]').forEach(b => b.setAttribute('aria-current', String(Number(b.dataset.spotSelect) === spotIndex)));
   }
   if (spots.length > 1) {
-    $('spot-next').hidden = false; $('spot-status').hidden = false; showSpot(0);
+    $('spot-next').hidden = false; $('spot-status').hidden = false;
+    document.querySelectorAll('.spot-dots, .featured-playlist').forEach(el => { el.hidden = false; });
+    const stage = document.querySelector('.spotlight-stage'); if (stage && stage.querySelector('.featured-playlist')) stage.classList.add('has-playlist');
+    showSpot(0);
     $('spot-next').addEventListener('click', () => showSpot(spotIndex + 1));
   }
   /* ---- shelves: 44px previous/next scroll each horizontal track ---- */
   const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const shelves = [...document.querySelectorAll('[data-shelf]')].map(el => ({el, track: el.querySelector('.shelf-track'), nav: el.querySelector('.shelf-nav'), count: el.querySelector('[data-shelf-count]'), base: el.querySelector('[data-shelf-count]').textContent}));
+  // J92 R6: the "New and updated" rail ([data-rail]) shares the track controls but is not a shelf.
+  const tracks = [...document.querySelectorAll('[data-shelf], [data-rail]')].map(el => ({el, track: el.querySelector('.shelf-track'), nav: el.querySelector('.shelf-nav'), count: el.querySelector('[data-shelf-count]'), base: el.querySelector('[data-shelf-count]').textContent}));
+  const shelves = tracks.filter(s => 'shelf' in s.el.dataset);
   function paintShelfNav(s) {
     const t = s.track, overflow = t.scrollWidth > t.clientWidth + 1;
     s.nav.hidden = !overflow;
     const [prev, next] = s.nav.querySelectorAll('[data-shelf-step]');
     prev.disabled = t.scrollLeft <= 1; next.disabled = t.scrollLeft + t.clientWidth >= t.scrollWidth - 1;
   }
-  shelves.forEach(s => {
+  tracks.forEach(s => {
     s.nav.addEventListener('click', e => { const b = e.target.closest('[data-shelf-step]'); if (!b) return; s.track.scrollBy({left: Number(b.dataset.shelfStep) * Math.max(160, s.track.clientWidth * 0.9), behavior: reduced() ? 'auto' : 'smooth'}); });
     s.track.addEventListener('scroll', () => paintShelfNav(s), {passive: true});
   });
-  const paintShelves = () => shelves.forEach(paintShelfNav);
+  const paintShelves = () => tracks.forEach(paintShelfNav);
   window.addEventListener('resize', paintShelves);
   function bindImages(root) {
     root.querySelectorAll('.thumb img').forEach(img => {
@@ -76,11 +92,13 @@
 
   /* ---- filtering ---- */
   function matches(g) {
-    const words = normalize(state.q).split(/\s+/).filter(Boolean);
+    const words = searchWords();
     const selected = state.list === 'favourites' ? favourites : state.list === 'recent' ? recent : null;
-    return words.every(w => searchable.get(g.id).includes(w)) && (!state.genre || g.genre === state.genre) && (!state.mood || (g.moods || []).includes(state.mood)) &&
+    // J92 R9: a facet filters strictly on the declared classroom_facets values.
+    return searchHit(g, words) && (!state.genre || g.genre === state.genre) && (!state.mood || (g.moods || []).includes(state.mood)) &&
       (!state.control || (state.control === 'unknown' ? !(g.controls || []).length : (g.controls || []).includes(state.control))) &&
       (!state.mode || (state.mode === 'unknown' ? !(g.modes || []).length : (g.modes || []).includes(state.mode))) &&
+      (!state.facet || (g.facets || []).includes(state.facet)) &&
       (!selected || selected.includes(g.id));
   }
   const active = () => fields.some(k => state[k]);
@@ -94,15 +112,31 @@
     state.q = (params.get('q') || '').slice(0, 160);
     state.mood = ['Calm','Fast','Thinky','Together'].includes(params.get('mood')) ? params.get('mood') : '';
     state.genre = data.genres.some(x => x.name === params.get('genre')) ? params.get('genre') : '';
+    state.facet = facetNames.includes(params.get('facet')) ? params.get('facet') : '';
     for (const k of ['control', 'mode', 'list']) { const el = $(k), v = params.get(k) || ''; state[k] = [...el.options].some(o => o.value === v) ? v : ''; }
     paintControls();
   }
   function paintControls() {
     query.value = state.q; ['genre', 'control', 'mode', 'list'].forEach(k => { $(k).value = state[k]; });
     document.querySelectorAll('.chip-button').forEach(b => {
-      const on = b.dataset.chip === 'genre' ? state.genre === b.dataset.genre : b.dataset.chip === 'control' ? state.control === b.dataset.control : !state.genre && !state.control && !state.mood;
+      const on = b.dataset.chip === 'genre' ? state.genre === b.dataset.genre : b.dataset.chip === 'control' ? state.control === b.dataset.control : !state.genre && !state.control && !state.mood && !state.facet;
       b.setAttribute('aria-pressed', String(on));
     });
+    document.querySelectorAll('.facet-chip').forEach(b => b.setAttribute('aria-pressed', String(state.facet === b.dataset.facet)));
+  }
+  // J92 R18: one removable chip per active filter, named by the control's own
+  // option text or value, plus Clear all. Nothing shows when nothing is active.
+  const facetLabel = f => f.slice(0, 1).toUpperCase() + f.slice(1);
+  function paintActiveFilters() {
+    const bar = $('active-filters'), items = [];
+    if (state.q) items.push(['q', $('query').labels[0].textContent + ': ' + state.q]);
+    if (state.mood) items.push(['mood', state.mood]);
+    if (state.genre) items.push(['genre', state.genre]);
+    for (const k of ['control', 'mode', 'list']) if (state[k]) { const el = $(k), opt = [...el.options].find(o => o.value === state[k]); items.push([k, el.labels[0].textContent + ': ' + (opt ? opt.textContent : state[k])]); }
+    if (state.facet) items.push(['facet', facetLabel(state.facet)]);
+    bar.hidden = items.length === 0;
+    bar.innerHTML = items.length ? items.map(([k, label]) => '<button type="button" class="active-filter" data-remove-filter="' + k + '" aria-label="Remove filter: ' + esc(label) + '">' + esc(label) + ' <span aria-hidden="true">×</span></button>').join('')
+      + '<button type="button" class="button clear-all" data-clear-all>Clear all</button>' : '';
   }
   function render({url = true} = {}) {
     const focused = document.activeElement, focusedCard = focused && focused.closest('[data-card]');
@@ -116,7 +150,11 @@
         const g = hits[0], play = card.el.querySelector('.card-actions [data-play]');
         const changedEdition = card.shown !== g.id; card.shown = g.id;
         card.el.querySelector('.card-title').textContent = active() ? title(g) : (g.series || title(g));
-        card.el.querySelector('.card-line').textContent = g.line || g.genre;
+        // J92 R3: body = pitch, kicker = sub_genre; R14: the guide link follows the shown edition; R18: where a search matched.
+        card.el.querySelector('.card-line').textContent = g.pitch || g.line || g.genre;
+        const kickerEl = card.el.querySelector('.card-kicker'); if (kickerEl) { kickerEl.textContent = g.subGenre || ''; kickerEl.hidden = !g.subGenre; }
+        const guide = card.el.querySelector('.guide-link'); if (guide) guide.setAttribute('href', '?game=' + encodeURIComponent(g.id));
+        const hint = card.el.querySelector('.card-match'), where = matchedIn(g); if (hint) { hint.textContent = where; hint.hidden = !where; }
         play.dataset.play = g.id; play.href = g.route; play.querySelector('.sr-only').textContent = ' ' + title(g);
         // The card's Play anchor above is repointed at the matching edition, so the static
         // edition list is derived here too: exactly card.ids minus whoever the Play anchor
@@ -137,16 +175,16 @@
           thumb.className = 'thumb' + (source ? '' : ' thumb-block');
           thumb.innerHTML = source ? '<img src="' + esc(source) + '" alt="" loading="lazy" width="640" height="360">' : '<span class="thumb-title">' + esc(title(g)) + '</span>';
           if (source) thumb.removeAttribute('aria-hidden'); else thumb.setAttribute('aria-hidden', 'true');
-          card.el.querySelector('.card-meta').innerHTML = (card.ids.length > 1 ? '<span class="chip">' + card.ids.length + ' editions</span>' : '') + (g.updated ? '<span class="chip">Updated ' + esc(g.updated.label) + '</span>' : '') + (needsKeyboard(g) ? '<span class="chip warn" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>Needs a keyboard</span>' : '');
+          card.el.querySelector('.card-meta').innerHTML = (card.ids.length > 1 ? '<span class="chip">' + card.ids.length + ' editions</span>' : '') + (g.updated ? '<span class="chip">Updated ' + esc(g.updated.label) + '</span>' : '') + (bandLabel(g) ? '<span class="chip pill-session">' + esc(bandLabel(g)) + '</span>' : '') + (needsKeyboard(g) ? '<span class="chip warn" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>Needs a keyboard</span>' : '');
           bindImages(card.el);
         }
       }
     }
     // Activities live on the Classroom shelf: shown for All, the Classroom chip and a search.
-    const activityState = !state.mood && !state.control && !state.mode && !state.list && (!state.genre || state.genre === 'Classroom');
-    const words = normalize(state.q).split(/\s+/).filter(Boolean);
+    const activityState = !state.mood && !state.control && !state.mode && !state.list && !state.facet && (!state.genre || state.genre === 'Classroom');
+    const words = searchWords();
     let shownActivities = 0;
-    for (const a of activityCards) { const on = activityState && words.every(w => searchable.get(a.g.id).includes(w)); a.el.hidden = !on; if (on) shownActivities++; }
+    for (const a of activityCards) { const on = activityState && searchHit(a.g, words); a.el.hidden = !on; if (on) shownActivities++; const hint = a.el.querySelector('.card-match'), where = on ? matchedIn(a.g) : ''; if (hint) { hint.textContent = where; hint.hidden = !where; } }
     // Recently opened orders cards within each shelf; every card keeps its own shelf.
     for (const s of shelves) {
       const own = cards.filter(c => c.el.parentElement === s.track);
@@ -171,6 +209,8 @@
       button.textContent = 'Remove'; button.setAttribute('aria-label', 'Remove from recently opened: ' + title(g)); card.el.append(button);
     }
     $('lanes').hidden = active();
+    grid.classList.toggle('is-filtering', active()); // J92 R18: the shelves unroll into a grid while filtering (CSS only)
+    paintActiveFilters();
     $('filters-open').setAttribute('aria-pressed', String(Boolean(state.genre || state.control || state.mode || state.list)));
     document.querySelectorAll('[data-collection]').forEach(a => { if (a.dataset.collection === state.list) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     paintFavourite();
@@ -231,6 +271,17 @@
     const editions = $('dialog-editions'), members = (g.editions || []).map(id => byId.get(id)).filter(Boolean);
     editions.hidden = members.length < 2;
     editions.querySelector('ul').innerHTML = members.map(m => '<li' + (m.id === g.id ? ' aria-current="true"' : '') + '><button type="button" class="edition-open" data-edition="' + esc(m.id) + '">' + esc(title(m)) + '</button><a class="play small" data-play="' + esc(m.id) + '" href="' + esc(m.route) + '">Play<span class="sr-only"> ' + esc(title(m)) + '</span></a></li>').join('');
+    // J92 R4/R10: the landed "what you do" lines, with the enrichment's input names and
+    // the session band as pills -- shown here only, never as a filter. Rows without
+    // enrichment (the activities, the staff tool) keep the record's paragraphs.
+    const lines = g.whatYouDo || [], pills = (g.inputs || []).map(i => '<span class="chip pill-input">' + esc(i) + '</span>').join('') + (bandLabel(g) ? '<span class="chip pill-session">' + esc(bandLabel(g)) + '</span>' : '');
+    $('dialog-what-you-do').hidden = !lines.length;
+    $('dialog-what-list').innerHTML = lines.map(l => '<li>' + esc(l) + '</li>').join('');
+    $('dialog-inputs').innerHTML = lines.length ? pills : '';
+    // J92 R18: similar games are the catalogue's other rows of the same genre, manifest order, editions of this game excluded.
+    const kin = new Set(g.editions || [g.id]), peers = catalogue.filter(o => o.genre === g.genre && !kin.has(o.id)).slice(0, 3), similar = $('dialog-similar');
+    similar.hidden = !peers.length;
+    similar.querySelector('ul').innerHTML = peers.map(m => '<li><button type="button" class="edition-open" data-edition="' + esc(m.id) + '">' + esc(title(m)) + '</button><a class="play small" data-play="' + esc(m.id) + '" href="' + esc(m.route) + '">Play<span class="sr-only"> ' + esc(title(m)) + '</span></a></li>').join('');
     $('dialog-favourite').dataset.favourite = g.id; paintFavourite(); $('share-status').textContent = '';
     poster(g);
     history.replaceState(history.state, '', addressWithGame(g));
@@ -302,14 +353,22 @@
   document.addEventListener('click', e => {
     const collection = e.target.closest('a[data-collection]');
     if (collection && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { e.preventDefault(); choose({q: '', mood: '', genre: '', control: '', mode: '', list: collection.dataset.collection}, true); $('all-games-title').focus({preventScroll: true}); return; }
-    const chip = e.target.closest('.chip-button');
+    const chip = e.target.closest('.chip-button, .facet-chip');
     if (chip) {
       const kind = chip.dataset.chip;
       if (kind === 'genre') choose({genre: state.genre === chip.dataset.genre ? '' : chip.dataset.genre}, true);
       else if (kind === 'control') choose({control: state.control === chip.dataset.control ? '' : chip.dataset.control}, true);
-      else choose({mood: '', genre: '', control: ''}, false);
+      else if (kind === 'facet') choose({facet: state.facet === chip.dataset.facet ? '' : chip.dataset.facet}, true);
+      else choose({mood: '', genre: '', control: '', facet: ''}, false);
       return;
     }
+    const removeFilter = e.target.closest('[data-remove-filter]');
+    if (removeFilter) { choose({[removeFilter.dataset.removeFilter]: ''}, false); ($('active-filters').querySelector('.active-filter') || $('all-games-title')).focus(); return; }
+    if (e.target.closest('[data-clear-all]')) { reset(); $('all-games-title').focus(); return; }
+    const select = e.target.closest('[data-spot-select]');
+    if (select) { showSpot(Number(select.dataset.spotSelect)); return; }
+    const guide = e.target.closest('a.guide-link');
+    if (guide && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { const id = new URL(guide.href).searchParams.get('game'); if (byId.has(id)) { e.preventDefault(); openInfo(byId.get(id), guide); } return; }
     if (e.target.closest('[data-clear-recent]')) { changeRecent(); return; }
     const remove = e.target.closest('[data-remove-recent]');
     if (remove) { changeRecent(remove.dataset.removeRecent); return; }
