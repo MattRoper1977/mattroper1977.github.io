@@ -143,6 +143,8 @@ def self_test():
         control('um-4 (a): a listed file whose bytes differ is refused', refused())
         record(hashlib.sha256(b'archived').hexdigest(), 'https://github.com/MattRoper1977/Lessons/raw/main/')
         control('um-4 (a): a download on a moving branch is refused', refused())
+    from subject_slots import self_test as subject_slots_self_test
+    control('J91: the subject-page slots pass their own self-test', subject_slots_self_test())
     print('self-test', 'PASS' if ok else 'FAIL')
     return ok
 
@@ -356,6 +358,13 @@ def build(output, lessons, apps=None, allow_sparse=False):
         report['status']='PARTIAL_SPARSE_REVIEW_ONLY'
         if not allow_sparse:raise ValueError('Full source checkout required; missing '+str(len(report['missing_source_files']))+' files')
     if not apps:report['apps']='Not supplied; separate Apps output still required'
+    # J91 (ug add.1 (a) and (d); ug add.11 (a) and (d)+(h)): the two slots of the published
+    # /Lessons/subject.html, filled from the copied registry before any generator walks the
+    # pages, so navigation, usage and the support walk see the page as it is published. A
+    # page without the markers stays byte-exact and nothing is read.
+    from subject_slots import fill_subject_page
+    slots = fill_subject_page(output, ROOT)
+    if slots: report['subject_slots'] = slots
     if apps and not report['missing_source_files']:
         refresh_resource_discovery(output, lessons, apps, ROOT)
         report['primary_discovery'] = refresh_primary(output, lessons, apps, ROOT)['counts']
@@ -379,6 +388,9 @@ def build(output, lessons, apps=None, allow_sparse=False):
             except (ValueError, UnicodeError): continue
             filtered = filter_data(data, is_game, prefix)
             if filtered != data: path.write_text(json.dumps(filtered, ensure_ascii=False, indent=2)+'\n')
+    if slots.get('lessonIndex'):
+        from subject_slots import confirm_subject_page
+        confirm_subject_page(output)  # the index still equals the registry as finally published
     from education_publication_admission import verify as verify_admission
     report['executable_admission'] = verify_admission(output)
     report['education_policy'] = {'recreational_output': 'excluded', 'source_files_removed': 0,
