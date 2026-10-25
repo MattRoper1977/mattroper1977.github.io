@@ -43,6 +43,30 @@ function assertSciencePackMembership(actual, expected) {
   assert.deepEqual(actual.decks, expected.decks, 'Science PowerPoint routes differ from the reviewed source');
   assert.deepEqual(actual.archives, expected.archives, 'Science lesson, week, whole or format archives differ from the reviewed source');
 }
+// J93 (rulings uz-6 (h), vb-3 (e)): the homepage is the bound J93 page. Retired -> replaced:
+//   #about "Made by a teacher..." with the "Meet ... ->" /commission/#about-... link
+//     -> #about is the J93 maker panel: its h2 is the Meet heading and its one link is /commission/;
+//   (new) 0 [data-mailing-link] on / and /main/ (the mailing link left the homepage with the hero).
+// Transition form (ruling rd-6 (b') "pending-set transition form (A)", LD9): this check also reads production
+// (published-completion-verify.yml), which serves the legacy page until the J93 Site squash is published. The
+// served page is detected and that page's assertions are applied strictly. A page that is neither (or both) is
+// red, and the local mount (CI, domain-split-verify.yml) must serve J93. Remove the legacy branch once J93 is live.
+const MAKER_HEADING = 'Meet Matt';
+const LOCAL = ['localhost', '127.0.0.1', '[::1]'].includes(new URL(origin).hostname);
+async function servedHome(page) {
+  const j93 = (await page.locator('main h1#home-title').count()) === 1 && (await page.locator('link[rel="stylesheet"][href="/assets/home.css"]').count()) === 1;
+  const legacy = (await page.locator('body[data-sw2-frontdoor]').count()) === 1;
+  assert(j93 !== legacy, `The served homepage is exactly one of the J93 page and the legacy page (j93=${j93}, legacy=${legacy})`);
+  assert(j93 || !LOCAL, 'The local publication must serve the J93 homepage; the legacy form is accepted from production only');
+  return j93 ? 'j93' : 'legacy';
+}
+async function assertJ93Maker(page, route) {
+  assert.equal(await page.locator('#about').count(), 1, 'One J93 maker panel (#about): ' + route);
+  assert.equal((await page.locator('#about h2').textContent()).trim(), MAKER_HEADING, 'The maker panel heading is the Meet heading: ' + route);
+  assert.deepEqual(await page.locator('#about a[href]').evaluateAll(es => es.map(a => a.getAttribute('href'))), ['/commission/'], 'The maker panel carries exactly the /commission/ link: ' + route);
+  assert.equal((await page.locator('#about a[href="/commission/"]').textContent()).trim(), 'tell me', 'The /commission/ link is the owner words: ' + route);
+  assert.equal(await page.locator('[data-mailing-link]').count(), 0, 'No mailing link on the J93 homepage: ' + route);
+}
 const report = { cases: [], powerpoints: 0, requirePacks, pageErrors: [] };
 fs.mkdirSync(output, { recursive: true });
 (async () => {
@@ -54,16 +78,23 @@ fs.mkdirSync(output, { recursive: true });
     for (const width of [320, 390, 1280]) {
       const page = await browser.newPage({viewport: {width, height: 900}, reducedMotion: 'reduce'});
       page.on('pageerror', error => report.pageErrors.push(error.message));
+      await page.goto(origin + '/main/');
+      const mainServed = await servedHome(page);
+      if (mainServed === 'j93') await assertJ93Maker(page, '/main/');
       await page.goto(origin + '/');
-      assert.match(await page.locator('#about').innerText(), /Made by a teacher\. For real classrooms\./);
+      const served = await servedHome(page);
+      assert.equal(served, mainServed, '/ and /main/ serve the same homepage');
+      report.served = served;
+      if (served === 'legacy') assert.match(await page.locator('#about').innerText(), /Made by a teacher\. For real classrooms\./);
+      else await assertJ93Maker(page, '/');
       // HC3 §8: the home page is a pupil entry, so the injected support footer is
       // gone from it. UX2 B2: the £5–£50 commissioning block moved verbatim to
       // /commission/, linked from the maker panel; no money copy stays on /.
       assert.equal(await page.locator('[data-mbm-support-footer]').count(), 0);
       assert.equal(await page.locator('#custom-resources').count(), 0, 'The commission block is no longer on the homepage');
       assert(!/£/.test(await page.locator('body').innerText()), 'No money copy on the homepage');
-      const commissionLink = page.locator('#about a[href="/commission/#about-matt"]');
-      assert.equal(await commissionLink.innerText(), 'Meet Matt →');
+      const commissionLink = served === 'legacy' ? page.locator('#about a[href="/commission/#about-matt"]') : page.locator('#about a[href="/commission/"]');
+      if (served === 'legacy') assert.equal(await commissionLink.innerText(), 'Meet Matt →');
       assert(await page.locator('[data-mbm-navigation="education"] img').first().evaluate(e => e.complete && e.naturalWidth > 0));
       for (const theme of ['cream', 'dark']) {
         await page.evaluate(t => document.documentElement.setAttribute('data-theme', t), theme);
@@ -71,7 +102,7 @@ fs.mkdirSync(output, { recursive: true });
       }
       await commissionLink.click();
       assert.equal(new URL(page.url()).pathname, '/commission/');
-      assert.equal(new URL(page.url()).hash, '#about-matt');
+      assert.equal(new URL(page.url()).hash, served === 'legacy' ? '#about-matt' : '');
       await page.locator('#about-matt-title').waitFor({state:'visible'});
       assert.equal(await page.locator('#about-matt-title').innerText(), 'About Matt');
       assert.match(await page.locator('#about-matt').innerText(), /teacher and creator behind Made by Matt/);

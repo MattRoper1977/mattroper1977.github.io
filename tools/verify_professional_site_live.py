@@ -12,13 +12,14 @@ import argparse
 import hashlib
 import html
 import json
+import re
 import sys
 import time
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urljoin, urlparse
+from urllib.parse import unquote, urlencode, urljoin, urlparse
 from urllib.request import Request, urlopen, HTTPRedirectHandler, build_opener
 
 DEFAULT_BASE = "https://madebymatt.uk/"
@@ -118,18 +119,206 @@ EDUCATION_STATS_MARKERS = (
     'href="/stats/on-this-device/"',
 ) + EDUCATION_NAVIGATION_MARKERS
 
+# J93 (rulings uz-6 (h), vb-3 (e); lane decisions LD5, LD9). The education homepage at / and /main/ is
+# the bound J93 page: domain-split/home/home.html, bound by domain-split/home_slots.py. The legacy
+# markers it retired, each REPLACED by the J93 element that took its place, never just dropped:
+#
+#   legacy <title>, legacy <h1>        -> the draft's own <title> and its one h1#home-title, read from
+#                                         the draft of record (never typed here), and exactly 1 h1
+#   data-home-search role="search"     -> the header search control: exactly one, at /resources/#rxSearch
+#   src="/assets/domain-site.js"       -> the page's own stylesheet and runtime, /assets/home.css + home.js
+#
+# and, in place of the retired hero, Try-a-lesson and mailing link: the four door cards at the record's
+# routes (data/audience-homepages.json by key), the three flagship cards BUILD, GROW, LAUNCH in order,
+# #about with its one /commission/ link, 0 [data-mailing-link], 0 #whats-new, 0 JSON-LD, exactly one
+# theme slot, the token stylesheet /assets/mbm-tokens.css, and 0 links to any game route (promotions
+# rule below). data-site-kind="education" data-page="home" still holds and is kept.
+#
+# TRANSITION FORM (ruling rd-6 (b') "pending-set transition form (A)", LD9). This gate reads
+# PRODUCTION, which serves the legacy page until the J93 Site squash is published. So it first detects
+# which page is served and then applies THAT page's assertions strictly: the J93 assertions to the J93
+# page, the unchanged legacy markers to the legacy page. A page that is neither, or that claims to be
+# both, never passes. --home-form j93 refuses the legacy page; the legacy branch and that option's
+# default go in the collapse change once J93 is live.
+HOME_DRAFT = ROOT / "domain-split" / "home" / "home.html"
+J93_HOME_ROUTES = ("/", "/main/")
+J93_DOOR_KEYS = ("pupils", "teachers", "parents", "schools")
+J93_PATHWAYS = ("BUILD", "GROW", "LAUNCH")
+J93_SEARCH_TARGET = "/resources/#rxSearch"
+J93_TOKEN_SHEET = "/assets/mbm-tokens.css"
+
+
+def _j93_door_routes() -> tuple[str, ...]:
+    record = json.loads((ROOT / "data" / "audience-homepages.json").read_text(encoding="utf-8"))["audiences"]
+    missing = [key for key in J93_DOOR_KEYS if not (record.get(key) or {}).get("route")]
+    if missing:
+        raise SystemExit(f"MEASUREMENT INVALID: the audience record has no route for door key(s) {missing}")
+    return tuple(record[key]["route"] for key in J93_DOOR_KEYS)
+
+
+J93_DOOR_ROUTES = _j93_door_routes()
+
+
+def j93_home_markers() -> tuple[str, ...]:
+    """The J93 homepage markers. Title and h1 are the draft's own elements, read from the draft of
+    record; the rest are structural hooks the binder emits, with the door routes from the record."""
+    draft = HOME_DRAFT.read_text(encoding="utf-8")
+    own = []
+    for pattern in (r"<title\b[^>]*>.*?</title>", r"<h1\b[^>]*>.*?</h1>"):
+        hits = re.findall(pattern, draft, re.S)
+        if len(hits) != 1:
+            raise SystemExit(f"MEASUREMENT INVALID: the J93 draft has {len(hits)} match(es) of {pattern}")
+        own.append(hits[0])
+    return tuple(own) + (
+        'data-site-kind="education" data-page="home"',
+        f'<link rel="stylesheet" href="{J93_TOKEN_SHEET}">',
+        '<link rel="stylesheet" href="/assets/home.css">',
+        '<script defer src="/assets/home.js"></script>',
+        '<div data-mbm-theme-slot>',
+        f'<a class="mbm-unified-search" href="{J93_SEARCH_TARGET}" aria-label="Search">',
+    ) + tuple(
+        f'<a class="home-door-card" data-slot-attr="href:audiences.doors.{i}.route" href="{route}">'
+        for i, route in enumerate(J93_DOOR_ROUTES)
+    ) + tuple(
+        f'<article class="home-pathway-card" data-pathway-card="{key}">' for key in J93_PATHWAYS
+    ) + (
+        '<section class="home-section home-maker" id="about" aria-labelledby="maker-heading">',
+        '<a href="/commission/">',
+    )
+
+
+J93_HOME_MARKERS = j93_home_markers()
+
+
+def education_game_routes() -> frozenset[str]:
+    """Every game route the publication serves, from the census the builder itself reads
+    (build_publications.CENSUS, located through its source so this stays standard-library only)."""
+    import ast
+    builder = ROOT / "domain-split" / "build_publications.py"
+    census = None
+    for node in ast.parse(builder.read_text(encoding="utf-8")).body:
+        if (isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "CENSUS" for t in node.targets)
+                and isinstance(node.value, ast.BinOp) and isinstance(node.value.right, ast.Constant)):
+            census = ROOT / node.value.right.value
+    if census is None:
+        raise SystemExit("MEASUREMENT INVALID: build_publications.CENSUS could not be located")
+    rows = json.loads(census.read_text(encoding="utf-8"))["rows"]
+    routes = frozenset(_normal(row["normalizedDecodedRoute"]) for row in rows)
+    if not rows or len(routes) != len(rows):
+        raise SystemExit(f"MEASUREMENT INVALID: {len(rows)} census rows gave {len(routes)} distinct game routes")
+    return routes
+
+
+def _normal(route: str) -> str:
+    # build_publications.normal(), the builder's own route normalisation.
+    path = unquote(urlparse(route).path)
+    return path.removesuffix("index.html").rstrip("/") or "/"
+
+
+class _HomeStructure(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.theme_slots = 0
+        self.search = []
+        self.doors = []
+        self.pathways = []
+        self.h1 = []
+        self.about = 0
+        self.about_commission = 0
+        self.mailing = 0
+        self.whats_new = 0
+        self.ldjson = 0
+        self.token_sheets = []
+        self.home_css = 0
+        self.legacy_frontdoor = 0
+        self._about_tag = None
+        self._about_depth = 0
+
+    def handle_starttag(self, tag, attributes):
+        attrs = dict(attributes)
+        classes = set((attrs.get("class") or "").split())
+        if self._about_tag == tag:
+            self._about_depth += 1
+        if "data-mbm-theme-slot" in attrs:
+            self.theme_slots += 1
+        if tag == "a" and "mbm-unified-search" in classes:
+            self.search.append(attrs.get("href"))
+        if tag == "a" and "home-door-card" in classes:
+            self.doors.append(attrs.get("href"))
+        if tag == "article" and "home-pathway-card" in classes and "data-pathway-card" in attrs:
+            self.pathways.append(attrs.get("data-pathway-card"))
+        if tag == "h1":
+            self.h1.append(attrs.get("id"))
+        if attrs.get("id") == "about":
+            self.about += 1
+            if self._about_tag is None:
+                self._about_tag, self._about_depth = tag, 1
+        if tag == "a" and self._about_tag and attrs.get("href") == "/commission/":
+            self.about_commission += 1
+        if "data-mailing-link" in attrs:
+            self.mailing += 1
+        if attrs.get("id") == "whats-new":
+            self.whats_new += 1
+        if tag == "script" and (attrs.get("type") or "").strip().lower() == "application/ld+json":
+            self.ldjson += 1
+        if tag == "link" and "stylesheet" in (attrs.get("rel") or "").split():
+            href = attrs.get("href") or ""
+            if "mbm-tokens" in href:
+                self.token_sheets.append(href)
+            if href == "/assets/home.css":
+                self.home_css += 1
+        if tag == "body" and "data-sw2-frontdoor" in attrs:
+            self.legacy_frontdoor += 1
+
+    def handle_endtag(self, tag):
+        if self._about_tag == tag:
+            self._about_depth -= 1
+            if self._about_depth == 0:
+                self._about_tag = None
+
+
+def _home_structure(text: str) -> _HomeStructure:
+    parsed = _HomeStructure()
+    parsed.feed(text)
+    return parsed
+
+
+def education_home_form(text: str) -> str | None:
+    """Which homepage is served: 'j93', 'legacy', or None for a page that is neither (or both)."""
+    parsed = _home_structure(text)
+    j93 = parsed.h1.count("home-title") == 1 and parsed.home_css == 1
+    legacy = parsed.legacy_frontdoor == 1
+    if j93 == legacy:
+        return None
+    return "j93" if j93 else "legacy"
+
+
+def j93_home_defects(text: str) -> list[str]:
+    """The J93 page's structure, exactly: counts, order and the record's routes."""
+    s = _home_structure(text)
+    defects = []
+    def expect(ok: bool, label: str, found: Any) -> None:
+        if not ok:
+            defects.append(f"{label} (found {found!r})")
+    expect(s.theme_slots == 1, "exactly one [data-mbm-theme-slot]", s.theme_slots)
+    expect(s.search == [J93_SEARCH_TARGET], f"one header search control at {J93_SEARCH_TARGET}", s.search)
+    expect(s.doors == list(J93_DOOR_ROUTES), "four door cards at the record routes, in key order", s.doors)
+    expect(s.pathways == list(J93_PATHWAYS), "three flagship cards BUILD, GROW, LAUNCH in order", s.pathways)
+    expect(s.h1 == ["home-title"], "exactly one h1, h1#home-title", s.h1)
+    expect(s.about == 1 and s.about_commission == 1, "one #about with its one /commission/ link",
+           (s.about, s.about_commission))
+    expect(s.mailing == 0, "no [data-mailing-link]", s.mailing)
+    expect(s.whats_new == 0, "no #whats-new", s.whats_new)
+    expect(s.ldjson == 0, "no application/ld+json", s.ldjson)
+    expect(s.token_sheets == [J93_TOKEN_SHEET], f"the token stylesheet is {J93_TOKEN_SHEET}", s.token_sheets)
+    return defects
+
 EDUCATION_PAGE_MARKERS = {
     **PAGE_MARKERS,
     "/stats/": EDUCATION_STATS_MARKERS,
     "/stats/on-this-device/": PAGE_MARKERS["/stats/"],
-    "/": ('<title>Big on ideas. Light on prep. · Made by Matt</title>',
-          '<h1>Big on ideas. Light on prep.</h1>', 'data-home-search role="search"',
-          'data-site-kind="education" data-page="home"',
-          'src="/assets/domain-site.js"'),
-    "/main/": ('<title>Big on ideas. Light on prep. · Made by Matt</title>',
-              '<h1>Big on ideas. Light on prep.</h1>', 'data-home-search role="search"',
-              'data-site-kind="education" data-page="home"',
-              'src="/assets/domain-site.js"'),
+    "/": J93_HOME_MARKERS,
+    "/main/": J93_HOME_MARKERS,
     "/for/teachers/": ('<title>Teachers · Made by Matt</title>',
                       '<h1>Ready for your next lesson?</h1>',
                       'data-site-kind="education" data-page="teachers"',
@@ -142,12 +331,29 @@ EDUCATION_PAGE_MARKERS = {
                'data-game-moved', '<h1>This game has moved</h1>',
                '<a id="play-game" href="https://www.madebymatt-play.uk/">'),
 }
+# The legacy education homepage's markers, unchanged, for the transition form above only: applied
+# strictly, and only when the served page is detected as the legacy page. Retire with the collapse.
+LEGACY_EDUCATION_HOME_MARKERS = {
+    "/": ('<title>Big on ideas. Light on prep. · Made by Matt</title>',
+          '<h1>Big on ideas. Light on prep.</h1>', 'data-home-search role="search"',
+          'data-site-kind="education" data-page="home"',
+          'src="/assets/domain-site.js"'),
+    "/main/": ('<title>Big on ideas. Light on prep. · Made by Matt</title>',
+              '<h1>Big on ideas. Light on prep.</h1>', 'data-home-search role="search"',
+              'data-site-kind="education" data-page="home"',
+              'src="/assets/domain-site.js"'),
+}
 # These publication headers supersede the legacy source header. Keep every
 # other page/runtime/theme assertion, and require the actual shared menu.
 for _route in ("/", "/main/", "/for/teachers/", "/for/pupils/", "/tools/",
                "/resources/", "/members/", "/privacy/", "/Lessons/", "/Matt-s-Apps-/", "/stats/on-this-device/"):
     EDUCATION_PAGE_MARKERS[_route] = tuple(
         marker for marker in EDUCATION_PAGE_MARKERS[_route]
+        if marker not in {'mbm-site-header', 'aria-current="page">Tools'}
+    ) + EDUCATION_NAVIGATION_MARKERS
+for _route in J93_HOME_ROUTES:
+    LEGACY_EDUCATION_HOME_MARKERS[_route] = tuple(
+        marker for marker in LEGACY_EDUCATION_HOME_MARKERS[_route]
         if marker not in {'mbm-site-header', 'aria-current="page">Tools'}
     ) + EDUCATION_NAVIGATION_MARKERS
 EDUCATION_PAGE_MARKERS["/tools/"] += ('aria-current="page">Teacher tools',)
@@ -190,8 +396,15 @@ HOME_FORBIDDEN = (
 )
 
 
-def education_promotions(text: str, *, migration: bool = False) -> list[str]:
-    """Reject real promotional markup without matching explanatory copy/CSS."""
+def education_promotions(text: str, *, migration: bool = False,
+                         game_routes: frozenset[str] = frozenset(),
+                         own_hosts: frozenset[str] = frozenset()) -> list[str]:
+    """Reject real promotional markup without matching explanatory copy/CSS.
+
+    With game_routes (the J93 homepage, LD5): also reject any link on this origin to a game route,
+    i.e. a census route or anything under /Games/ or /Lessons/Games/. The Play root itself stays
+    allowed; a Play-host game path is already an individual Play promotion above.
+    """
     class Promotions(HTMLParser):
         def __init__(self):
             super().__init__()
@@ -212,6 +425,13 @@ def education_promotions(text: str, *, migration: bool = False) -> list[str]:
                 if (url.hostname in {'madebymatt-play.uk', 'www.madebymatt-play.uk'}
                         and url.path.rstrip('/') not in {'', '/game-saves'}):
                     self.found.append('individual Play promotion: ' + attrs['href'])
+            if tag == 'a' and game_routes:
+                url = urlparse(attrs.get('href') or '')
+                if url.scheme in ('', 'http', 'https') and (not url.hostname or url.hostname in own_hosts):
+                    path = unquote(url.path)
+                    if (path.startswith('/') and (_normal(path) in game_routes or path.startswith('/Games/')
+                                                  or path.startswith('/Lessons/Games/'))):
+                        self.found.append('game route link: ' + attrs['href'])
 
     parser = Promotions()
     parser.feed(text)
@@ -254,6 +474,7 @@ def verify_once(
     attempt: int,
     extra_home_marker: str | None,
     publication: str = "legacy",
+    home_form: str = "transition",
 ) -> dict[str, Any]:
     nonce = f"{int(time.time())}-{attempt}"
     errors: list[str] = []
@@ -262,18 +483,35 @@ def verify_once(
     json_surfaces: dict[str, Any] = {}
     page_markers = EDUCATION_PAGE_MARKERS if publication == "education" else PAGE_MARKERS
     json_paths = EDUCATION_JSON_SURFACES if publication == "education" else JSON_SURFACES
+    game_routes = education_game_routes() if publication == "education" else frozenset()
+    own_hosts = frozenset({urlparse(base).hostname} - {None})
 
     for path, required in page_markers.items():
         try:
             status, headers, body, final_url = fetch(base, path, nonce, timeout)
             text = body.decode("utf-8", errors="replace")
             markers = list(required)
+            # The transition form: detect the served homepage, then hold it to its own assertions.
+            served_home = None
+            home_defects: list[str] = []
+            if publication == "education" and path in J93_HOME_ROUTES:
+                served_home = education_home_form(text)
+                if served_home is None:
+                    home_defects.append("the served homepage is neither the J93 page nor the legacy page")
+                elif served_home == "legacy" and home_form == "transition":
+                    markers = list(LEGACY_EDUCATION_HOME_MARKERS[path])
+                elif served_home == "legacy":
+                    home_defects.append("the legacy homepage is served where the J93 page is required")
+                else:
+                    home_defects += j93_home_defects(text)
             if path == "/" and extra_home_marker:
                 markers.append(extra_home_marker)
             missing = [marker for marker in markers if marker not in text]
             forbidden = [marker for marker in HOME_FORBIDDEN if path == "/" and marker in text]
             if publication == "education":
-                forbidden += education_promotions(text, migration=path == "/games/")
+                forbidden += education_promotions(
+                    text, migration=path == "/games/",
+                    game_routes=game_routes if served_home == "j93" else frozenset(), own_hosts=own_hosts)
             content_type = headers.get("Content-Type", headers.get("content-type", ""))
             if status != 200:
                 errors.append(f"{path}: expected HTTP 200, received {status}")
@@ -283,6 +521,8 @@ def verify_once(
                 errors.append(f"{path}: missing markers {missing}")
             if forbidden:
                 errors.append(f"{path}: forbidden page markers {forbidden}")
+            if home_defects:
+                errors.append(f"{path}: homepage defects {home_defects}")
             pages[path] = {
                 "status": status,
                 "bytes": len(body),
@@ -291,6 +531,8 @@ def verify_once(
                 "final_url": final_url,
                 "missing_markers": missing,
                 "forbidden_markers": forbidden,
+                "served_home": served_home,
+                "home_defects": home_defects,
             }
         except (URLError, TimeoutError, OSError) as exc:
             errors.append(f"{path}: request failed: {exc}")
@@ -396,6 +638,9 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=20.0)
     parser.add_argument("--json-out", type=Path)
     parser.add_argument("--expect-home-marker")
+    parser.add_argument("--home-form", choices=("transition", "j93"), default="transition",
+                        help="education homepage: 'transition' accepts the J93 page or the legacy page, each "
+                             "held to its own assertions (production, until J93 is published); 'j93' refuses legacy")
     args = parser.parse_args()
 
     if args.attempts < 1:
@@ -403,7 +648,8 @@ def main() -> int:
 
     result: dict[str, Any] = {}
     for attempt in range(1, args.attempts + 1):
-        result = verify_once(args.base, args.timeout, attempt, args.expect_home_marker, args.publication)
+        result = verify_once(args.base, args.timeout, attempt, args.expect_home_marker, args.publication,
+                             args.home_form)
         if result["passed"]:
             print(
                 f"Made by Matt live verification: PASS on attempt {attempt}; "
@@ -420,6 +666,11 @@ def main() -> int:
             print(f"  - {error}", file=sys.stderr)
         if attempt < args.attempts:
             time.sleep(args.delay)
+
+    if args.publication == "education":
+        served = {route: result.get("pages", {}).get(route, {}).get("served_home") for route in J93_HOME_ROUTES}
+        print("Education homepage served (" + args.home_form + "): "
+              + ", ".join(f"{route} = {form or 'neither'}" for route, form in served.items()))
 
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)

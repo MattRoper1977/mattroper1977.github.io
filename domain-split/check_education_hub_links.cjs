@@ -1,4 +1,6 @@
 'use strict';
+// J93 (rulings uz-6 (h), vb-3 (e)): on / and /main/ the card line icons are the J93 subject-tile icons
+// (#subjects a.home-subject-tile .home-subject-icon svg, exactly 4) in place of the SW2 .fd-symbol icons.
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const expected=[['/Lessons/','Lessons'],['/resources/','Resources'],['/Matt-s-Apps-/','Apps & tools'],['/tools/','Teacher tools']];
 const routes=[...expected.map(([route])=>route),'/','/main/'];
@@ -83,10 +85,12 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
         }
         await page.evaluate(values=>[document.documentElement,document.body].forEach((e,i)=>values[i]===null?e.removeAttribute('data-theme'):e.setAttribute('data-theme',values[i])),savedThemes);
         await check();
-        const selector=route==='/Lessons/'?'#scards .icon svg.fd-icon':route==='/resources/'?'#pillars svg.fd-icon':route==='/tools/'?'.ci svg.fd-icon':route==='/Matt-s-Apps-/'?'#groups .ci svg.fd-icon':['/','/main/'].includes(route)?'.fd-symbol svg.fd-icon':null;
+        const selector=route==='/Lessons/'?'#scards .icon svg.fd-icon':route==='/resources/'?'#pillars svg.fd-icon':route==='/tools/'?'.ci svg.fd-icon':route==='/Matt-s-Apps-/'?'#groups .ci svg.fd-icon':['/','/main/'].includes(route)?'#subjects a.home-subject-tile .home-subject-icon svg':null;
         if(selector){
         await page.locator(selector).first().waitFor({state:'visible'});
         assert((await page.locator(selector).count())>0,'Visible line icons');
+        // J93: the SW2 tile icons (.fd-symbol) are replaced by the J93 subject-tile icons, one per tile.
+        if(['/','/main/'].includes(route))assert.equal(await page.locator(selector).count(),4,'J93: one line icon per subject tile');
         const dims=await page.locator(selector).evaluateAll(es=>es.filter(e=>e.getClientRects().length).map(e=>({w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height})));
         assert(dims.every(b=>b.w>=24&&b.h>=24),'Readable card icon size');
         }
