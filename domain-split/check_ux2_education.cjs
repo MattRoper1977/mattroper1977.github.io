@@ -174,7 +174,7 @@ async function suite(browser, mutation) {
     // subject page at its pathway with every accordion expanded — and reported, never hidden.
     const catalogue = await (await page.request.get(origin + '/Lessons/resources.json')).json();
     const lessonByHref = new Map(catalogue.filter(r => String(r.type || '').toLowerCase() === 'lesson').map(r => ['/Lessons/' + (r.file || r.url || ''), r]));
-    const segmentCache = new Map(); const viaSegment = [];
+    const segmentCache = new Map(); const viaSegment = []; const linkedRelocations = [];
     const renderedAt = async (slug, tier) => {
       const id = slug + '|' + (tier || 'ALL');
       if (!segmentCache.has(id)) {
@@ -205,16 +205,36 @@ async function suite(browser, mutation) {
       if (!entry) { problems.push(`${href} (on ${route}) is no longer within two taps of / and is not a recorded relocation or retirement`); continue; }
       const dest = key(entry.to);
       if (!twoTap.has(dest)) { problems.push(`${href} → ${entry.to}: the recorded destination is not within two taps of /`); continue; }
-      if (entry.selector) {
+      // ve-2: a relocation goes to "a page within two taps that really lists the link". For a relocated FILE (its
+      // path has an extension) the destination must link that file, after the recorded control is clicked when
+      // the entry names one; a page href keeps the existing destination and control checks.
+      const target = decodeURIComponent(new URL(href, origin).pathname);
+      const isFile = /\.[A-Za-z0-9]+$/.test(target);
+      if (entry.selector || isFile) {
         const destRoute = new URL(entry.to, origin);
         await page.goto(destRoute.href, { waitUntil: 'load' }); await settle(page);
-        const count = await page.locator(entry.selector).count();
-        if (!count) problems.push(`${href} → ${entry.to} ${entry.selector}: the recorded control is not on that page`);
+        const count = entry.selector ? await page.locator(entry.selector).count() : 0;
+        if (entry.selector && !count) { problems.push(`${href} → ${entry.to} ${entry.selector}: the recorded control is not on that page`); continue; }
+        // A directory index recorded under its canonical route (/x/index.html -> /x/) is that page itself: the
+        // destination must serve the very same bytes (200), which is stricter than a link to it.
+        const selfIndex = isFile && !entry.selector && /\/index\.html$/.test(target)
+          && decodeURIComponent(destRoute.pathname) === target.slice(0, -'index.html'.length);
+        if (selfIndex) {
+          const [asFile, asRoute] = await Promise.all([page.request.get(origin + target), page.request.get(destRoute.href)]);
+          if (asFile.status() !== 200 || asRoute.status() !== 200 || !(await asFile.body()).equals(await asRoute.body()))
+            problems.push(`${href} → ${entry.to}: the canonical route does not serve that same file`);
+          else linkedRelocations.push(href);
+        } else if (isFile) {
+          if (entry.selector) { await page.locator(entry.selector).first().click(); await settle(page); }
+          const linked = await page.evaluate(t => [...document.querySelectorAll('a[href]')].some(a => { try { return decodeURIComponent(new URL(a.href).pathname) === t; } catch (_) { return false; } }), target);
+          if (!linked) problems.push(`${href} → ${entry.to}${entry.selector ? ' ' + entry.selector : ''}: the destination does not link it (ve-2: a page that really lists the link)`);
+          else linkedRelocations.push(href);
+        }
       }
     }
     assert.deepEqual(problems, [], 'Pre-order hrefs lost within two taps of /: '+JSON.stringify(problems));
     assert.deepEqual(stale, [], 'Recorded relocations/retirements that are in fact still reachable (stale ledger): '+JSON.stringify(stale));
-    return { oneTap: oneTap.size, twoTap: twoTap.size, expandedPages: Object.keys(expanded).length, preOrder: seen.size, lessonsViaPathwaySegment: viaSegment.length };
+    return { oneTap: oneTap.size, twoTap: twoTap.size, expandedPages: Object.keys(expanded).length, preOrder: seen.size, lessonsViaPathwaySegment: viaSegment.length, relocatedFilesLinked: linkedRelocations.length };
   });
 
   for (const route of GATED) {
