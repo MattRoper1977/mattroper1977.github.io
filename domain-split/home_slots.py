@@ -269,7 +269,9 @@ def flagship(view, lessons_root, hubs):
         else:
             labels = {r['weekLabel'] for r in chosen}
             if len(labels) != 1:
-                break
+                # S1: this week does not resolve (its three rows name different weeks); try the next
+                # (the spec fallback), as a missing pathway row does, rather than leaving the loop.
+                continue
             hub = next((h for h in hubs if h['slug'] == query), None)
             if hub is None:
                 raise ValueError('The flagship subject is not one of the four homepage hubs: ' + query)
@@ -599,11 +601,14 @@ def self_test(lessons_root=None):
                     for j, (s, n, *_) in enumerate(bp.SUBJECT_CARDS)]
             # weeks: which pathways have a registry row in the flagship week and in the fallback week
             present = over.pop('weeks', {FLAGSHIP: PATHWAYS, FALLBACK: ()})
+            # mixed_labels: weeks whose LAUNCH row carries a different week label from the other two
+            mixed = over.pop('mixed_labels', ())
             view = {'weeks': {}}
             for (q, t, w), pathways in present.items():
                 view['weeks'][f'{q}:{t}:{w}'] = [
                     {'file': card['file'], 'registry': True, 'pathway': card['pathway'],
-                     'title': card['pathway'] + ' fixture', 'desc': 'fixture outcome', 'weekLabel': f'{t} · Week {w}'}
+                     'title': card['pathway'] + ' fixture', 'desc': 'fixture outcome',
+                     'weekLabel': f'{t} · Week {w}' + (' (other)' if (q, t, w) in mixed and card['pathway'] == 'LAUNCH' else '')}
                     for card in fake_cards if card['pathway'] in pathways]
                 # a lesson-order supplement is a hub row but never a registry row
                 view['weeks'][f'{q}:{t}:{w}'].append({'file': 'x.html', 'registry': False, 'pathway': 'GROW',
@@ -684,6 +689,16 @@ def self_test(lessons_root=None):
                 fake_sources(weeks=no_grow)['flagship']['fallback'] is True)
         control('flagship: neither week resolves to one registry row per pathway -> refusal',
                 'Neither the flagship week' in refusal(fake_sources, weeks={FLAGSHIP: ('BUILD', 'LAUNCH'), FALLBACK: ('LAUNCH',)}))
+        def fallback_bound(**over):
+            try:
+                return fake_sources(**over)['flagship']['fallback'] is True
+            except ValueError:
+                return False
+        control('flagship plant: one registry row per pathway but differing week labels -> the spec fallback week is bound',
+                fallback_bound(weeks={FLAGSHIP: PATHWAYS, FALLBACK: PATHWAYS}, mixed_labels=(FLAGSHIP,)))
+        control('flagship plant: differing week labels in both weeks -> refusal',
+                'Neither the flagship week' in refusal(fake_sources, weeks={FLAGSHIP: PATHWAYS, FALLBACK: PATHWAYS},
+                                                       mixed_labels=(FLAGSHIP, FALLBACK)))
         fb = fake_sources(weeks=no_grow)
         fb_page = bind(template, fb)
         links = re.findall(r'<a class="home-card-link" data-slot-attr="href:subjects\.hubs\.0\.route" href="([^"]+)"', fb_page)
