@@ -283,6 +283,7 @@ async function suite(browser, mutation) {
       const link = n.querySelector('a.home-card-link');
       const box = n.getBoundingClientRect(); const bbox = by ? by.getBoundingClientRect() : { width: 0, height: 0 };
       return { key: n.getAttribute('data-pathway-card'), badge: badge ? badge.textContent.trim() : '', byline: by ? by.textContent.trim() : '',
+        week: (n.querySelector('.home-pathway-week') || { textContent: '' }).textContent.trim(),
         badges: n.querySelectorAll('.home-pack-badges > li.home-pack-badge').length, lessonFirst: !!(first && first.getAttribute('data-fixed') === 'true' && lesson),
         lesson: lesson ? lesson.getAttribute('href') : null, link: link ? link.getAttribute('href') : null,
         painted: box.width > 0 && box.height > 0 && bbox.width > 0 && bbox.height > 0, overflow: n.scrollWidth > n.clientWidth + 1 };
@@ -293,7 +294,7 @@ async function suite(browser, mutation) {
     assert.deepEqual(cards.map(c => c.key), names, 'the flagship strip carries BUILD, GROW, LAUNCH in that order');
     const catalogue = await (await page.request.get(origin + '/Lessons/resources.json')).json();
     const rows = new Map(catalogue.filter(r => String(r.type || '').toLowerCase() === 'lesson').map(r => [decodeURIComponent('/Lessons/' + (r.file || r.url || '')), r]));
-    const rules = fixtures.relocations.lessonRows; const subjects = new Set(); const onHub = [];
+    const rules = fixtures.relocations.lessonRows; const subjects = new Set(); const onHub = []; let order = null;
     for (const [i, c] of cards.entries()) {
       assert.equal(c.badge, names[i], 'pathway badge for ' + c.key);
       assert.equal(c.byline, record[i].byline, 'byline for ' + c.key + ' is byte-equal to the owner words of record');
@@ -302,7 +303,19 @@ async function suite(browser, mutation) {
       assert.equal(c.badges, fixtures.appendix.homeFlagship.badgesPerCard, 'badge count of record on ' + c.key);
       assert.ok(c.lessonFirst, 'the lesson badge comes first on ' + c.key);
       assert.equal((await page.request.get(origin + c.lesson)).status(), 200, 'the lesson badge of ' + c.key + ' answers 200');
-      if (c.lesson === c.link) { onHub.push(c.key); continue; }  // vb-3 (a): the lesson file is not in the tree
+      if (c.lesson === c.link) {
+        // vb-3 (a): the badge links the card's subject page ONLY when the lesson file is not in the tree. Find the card's
+        // registry lesson independently (its subject page, its pathway, the card's week label in the lesson order)
+        // and require that its file really answers 404.
+        order = order || await (await page.request.get(origin + '/Lessons/assets/catalogue/lesson-order.json')).json();
+        const slug = new URL(c.link, origin).searchParams.get('subject');
+        const due = [...rows.values()].filter(r => rules.cardOf(r) === slug && rules.tierOf(r) === c.key
+          && (((order.entries || {})[r.file || r.url] || {}).weeks || []).some(w => w && w.label === c.week));
+        assert.equal(due.length, 1, 'MEASUREMENT INVALID: the ' + c.key + ' card of week ' + JSON.stringify(c.week) + ' has exactly one registry lesson on ' + slug);
+        assert.equal((await page.request.get(origin + '/Lessons/' + encodeURI(due[0].file || due[0].url))).status(), 404,
+          'vb-3 (a): the lesson badge of ' + c.key + ' links the card\'s subject page only when its lesson file answers 404');
+        onHub.push(c.key); continue;
+      }
       const row = rows.get(decodeURIComponent(new URL(c.lesson, origin).pathname));
       assert.ok(row, 'the lesson badge of ' + c.key + ' is a registry lesson row');
       assert.equal(rules.tierOf(row), c.key, 'the lesson badge of ' + c.key + ' is on that pathway');
