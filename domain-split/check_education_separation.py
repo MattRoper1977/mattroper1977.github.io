@@ -192,7 +192,8 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by
 # re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
     '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 Autumn 2 Week 1 landed: 1417 rows; built by the Site fallback Lessons 9ed44bdf
-    'e8882f70613ab1301fe43a946e108a9a764128712ba8f1fdb6d3a7053406a76b',   # us landed (Lessons #714, b4e365ef): built by Lessons main, 1571 rows
+    'e8882f70613ab1301fe43a946e108a9a764128712ba8f1fdb6d3a7053406a76b',   # us landed (Lessons #714, b4e365ef): built by Lessons main, 1571 rows; retired at the vg follow-up
+    'cf03cb20253c3b9817054e93377d9387c3a46b609aa0d326ecf246ab77ab0e16',   # vg in flight (Lessons #716): built by the Lessons candidate 569e1229, 2001 rows
 )
 
 
@@ -350,6 +351,13 @@ def registry_errors(output):
     # us follow-up (25 October 2026, rulings us add.4-1 and uz-3): Lessons #714 merged (b4e365ef), so e8882f70 is what Lessons main
     # builds and dcc90960 (the up state, built by nothing now) is dropped; it joins the previous digests below. The fence is the
     # pair 16195414 (the Site fallback Lessons 9ed44bdf) and e8882f70 (Lessons main). The collapse window is unchanged.
+    # vg in flight (25 October 2026, ruling vg-1, the uj add.4 form): the Autumn 2 Public landing (Lessons #716) adds 430
+    # document rows, so the candidate's retained registry is a third state, cf03cb20 (Lessons candidate 569e1229, 2001 rows:
+    # the 1571 of e8882f70 kept in order and unchanged, 430 joined, every one a document the landing brings: 213 pdf, 170 docx,
+    # 47 pptx), measured from built bytes of Site 0c1fd6c6 with that candidate; Lessons main c388aec1 on the same Site
+    # reproduces e8882f70 and the pinned Lessons 9ed44bdf reproduces 16195414 exactly. Held beside the pair only while #716 is
+    # in flight; after the Lessons merge a follow-up drops e8882f70 and the fence is a pair again (16195414, cf03cb20). The
+    # collapse window is unchanged.
     baseline_shas = REGISTRY_BASELINES
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
@@ -617,8 +625,8 @@ def self_test():
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d',
               'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',
               '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd','60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b','1a358a41168f6d1205a3d3bd855753a6c6400855626c6660cf652e3947b89a57','5c4fc9892e60f5e50ae7712a1fe44f5c6ab355e7f0a872c8143d3e612af66c9b','dcc9096033c437337b4ee3014056d322292b600eebb4f9ea4b2cf0de717cfcd1')
-    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','e8882f70613ab1301fe43a946e108a9a764128712ba8f1fdb6d3a7053406a76b') and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the pair 16195414 (built by the Site fallback Lessons 9ed44bdf) and e8882f70 (built by Lessons main since us landed, Lessons #714); dcc90960 retired at the us follow-up, 5c4fc989 at the up follow-up, 1a358a41 at the uj follow-up, 60e0cd4c at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
+    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','e8882f70613ab1301fe43a946e108a9a764128712ba8f1fdb6d3a7053406a76b','cf03cb20253c3b9817054e93377d9387c3a46b609aa0d326ecf246ab77ab0e16') and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly 16195414 (built by the Site fallback Lessons 9ed44bdf), e8882f70 (built by Lessons main since us landed, Lessons #714; retired at the vg follow-up) and cf03cb20 (vg in flight: built by the Lessons candidate 569e1229, Lessons #716); dcc90960 retired at the us follow-up, 5c4fc989 at the up follow-up, 1a358a41 at the uj follow-up, 60e0cd4c at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
