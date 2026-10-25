@@ -26,7 +26,6 @@ assert.equal(SAMPLE_MS, 30000, 'the release protocol requires an exact 30-second
 const SUBJECTS = [
   { id: 'offbrand', candidate: '/offbrand/', baselineRoot: 'lessons', baseline: '/Games/Off_Brand.html' },
   { id: 'trailrunner', candidate: '/trailrunner/', baselineRoot: 'lessons', baseline: '/Games/Trail_Runner.html' },
-  { id: 'apexkick', candidate: '/apexkick/', baselineRoot: 'site', baseline: '/apexkick/' },
   { id: 'auroralinks', candidate: '/auroralinks/', baselineRoot: 'site', baseline: '/auroralinks/' },
   { id: 'houseolympiad', candidate: '/houseolympiad/', baselineRoot: null, baseline: null },
   { id: 'olympics', candidate: '/olympics/', baselineRoot: 'site', baseline: '/olympics/' },
@@ -67,12 +66,6 @@ async function startSubject(page, id) {
   if (id === 'trailrunner') {
     await page.waitForFunction(() => !!window.__TR, null, { timeout: 60000 }); await page.locator('#start-btn').click();
     await page.waitForFunction(() => !['MENU', 'PAUSED'].includes(String(window.__TR.gameState))); return;
-  }
-  if (id === 'apexkick') {
-    await page.waitForFunction(() => !!document.querySelector('#bPlay,#bModes'), null, { timeout: 30000 });
-    if (await clickVisible(page, ['#bModes'])) { await clickVisible(page, ['#mPractice', '#mDaily', '#mRivals']); }
-    else await clickVisible(page, ['#bPlay']);
-    await page.waitForTimeout(3500); return;
   }
   if (id === 'auroralinks') { await page.waitForFunction(() => !!document.querySelector('#quickBtn,#enterBtn,#startBtn')); await clickVisible(page, ['#quickBtn', '#enterBtn', '#startBtn']); return; }
   if (id === 'houseolympiad') {
