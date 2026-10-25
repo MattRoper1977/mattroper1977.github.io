@@ -17,7 +17,7 @@ const KEY = 'mbm_sports_passport_v4';
 const BACKUP = 'mbm_sports_passport_v4_corrupt_backup';
 const BANNED_NODE = 'mbm-default00000000';
 const CORRUPT_RAW = '{V6PGF-not-json:\u2603';
-const SEED_GAME = path.join(ROOT, 'apexkick', 'index.html');
+const SEED_GAME = path.join(ROOT, 'houseolympiad', 'index.html');
 const CHROME = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined;
 const PORT = Number(process.env.PASSPORT_GATE_PORT || 4460);
 const WAIT_MS = Number(process.env.PASSPORT_GATE_WAIT_MS || 6500);
@@ -388,7 +388,7 @@ async function selftest(fixture) {
       'C5 banned node',
     ));
     const drop = await preservationArm(fixture, dropKey, false);
-    const apexKick = await preservationArm(fixture, SEED_GAME, false);
+    const lawfulMerge = await preservationArm(fixture, path.join(ROOT, 'olympics', 'index.html'), false);
     const removed = await corruptArm(fixture, noBackup);
     const curlClean = await corruptArm(fixture, curlPath);
     const freshCleanA = await freshArm(fixture, freshPath, 'control-clean-1');
@@ -406,7 +406,7 @@ async function selftest(fixture) {
         || bannedFirst.node === bannedSecond.node));
     const outcomes = [
       ['control 1 C1 drop one key', !drop.invalid && c1For(drop).ok === false, drop.invalid || c1For(drop).detail],
-      ['control 2 C1 inverse apexkick', !apexKick.invalid && c1For(apexKick).ok === true, apexKick.invalid || c1For(apexKick).detail],
+      ['control 2 C1 inverse olympics', !lawfulMerge.invalid && c1For(lawfulMerge).ok === true, lawfulMerge.invalid || c1For(lawfulMerge).detail],
       ['control 3 C2 remove backup', !removed.invalid && c2For(removed).ok === false, removed.invalid || c2For(removed).detail],
       ['control 4 C2 inverse Apex Curl', !curlClean.invalid && c2For(curlClean).ok === true, curlClean.invalid || c2For(curlClean).detail],
       ['control 5 C5 hard-coded node', cleanC5 && bannedC5, `clean=${cleanFirst?.node || 'none'} != ${cleanSecond?.node || 'none'}; planted=${bannedFirst?.node || 'none'},${bannedSecond?.node || 'none'}`],
