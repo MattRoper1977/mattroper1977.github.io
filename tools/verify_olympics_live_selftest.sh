@@ -23,11 +23,19 @@ PIDS=()
 # the subshell's PID, the kill lands there, and python keeps the port — which
 # is exactly how a stale server from an earlier run served a since-deleted
 # fixture to this harness and reported a false red.
+#
+# J92: every call site is `URL="$(serve …)"`, and a command substitution IS a
+# subshell — so `PIDS+=($!)` filled an array the parent never saw, the EXIT
+# trap killed nothing, and one run left 7 fixture servers alive on 127.0.0.1,
+# each serving a directory the trap had already deleted (measured, red-first).
+# The PID is therefore also written to a file under $WORK, which the trap
+# reads: a file crosses the subshell boundary, an array does not.
 serve() {  # serve <dir> -> echoes the URL it is actually listening on
   local dir="$1" port
   port="$(python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()')"
   python3 -m http.server "$port" --bind 127.0.0.1 --directory "$dir" >/dev/null 2>&1 &
   PIDS+=($!)
+  echo "$!" >> "$WORK/server.pids"
   for _ in $(seq 1 40); do
     curl -sf -o /dev/null "http://127.0.0.1:$port/" && break
     sleep 0.25
@@ -35,7 +43,10 @@ serve() {  # serve <dir> -> echoes the URL it is actually listening on
   echo "http://127.0.0.1:$port"
 }
 
-cleanup() { for p in "${PIDS[@]:-}"; do [ -n "$p" ] && kill "$p" 2>/dev/null; done; rm -rf "$WORK"; }
+cleanup() {
+  for p in "${PIDS[@]:-}" $(cat "$WORK/server.pids" 2>/dev/null); do [ -n "$p" ] && kill "$p" 2>/dev/null; done
+  rm -rf "$WORK"
+}
 trap cleanup EXIT
 
 # ---- baseline fixture -------------------------------------------------------
