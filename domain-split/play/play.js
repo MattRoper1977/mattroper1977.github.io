@@ -77,8 +77,11 @@
     prev.disabled = t.scrollLeft <= 1; next.disabled = t.scrollLeft + t.clientWidth >= t.scrollWidth - 1;
   }
   tracks.forEach(s => {
-    s.nav.addEventListener('click', e => { const b = e.target.closest('[data-shelf-step]'); if (!b) return; s.track.scrollBy({left: Number(b.dataset.shelfStep) * Math.max(160, s.track.clientWidth * 0.9), behavior: reduced() ? 'auto' : 'smooth'}); });
+    s.nav.addEventListener('click', e => { const b = e.target.closest('[data-shelf-step]'); if (!b) return; s.track.scrollBy({left: Number(b.dataset.shelfStep) * Math.max(160, s.track.clientWidth * 0.9), behavior: reduced() ? 'auto' : 'smooth'});
+      setTimeout(() => paintShelfNav(s), 0); // the controls follow the track's own position after a step; the scroll event alone can arrive late in a headless, frame-starved page
+    });
     s.track.addEventListener('scroll', () => paintShelfNav(s), {passive: true});
+    s.track.addEventListener('scrollend', () => paintShelfNav(s), {passive: true});
   });
   const paintShelves = () => tracks.forEach(paintShelfNav);
   window.addEventListener('resize', paintShelves);
