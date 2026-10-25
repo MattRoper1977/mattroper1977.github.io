@@ -80,6 +80,11 @@ const fixtures = {
   consent: JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/consent-contract.json'), 'utf8')),
   pathways: JSON.parse(fs.readFileSync(path.join(__dirname, 'pathway-definitions.json'), 'utf8')),
 };
+// J93 (vb-3 (h), vc-4): the maker's note carries the region word, which is allowed in home/home.html
+// and the two built pages only. So it is not listed in any fixture: the gate reads the draft's own
+// note at run time and compares the rendered note to it by sha256, never retyping its words.
+const HOME_DRAFT = fs.readFileSync(path.join(__dirname, 'home/home.html'), 'utf8');
+const sha256 = text => require('node:crypto').createHash('sha256').update(text, 'utf8').digest('hex');
 // Lessons hub rules (assets/catalogue/hub.js cardOf/tierOf, UX2 A2), used only to find the subject
 // page and pathway segment a lesson row renders on.
 fixtures.relocations.lessonRows = {
@@ -223,6 +228,13 @@ async function suite(browser, mutation) {
       assert.deepEqual(missing, [], 'Appendix A strings missing on ' + route + ': ' + JSON.stringify(missing));
       // J93 (uz-6 (h)): the legacy h1 is replaced by the one J93 h1, the masthead of record.
       if (route === '/') assert.deepEqual(await page.locator('h1').evaluateAll(n => n.map(h => h.textContent.trim())), [fixtures.appendix.homeHeading], 'Exactly one h1 on /, and it is the J93 masthead of record');
+      if (route === '/') {
+        const drafted = await page.evaluate(tpl => [...new DOMParser().parseFromString(tpl, 'text/html').querySelectorAll('p[data-slot="owner.makerNote"]')].map(p => p.textContent), HOME_DRAFT);
+        assert.equal(drafted.length, 1, 'MEASUREMENT INVALID: the draft of record (home/home.html) has exactly one maker\'s note');
+        const served = await page.locator('p[data-slot="owner.makerNote"]').evaluateAll(n => n.map(p => p.textContent));
+        assert.equal(served.length, 1, 'Exactly one maker\'s note on /');
+        assert.equal(sha256(served[0]), sha256(drafted[0]), 'The maker\'s note on / is the draft\'s own note (sha256 of its text)');
+      }
       // EDU-HEADER-BRAND-20260915: once in the header brand lock-up, once in the footer.
       const lbe = (text.match(/Learn • Build • Explore/g) || []).length;
       assert.equal(lbe, 2, '"Learn • Build • Explore" exactly twice on ' + route + ' (header brand and footer)');
