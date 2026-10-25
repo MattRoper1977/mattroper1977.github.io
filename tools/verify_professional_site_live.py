@@ -130,7 +130,8 @@ EDUCATION_STATS_MARKERS = (
 #
 # and, in place of the retired hero, Try-a-lesson and mailing link: the four door cards at the record's
 # routes (data/audience-homepages.json by key), the three flagship cards BUILD, GROW, LAUNCH in order,
-# #about with its one /commission/ link, 0 [data-mailing-link], 0 #whats-new, 0 JSON-LD, exactly one
+# #about with its one /commission/ link, 0 [data-mailing-link], 0 #whats-new, exactly one SEO-1 JSON-LD
+# block (ruling vd-1 (b); it replaces uz-6 (g)'s "0 JSON-LD"; see J93_SEO1 below), exactly one
 # theme slot, the token stylesheet /assets/mbm-tokens.css, and 0 links to any game route (promotions
 # rule below). data-site-kind="education" data-page="home" still holds and is kept.
 #
@@ -146,6 +147,13 @@ J93_DOOR_KEYS = ("pupils", "teachers", "parents", "schools")
 J93_PATHWAYS = ("BUILD", "GROW", "LAUNCH")
 J93_SEARCH_TARGET = "/resources/#rxSearch"
 J93_TOKEN_SHEET = "/assets/mbm-tokens.css"
+# SEO-1 (ruling vd-1 (b)): the binder stamps ONE JSON-LD block, a WebSite and a Person, both named with the
+# owner's brand line (the draft <title>'s text after its last " · "), WebSite url = origin + "/", publisher =
+# the Person, and the Person carries exactly @type, @id (origin + "/#about") and name: no contact detail of
+# any kind. The name, origin and language are read from the draft and domain-split/config.json, never typed.
+J93_PERSON_KEYS = frozenset({"@type", "@id", "name"})
+J93_CONTACT_KEYS = frozenset({"email", "telephone", "faxNumber", "address", "contactPoint", "sameAs", "contactType",
+                              "areaServed", "location", "homeLocation", "workLocation", "image", "url"})
 
 
 def _j93_door_routes() -> tuple[str, ...]:
@@ -157,6 +165,70 @@ def _j93_door_routes() -> tuple[str, ...]:
 
 
 J93_DOOR_ROUTES = _j93_door_routes()
+
+
+def _j93_seo1() -> tuple[dict[str, Any], str]:
+    """The SEO-1 block the binder must stamp: (expected JSON value, its stamped script line)."""
+    draft = HOME_DRAFT.read_text(encoding="utf-8")
+    titles = re.findall(r"<title\b[^>]*>([^<]*)</title>", draft)
+    langs = re.findall(r'<html lang="([^"]+)">', draft)
+    if len(titles) != 1 or " · " not in html.unescape(titles[0]) or len(langs) != 1:
+        raise SystemExit("MEASUREMENT INVALID: the J93 draft has no single <title> brand line or html lang")
+    brand = html.unescape(titles[0]).rsplit(" · ", 1)[1].strip()
+    origin = json.loads((ROOT / "domain-split" / "config.json").read_text(encoding="utf-8"))["education_origin"]
+    if not brand or not origin.startswith("https://") or origin.endswith("/"):
+        raise SystemExit("MEASUREMENT INVALID: no brand line or no education origin of record")
+    person = {"@type": "Person", "@id": origin + "/#about", "name": brand}
+    value = {"@context": "https://schema.org", "@graph": [
+        {"@type": "WebSite", "@id": origin + "/#website", "url": origin + "/", "name": brand,
+         "inLanguage": langs[0], "publisher": {"@id": person["@id"]}},
+        person]}
+    line = ('<script type="application/ld+json">'
+            + json.dumps(value, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/") + "</script>")
+    return value, line
+
+
+J93_SEO1, J93_SEO1_LINE = _j93_seo1()
+
+
+def seo1_defects(blocks: list[str]) -> list[str]:
+    """SEO-1 shape, exactly: one block; a WebSite and a Person named with the brand line; WebSite url and
+    publisher; Person keys exactly @type/@id/name; no contact key anywhere (url only on the WebSite)."""
+    if len(blocks) != 1:
+        return [f"exactly one SEO-1 JSON-LD block (found {len(blocks)})"]
+    try:
+        value = json.loads(blocks[0])
+    except ValueError as error:
+        return [f"the SEO-1 JSON-LD block is not JSON ({error})"]
+    want = J93_SEO1
+    site_want, person_want = want["@graph"]
+    graph = value.get("@graph") if isinstance(value, dict) else None
+    if not isinstance(graph, list) or sorted(str(n.get("@type")) for n in graph if isinstance(n, dict)) != [
+            "Person", "WebSite"] or len(graph) != 2:
+        return [f"the SEO-1 block is one WebSite and one Person (found {value!r})"]
+    site = next(n for n in graph if n["@type"] == "WebSite")
+    person = next(n for n in graph if n["@type"] == "Person")
+    defects = []
+    def expect(ok: bool, label: str, found: Any) -> None:
+        if not ok:
+            defects.append(f"SEO-1: {label} (found {found!r})")
+    expect(value.get("@context") == want["@context"], "@context", value.get("@context"))
+    expect(site.get("name") == person.get("name") == site_want["name"],
+           "WebSite and Person named with the title's brand line", (site.get("name"), person.get("name")))
+    expect(site.get("url") == site_want["url"], "WebSite url is the education origin + '/'", site.get("url"))
+    expect(site.get("publisher") == {"@id": person_want["@id"]} and person.get("@id") == person_want["@id"],
+           "WebSite publisher is the Person at origin + '/#about'", (site.get("publisher"), person.get("@id")))
+    expect(set(person) == J93_PERSON_KEYS, "the Person carries exactly @type, @id and name", sorted(person))
+    def keys(node: Any) -> set[str]:
+        if isinstance(node, dict):
+            return set(node) | {k for v in node.values() for k in keys(v)}
+        if isinstance(node, list):
+            return {k for v in node for k in keys(v)}
+        return set()
+    contact = (keys(person) | keys({k: v for k, v in site.items() if k != "url"})) & J93_CONTACT_KEYS
+    expect(not contact, "no contact detail of any kind", sorted(contact))
+    expect(value == want, "the block is exactly the SEO-1 value of record", value)
+    return defects
 
 
 def j93_home_markers() -> tuple[str, ...]:
@@ -184,6 +256,7 @@ def j93_home_markers() -> tuple[str, ...]:
     ) + (
         '<section class="home-section home-maker" id="about" aria-labelledby="maker-heading">',
         '<a href="/commission/">',
+        J93_SEO1_LINE,
     )
 
 
@@ -228,6 +301,8 @@ class _HomeStructure(HTMLParser):
         self.mailing = 0
         self.whats_new = 0
         self.ldjson = 0
+        self.ldjson_blocks: list[str] = []
+        self._ld = False
         self.token_sheets = []
         self.home_css = 0
         self.legacy_frontdoor = 0
@@ -261,6 +336,8 @@ class _HomeStructure(HTMLParser):
             self.whats_new += 1
         if tag == "script" and (attrs.get("type") or "").strip().lower() == "application/ld+json":
             self.ldjson += 1
+            self._ld = True
+            self.ldjson_blocks.append("")
         if tag == "link" and "stylesheet" in (attrs.get("rel") or "").split():
             href = attrs.get("href") or ""
             if "mbm-tokens" in href:
@@ -270,7 +347,13 @@ class _HomeStructure(HTMLParser):
         if tag == "body" and "data-sw2-frontdoor" in attrs:
             self.legacy_frontdoor += 1
 
+    def handle_data(self, data):
+        if self._ld:
+            self.ldjson_blocks[-1] += data
+
     def handle_endtag(self, tag):
+        if tag == "script":
+            self._ld = False
         if self._about_tag == tag:
             self._about_depth -= 1
             if self._about_depth == 0:
@@ -309,7 +392,7 @@ def j93_home_defects(text: str) -> list[str]:
            (s.about, s.about_commission))
     expect(s.mailing == 0, "no [data-mailing-link]", s.mailing)
     expect(s.whats_new == 0, "no #whats-new", s.whats_new)
-    expect(s.ldjson == 0, "no application/ld+json", s.ldjson)
+    defects += seo1_defects(s.ldjson_blocks)
     expect(s.token_sheets == [J93_TOKEN_SHEET], f"the token stylesheet is {J93_TOKEN_SHEET}", s.token_sheets)
     return defects
 
