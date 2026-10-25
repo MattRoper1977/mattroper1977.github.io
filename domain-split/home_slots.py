@@ -56,12 +56,17 @@ Where each slot comes from (uz-6 (b)):
   the Meet section) and the name. No contact details of any kind (no email,
   telephone, address, contactPoint, sameAs, url or similar on the Person).
 * No qualification badges and no awarding-body or exam-board text (vb-3 (d)).
+* LD10 (lane decision under vb-1): the build links /assets/home-corrections.css
+  (domain-split/home_corrections.css) right after /assets/home.css. The draft
+  files stay byte-identical; the corrections add only what the estate's
+  no-overflow and 44 px target gates ask of every page (the footer wrapper's
+  border-box; the lesson badge and maker's-note links at 44 px).
 
 data-sample is dropped from every element the build fills; every other
 attribute and all other markup is kept. The self-test proves that the output
 differs from the draft only by slot values, the regenerated badge lists, the
-omitted section and cards, PLAY_ROOT, the dropped data-sample and the stamped
-SEO-1 block.
+omitted section and cards, PLAY_ROOT, the dropped data-sample, the stamped
+SEO-1 block and the LD10 correction link.
 
 A slot that cannot be filled stops the build: the page is never published
 half-filled.
@@ -137,6 +142,8 @@ START_TAG = re.compile(r'<(\w+)\b[^>]*>')
 ATTR_SLOT = re.compile(r'\sdata-slot-attr="(\w+):([^"]+)"')
 SAMPLE = ' data-sample="none"'
 # vd-1 (b): the stamped SEO-1 line, and the keys a contact detail would use (none may appear).
+HOME_CSS_LINK = '<link rel="stylesheet" href="/assets/home.css">\n'
+CORRECTIONS_LINK = '<link rel="stylesheet" href="/assets/home-corrections.css">\n'
 LD_LINE = re.compile(r'<script type="application/ld\+json">[^\n]*</script>\n')
 CONTACT_KEYS = {'email', 'telephone', 'faxNumber', 'address', 'contactPoint', 'sameAs', 'url', 'contactType',
                 'areaServed', 'location', 'homeLocation', 'workLocation', 'image'}
@@ -498,6 +505,10 @@ def bind(template, sources, check_digest=True):
                         ('data-mailing-link', 'a mailing link'), ('PLAY_ROOT', 'PLAY_ROOT')):
         if needle in text:
             raise ValueError('The bound page still carries ' + why)
+    # LD10: the correction stylesheet, right after the draft's own stylesheet.
+    if text.count(HOME_CSS_LINK) != 1 or 'home-corrections.css' in text:
+        raise ValueError('The draft has no single home.css link to follow')
+    text = text.replace(HOME_CSS_LINK, HOME_CSS_LINK + CORRECTIONS_LINK, 1)
     # vd-1 (b): SEO-1 stamped at build, once, before </head>.
     if text.count('</head>') != 1:
         raise ValueError('The draft has no single </head>')
@@ -523,6 +534,7 @@ def neutral(text):
     byte for byte: slot values, badge lists, PLAY, What's new, data-sample."""
     text = WHATS_NEW.sub('', text)
     text = LD_LINE.sub('', text)
+    text = text.replace(CORRECTIONS_LINK, '')
     text = PACK_LIST.sub(lambda m: m.group(1) + m.group(3).splitlines(keepends=True)[0] + '§PACK§\n' + m.group(4), text)
     text = TEXT_SLOT.sub(lambda m: m.group(1).replace(SAMPLE, '') + '§' + m.group(7), text)
 
@@ -615,6 +627,8 @@ def self_test(lessons_root=None):
         control('PLAY_ROOT/ becomes shared_navigation.PLAY twice; no data-sample is left',
                 page.count('href="' + play + '"') == 2 and 'data-sample' not in page and 'PLAY_ROOT' not in page)
         control('no mailing link (vd-1 (c))', 'data-mailing-link' not in page)
+        control('LD10: the correction stylesheet is linked once, right after home.css',
+                page.count(CORRECTIONS_LINK) == 1 and HOME_CSS_LINK + CORRECTIONS_LINK in page)
         blocks = LD_LINE.findall(page)
         ld = json.loads(blocks[0].split('>', 1)[1].rsplit('</script>', 1)[0]) if len(blocks) == 1 else {}
         graph = {g.get('@type'): g for g in ld.get('@graph', [])}
@@ -732,7 +746,8 @@ def self_test(lessons_root=None):
             control('real: one SEO-1 block, named with the brand line, no contact detail',
                     len(LD_LINE.findall(real_page)) == 1 and not any('"' + k + '"' in LD_LINE.findall(real_page)[0]
                                                                   for k in CONTACT_KEYS - {'url'}))
-            before, after = WHATS_NEW.sub('', template).splitlines(), LD_LINE.sub('', real_page).splitlines()
+            before = WHATS_NEW.sub('', template).splitlines()
+            after = LD_LINE.sub('', real_page).replace(CORRECTIONS_LINK, '').splitlines()
             moved = [i for i, (a, b) in enumerate(zip(before, after)) if a != b]
             control('real: every line that moved is a slot line or a PLAY_ROOT line',
                     len(before) == len(after) and all('data-slot' in before[i] or PLAY_ROOT in before[i] for i in moved),

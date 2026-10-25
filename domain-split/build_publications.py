@@ -392,6 +392,8 @@ def main():
         # J93: the homepage's own stylesheet and script (home.css r2, home.js), byte for byte.
         copy_file(HERE / 'home' / 'home.css', education, 'assets/home.css')
         copy_file(HERE / 'home' / 'home.js', education, 'assets/home.js')
+        # LD10 (vb-1): the landing corrections the homepage links after home.css (not part of the draft).
+        copy_file(HERE / 'home_corrections.css', education, 'assets/home-corrections.css')
         for image in json.loads((HERE / 'education-hero.json').read_text())['images'].values():
             copy_file(HERE / image['file'], education, image['published'])
     for target in [games, education]:
