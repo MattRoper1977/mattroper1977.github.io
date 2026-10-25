@@ -1,0 +1,777 @@
+/* Made by Matt — J93 Education Homepage styles (home.css)
+ * Consumes only custom properties defined in /assets/mbm-tokens.css.
+ * Zero raw colours, zero font-family declarations, zero redefined tokens.
+ */
+
+body[data-page="home"] .home-main,
+body[data-page="home"] .home-main *,
+body[data-page="home"] .home-main *::before,
+body[data-page="home"] .home-main *::after {
+  box-sizing: border-box;
+}
+
+body[data-page="home"] .home-main [hidden] {
+  display: none !important;
+}
+
+body[data-page="home"] {
+  margin: 0;
+  background-color: var(--mbm-bg);
+  color: var(--mbm-primary);
+  line-height: 1.5;
+}
+
+.home-main {
+  display: block;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.home-wrap {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+/* --- Focus & Tap Targets --- */
+
+.skip,
+.home-btn,
+.home-door-card,
+.home-switch-btn,
+.home-card-link,
+.home-subject-tile,
+.home-tool-card,
+.fd-footer-links a {
+  min-height: var(--mbm-tap);
+}
+
+.skip:focus-visible,
+.home-btn:focus-visible,
+.home-door-card:focus-visible,
+.home-switch-btn:focus-visible,
+.home-card-link:focus-visible,
+.home-subject-tile:focus-visible,
+.home-tool-card:focus-visible,
+.fd-footer-links a:focus-visible {
+  outline: 3px solid var(--mbm-accent);
+  outline-offset: 2px;
+}
+
+.skip {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 1rem;
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 2px solid var(--mbm-primary);
+  border-radius: var(--mbm-card-radius);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.skip:focus,
+.skip:focus-visible {
+  top: 16px;
+}
+
+/* --- Typography & Shared Helpers --- */
+
+.home-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.home-kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mbm-accent);
+}
+
+/* --- 1. Masthead --- */
+
+.home-masthead {
+  padding-block: 1.75rem;
+  background-color: var(--mbm-card);
+  border-bottom: 1px solid currentColor;
+  box-shadow: var(--mbm-card-shadow);
+}
+
+.home-masthead-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.home-brand-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.home-emblem {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--mbm-card-radius);
+  display: block;
+}
+
+.home-brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.home-brand-credit {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.home-brand-credit strong {
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.home-brand-credit small {
+  font-size: 0.8125rem;
+  color: var(--mbm-accent);
+  font-weight: 600;
+}
+
+.home-descriptor {
+  margin: 0;
+  font-size: 1.375rem;
+  line-height: 1.3;
+  font-weight: 800;
+}
+
+.home-masthead-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.home-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 1.25rem;
+  padding-block: 0.5rem;
+  border-radius: var(--mbm-card-radius);
+  font-weight: 700;
+  text-decoration: none;
+  border: 2px solid transparent;
+  transition: transform var(--mbm-motion-duration) var(--mbm-motion-ease);
+}
+
+.home-btn-primary {
+  background-color: var(--mbm-accent);
+  color: var(--mbm-card);
+  border-color: var(--mbm-accent);
+}
+
+.home-btn-outline {
+  background-color: var(--mbm-card-raised);
+  color: var(--mbm-primary);
+  border-color: var(--mbm-primary);
+}
+
+/* --- Sections --- */
+
+.home-section {
+  padding-block: 2rem;
+}
+
+.home-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.home-section-head h2 {
+  margin: 0;
+  font-size: 1.375rem;
+  line-height: 1.25;
+}
+
+/* --- 2. Four Doors --- */
+
+.home-doors-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.home-door-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.125rem;
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 1px solid currentColor;
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+  text-decoration: none;
+  transition: transform var(--mbm-motion-duration) var(--mbm-motion-ease);
+}
+
+.home-door-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mbm-tap);
+  height: var(--mbm-tap);
+  border-radius: var(--mbm-card-radius);
+  background-color: var(--mbm-bg);
+  color: var(--mbm-accent);
+}
+
+.home-door-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.home-door-body h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+
+.home-door-byline {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.home-door-arrow {
+  flex-shrink: 0;
+  align-self: center;
+  font-weight: 700;
+  color: var(--mbm-accent);
+}
+
+/* --- 3. One Topic, Three Pathways (Flagship Strip) --- */
+
+.home-flagship-head {
+  align-items: flex-start;
+}
+
+.home-pathway-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  transition: none;
+}
+
+.home-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--mbm-tap);
+  padding-inline: 0.875rem;
+  padding-block: 0.375rem;
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 2px solid currentColor;
+  border-radius: var(--mbm-card-radius);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: none;
+}
+
+.home-switch-btn[aria-pressed="true"] {
+  outline: 2px solid var(--mbm-primary);
+  outline-offset: 1px;
+}
+
+.home-chip-build {
+  background-color: var(--mbm-pathway-build-bg);
+  color: var(--mbm-pathway-build-ink);
+}
+
+.home-chip-grow {
+  background-color: var(--mbm-pathway-grow-bg);
+  color: var(--mbm-pathway-grow-ink);
+}
+
+.home-chip-launch {
+  background-color: var(--mbm-pathway-launch-bg);
+  color: var(--mbm-pathway-launch-ink);
+}
+
+.home-flagship-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  transition: none;
+}
+
+.home-pathway-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 1px solid currentColor;
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+  transition: none;
+}
+
+.home-pathway-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.home-pathway-badge {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: 0.625rem;
+  padding-block: 0.2rem;
+  border-radius: var(--mbm-card-radius);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.home-pathway-week {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.home-pathway-byline {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.home-unit-title {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+
+.home-unit-outcome {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.home-pack-box {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px solid currentColor;
+}
+
+.home-pack-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.home-pack-badges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.home-pack-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding-inline: 0.5rem;
+  padding-block: 0.2rem;
+  border-radius: var(--mbm-card-radius);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.home-format-html {
+  background-color: var(--mbm-format-html);
+  color: var(--mbm-format-html-ink);
+}
+
+.home-format-docx {
+  background-color: var(--mbm-format-docx);
+  color: var(--mbm-format-docx-ink);
+}
+
+.home-format-pdf {
+  background-color: var(--mbm-format-pdf);
+  color: var(--mbm-format-pdf-ink);
+}
+
+.home-format-pptx {
+  background-color: var(--mbm-format-pptx);
+  color: var(--mbm-format-pptx-ink);
+}
+
+.home-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+  font-weight: 700;
+  color: var(--mbm-accent);
+  text-decoration: underline;
+}
+
+/* --- 4. Subjects --- */
+
+.home-subjects-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.home-subject-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 2px solid currentColor;
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+  text-decoration: none;
+  transition: transform var(--mbm-motion-duration) var(--mbm-motion-ease);
+}
+
+.home-subject-science .home-subject-icon {
+  background-color: var(--mbm-subject-science);
+  color: var(--mbm-subject-science-ink);
+}
+
+.home-subject-humanities .home-subject-icon {
+  background-color: var(--mbm-subject-humanities);
+  color: var(--mbm-subject-humanities-ink);
+}
+
+.home-subject-art .home-subject-icon {
+  background-color: var(--mbm-subject-art);
+  color: var(--mbm-subject-art-ink);
+}
+
+.home-subject-lifeskills .home-subject-icon {
+  background-color: var(--mbm-subject-lifeskills);
+  color: var(--mbm-subject-lifeskills-ink);
+}
+
+.home-subject-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.home-subject-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mbm-tap);
+  height: var(--mbm-tap);
+  border-radius: var(--mbm-card-radius);
+}
+
+.home-subject-count {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.home-subject-count strong {
+  font-size: 1.125rem;
+  font-weight: 800;
+}
+
+.home-subject-tile h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.home-halfterm-strip {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+}
+
+.home-halfterm-strip li {
+  padding-inline: 0.4rem;
+  padding-block: 0.2rem;
+  background-color: var(--mbm-bg);
+  color: var(--mbm-primary);
+  border-radius: var(--mbm-card-radius);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.home-tile-action {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 700;
+  color: var(--mbm-accent);
+}
+
+/* --- 5. Teacher Tools --- */
+
+.home-tools-strip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.home-tool-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 1px solid currentColor;
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+  text-decoration: none;
+}
+
+/* --- 6. Meet Matt --- */
+
+.home-maker-inner {
+  padding: 1.5rem;
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 1px solid currentColor;
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+}
+
+.home-maker-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.home-maker-copy h2 {
+  margin: 0;
+  font-size: 1.375rem;
+}
+
+.home-maker-note {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.home-maker-credit {
+  margin: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.home-maker-credit strong {
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.home-maker-credit small {
+  font-size: 0.8125rem;
+  color: var(--mbm-accent);
+  font-weight: 600;
+}
+
+/* --- 7. What's New --- */
+
+.home-updates-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.home-update-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.25rem;
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 1px solid currentColor;
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+}
+
+.home-update-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.home-update-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.home-update-date {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--mbm-accent);
+}
+
+.home-update-desc {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+/* --- 8. Footer --- */
+
+.fd-footer {
+  padding-block: 1.5rem;
+  border-top: 1px solid currentColor;
+}
+
+.fd-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.fd-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  color: var(--mbm-primary);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* --- Desktop Breakpoints --- */
+
+@media (min-width: 48rem) {
+  .home-wrap {
+    padding-inline: 24px;
+  }
+
+  .home-masthead-inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .home-descriptor {
+    font-size: 1.625rem;
+  }
+
+  .home-flagship-head {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .home-doors-grid,
+  .home-subjects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .home-flagship-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .home-updates-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 68rem) {
+  .home-doors-grid,
+  .home-subjects-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .home-updates-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* --- Reduced Motion --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .home-btn,
+  .home-door-card,
+  .home-subject-tile,
+  .home-pathway-switch,
+  .home-switch-btn,
+  .home-flagship-grid,
+  .home-pathway-card {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* --- Print --- */
+
+@media print {
+  .skip,
+  .home-masthead-actions,
+  .home-pathway-switch {
+    display: none !important;
+  }
+
+  body[data-page="home"] {
+    background-color: var(--mbm-card);
+    color: var(--mbm-primary);
+  }
+
+  .home-pathway-card[hidden] {
+    display: flex !important;
+  }
+
+  .home-masthead,
+  .home-door-card,
+  .home-pathway-card,
+  .home-subject-tile,
+  .home-tool-card,
+  .home-maker-inner,
+  .home-update-item {
+    box-shadow: none !important;
+    border: 1px solid var(--mbm-primary) !important;
+    break-inside: avoid;
+  }
+}

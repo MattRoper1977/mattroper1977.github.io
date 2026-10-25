@@ -389,6 +389,9 @@ def main():
         copy_file(HERE / 'education-navigation.css', education, 'assets/education-navigation.css')
         copy_file(HERE / 'added-this-half-term.js', education, 'assets/added-this-half-term.js')
         copy_file(HERE / 'try-a-lesson.js', education, 'assets/try-a-lesson.js')
+        # J93: the homepage's own stylesheet and script (home.css r2, home.js), byte for byte.
+        copy_file(HERE / 'home' / 'home.css', education, 'assets/home.css')
+        copy_file(HERE / 'home' / 'home.js', education, 'assets/home.js')
         for image in json.loads((HERE / 'education-hero.json').read_text())['images'].values():
             copy_file(HERE / image['file'], education, image['published'])
     for target in [games, education]:
