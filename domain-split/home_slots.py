@@ -91,6 +91,7 @@ import tempfile
 HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / 'home' / 'home.html'
 # home.html r5, the accepted draft of record (README_J93 section 12).
+# Pinned: the sha256 of home.html r5 (31,020 B), the file of record in rulings uz-6 and vb-3.
 TEMPLATE_SHA256 = '32f53a119ed9d3e6e88daee81d201c6cf737d1d6e06cc5c0b6e668e52287e7aa'
 NODE_SCRIPT = HERE / 'home_hub_counts.cjs'
 RECORD = 'data/audience-homepages.json'
@@ -109,6 +110,8 @@ IMAGE = re.compile(r'\.(jpe?g|png|gif|svg|webp)$', re.I)
 # HUB_LINKS labels of the three Teacher Tools cards.
 TOOL_LABELS = {'resources': 'Resources', 'apps': 'Apps & tools', 'tools': 'Teacher tools'}
 # The owner's words (spec section 6), confirmed by digest of the draft's markup.
+# Pinned: the sha256 of each owner-word string as home.html r5 types it, in page order (masthead 1, door
+# bylines 4, pathway bylines 3, maker's note 1): spec b3d3df9b section 6, an input of record under uz-6.
 OWNER_WORDS = {
     'masthead': ['945b7adcfbc710f3444046127d91a4d07553a3763a378acfea51b9ec40eb8b47'],
     'door bylines': ['918c9a19dcd444e40528c54d693575bd51cb31bb5ff41a74436ab0e74cc3389d',
