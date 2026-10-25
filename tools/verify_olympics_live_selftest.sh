@@ -23,11 +23,19 @@ PIDS=()
 # the subshell's PID, the kill lands there, and python keeps the port — which
 # is exactly how a stale server from an earlier run served a since-deleted
 # fixture to this harness and reported a false red.
+#
+# J92: every call site is `URL="$(serve …)"`, and a command substitution IS a
+# subshell — so `PIDS+=($!)` filled an array the parent never saw, the EXIT
+# trap killed nothing, and one run left 7 fixture servers alive on 127.0.0.1,
+# each serving a directory the trap had already deleted (measured, red-first).
+# The PID is therefore also written to a file under $WORK, which the trap
+# reads: a file crosses the subshell boundary, an array does not.
 serve() {  # serve <dir> -> echoes the URL it is actually listening on
   local dir="$1" port
   port="$(python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()')"
   python3 -m http.server "$port" --bind 127.0.0.1 --directory "$dir" >/dev/null 2>&1 &
   PIDS+=($!)
+  echo "$!" >> "$WORK/server.pids"
   for _ in $(seq 1 40); do
     curl -sf -o /dev/null "http://127.0.0.1:$port/" && break
     sleep 0.25
@@ -35,7 +43,10 @@ serve() {  # serve <dir> -> echoes the URL it is actually listening on
   echo "http://127.0.0.1:$port"
 }
 
-cleanup() { for p in "${PIDS[@]:-}"; do [ -n "$p" ] && kill "$p" 2>/dev/null; done; rm -rf "$WORK"; }
+cleanup() {
+  for p in "${PIDS[@]:-}" $(cat "$WORK/server.pids" 2>/dev/null); do [ -n "$p" ] && kill "$p" 2>/dev/null; done
+  rm -rf "$WORK"
+}
 trap cleanup EXIT
 
 # ---- baseline fixture -------------------------------------------------------
@@ -209,6 +220,118 @@ expect_red "arcade throws" "arcade-no-script-error" "$(run "$WORK/served/games.j
 mv "$WORK/data/new-release-occupants.json" "$WORK/record.parked"
 expect_red "declared record absent" "holder-record-readable" "$(run "$WORK/served/games.json" "$WORK/served/olympics.html" "")"
 mv "$WORK/record.parked" "$WORK/data/new-release-occupants.json"
+
+# ---- 10-12 J92 (R5): the play-shelf derivation, controlled --------------------
+# The page the play origin serves at /games/ since #268 is not $SITE/games: it
+# is static .game-card articles in #game-grid, a #play-data dataset, and every
+# series collapsed onto its LEAD card (the first games-group member), the other
+# catalogue editions riding on it as links. With --catalogue-url the verifier
+# derives, from that dataset, expected cards = catalogue routes - non-lead
+# catalogue editions, and requires the count line to name the games-group
+# count, not the route total. None of that is proven by the $SITE/games
+# fixtures above, which carry no dataset and run with no catalogue.
+#
+# So a play-shelf fixture is built FROM the shelf passed in, nothing typed:
+# every shelf game is a catalogue route, two activities and one staff row are
+# added, and the first two shelf games are declared a series. The page must
+# therefore render (N+3)-1 cards and name N in its count line. Baseline green,
+# then three plants: a third edition declared in the dataset while the page
+# keeps its cards (expected drops, rendered does not) must red
+# arcade-renders-shelf; a count line naming the route total must red
+# arcade-countline; a page with no dataset must red shelf-dataset-readable.
+echo "== play-shelf derivation (J92 R5): baseline must be green =="
+mkdir -p "$WORK/play/games" "$WORK/play/data"
+python3 - "$GAMES_JSON" "$WORK/play" <<'PY'
+import json,sys,html
+shelf=json.load(open(sys.argv[1]))['games']; out=sys.argv[2]
+games=[{'id':'game-%d'%i,'route':e['href'],'title':e['title'],'group':'games'} for i,e in enumerate(shelf,1)]
+extra=[{'id':'game-a1','route':'/fixture-activity-one/','title':'Activity one','group':'activities'},
+       {'id':'game-a2','route':'/fixture-activity-two/','title':'Activity two','group':'activities'},
+       {'id':'game-s1','route':'/fixture-staff-one/','title':'Staff one','group':'staff'}]
+rows=games+extra
+series={'Pair':[games[0]['id'],games[1]['id']]}
+for r in rows:
+    if r['id'] in series['Pair']: r['editions']=list(series['Pair'])
+data={'counts':{'games':len(games),'activities':2,'staff':1},'catalogue':len(games),'genres':[],'series':series,'games':rows}
+def card(r,more=''):
+    return '<article class="game-card" data-card="%s"><h4>%s</h4><a href="%s">Play</a>%s</article>'%(r['id'],html.escape(r['title']),html.escape(r['route']),more)
+lead,nonlead=games[0],games[1]
+cards=[card(lead,'<ul class="card-editions"><li><a href="%s">Play</a></li></ul>'%html.escape(nonlead['route']))]+[card(r) for r in games[2:]]+[card(r) for r in extra]
+page=('<!doctype html><html><head><meta charset="utf-8"><title>play-shelf fixture</title>'
+      '<style>.game-card{display:block;min-height:40px;border:1px solid #000;margin:4px}</style></head><body>'
+      '<p id="result-count" role="status">%d games</p><div id="game-grid">%s</div>'
+      '<script id="play-data" type="application/json">%s</script></body></html>')%(len(games),''.join(cards),json.dumps(data).replace('<','\\u003c'))
+open(out+'/games/index.html','w',encoding='utf-8').write(page)
+cat={'games':[{'id':r['id'],'route':r['route'],'title':r['title']} for r in games],
+     'activities':[{'id':r['id'],'route':r['route']} for r in extra[:2]],
+     'staff':[{'id':extra[2]['id'],'route':extra[2]['route']}]}
+json.dump(cat,open(out+'/data/domain-catalogue.json','w'))
+print('        fixture: %d catalogue routes, %d cards rendered (1 non-lead edition), count line names %d'%(len(rows),len(cards),len(games)))
+PY
+PLAY_URL="$(serve "$WORK/play")"
+
+run_cat() {  # run_cat <served-games> <served-olympics> <arcade-url> <catalogue-url>
+  ( cd "$WORK/run" && node verify_olympics_live.mjs \
+      --served-games "$1" --repo-games "$GAMES_JSON" \
+      --served-olympics "$2" --repo-olympics "$SITE/olympics/index.html" \
+      --arcade-url "$3" --catalogue-url "$4" 2>&1 )
+}
+
+out="$(run_cat "$WORK/served/games.json" "$WORK/served/olympics.html" "$PLAY_URL/games/" "$PLAY_URL/data/domain-catalogue.json")"
+if grep -q "limbs pass" <<<"$out" && ! grep -q "FAILING LIMBS" <<<"$out" && grep -q "PASS  shelf-dataset-readable" <<<"$out"; then
+  echo "  ok    play-shelf baseline green"
+  grep -E 'arcade-renders-shelf|arcade-countline' <<<"$out" | sed 's/^/       /'
+else
+  echo "  BROKEN play-shelf baseline is not green - the three controls below are meaningless"
+  echo "$out" | tail -8 | sed 's/^/         /'
+  fails=$((fails+1))
+fi
+
+echo "== knocking over the derivation =="
+
+# 10 arcade-renders-shelf - a THIRD edition planted in the dataset, no card removed.
+# Expected drops by one; the page still renders every card; the limb must say so.
+cp -r "$WORK/play" "$WORK/play-edition"
+python3 - "$WORK/play-edition/games/index.html" <<'PY'
+import json,re,sys
+p=sys.argv[1]; s=open(p,encoding='utf-8').read()
+m=re.search(r'<script id="play-data" type="application/json">(.*?)</script>',s,re.S)
+d=json.loads(m.group(1)); third=[g['id'] for g in d['games'] if g['group']=='games' and g['id'] not in d['series']['Pair']][0]
+d['series']['Pair'].append(third)
+s=s[:m.start(1)]+json.dumps(d).replace('<','\\u003c')+s[m.end(1):]
+open(p,'w',encoding='utf-8').write(s)
+PY
+EDITION_URL="$(serve "$WORK/play-edition")"
+expect_red "a third edition planted in the dataset, no card removed" "arcade-renders-shelf" \
+  "$(run_cat "$WORK/served/games.json" "$WORK/served/olympics.html" "$EDITION_URL/games/" "$EDITION_URL/data/domain-catalogue.json")"
+
+# 11 arcade-countline - the count line names the ROUTE total instead of the games-group count.
+cp -r "$WORK/play" "$WORK/play-countline"
+python3 - "$WORK/play-countline/games/index.html" <<'PY'
+import json,re,sys
+p=sys.argv[1]; s=open(p,encoding='utf-8').read()
+d=json.loads(re.search(r'<script id="play-data" type="application/json">(.*?)</script>',s,re.S).group(1))
+total=sum(d['counts'].values())
+s2=re.sub(r'(<p id="result-count" role="status">)\d+ games',lambda m:m.group(1)+str(total)+' games',s,count=1)
+assert s2!=s
+open(p,'w',encoding='utf-8').write(s2)
+PY
+COUNTLINE_URL="$(serve "$WORK/play-countline")"
+expect_red "count line names the route total" "arcade-countline" \
+  "$(run_cat "$WORK/served/games.json" "$WORK/served/olympics.html" "$COUNTLINE_URL/games/" "$COUNTLINE_URL/data/domain-catalogue.json")"
+
+# 12 shelf-dataset-readable - the page carries no #play-data, so nothing can be derived.
+cp -r "$WORK/play" "$WORK/play-nodata"
+python3 - "$WORK/play-nodata/games/index.html" <<'PY'
+import re,sys
+p=sys.argv[1]; s=open(p,encoding='utf-8').read()
+s2=re.sub(r'<script id="play-data" type="application/json">.*?</script>','',s,count=1,flags=re.S)
+assert s2!=s
+open(p,'w',encoding='utf-8').write(s2)
+PY
+NODATA_URL="$(serve "$WORK/play-nodata")"
+expect_red "no #play-data on the shelf" "shelf-dataset-readable" \
+  "$(run_cat "$WORK/served/games.json" "$WORK/served/olympics.html" "$NODATA_URL/games/" "$NODATA_URL/data/domain-catalogue.json")"
 
 echo
 if [ "$fails" -eq 0 ]; then

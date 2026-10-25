@@ -46,8 +46,22 @@ const servedOlympics = arg('--served-olympics');
 const repoOlympics = arg('--repo-olympics');
 const arcadeUrl = arg('--arcade-url');
 /* HC3 §1.1: the arcade is the play home. Its grid also carries the classroom
-   activities, so the rendered total is the play catalogue's total (fetched
-   from --catalogue-url), and every SHELF entry must have a rendered card. */
+   activities, so the rendered expectation starts from the play catalogue's
+   route total (fetched from --catalogue-url), and every SHELF entry must have
+   a rendered card.
+
+   J92 (R5, F-shelf-count-drift). The play shelf collapses a series onto its
+   LEAD card: the first catalogue (games-group) member of a series gets the
+   card, the other catalogue members ride on it as edition links. So "one
+   card per route" is the wrong expectation for this page — 69 routes render
+   as 65 cards — and the right one is DERIVED at run time from the shelf's own
+   dataset (#play-data: data.series, data.games[].group), never typed:
+
+       expected cards = catalogue routes − non-lead catalogue series editions
+
+   and the count line names the games-group count (data.counts.games, equal
+   to data.catalogue), not the route total. Without --catalogue-url the old
+   expectation stands: the shelf's own length, named in the count line. */
 const catalogueUrl = arg('--catalogue-url');
 
 // ---------------------------------------------------------------- A1 + A2
@@ -143,10 +157,54 @@ if (arcadeUrl) {
 
   await page.goto(arcadeUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
+  // The shelf's own dataset, read from the served page. Null when the page
+  // carries none (the pre-#268 arcade) or it does not parse.
+  const dataset = await page.evaluate(() => {
+    const s = document.getElementById('play-data');
+    if (!s) return null;
+    try { return JSON.parse(s.textContent); } catch (_) { return null; }
+  });
+
+  const expected = sEntries.length;   // the shelf: every entry needs a card
+  let total = expected;               // catalogue routes (games + activities + staff)
+  let expectedCards = expected;       // what the browse structure must render
+  let wantCount = null;               // what the count line must name
+  const nonLead = new Set();
+  if (catalogueUrl) {
+    try {
+      const cat = await (await fetch(catalogueUrl, { cache: 'no-store' })).json();
+      total = (cat.games || []).length + (cat.activities || []).length + (cat.staff || []).length;
+      expectedCards = total;
+      const catHrefs = new Set((cat.games || []).map((g) => g.href || g.route));
+      const missing = sEntries.map((e) => e.href).filter((h) => !catHrefs.has(h));
+      check('catalogue-carries-shelf', missing.length === 0,
+        missing.length ? `shelf entries absent from the play catalogue: ${missing.slice(0, 5).join(' ')}` : `${sEntries.length} shelf entries all in the play catalogue (${total} rows)`);
+    } catch (e) { check('catalogue-readable', false, String(e)); }
+
+    // R5: the series rule, derived from #play-data. A series list names its
+    // members in shelf order; the first games-group member leads and the rest
+    // ride on its card. Members outside the games group keep their own card.
+    const usable = dataset !== null && Array.isArray(dataset.games) && dataset.series !== null
+      && typeof dataset.series === 'object' && dataset.counts && Number.isInteger(dataset.counts.games)
+      && Number.isInteger(dataset.catalogue);
+    check('shelf-dataset-readable', usable,
+      usable
+        ? `#play-data: ${dataset.games.length} rows, ${Object.keys(dataset.series).length} series, counts ${JSON.stringify(dataset.counts)}, catalogue ${dataset.catalogue}`
+        : 'no parseable #play-data (games[], series, counts, catalogue) on the arcade page, so no card expectation could be derived');
+    if (usable) {
+      const group = new Map(dataset.games.map((g) => [g.id, g.group]));
+      for (const ids of Object.values(dataset.series)) {
+        const catalogueMembers = (Array.isArray(ids) ? ids : []).filter((id) => group.get(id) === 'games');
+        for (const id of catalogueMembers.slice(1)) nonLead.add(id);
+      }
+      expectedCards = total - nonLead.size;
+      wantCount = dataset.counts.games;
+    }
+  }
+
   // Poll, never single-sample: the shelf arrives by fetch and the grid is
   // empty until it resolves. A single sample here is the census bug that
   // recorded two branded splashes as unbranded.
-  const expected = sEntries.length;
   let rendered = -1;
   for (let i = 0; i < 60; i++) {
     // The browse structure moved from one A-Z grid (#allGrid) to genre
@@ -164,23 +222,14 @@ if (arcadeUrl) {
         return r.width > 0 && r.height > 0 && el.offsetParent !== null;
       }).length;
     });
-    if (rendered >= expected) break;
+    if (rendered >= expectedCards) break;
     await page.waitForTimeout(250);
   }
 
-  let total = expected;
-  if (catalogueUrl) {
-    try {
-      const cat = await (await fetch(catalogueUrl, { cache: 'no-store' })).json();
-      total = (cat.games || []).length + (cat.activities || []).length + (cat.staff || []).length;
-      const catHrefs = new Set((cat.games || []).map((g) => g.href || g.route));
-      const missing = sEntries.map((e) => e.href).filter((h) => !catHrefs.has(h));
-      check('catalogue-carries-shelf', missing.length === 0,
-        missing.length ? `shelf entries absent from the play catalogue: ${missing.slice(0, 5).join(' ')}` : `${sEntries.length} shelf entries all in the play catalogue (${total} rows)`);
-    } catch (e) { check('catalogue-readable', false, String(e)); }
-  }
-  check('arcade-renders-shelf', rendered >= expected && rendered === total,
-    `${rendered} cards occupy real space in the browse structure, shelf is ${expected}, catalogue total ${total} (rendered, not node-counted)`);
+  check('arcade-renders-shelf', rendered >= expected && rendered === expectedCards,
+    catalogueUrl
+      ? `${rendered} cards occupy real space in the browse structure, expected ${expectedCards} = ${total} catalogue routes − ${nonLead.size} non-lead series editions (derived from #play-data), shelf is ${expected} (rendered, not node-counted)`
+      : `${rendered} cards occupy real space in the browse structure, shelf is ${expected} (rendered, not node-counted)`);
   const shelfMissing = await page.evaluate((hrefs) => hrefs.filter((h) => ![...document.querySelectorAll('a[href]')].some((a) => {
     const raw = a.getAttribute('href') || ''; let dec = raw; try { dec = decodeURIComponent(raw); } catch (_) {}
     return raw === h || dec === h; })), sEntries.map((e) => e.href));
@@ -189,8 +238,19 @@ if (arcadeUrl) {
 
   const countline = (await page.textContent('#countline').catch(() => null))
     || (await page.textContent('[role="status"]').catch(() => '')) || '';
-  check('arcade-countline', countline.includes(String(total)),
-    `countline reads ${JSON.stringify(countline.trim().slice(0, 80))}, expected to name ${total}`);
+  // R5: with a catalogue, the count line names the games-group count and not
+  // the route total; a whole number, so 62 is not found inside 162.
+  const names = (n) => new RegExp('(^|\\D)' + n + '(\\D|$)').test(countline);
+  if (catalogueUrl) {
+    const consistent = wantCount !== null && wantCount === dataset.catalogue;
+    check('arcade-countline', consistent && names(wantCount) && (wantCount === total || !names(total)),
+      wantCount === null
+        ? `countline reads ${JSON.stringify(countline.trim().slice(0, 80))}; no games-group count could be derived from #play-data`
+        : `countline reads ${JSON.stringify(countline.trim().slice(0, 80))}, expected to name the games-group count ${wantCount} (data.counts.games${consistent ? ' = data.catalogue' : ', but data.catalogue is ' + dataset.catalogue}) and not the route total ${total}`);
+  } else {
+    check('arcade-countline', countline.includes(String(total)),
+      `countline reads ${JSON.stringify(countline.trim().slice(0, 80))}, expected to name ${total}`);
+  }
 
   check('arcade-no-script-error', scriptErrors.length === 0,
     scriptErrors.length ? JSON.stringify(scriptErrors.slice(0, 3)) : 'no thrown exceptions or script console errors');

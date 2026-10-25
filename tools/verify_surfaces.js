@@ -10,8 +10,10 @@
  * the manifest says. A number that cannot move is not a measurement.
  *
  * Three things are measured here, all from a runner, none assumed:
- *   1  JS-OFF homepage — the New Release boxes are static markup, so a served-
- *      bytes check is the right instrument for them.
+ *   1  JS-OFF homepage — the "New and updated" rail is static markup (one
+ *      `data-release` box per games[] entry that carries `updated` in the
+ *      page's own #play-data dataset), so a served-bytes check is the right
+ *      instrument for it, and the expected set is DERIVED from that dataset.
  *   2  JS-ON arcade    — the cards are rendered, so they are counted in the
  *      rendered DOM with a real browser, with a can-fail control.
  *   3  MANIFEST ORIGIN — how /Games/games.json is actually served, and whether
@@ -21,8 +23,17 @@
  * Usage:  node tools/verify_surfaces.js [--base https://madebymatt-play.uk]
  *
  * HC3 §1.1: games serve on the play origin. The play home renders the shelf as
- * static .game-card articles in #game-grid (no New Release boxes, no genre
- * accordions), so each limb below accepts the play structure beside the old one.
+ * static .game-card articles in #game-grid (no genre accordions), so each limb
+ * below accepts the play structure beside the old one.
+ *
+ * J92 (R6, F-new-release-occupants): the three authored New Release boxes of
+ * the 12 Aug homepage stopped being served on 6 Sep (#268 gave / and /main/ to
+ * the play shelf) and S1 read `served occupants: []` against three ruled names
+ * ever since. The play shelf's rail is the updated array, so S1 now compares
+ * the served `data-release` ids against the ids the served #play-data declares
+ * as updated — nothing typed. The ruled three-name map is still read and
+ * printed, as information: whether each ruled name is among today's updated
+ * entries is reported, never enforced.
  */
 const path = require('path');
 const http = require('http');
@@ -80,22 +91,49 @@ function launchOpts() {
   // not have matched even if it had been current. Both halves had to move for
   // this limb to measure anything: the surface it reads, and where it reads the
   // ruling from. Same species as BACKLOG 0a-A.
-  console.log('S1 — homepage New Release boxes (static markup, served bytes)');
+  //
+  // THIRD, J92 (R6). The ruled map named three authored boxes that no served
+  // page has carried since 6 Sep. On the play shelf the rail is the updated
+  // array: one `data-release="<id>"` box per games[] entry with `updated`, and
+  // none at all when the array is empty. So the expected set is derived from
+  // the served page's own #play-data, and the limb holds in both directions:
+  // every served box is an updated entry, every updated entry has a box, no id
+  // twice. A page with no readable dataset is MEASUREMENT INVALID, not a pass.
+  console.log('S1 — "New and updated" rail: one data-release box per updated entry in the served #play-data');
   const home = await get(BASE + '/main/');
-  let occupants = [...home.matchAll(/data-release="([^"]+)"/g)].map(m => m[1]);
-  if (!occupants.length) {
-    // The play home has no New Release boxes; the ruled occupants must be
-    // present as rendered cards there (their card titles carry the name).
-    occupants = RULED_OCCUPANTS.filter(r => home.includes('<h3>' + r) || home.includes(r + '</h3>') || new RegExp('<h3>[^<]*' + r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(home));
-    console.log('       (play home: no New Release boxes; occupants read from the rendered cards)');
+  const occupants = [...home.matchAll(/data-release="([^"]+)"/g)].map(m => m[1]);
+  let dataset = null, datasetError = null;
+  try {
+    const m = home.match(/<script id="play-data" type="application\/json">([\s\S]*?)<\/script>/);
+    if (!m) throw new Error('no #play-data script in the served page');
+    dataset = JSON.parse(m[1]);
+    if (!Array.isArray(dataset.games)) throw new Error('#play-data has no games[] array');
+  } catch (e) { dataset = null; datasetError = e.message; }
+  const expected = dataset ? dataset.games.filter(g => g.updated).map(g => g.id) : [];
+  const missing = expected.filter(id => !occupants.includes(id));
+  const stray = occupants.filter(id => !expected.includes(id));
+  const twice = [...new Set(occupants.filter((o, i) => occupants.indexOf(o) !== i))];
+  console.log('       served release boxes: ' + occupants.length + '; expected (updated entries in #play-data): ' + expected.length);
+  ok('served dataset readable', dataset !== null,
+    dataset === null ? datasetError : dataset.games.length + ' rows, ' + expected.length + ' carry updated');
+  ok('every updated entry has a release box', dataset !== null && missing.length === 0,
+    dataset === null ? 'MEASUREMENT INVALID - no dataset to derive the expected set from'
+      : (expected.length - missing.length) + ' of ' + expected.length + ' served' + (missing.length ? ', missing: ' + missing.slice(0, 5).join(',') + (missing.length > 5 ? ',…' : '') : ''));
+  ok('no release box outside the updated array', dataset !== null && stray.length === 0,
+    dataset === null ? 'MEASUREMENT INVALID - no dataset to judge the served boxes against'
+      : (stray.length ? stray.slice(0, 5).join(',') : 'none'));
+  ok('no game holds two surfaces', twice.length === 0, twice.join(',') || 'none');
+  // The ruled three-name map (data/new-release-occupants.json): information,
+  // not a gate. The map binds an authored box label to a folder slug; an entry
+  // is "among the updated entries" when the dataset row at /<slug>/ carries
+  // updated. Today none is, and that is reported as stale rather than failed.
+  const routeOf = slug => '/' + slug + '/';
+  const amongUpdated = dataset ? RULED_OCCUPANTS.filter(name => dataset.games.some(g => g.updated && g.route === routeOf(RECORD.occupants[name]))) : [];
+  for (const name of RULED_OCCUPANTS) {
+    console.log('       ruled occupant ' + JSON.stringify(name) + ' -> /' + RECORD.occupants[name] + '/: '
+      + (dataset === null ? 'not judged (no dataset)' : amongUpdated.includes(name) ? 'among the updated entries' : 'not among the updated entries (map is stale, reported only)'));
   }
-  console.log('       served occupants: ' + JSON.stringify(occupants));
-  for (const r of RULED_OCCUPANTS) ok('ruled occupant served: ' + r, occupants.includes(r));
-  ok('no unruled occupant', occupants.every(o => RULED_OCCUPANTS.includes(o)),
-    occupants.filter(o => !RULED_OCCUPANTS.includes(o)).join(',') || 'none');
-  ok('no game holds two surfaces',
-    new Set(occupants).size === occupants.length,
-    [...new Set(occupants.filter((o, i) => occupants.indexOf(o) !== i))].join(',') || 'none');
+  console.log('       ruled map: ' + amongUpdated.length + ' of ' + RULED_OCCUPANTS.length + ' names among the updated entries (information, not enforced)');
 
   /* ---------------------------------------------- 3 · manifest origin first */
   // Run before the DOM count, because a stale manifest EXPLAINS a low count.

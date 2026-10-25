@@ -10,11 +10,16 @@
 <link rel="stylesheet" href="/assets/play/play.css">
 <script defer src="/assets/play/play.js"></script>
 </head>
-<body data-site-kind="games" data-page="games">
+<body data-site-kind="games" data-page="games">@@TILES@@
 <a class="skip" href="#all-games">Skip to games</a>
 <header class="masthead" data-mbm-chrome="play" data-theme="dark"><a class="brand" href="/">@@LOGO@@<span class="brand-lockup"><span class="brand-name">Made by Matt <strong>Play</strong></span><span class="brand-tagline">Play • Explore • Escape</span></span></a>
+<nav class="estate-switcher" aria-label="Switch between Education and Play"><a class="switcher-link" href="https://madebymatt.uk/">Education <span aria-hidden="true">↗</span></a><a class="switcher-link" href="/" aria-current="page">Play</a></nav>
 <div class="head-actions"><a class="icon-button" id="search-jump" href="#query" aria-label="Search games"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></a>
 <details class="menu"><summary aria-label="Menu"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></summary><nav aria-label="Main menu"><a href="#all-games">All games</a><a href="#classroom">For your classroom</a><a href="/game-saves/">Transfer saves</a><a href="/privacy/">Privacy and saved progress</a><a href="/stats/">Statistics</a></nav></details></div></header>
+<section class="trust-strip" aria-label="Access and saved progress"><ul class="trust-list">
+<li class="trust-item"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M4 10.5 8 14.5 16 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>No login or account needed</span></li>
+<li class="trust-item"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M10 2.5 4 5v4.8c0 4 2.6 6.9 6 7.7 3.4-.8 6-3.7 6-7.7V5l-6-2.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Progress stays in this browser unless you export a code</span></li>
+</ul></section>
 <div class="play-layout">
 <aside class="browse-sidebar" aria-label="Your game collection">
 <p class="nav-caption">YOUR SPACE</p>
@@ -24,14 +29,19 @@
 <a href="?list=recent#all-games" data-collection="recent"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Recently played</a>
 </nav>
 <p class="device-note">Favourites and recent launches stay in this browser.</p>
+<details class="save-vault" id="save-vault"><summary class="save-vault-summary"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 6v3M12 15v3M6 12h3M15 12h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Save Vault</span></summary>
+<div class="save-vault-body"><ol class="vault-steps" aria-label="Two-step save transfer">
+<li class="vault-step"><strong>Step 1 · Export on this device</strong><span>Copy a sync code or download your local Passport / save file inside a game or on the Transfer saves page.</span></li>
+<li class="vault-step"><strong>Step 2 · Import on your next device</strong><span>Paste your code or select your backup file to restore progress locally in that browser.</span></li>
+</ol><a class="button vault-link" href="/game-saves/">Open Transfer saves</a></div></details>
 <a class="sidebar-education" href="https://madebymatt.uk/">Made by Matt Education <span aria-hidden="true">↗</span></a>
 </aside>
 <main>
 <section class="intro" aria-labelledby="intro-title"><div class="intro-head"><div class="intro-copy"><p class="eyebrow">YOUR NEXT GAME STARTS HERE.</p><h1 id="intro-title">Pick a game. <span>Make it yours.</span></h1><p class="lede">Race, explore, build or work out your next move. Find your favourite or try something unexpected—play straight in your browser.</p></div>@@HEROART@@</div>
 <form id="discovery-form" action="/" method="get" role="search"><label for="query">Search games</label><div class="search-row"><input id="query" name="q" type="search" maxlength="160" placeholder="Search games" autocomplete="off"><button type="button" id="filters-open" aria-haspopup="dialog" aria-expanded="false">Filters</button></div></form>
-<div class="mood-tools"><div class="chip-row" role="group" aria-label="Categories">@@CHIPS@@</div><button type="button" id="surprise" aria-haspopup="dialog" hidden>Surprise me</button></div><p class="mood-note">Categories come from the game catalogue. Keyboard and Touch list only games whose controls have been checked.</p></section>
+<div class="mood-tools"><div class="chip-row" role="group" aria-label="Categories">@@CHIPS@@</div><button type="button" id="surprise" aria-haspopup="dialog" hidden>Surprise me</button></div>@@FACETS@@<p class="mood-note">Categories come from the game catalogue. Keyboard and Touch list only games whose controls have been checked.</p></section>
 <div id="lanes">@@FEATURED@@</div>
-<section id="all-games" aria-labelledby="all-games-title"><div class="section-head"><h2 id="all-games-title" tabindex="-1">All games</h2><p id="result-count" role="status" aria-live="polite">@@COUNT@@</p><button type="button" id="clear-favourites" hidden>Clear favourites</button><button type="button" id="clear-recent-list" data-clear-recent hidden>Clear recently opened</button></div>
+<section id="all-games" aria-labelledby="all-games-title"><div class="section-head"><h2 id="all-games-title" tabindex="-1">All games</h2><p id="result-count" role="status" aria-live="polite">@@COUNT@@</p><div id="active-filters" class="active-filters" role="group" aria-label="Active filters" hidden></div><button type="button" id="clear-favourites" hidden>Clear favourites</button><button type="button" id="clear-recent-list" data-clear-recent hidden>Clear recently opened</button></div>
 <p id="list-note" class="muted" hidden>These are launches from this browser on this device, not saved games or resumable progress.</p><p id="surprise-status" role="status"></p>
 <p id="storage-status" role="status"></p>
 <noscript><p class="notice">All games are listed below. Search, filters and favourites need JavaScript; direct Play links work without it.</p></noscript>@@NOSCRIPT@@
@@ -50,9 +60,11 @@
 <div id="dialog-media"></div><h2 id="dialog-title"></h2><div id="dialog-support" class="card-meta"></div><p id="dialog-keyboard" class="warn-line" hidden>Needs a keyboard</p>
 <div class="sheet-actions"><a class="play big" id="dialog-play">Play</a><button type="button" class="button" id="dialog-watch" hidden>Watch gameplay</button></div><p id="media-status" role="status"></p>
 <p id="dialog-description"></p>
+<section id="dialog-what-you-do" class="game-facts" hidden><h3>What you do</h3><ul id="dialog-what-list"></ul><div id="dialog-inputs" class="card-meta"></div></section>
 <p id="dialog-mood" class="muted" hidden></p>
 <section class="game-facts"><h3>Controls</h3><p id="dialog-controls"></p><h3>Players</h3><p id="dialog-players"></p><h3>Comfort and access</h3><p id="dialog-accessibility"></p></section>
 <section id="dialog-editions" hidden><h3>Editions</h3><ul></ul></section>
+<section id="dialog-similar" hidden><h3>Similar games</h3><ul></ul></section>
 <section class="progress"><h3>Your progress</h3><p id="dialog-saves"></p><a class="button" href="/game-saves/">Transfer saves</a></section>
 <div class="sheet-actions"><button type="button" class="button" id="dialog-favourite" aria-pressed="false">Favourite</button><button type="button" class="button" id="dialog-remove-recent" hidden>Remove from recently opened</button><button type="button" class="button" id="dialog-share">Share</button></div><p id="share-status" role="status"></p></dialog>
 <script id="play-data" type="application/json">@@DATA@@</script>
