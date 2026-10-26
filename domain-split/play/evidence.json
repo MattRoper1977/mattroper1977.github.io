@@ -1510,7 +1510,7 @@
       "genres": [
         "Sport"
       ],
-      "description": "Aim a free kick, set its power and curl the shot past the keeper.",
+      "description": "Swipe to strike and bend free kicks, corners and volleys across nine modes.",
       "audience": "general",
       "controls": [
         "keyboard",
@@ -1519,39 +1519,45 @@
       "modes": [
         "local"
       ],
-      "instructions": "Arrow keys aim, Q/E add curl, −/+ adjust power, Space strikes; P/Escape pauses. You can also drag and flick to shoot. Same-network multiplayer requires the game’s manual pairing.",
+      "instructions": "Swipe up from the ball to strike, with a finger or the mouse; bow the swipe to bend it. In Keeper Glove Mode tap or swipe across the goal mouth, or press A/S/D, to dive. In the 2P shootout the defending player secretly picks a dive (L/C/R or A/S/D). Opening the Locker or Trophies pauses a match.",
       "evidence": [
         {
           "control": "keyboardMouse",
-          "needle": "Keyboard: arrows aim",
-          "line": 4797,
-          "excerpt": "th to curl. All interactive controls are at least 44 px.<br>Keyboard: arrows aim · Q/E curl · −/+ power · Space strikes · P or Escape pauses.</p></div><div class=\"sect\"><h3>Your save</h3><p class=\"note\">Game progress and your Passport stay in this browser only"
+          "needle": "swipeCanvas.addEventListener('pointerdown'",
+          "line": 1543,
+          "excerpt": "  swipeCanvas.addEventListener('pointerdown', (e) => {"
+        },
+        {
+          "control": "keyboardMouse",
+          "needle": "(or press A/S/D) to dive!",
+          "line": 2319,
+          "excerpt": "> Watch the run-up, then tap or swipe across the goal mouth (or press A/S/D) to dive!',"
         },
         {
           "control": "touch",
-          "needle": "Drag the marker",
-          "line": 7,
-          "excerpt": " — AAA V6 Release</title> <meta name=\"description\" content=\"Drag the marker onto the goal, then flick to strike in a standalone championship free-kick game with accessible offline and same-network play.\"> <meta name=\"theme-color\" content=\"#0B1220\"> <meta "
+          "needle": "<strong>Swipe up</strong> to strike · <strong>Curve your path</strong>",
+          "line": 410,
+          "excerpt": "    <div class=\"hint-pill\" id=\"hud-hint\"><strong>Swipe up</strong> to strike · <strong>Curve your path</strong> to bend around the wall</div>"
         },
         {
           "mode": [
             "local-multiplayer"
           ],
-          "needle": "iceServers:[]",
-          "line": 4111,
-          "excerpt": "y{LAN.pc.close()}catch(e){}   var pc=new RTCPeerConnection({iceServers:[],iceCandidatePoolSize:0});LAN.pc=pc;LAN.ready=false;LAN.hello=false;LAN.remoteHello=false;LAN.txSeq=0;LAN.rxSeq=0;   pc.onconnectionstatechange=function(){     if(LAN.closing)retur"
+          "needle": "<h3>👥 2P Pass & Play</h3>",
+          "line": 449,
+          "excerpt": "      <div class=\"mode-card\" data-mode=\"shootout2p\"><h3>👥 2P Pass & Play</h3><p>Head-to-head shootout! Hidden keeper dives, guessed sides revealed on the strike, Sudden Death.</p></div>"
         }
       ],
       "source": {
         "repository": "Site",
         "path": "apexkick/index.html",
-        "sha256": "097caf2618315fffc3d0765271dc3c05b6b2795f8ef8592edb1d45d823b7c17e",
-        "published_sha256": "0f6c53bc67fadb84ec891d189fa23fb0b3719afa15d0f2a653755caf84291653"
+        "sha256": "2a0295ce575cc2eb3b57f667b2bdcfb327112adf16a5ffbc55348ac3ba879d7d",
+        "published_sha256": "2a0295ce575cc2eb3b57f667b2bdcfb327112adf16a5ffbc55348ac3ba879d7d"
       },
       "updated": {
-        "date": "2026-09-04",
-        "description": "Pause controls, aim resizing and weather/rendering recovery fixes.",
-        "commit": "bb5f97a2f185aa603cc394d0a3ddbd16ceab72ad"
+        "date": "2026-10-26",
+        "description": "Replaced by Apex Kick: World Stage V10: nine modes, including 60s Time Attack, Corner Kick Whip, Keeper Glove Mode and a 2P shootout.",
+        "commit": "2dc0c051349564baf6cc5469b0fe6c95077c55a0"
       }
     },
     "/apexpool": {

@@ -4,8 +4,8 @@ Written under Order V6-PG §3.1.
 
 `mbm_sports_passport_v4` is a **shared, cross-game** localStorage key. It carries
 a child's name, class, house, XP, house points, badges, award receipts, per-game
-summaries and Olympiad results across every sports title on the estate. Four
-games write it today — `apexkick`, `auroralinks`, `houseolympiad`, `olympics` —
+summaries and Olympiad results across every sports title on the estate. Three
+games write it today — `auroralinks`, `houseolympiad`, `olympics` —
 and every candidate in the V6 package references it.
 
 Until now there was no written rule any candidate could be tested against. An
@@ -28,7 +28,7 @@ work.** Two installs sharing one node id cannot have their contributions
 distinguished or merged.
 
 The normaliser is `normalizePassport(raw, preferredNode)`, embedded identically
-in every build inside `<!-- MBM-V4-RUNTIME:BEGIN -->` — `apexkick/index.html:886`.
+in every build inside `<!-- MBM-V4-RUNTIME:BEGIN -->` — `docs/fixtures/apexkick_v4_passport_reference.js:16` (copied from the pre-V10 `apexkick/index.html:886`).
 It throws on exactly four conditions:
 
 - `raw` is not a plain object
@@ -46,7 +46,7 @@ A write to `mbm_sports_passport_v4` during boot is lawful **if and only if** it 
 Compliance is decided by comparing the record's **value** before and after boot — **not** by the presence or absence of a `setItem` call.
 A build is RED under C1 if, after boot, any key present in the pre-boot record is absent; or any scalar present before is reset to a default, zero, or empty value; or any collection present before has lost members.
 A build that performs no boot write is GREEN by vacuity.
-**Reference implementation: `apexkick`, which writes on boot and merges first (see `:3572`–`:3573`).**
+**Reference implementation: the pre-V10 `apexkick`, which wrote on boot and merged first: boot read `docs/fixtures/apexkick_v4_passport_reference.js:24`, merge write `docs/fixtures/apexkick_v4_passport_reference.js:26` (copied from its `:3612` and `:3618`; the earlier citation `:3572`–`:3573` had drifted onto squad code).**
 
 ---
 
@@ -67,7 +67,7 @@ Apex Curl writes the raw string to `mbm_sports_passport_v4_corrupt_backup`, expr
 **reads**.
 
 ```
-apexkick/index.html:1268
+docs/fixtures/apexkick_v4_passport_reference.js:22   (pre-V10 apexkick/index.html:1268)
     if (GAME_IDS.indexOf(game) < 0) throw new Error('Award game id is invalid.');
 ```
 
@@ -95,7 +95,7 @@ currently reaches normalizePassport's throw, which is how the withdrawn probe in
 `raw.seasonId` at all; it overwrites it unconditionally:
 
 ```
-apexkick/index.html:904          (inside normalizePassport, which begins at 886)
+docs/fixtures/apexkick_v4_passport_reference.js:18   (pre-V10 apexkick/index.html:904, inside normalizePassport, which begins at :16)
       seasonId: PASSPORT_SEASON,
 ```
 
@@ -126,7 +126,7 @@ The node id MUST be generated once per install and persisted. The banned conditi
 Seed → boot → re-read must satisfy `lamport_after >= lamport_before`.
 
 `normalizePassport` computes `output.lamport = Math.max.apply(Math, clocks)`
-(`apexkick/index.html:928`) over every register and pair clock in the record, so a normalise can only raise
+(`docs/fixtures/apexkick_v4_passport_reference.js:20`, pre-V10 `apexkick/index.html:928`) over every register and pair clock in the record, so a normalise can only raise
 it. A boot that lowers it has discarded clocks — which is the same event C1
 describes, seen from the other side, and is why both are measured.
 

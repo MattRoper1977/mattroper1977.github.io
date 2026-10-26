@@ -54,14 +54,6 @@ const GAMES = Object.freeze([
     saveKeys: ['trekTrailRunner_v1', 'trekTrailSettings_v1']
   },
   {
-    id: 'apexkick', name: 'Apex Kick: World Stage', route: '/apexkick/',
-    file: 'apexkick/index.html', canonical: 'https://madebymatt.uk/apexkick/',
-    input: 'Apex_Kick_AAA_v4.html', alternateInputs: ['Apex_Kick_AAA_v4(2).html'], inputBytes: 954540,
-    inputSha256: '3730c4ec586d96c16f7fa5aa433690a00fe16fcf0bde2e38a7f0c9f6ea2d3f15',
-    identity: /AAA V4|Final Edition build 4\.0\.0/i,
-    saveKeys: ['apexkick.aaa.v4', 'apexkick.aaa.v3']
-  },
-  {
     id: 'auroralinks', name: 'Aurora Links: Northern Lights Tour', route: '/auroralinks/',
     file: 'auroralinks/index.html', canonical: 'https://madebymatt.uk/auroralinks/',
     input: 'Aurora_Links_AAA_v4.html', inputBytes: 204011,
@@ -595,25 +587,6 @@ async function smokeTrail(page, mobile) {
   await page.waitForFunction(() => window.__TR.gameState !== 'PAUSED');
 }
 
-async function smokeApex(page) {
-  await page.waitForFunction(() => !!window.MadeByMattV4QA && !!window.__AK_DEBUG && !!document.querySelector('#bModes'), null, { timeout: 30000 });
-  const selfTests = await page.evaluate(() => ({ rollback: MadeByMattV4QA.rollback.selfTest(), physics: MadeByMattV4QA.physics.selfTest() }));
-  assert(selfTests.rollback.ok && selfTests.physics.ok, 'Apex V4 self-tests failed');
-  await page.locator('#bModes').click(); await page.locator('#mPractice').click();
-  await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.state === 'aim', null, { timeout: 15000 });
-  const before = await page.evaluate(() => MadeByMattV4QA.snapshot());
-  // Exercise pause in the stable aiming state. The flight-to-resolve handoff
-  // is deliberately non-pausable and can happen between two CI protocol turns.
-  await page.keyboard.press('Escape');
-  await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.paused === true);
-  await page.locator('#pauseResume').click();
-  await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.paused === false);
-  await page.keyboard.press('ArrowRight'); await page.keyboard.press('Enter');
-  await page.waitForFunction(() => MadeByMattV4QA.snapshot().game.state === 'flight', null, { timeout: 15000 });
-  const after = await page.evaluate(() => MadeByMattV4QA.snapshot());
-  assert(after.game.state !== 'intro' && (after.game.state !== before.game.state || after.game.momentIdx !== before.game.momentIdx), 'Apex kick did not enter simulation');
-}
-
 async function smokeAurora(page) {
   await page.waitForFunction(() => !!window.MadeByMattV4QA && !!document.querySelector('#quickBtn'));
   const selfTests = await page.evaluate(() => ({ rollback: MadeByMattV4QA.rollback.selfTest(), physics: MadeByMattV4QA.physics.selfTest() }));
@@ -855,7 +828,7 @@ async function smokeVoxel(page, mobile) {
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#overlay')).display === 'none');
 }
 
-const SMOKES = { offbrand: smokeOffbrand, trailrunner: smokeTrail, apexkick: smokeApex, auroralinks: smokeAurora, houseolympiad: smokeHouse, olympics: smokeGlobal, relicforge: smokeRelic, voxel: smokeVoxel };
+const SMOKES = { offbrand: smokeOffbrand, trailrunner: smokeTrail, auroralinks: smokeAurora, houseolympiad: smokeHouse, olympics: smokeGlobal, relicforge: smokeRelic, voxel: smokeVoxel };
 
 async function verifyWayOut(page, origin) {
   const exit = page.locator('#mbmexit-back,#mbmhud-back').first();
@@ -925,27 +898,22 @@ async function runMigrationFixtures(browser, origin) {
     const save = await page.evaluate(() => JSON.parse(localStorage.getItem('trekTrailRunner_v1')));
     assert.equal(save.best, 4321); assert.equal(save.runs, 7);
   });
-  await migrationFixture(browser, origin, GAMES[2], { 'apexkick.aaa.v3': { version: 3, credits: 777, goals: 3, shots: 9, division: 6 } }, async page => {
-    await page.waitForFunction(() => !!window.__AK_DEBUG);
-    const saves = await page.evaluate(() => ({ old: JSON.parse(localStorage.getItem('apexkick.aaa.v3')), current: JSON.parse(localStorage.getItem('apexkick.aaa.v4')) }));
-    assert.equal(saves.old.credits, 777); assert.equal(saves.current.credits, 777);
-  });
-  await migrationFixture(browser, origin, GAMES[3], { mbm_aurora_links_round_v1: { scores: [3, 3, 4, 4, 4, 2, 5, 4, 4] } }, async page => {
+  await migrationFixture(browser, origin, GAMES[2], { mbm_aurora_links_round_v1: { scores: [3, 3, 4, 4, 4, 2, 5, 4, 4] } }, async page => {
     await page.waitForFunction(() => !!window.MadeByMattV4QA);
     const saves = await page.evaluate(() => ({ old: JSON.parse(localStorage.getItem('mbm_aurora_links_round_v1')), current: JSON.parse(localStorage.getItem('mbm_aurora_links_aaa_v4')) }));
     assert.equal(saves.old.scores.length, 9); assert.equal(saves.current.totalHoles, 9); assert(Number.isFinite(saves.current.best.tour));
   });
-  await migrationFixture(browser, origin, GAMES[4], { mbm_sports_passport_v3: { version: 3, profile: { name: 'Legacy Player', className: 'Class 4', house: 'Ember' }, xp: 900, badges: ['starter'] } }, async page => {
+  await migrationFixture(browser, origin, GAMES[3], { mbm_sports_passport_v3: { version: 3, profile: { name: 'Legacy Player', className: 'Class 4', house: 'Ember' }, xp: 900, badges: ['starter'] } }, async page => {
     await page.waitForFunction(() => !!window.MadeByMattOlympiadV4QA);
     const values = await page.evaluate(() => ({ old: localStorage.getItem('mbm_sports_passport_v3'), current: localStorage.getItem('mbm_sports_passport_v4') }));
     assert(values.old && values.current, 'House Passport migration slots missing');
   });
-  await migrationFixture(browser, origin, GAMES[5], { mbm_global_games_world_stage_v3: { version: 3, credits: 777, records: { sprint: 12.34 }, profile: { name: 'Legacy Athlete', nation: 'GBR' } } }, async page => {
+  await migrationFixture(browser, origin, GAMES[4], { mbm_global_games_world_stage_v3: { version: 3, credits: 777, records: { sprint: 12.34 }, profile: { name: 'Legacy Athlete', nation: 'GBR' } } }, async page => {
     await page.waitForFunction(() => !!window.MBMGlobalGames);
     const saves = await page.evaluate(() => ({ old: JSON.parse(localStorage.getItem('mbm_global_games_world_stage_v3')), current: JSON.parse(localStorage.getItem('mbm_global_games_world_stage_v4')) }));
     assert.equal(saves.old.credits, 777); assert.equal(saves.current.credits, 777); assert.equal(saves.current.records.sprint, 12.34);
   });
-  await migrationFixture(browser, origin, GAMES[6], { mbm_relicforge_v1: { version: 1, highScore: 4567, credits: 222, bestChamber: 4 } }, async page => {
+  await migrationFixture(browser, origin, GAMES[5], { mbm_relicforge_v1: { version: 1, highScore: 4567, credits: 222, bestChamber: 4 } }, async page => {
     await page.waitForFunction(() => !!window.__relicforge);
     await page.evaluate(() => __relicforge.start());
     await page.waitForTimeout(100);
@@ -953,7 +921,7 @@ async function runMigrationFixtures(browser, origin) {
     const save = await page.evaluate(() => JSON.parse(localStorage.getItem('mbm_relicforge_v1')));
     assert.equal(save.highScore, 4567); assert.equal(save.credits, 222);
   });
-  await migrationFixture(browser, origin, GAMES[7], { 'voxelfrontier.save.v1': { v: 1, seed: 424242, px: 2, py: 32, pz: 3, mode: 'creative', edits: '' } }, async page => {
+  await migrationFixture(browser, origin, GAMES[6], { 'voxelfrontier.save.v1': { v: 1, seed: 424242, px: 2, py: 32, pz: 3, mode: 'creative', edits: '' } }, async page => {
     await page.waitForFunction(() => !!window.__BEACONFALL_GREEDY__);
     const saves = await page.evaluate(() => ({ old: localStorage.getItem('voxelfrontier.save.v1'), current: localStorage.getItem('voxelfrontier.world.v2.424242') }));
     assert(saves.old, 'Voxel removed its legacy source save'); assert(saves.current, 'Voxel did not create its V4 world slot'); assert.equal(JSON.parse(saves.current).v, 4);

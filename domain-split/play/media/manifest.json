@@ -38,7 +38,7 @@
       "id": "apexkick",
       "title": "Apex Kick",
       "route": "/apexkick/",
-      "status": "accepted",
+      "status": "retired",
       "viewport": {
         "width": 1280,
         "height": 720
@@ -65,7 +65,11 @@
       "poster": "/assets/play/media/apexkick.webp",
       "reviewed_at": "2026-09-06",
       "review_evidence": "Inspected real recording frames at 0.5, 3, 6, 9, 12 and 16 seconds; three kick attempts, changing camera and genuine outcomes. No successful shot fabricated.",
-      "lessons_commit": "ccbe7a8bd70692fbf5a6c5352c7bf823c54f463f"
+      "lessons_commit": "ccbe7a8bd70692fbf5a6c5352c7bf823c54f463f",
+      "retired": {
+        "date": "2026-10-25",
+        "reason": "Recorded from the pre-V10 Apex Kick (published sha256 0f6c53bc67fadb84ec891d189fa23fb0b3719afa15d0f2a653755caf84291653). V10 replaced it (AK10-A); a V10 clip is a later job (AK10-N). Approved by Matt Roper 2026-10-21: /apexkick/ replaced by Apex Kick: World Stage V10 (intake sha256 07ed72653d180a33e5d0a9c56931ea7e28d3d7d8062f43ba161694c5a70fa826; published sha256 58e85102979e93fa72a250a20508e6c6fd120b7af84727a2ef0bff20868ee6d3). Reviewed by Claude in chat: all nine modes played to the result screen in automated runs with zero console errors."
+      }
     },
     {
       "id": "voxel",
@@ -262,6 +266,72 @@
       "poster": "/assets/play/media/novasiege.webp",
       "reviewed_at": "2026-09-06",
       "review_evidence": "Reviewed six timeline frames showing movement, plasma firing, drone hits, changing score and multiplier. Read-only after-state recorded score881, multiplier2 and full shields; all actions were ordinary keyboard input."
+    },
+    {
+      "id": "apexkick-v10",
+      "title": "Apex Kick",
+      "route": "/apexkick/",
+      "status": "retired",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "device": "Headless Chromium 141.0.7390.37 (Playwright 1.56.1), local re-run of the CI capture script; fresh isolated context",
+      "captured_at": "2026-10-25T23:19:45.434Z",
+      "source_commit": "11af9e102100a8b1d6b96dc7271d55cc99229c85",
+      "lessons_commit": "c388aec13647eedb0fc597951df743ec83ebdde6",
+      "published_sha256": "58e85102979e93fa72a250a20508e6c6fd120b7af84727a2ef0bff20868ee6d3",
+      "description": "Keeper Glove Mode: read the striker’s run-up and dive left, right or centre to save the shot.",
+      "storage_keys": [
+        "mbm_apexkick_v10_save",
+        "mbm_splash_last"
+      ],
+      "errors": [],
+      "source_recording": "apexkick/727e43fe931bdf491c5243f21e03207a.webm",
+      "duration_seconds": 19.96,
+      "codec": "h264",
+      "bytes": 1219636,
+      "video_sha256": "ec76dcd7c6e1c0defa47a01f64a80a7ce3cdd4e9500bfa9b4c4f748cf489b74f",
+      "poster_sha256": "03524ca6f93cb9919ef2d48d715057f60cee793472d31b8199c71969fdbdf36e",
+      "video": "/assets/play/media/apexkick-v10.mp4",
+      "poster": "/assets/play/media/apexkick-v10.webp",
+      "reviewed_at": "2026-10-25",
+      "review_evidence": "AK10-T recapture for Apex Kick: World Stage V10.1 (apexkick/index.html 58e85102979e…), ruling AK10-S-1. The CI capture script domain-split/play/capture.cjs, with its Apex Kick routines rewritten for V10 in the same commit as this clip, re-run locally in headless Chromium against the built Play tree: Keeper Glove Mode chosen in the hub, then the game's own A/D/S dive keys pressed as each strike lands. The capture made 3 requests, all local: the profile check, the page and its vendored three.js. Every frame was reviewed by Claude at 1 per second, plus 0.5/3/6/9/12/16 s: three AI run-ups, three dives and three genuine results (\"BEAT AT THE POST!\"; no save is seeded), with the shot radar. Visible text is game UI only, and no real person, place or organisation name appears. The stadium board behind the goal is out of frame in this camera. Storage keys mbm_apexkick_v10_save and mbm_splash_last only; 0 errors. Matt's phone tap is still the human review of this clip.",
+      "retired": {
+        "date": "2026-10-26",
+        "reason": "Recorded from Apex Kick V10.1 (published sha256 58e85102979e93fa72a250a20508e6c6fd120b7af84727a2ef0bff20868ee6d3). The AK10-V/W text changes (Corner Curler, trophy id migration) changed the bytes; recaptured once from them as apexkick-v10-2 (AK10-W W-1)."
+      }
+    },
+    {
+      "id": "apexkick-v10-2",
+      "title": "Apex Kick",
+      "route": "/apexkick/",
+      "status": "accepted",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "device": "Headless Chromium 141.0.7390.37 (Playwright 1.56.1), local re-run of the CI capture script; fresh isolated context",
+      "captured_at": "2026-10-26T10:05:13.332Z",
+      "source_commit": "cb5331b937ac5d202a4de48afc5098e6a1e8bb23",
+      "lessons_commit": "c388aec13647eedb0fc597951df743ec83ebdde6",
+      "published_sha256": "2a0295ce575cc2eb3b57f667b2bdcfb327112adf16a5ffbc55348ac3ba879d7d",
+      "description": "Keeper Glove Mode: read the striker’s run-up and dive left, right or centre to save the shot.",
+      "storage_keys": [
+        "mbm_apexkick_v10_save",
+        "mbm_splash_last"
+      ],
+      "errors": [],
+      "source_recording": "apexkick/d592ffbc2e6aef0a6d470b395ef88ba7.webm",
+      "duration_seconds": 19.96,
+      "codec": "h264",
+      "bytes": 959743,
+      "video_sha256": "a369595b5d1325f5fa411da443458725ec979c850a4b01ee4d34e1cf125b0423",
+      "poster_sha256": "986e04f2aec2d663a6607ceb1b58fd82ac01dc6b60356c3d3faf249abee7b04e",
+      "video": "/assets/play/media/apexkick-v10-2.mp4",
+      "poster": "/assets/play/media/apexkick-v10-2.webp",
+      "reviewed_at": "2026-10-26",
+      "review_evidence": "AK10-W recapture for Apex Kick: World Stage after the AK10-V/W text changes (apexkick/index.html 2a0295ce575c…), ruling AK10-W W-1, by the AK10-S method. The CI capture script domain-split/play/capture.cjs, unchanged, re-run locally in headless Chromium against the built Play tree: Keeper Glove Mode chosen in the hub, then the game's own A/D/S dive keys pressed as each strike lands. The capture made 3 requests, all local: the profile check, the page and its vendored three.js. Every frame was reviewed by Claude at one frame per 2 s: AI run-ups, dives and genuine results, including one \"SUPERB SAVE!\" (no save is seeded), with the shot radar. Visible text is game UI only, and no real person, place or organisation name appears. The stadium board behind the goal is out of frame in this camera. Storage keys mbm_apexkick_v10_save and mbm_splash_last only; 0 errors. Matt's phone tap is still the human review of this clip."
     }
   ]
 }

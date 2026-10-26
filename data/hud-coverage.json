@@ -164,12 +164,12 @@
   },
   {
    "route": "/apexkick/",
-   "verifier": "tools/verify_v4_games_deployment.mjs",
+   "verifier": "tools/verify_apexkick_v10.mjs",
    "gates": [
-    "single self-contained AAA V4 payload with zero script src dependencies",
-    "generated inline way out is keyboard- and touch-reachable"
+    "single self-contained V10 payload: zero network requests beyond the page and its vendored three.js r128",
+    "generated inline way out resolves to /games/"
    ],
-   "note": "World Stage AAA V4 is delivered as a standalone one-file game; its way out remains inline rather than introducing /hud.js."
+   "note": "Apex Kick: World Stage V10 (AK10, 2026-10-21) is a standalone one-file game with one vendored script; its way out remains inline rather than introducing /hud.js."
   },
   {
    "route": "/auroralinks/",
@@ -313,7 +313,7 @@
  },
  "makerSplash": {
   "_what": "The estate-wide Made by Matt introduction and its rolling 24-hour suppression. tools/render_maker_splash.py is the only writer of the stamped block; the visual donor is the CyberPulse Made by / Matt / presents form and every applied block is byte-identical.",
-  "_state": "Application census resolved against route-owned before/after verifiers: thirty-one Site routes are declined on unchanged exact assertions; every remaining applied route is generator-owned pending browser-matrix confirmation. PLAY-Q1 batch 1 (2026-09-16): the region paints the Play lockup on the Play host; four applied routes with accepted gameplay clips are held at the earlier region, pinned by digest, until batch 1b recaptures their clips.",
+  "_state": "Application census resolved against route-owned before/after verifiers: thirty-one Site routes are declined on unchanged exact assertions; every remaining applied route is generator-owned pending browser-matrix confirmation. PLAY-Q1 batch 1 (2026-09-16): the region paints the Play lockup on the Play host; four applied routes with accepted gameplay clips are held at the earlier region, pinned by digest, until batch 1b recaptures their clips. AK10 (2026-10-21): /apexkick/ moves from held to applied. It was held only for its accepted gameplay clip; Apex Kick: World Stage V10 replaces the payload and that clip is retired (ruling AK10-N), so there is nothing left to recapture and the current generated region is stamped.",
   "applied": [
    {
     "route": "/cyberpulse/"
@@ -356,6 +356,9 @@
    },
    {
     "route": "/skybreak/"
+   },
+   {
+    "route": "/apexkick/"
    }
   ],
   "declined-with-reason": [
@@ -466,11 +469,6 @@
   ],
   "variant-retained-with-reason": [],
   "held-at-previous-region-with-reason": [
-   {
-    "route": "/apexkick/",
-    "region_sha256": "88c7c6bc0f739c1ad14b0eb1a0788b92ee42c28d7d99e5b28c6adcd83e74a3ff",
-    "reason": "PLAY-Q1 batch 1b: keeps the accepted 2026-08-27 canon region until its accepted gameplay clip (domain-split/play/media) is recaptured against the new bytes in the Play capture job and accepted; a clip bound to different published bytes is refused by the builder."
-   },
    {
     "route": "/voxel/",
     "region_sha256": "88c7c6bc0f739c1ad14b0eb1a0788b92ee42c28d7d99e5b28c6adcd83e74a3ff",

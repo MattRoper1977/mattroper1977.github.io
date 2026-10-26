@@ -111,8 +111,8 @@ jobs:
           node --check tools/verify_v4_games_deployment.mjs
           node --check tools/benchmark_v4_games_deployment.mjs
           node tools/verify_v4_games_deployment.mjs | tee artifacts/v4-games/static.log
-          sha256sum offbrand/index.html trailrunner/index.html apexkick/index.html auroralinks/index.html houseolympiad/index.html olympics/index.html relicforge/index.html voxel/index.html | tee artifacts/v4-games/deployed-sha256.txt
-          wc -c offbrand/index.html trailrunner/index.html apexkick/index.html auroralinks/index.html houseolympiad/index.html olympics/index.html relicforge/index.html voxel/index.html | tee artifacts/v4-games/deployed-bytes.txt
+          sha256sum offbrand/index.html trailrunner/index.html auroralinks/index.html houseolympiad/index.html olympics/index.html relicforge/index.html voxel/index.html | tee artifacts/v4-games/deployed-sha256.txt
+          wc -c offbrand/index.html trailrunner/index.html auroralinks/index.html houseolympiad/index.html olympics/index.html relicforge/index.html voxel/index.html | tee artifacts/v4-games/deployed-bytes.txt
 
       - name: Canonical generators and discovery gates
         env:
