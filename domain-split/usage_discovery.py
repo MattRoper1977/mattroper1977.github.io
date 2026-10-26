@@ -161,6 +161,7 @@ def registry(output, lessons, site_source, play_only=False):
     aliases=site_source/'domain-split/usage-route-aliases.json'
     if aliases.is_file():
         for alias in read(aliases):
+            if play_only and alias['source']!='play': continue  # M1: education identities are not part of the Play registry
             key=(alias['source'],canonical(alias['route']))
             if key not in records or not re.fullmatch(r'[a-f0-9]{64}',alias['resource_id']): raise ValueError('Invalid usage alias record')
             records[key]['resource_id']=alias['resource_id']
