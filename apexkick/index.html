@@ -441,7 +441,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       <div class="mode-card selected" data-mode="tour"><h3>🏆 World Tour</h3><p>10 progressive stages from Academy trials to 33m gale-force Stadium Finals.</p></div>
       <div class="mode-card" data-mode="freekick"><h3>🧱 Pro Free Kicks</h3><p>Bend dead-balls over and around jumping 3-to-6 man walls from tight angles.</p></div>
       <div class="mode-card" data-mode="timeattack"><h3>⏱️ 60s Time Attack <span class="new-tag">NEW</span></h3><p>Instant respawns, Fever multipliers up to 5×, and Gold Time Rings worth +4.0s.</p></div>
-      <div class="mode-card" data-mode="corner"><h3>📐 Corner Kick Whip <span class="new-tag">NEW</span></h3><p>Whip in-swingers from the flag: bend an Olympic Goal or find your striker's head.</p></div>
+      <div class="mode-card" data-mode="corner"><h3>📐 Corner Kick Whip <span class="new-tag">NEW</span></h3><p>Whip in-swingers from the flag: bend a Corner Curler or find your striker's head.</p></div>
       <div class="mode-card" data-mode="keeper"><h3>🧤 Keeper Glove Mode</h3><p>YOU are the Goalkeeper! Read the AI striker's run-up and swipe/tap to dive & parry.</p></div>
       <div class="mode-card" data-mode="targets"><h3>🎯 Top Bins Blitz</h3><p>Smash oscillating corner bullseyes and high-multiplier rings before shots run out.</p></div>
       <div class="mode-card" data-mode="volley"><h3>⚡ Cross & Volley</h3><p>Whip curled crosses onto the boot of a sprinting striker for a thunder volley.</p></div>
@@ -565,7 +565,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     { id: 'brick_wall', icon: '🧤', name: 'Clean Sheet Hero', desc: 'Make 3 saves in Keeper Glove Mode', reward: 350 },
     { id: 'rain_master', icon: '🌧️', name: 'Wet Tuesday Night', desc: 'Score a goal in Heavy Rain or Snow', reward: 250 },
     { id: 'streak_5', icon: '🔥', name: 'Unstoppable 5x', desc: 'Hit a 5-shot scoring/saving streak', reward: 500 },
-    { id: 'olympic', icon: '📐', name: 'Straight from the Corner', desc: 'Score direct from a corner kick', reward: 400 },
+    { id: 'cornercurler', icon: '📐', name: 'Straight from the Corner', desc: 'Score direct from a corner kick', reward: 400 },
     { id: 'fever_5', icon: '⏱️', name: 'Fever Pitch', desc: 'Reach a 5× Fever multiplier in Time Attack', reward: 300 }
   ];
 
@@ -586,6 +586,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     trophies: []
   });
 
+  let saveMigrated = false;
   function loadSave() {
     let raw = null;
     try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { return defaultSave(); }
@@ -597,6 +598,13 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       if (!Array.isArray(s.ownedKits) || !s.ownedKits.length) s.ownedKits = ['cyan'];
       if (!Array.isArray(s.ownedTrails) || !s.ownedTrails.length) s.ownedTrails = ['emerald'];
       if (!Array.isArray(s.trophies)) s.trophies = [];
+      // One-time trophy id migration: saves made before the rename keep the trophy.
+      const oldTrophy = s.trophies.indexOf('olympic');
+      if (oldTrophy !== -1) {
+        if (s.trophies.includes('cornercurler')) s.trophies.splice(oldTrophy, 1);
+        else s.trophies[oldTrophy] = 'cornercurler';
+        saveMigrated = true;
+      }
       if (!s.ownedKits.includes(s.equippedKit)) s.equippedKit = s.ownedKits[0];
       if (!s.ownedTrails.includes(s.equippedTrail)) s.equippedTrail = s.ownedTrails[0];
       s.credits = Number.isFinite(s.credits) ? s.credits : 2500;
@@ -610,6 +618,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   }
   let save = loadSave();
   const persistSave = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* storage blocked — play on */ } };
+  if (saveMigrated) persistSave();
 
   const toastQueue = [];
   let toastBusy = false;
@@ -1427,7 +1436,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       showBanner('60 SECONDS · GO!', 'Every goal respawns instantly — chain them for Fever!');
       later(hideBanner, 1000);
     } else if (state.mode === 'corner' && state.shotIndex === 0) {
-      showBanner('CORNER KICK WHIP', 'Bend it in direct for an Olympic Goal — or find the green ring for a header');
+      showBanner('CORNER KICK WHIP', 'Bend it in direct for a Corner Curler — or find the green ring for a header');
       later(hideBanner, 1800);
     }
   }
@@ -2015,8 +2024,8 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
           const isTopBins = Math.abs(bx) > 2.35 && by > 1.55;
           let basePts, title;
           if (state.mode === 'corner' && !state.assistTriggered) {
-            basePts = 350; title = 'OLYMPIC GOAL!!';
-            unlockTrophy('olympic');
+            basePts = 350; title = 'CORNER CURLER!!';
+            unlockTrophy('cornercurler');
           } else if (state.mode === 'corner') {
             basePts = isTopBins ? 300 : 220;
             title = state.assistKind === 'header' ? 'BULLET HEADER GOAL!' : 'CORNER VOLLEY GOAL!';
@@ -2313,7 +2322,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       crossbar: '<strong>Woodwork Challenge:</strong> Aim directly for the golden crossbar (250pt) or top joint (500pt)!',
       shootout2p: `<strong>Player ${state.activePlayer}'s Kick:</strong> Defender secretly picks L/C/R (or A/S/D) — revealed when the ball is struck. Beat a guessed dive with height or pace!`,
       timeattack: '<strong>Time Attack:</strong> Goals respawn instantly · chain them for ×2 / ×3 / ×5 Fever · fly through gold rings for +4.0s',
-      corner: '<strong>Corner Whip:</strong> Swipe into the box · <strong>bow your swipe</strong> to bend it in direct (Olympic Goal) or drop it on the green ring for a header'
+      corner: '<strong>Corner Whip:</strong> Swipe into the box · <strong>bow your swipe</strong> to bend it in direct (Corner Curler) or drop it on the green ring for a header'
     };
     document.getElementById('hud-hint').innerHTML = hints[state.mode];
   }
