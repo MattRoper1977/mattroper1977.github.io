@@ -297,7 +297,11 @@ async function judge(gameFile, { expect = null } = {}) {
       await swipe(p);
       let live = 0;
       const t1 = Date.now();
-      while (Date.now() - t1 < 8000) { live = Math.max(live, await p.evaluate(() => window.__ak10.pendingMatch())); if ((await banner(p)).show) break; await sleep(25); }
+      // One read for both: with two, a shot ending between them read as "0 timers" and then stopped on its banner.
+      while (Date.now() - t1 < 8000) {
+        const s = await p.evaluate(() => ({ pending: window.__ak10.pendingMatch(), show: document.getElementById('center-banner').classList.contains('show') }));
+        live = Math.max(live, s.pending); if (s.show) break; await sleep(25);
+      }
       await sleep(2200);   // the next shot is set up
       const shotsBefore = await savedShots(p);
       await swipe(p, 30);
