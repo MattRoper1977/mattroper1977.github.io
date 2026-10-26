@@ -259,6 +259,12 @@ def footer(record, bp, kind):
 
 
 def render(kind, origin, bp):
+    if kind == 'home':
+        # J93 (uz-6 (a), (b)): / and /main/ are the accepted draft of record,
+        # domain-split/home/home.html, bound by home_slots.py. The legacy home
+        # branch below is no longer reached; its helpers stay until retired.
+        import home_slots
+        return home_slots.render_home(origin, bp)
     record = json.loads(bp.AUDIENCE_RECORD.read_text())['audiences']
     subjects = subject_tiles(bp, bp.LESSONS_ROOT, featured=kind == 'home')
     primary = bp.LESSONS_ROOT is not None and (bp.LESSONS_ROOT / 'primary/index.html').is_file()

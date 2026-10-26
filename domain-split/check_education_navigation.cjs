@@ -7,6 +7,15 @@
  * Run against the BUILT education Site + Lessons trees mounted at one origin.
  * Do not inject lesson-navigation.js here: its presence is a publication gate.
  * This harness writes only browser storage and its own evidence directory.
+ *
+ * J93 (rulings uz-6 (h), vb-3 (e)): / and /main/ are the bound J93 homepage (domain-split/home/home.html,
+ * bound by home_slots.py). Retired -> replaced, on /main/:
+ *   the education-frontdoors.css link            -> the J93 /assets/home.css link (loaded, with rules)
+ *   the legacy h1                                -> the one J93 h1 (main h1#home-title, the masthead of record)
+ *   [data-subject-tiles] row, "Explore a subject" -> #subjects .home-subjects-grid, "Subjects" (#subjects-heading)
+ *   [data-subject-tiles] a.fd-subject            -> #subjects a.home-subject-tile (exactly 4)
+ * The four subject names and destinations, the retired shortcut bar, the saved/recommended views, the cover
+ * packs, the Art Studio click-through and every other case are unchanged.
  */
 const { chromium } = require('playwright');
 const fs = require('node:fs');
@@ -267,7 +276,8 @@ async function hubTests(browser) {
 async function publicationPage(page, route) {
   const response = await page.goto(targetURL(route), { waitUntil: 'domcontentloaded' });
   assert(response?.ok(), `Education route ${route} returned ${response?.status()}`);
-  const stylesheet = route === '/main/' ? '/assets/education-frontdoors.css' : '/assets/education-navigation.css';
+  // J93: the homepage's own stylesheet is /assets/home.css (copied from domain-split/home/home.css).
+  const stylesheet = route === '/main/' ? '/assets/home.css' : '/assets/education-navigation.css';
   assert(await page.locator('link[rel="stylesheet"][href="'+stylesheet+'"]').count(), `${route} lacks its published education styling`);
   await page.waitForFunction(stylesheet => [...document.styleSheets].some(sheet => {
     try { return sheet.href?.endsWith(stylesheet) && sheet.cssRules.length > 0; } catch (_) { return false; }
@@ -283,14 +293,22 @@ async function educationJourneyTests(browser) {
     await checkCase(name + '-education-home-subject-and-personal-shortcuts', page, async () => {
       await publicationPage(page, '/main/');
       assert.equal(await page.locator('body').getAttribute('data-site-kind'), 'education', 'The old general homepage is still being served');
-      assert.equal(await page.locator('h1').innerText(), 'Big on ideas. Light on prep.');
+      // J93: the legacy h1 is replaced by the one J93 h1, the masthead descriptor of the draft of record.
+      assert.equal(await page.locator('h1').count(), 1, 'The J93 homepage has exactly one h1');
+      assert.equal(await page.locator('main h1#home-title').count(), 1, 'The one h1 is the J93 masthead (main h1#home-title)');
+      assert.equal((await page.locator('main h1#home-title').textContent()).replace(/\s+/g, ' ').trim(),
+        'Real lessons, real packs, real games \u2014 by a teacher, for every pathway \u00b7 Free \u2022 No login \u2022 Works offline',
+        'The J93 h1 is the masthead string of record');
       // UX2 B2: the homepage is Appendix A §HOME. "Go straight to your subject" is
       // the tile row itself now, with no explanatory paragraph beneath it, and each
       // tile is one of the four subject cards the Lessons hub derives - so the names
       // and the destinations both come from the record rather than from this file's
       // memory of the old shelf URLs.
-      assert.equal(await page.locator('[data-subject-tiles]').count(), 1, 'The homepage has no subject tile row');
-      assert.equal(await page.getByRole('heading', { name: 'Explore a subject', exact: true }).count(), 1);
+      // J93: the SW2 tile row is replaced by the J93 subject strip, #subjects, with its own heading.
+      assert.equal(await page.locator('main #subjects .home-subjects-grid').count(), 1, 'The homepage has no subject tile row');
+      assert.equal(await page.locator('#subjects h2#subjects-heading').count(), 1, 'The subject strip has its heading');
+      assert.equal(await page.getByRole('heading', { name: 'Subjects', exact: true }).count(), 1);
+      assert.equal(await page.locator('#subjects a.home-subject-tile').count(), 4, 'The J93 subject strip has exactly four tiles');
       const subjects = [
         ['Science', '/Lessons/subject.html?subject=science'],
         ['Humanities & RE', '/Lessons/subject.html?subject=humanities-re'],
@@ -299,7 +317,7 @@ async function educationJourneyTests(browser) {
       ];
       const links = [];
       for (const [label, expected] of subjects) {
-        const card = page.locator('[data-subject-tiles] a.fd-subject').filter({ has: page.getByRole('heading', { name: label, exact: true }) });
+        const card = page.locator('#subjects a.home-subject-tile').filter({ has: page.getByRole('heading', { name: label, exact: true }) });
         assert.equal(await card.count(), 1, `${label} does not have one clear subject card`);
         const href = new URL(await card.getAttribute('href'), page.url());
         assert.equal(href.href, targetURL(expected));
@@ -336,7 +354,7 @@ async function educationJourneyTests(browser) {
       // exercised with the record's own string in the storage case below rather than
       // with a card name that never was one.
       await publicationPage(page, '/main/');
-      await page.locator('[data-subject-tiles] a.fd-subject').filter({ has: page.getByRole('heading', { name: 'Art Studio', exact: true }) }).click();
+      await page.locator('#subjects a.home-subject-tile').filter({ has: page.getByRole('heading', { name: 'Art Studio', exact: true }) }).click();
       await page.waitForFunction(() => /\d+ lessons/.test(document.querySelector('#summary')?.textContent || ''));
       assert.equal(new URL(page.url()).pathname, '/Lessons/subject.html');
       assert.equal(new URL(page.url()).searchParams.get('subject'), 'art-studio');

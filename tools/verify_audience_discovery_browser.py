@@ -140,9 +140,93 @@ def check_education_pupil_brand(page: Any, findings: Findings) -> None:
                    f"brand {href!r}")
 
 
+# J93 (rulings uz-6 (h), vb-3 (e); LD9). The education homepage is the bound J93 page. The legacy
+# assertions below (EDU-D2: three direct entrances plus the keyboard-opened institutional group) are
+# REPLACED, on the J93 page, by the four door cards that took their place:
+#   direct entrance {route} visible, x3        -> exactly 4 a.home-door-card in main, at the record
+#                                                 routes by key (pupils, teachers, parents, schools), in
+#                                                 order, each visible, each named by its record label
+#   one institutional group, named, collapsed  -> each record route is linked exactly once in main (the
+#                                                 doors) or not at all, and the shared menu carries every
+#                                                 audience route exactly once
+#   keyboard opens / closes the group          -> the keyboard reaches the four doors in order (Tab)
+#   opened group exposes {route}               -> the shared menu carries {route}
+#
+# TRANSITION FORM (ruling rd-6 (b') "pending-set transition form (A)"). --publication education reads
+# PRODUCTION (verify-games-audience-faces.yml, pull_request and push), which serves the legacy page
+# until the J93 Site squash is published. The check detects the served page and holds it to its OWN
+# assertions: the J93 page to the doors, the legacy page to EDU-D2 unchanged. A page that is neither,
+# or both, fails. --home-form j93 refuses the legacy page; the legacy branch goes in the collapse.
+J93_DOOR_KEYS = ("pupils", "teachers", "parents", "schools")
+HOME_FORM = "transition"
+
+
+def education_home_form(page: Any) -> str | None:
+    """'j93', 'legacy', or None when the served page is neither (or both)."""
+    j93 = (page.locator('main h1#home-title').count() == 1
+           and page.locator('link[rel="stylesheet"][href="/assets/home.css"]').count() == 1)
+    legacy = page.locator('body[data-sw2-frontdoor]').count() == 1
+    if j93 == legacy:
+        return None
+    return 'j93' if j93 else 'legacy'
+
+
 def check_education_home_audiences(page: Any, findings: Findings, label: str,
-                                  routes: list[str]) -> None:
-    """EDU-D2: direct personal entrances plus a keyboard-opened native group."""
+                                  routes: list[str], home_form: str | None = None) -> None:
+    """The served education homepage, held to its own assertions (transition form)."""
+    home_form = home_form or HOME_FORM
+    served = education_home_form(page)
+    findings.check(served is not None,
+                   f'{label}: the served homepage is exactly one of the J93 page and the legacy page')
+    if served is None:
+        return
+    if served == 'legacy':
+        findings.check(home_form == 'transition',
+                       f'{label}: the legacy homepage is accepted only in the transition form')
+        if home_form == 'transition':
+            check_legacy_home_audiences(page, findings, label, routes)
+        return
+    check_j93_home_doors(page, findings, label, routes)
+
+
+def check_j93_home_doors(page: Any, findings: Findings, label: str, routes: list[str]) -> None:
+    """J93: the four door cards at the record routes; every audience route in the shared menu."""
+    record = _AUD['audiences']
+    doors = [record[key]['route'] for key in J93_DOOR_KEYS]
+    names = [record[key]['label'] for key in J93_DOOR_KEYS]
+    cards = page.locator('main a.home-door-card')
+    findings.check(cards.count() == 4, f'{label}: exactly four door cards', f'found {cards.count()}')
+    hrefs = [cards.nth(i).get_attribute('href') for i in range(cards.count())]
+    findings.check(hrefs == doors, f'{label}: the door cards are the record routes, in key order', f'{hrefs}')
+    if cards.count() != 4:
+        return
+    for i, (route, name) in enumerate(zip(doors, names)):
+        card = cards.nth(i)
+        findings.check(card.is_visible(), f'{label}: door card {route} is visible')
+        heading = card.locator('h3')
+        shown = heading.first.inner_text().strip() if heading.count() == 1 else None
+        findings.check(shown == name, f'{label}: door card {route} is named by its record label',
+                       f'{shown!r}')
+    for route in routes:
+        in_main = page.locator(f'main a[href="{route}"]').count()
+        findings.check(in_main == (1 if route in doors else 0),
+                       f'{label}: main links {route} {"once, as its door" if route in doors else "nowhere"}',
+                       f'found {in_main}')
+        in_menu = page.locator(f'header[data-mbm-navigation="education"] a[href="{route}"]').count()
+        findings.check(in_menu == 1, f'{label}: the shared menu carries {route} exactly once',
+                       f'found {in_menu}')
+    cards.nth(0).focus()
+    order_ok = page.evaluate("el => document.activeElement === el", cards.nth(0).element_handle())
+    for i in range(1, 4):
+        page.keyboard.press('Tab')
+        order_ok = order_ok and page.evaluate("el => document.activeElement === el",
+                                              cards.nth(i).element_handle())
+    findings.check(bool(order_ok), f'{label}: the keyboard reaches the four doors in order')
+
+
+def check_legacy_home_audiences(page: Any, findings: Findings, label: str,
+                                routes: list[str]) -> None:
+    """EDU-D2: direct personal entrances plus a keyboard-opened native group (legacy page, unchanged)."""
     direct = [_AUD['audiences'][key]['route'] for key in ('teachers', 'pupils', 'parents')]
     for route in direct:
         findings.check(page.locator(f'.fd-audience-entry a[href="{route}"]:visible').count() == 1,
@@ -534,22 +618,59 @@ def self_test() -> None:
         routes = list(dict.fromkeys(AUDIENCE_ROUTES + ['/for/governors-trustees/']))
         institutions = [route for route in routes if route not in direct]
         links = lambda values: ''.join(f'<a href="{route}">{route}</a>' for route in values)
-        fixture = ('<main><nav class="fd-audience-entry">' + links(direct) + '</nav>'
+        # The legacy page is the one whose body carries data-sw2-frontdoor (the transition form).
+        fixture = ('<body data-sw2-frontdoor="home"><main><nav class="fd-audience-entry">' + links(direct) + '</nav>'
                    '<section id="audiences"><details><summary>Working with schools and organisations</summary>'
-                   + links(institutions) + '</details></section></main>')
+                   + links(institutions) + '</details></section></main></body>')
         cases = [('approved native disclosure', fixture, True),
                  ('hidden summary', fixture.replace('<summary>', '<summary hidden>'), False),
                  ('wrong group label', fixture.replace('Working with schools and organisations', 'More'), False),
                  ('non-disclosure group', fixture.replace('<details>', '<div>').replace('</details>', '</div>'), False)]
         for route in routes:
             cases.append((f'missing audience {route}', fixture.replace(f'<a href="{route}">{route}</a>', ''), False))
+        cases = [(label, markup, should_pass, 'transition') for label, markup, should_pass in cases]
+        cases.append(('legacy page under --home-form j93', fixture, False, 'j93'))
+        # J93: the four door cards (record routes and labels by key) and the shared menu, built from
+        # the record here, as the binder and the chrome emit them; then one plant per assertion.
+        record = _AUD['audiences']
+        doors = [record[key]['route'] for key in J93_DOOR_KEYS]
+        def door(key: str, extra: str = '') -> str:
+            return (f'<a class="home-door-card" href="{record[key]["route"]}"{extra}>'
+                    f'<span class="home-door-body"><h3>{record[key]["label"]}</h3></span></a>')
+        menu = ('<header data-mbm-navigation="education"><nav>' + links(routes) + '</nav></header>')
+        j93 = ('<head><link rel="stylesheet" href="/assets/home.css"></head><body>' + menu
+               + '<main><h1 id="home-title">Home</h1><section id="doors">'
+               + ''.join(door(key) for key in J93_DOOR_KEYS) + '</section></main></body>')
+        first, second = door(J93_DOOR_KEYS[0]), door(J93_DOOR_KEYS[1])
+        cases += [
+            ('J93 four door cards', j93, True, 'transition'),
+            ('J93 four door cards (--home-form j93)', j93, True, 'j93'),
+            ('J93 door missing', j93.replace(door('schools'), ''), False, 'transition'),
+            ('J93 fifth door', j93.replace('</section>', door('trusts') + '</section>'), False, 'transition'),
+            ('J93 doors out of order', j93.replace(first + second, second + first), False, 'transition'),
+            ('J93 door route not of record',
+             j93.replace(door('parents'), door('parents').replace(doors[2], '/for/elsewhere/')), False, 'transition'),
+            ('J93 door hidden', j93.replace(door('teachers'), door('teachers', ' style="display:none"')),
+             False, 'transition'),
+            ('J93 door wrongly named', j93.replace(f'<h3>{record["pupils"]["label"]}</h3>', '<h3>Kids</h3>'),
+             False, 'transition'),
+            ('J93 door out of keyboard order', j93.replace(door('parents'), door('parents', ' tabindex="-1"')),
+             False, 'transition'),
+            ('J93 menu without an audience route', j93.replace(f'<a href="{routes[-1]}">{routes[-1]}</a>', '', 1),
+             False, 'transition'),
+            ('J93 main links a non-door audience', j93.replace('</section>', links([routes[-1]]) + '</section>'),
+             False, 'transition'),
+            ('neither page (no J93 stylesheet, no legacy flag)',
+             j93.replace('<link rel="stylesheet" href="/assets/home.css">', ''), False, 'transition'),
+            ('both pages at once', j93.replace('<body>', '<body data-sw2-frontdoor="home">'), False, 'transition'),
+        ]
         for enabled in (True, False):
             context = browser.new_context(java_script_enabled=enabled)
             page = context.new_page()
-            for label, markup, should_pass in cases:
+            for label, markup, should_pass, form in cases:
                 page.set_content(markup)
                 probe = Findings()
-                check_education_home_audiences(page, probe, label, routes)
+                check_education_home_audiences(page, probe, label, routes, form)
                 if (not probe.failures) == should_pass:
                     print(f'  [PASS] audience disclosure control (JS={enabled}): {label}')
                 else:
@@ -567,6 +688,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--publication", choices=("legacy", "education"), default="legacy")
     parser.add_argument("--self-test", action="store_true", help="prove the checks can fail")
+    parser.add_argument("--home-form", choices=("transition", "j93"), default="transition",
+                        help="education homepage: 'transition' accepts the J93 page or the legacy page, each held "
+                             "to its own assertions (production, until J93 is published); 'j93' refuses legacy")
     parser.add_argument("--artifacts", type=Path, default=ARTIFACTS,
                         help="where screenshots and the report are written; control runs must "
                              "pass a scratch directory so a deliberate failure is never recorded "
@@ -574,6 +698,9 @@ def main() -> None:
     parser.add_argument("--report", type=Path, default=None,
                         help="report path (defaults to <artifacts>/results.json)")
     args = parser.parse_args()
+
+    global HOME_FORM
+    HOME_FORM = args.home_form
 
     if args.self_test:
         print("Browser controls:")

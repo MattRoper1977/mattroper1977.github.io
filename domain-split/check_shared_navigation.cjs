@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 'use strict';
 // Run against the assembled publication using the established CI browser.
+// J93 (rulings uz-6 (h), vb-3 (e)): the homepage (/ and /main/) has no search box of its own. Its header search
+// control targets the Resources search (/resources/#rxSearch), asserted exactly on both routes, and the home
+// search journey that typed into the retired hero box ([data-home-search]) now starts from that header control.
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -137,6 +140,12 @@ async function chromeFocus(control,surface,label,redProof=false) {
           const searchBox = await searchLink.boundingBox();
           assert(searchBox && searchBox.width >= 44 && searchBox.height >= 44, 'Header search control is 44px: ' + route);
           const target = await searchLink.getAttribute('href');
+          // J93 (uz-6 (h)): on / and /main/ the one header search target is the Resources search, never an
+          // in-page jump, and the retired homepage search box is gone.
+          if (['/', '/main/'].includes(route)) {
+            assert.deepEqual(await page.locator(header + ' .mbm-unified-search').evaluateAll(es => es.map(e => e.getAttribute('href'))), ['/resources/#rxSearch'], 'J93 header search targets the Resources search: ' + route);
+            assert.equal(await page.locator('[data-home-search], #home-resource-query').count(), 0, 'The retired homepage search box is gone: ' + route);
+          }
           if (target.startsWith('#')) assert.equal(await page.locator('[id="' + target.slice(1) + '"]').count(), 1, 'Header search jumps to a real control: ' + route);
           else assert.equal(target, '/resources/#rxSearch', 'Header search falls back to Resources: ' + route);
           if (javaScriptEnabled) {
@@ -263,8 +272,13 @@ async function chromeFocus(control,surface,label,redProof=false) {
         await page.locator(menu+' > summary').press('Enter');
         assert.equal(await page.locator(menu+' > summary').evaluate(el=>getComputedStyle(el).transitionDuration),'0s');
         await page.locator(menu+' > summary').press('Escape');
-        await page.getByLabel('Search lessons and resources').fill('PDF Studio');
-        await page.locator('[data-home-search] button').click();
+        // J93 (uz-6 (h)): the retired hero search box is replaced by the header search control. It opens the
+        // Resources search with the field focused, and the query lands in ?q= exactly as the hero form's did.
+        await page.locator(header+' .mbm-unified-search').click();
+        await page.waitForURL(origin+'/resources/#rxSearch');
+        await page.waitForFunction(()=>document.activeElement?.id==='rxSearch');
+        await page.locator('#rxSearch').fill('PDF Studio');
+        await page.waitForFunction(()=>new URLSearchParams(location.search).get('q')==='PDF Studio');
         assert.equal(new URL(page.url()).pathname,'/resources/');
         assert.equal(new URL(page.url()).searchParams.get('q'),'PDF Studio');
         await page.locator('a[href="/Matt-s-Apps-/PDF_Studio.html"]').first().waitFor({state:'visible'});

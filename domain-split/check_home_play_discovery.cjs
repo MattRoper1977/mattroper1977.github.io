@@ -4,6 +4,10 @@
 // Exercise assembled publications with the existing CI Playwright runtime.
 // Canonical domain navigations are fulfilled from the corresponding local
 // publication, so clicks retain their real URLs without contacting live games.
+// J93 (rulings uz-6 (h), vb-3 (e)): / and /main/ are the bound J93 homepage. The "Here for someone else?" rows
+// (#audiences, institutional routes from the record) are replaced by the four door cards (#doors), which are the
+// record's pupils, teachers, parents and schools routes and labels in key order; the institutional routes remain
+// menu rows and are each held to the same target rule there. /#audiences -> /#doors.
 const { chromium } = require('playwright');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -117,32 +121,34 @@ async function educationOnly(page, requests, start) {
       for (const home of ['/', '/main/']) await check(`${width}-${home === '/' ? 'home' : 'main'}-audiences-primary-and-play`, async () => {
         // UX2 B2: the homepage is Appendix A §HOME. Primary lessons and Play are
         // menu rows, Play is also the footer's last link, and the audience routes
-        // are the "Here for someone else?" rows (#audiences) read from the record.
+        // were the "Here for someone else?" rows (#audiences); J93 replaces them with the four door cards (#doors).
         const start = requests.length; await goto(page, home);
         assert.equal(await page.locator('.mbm-explore-nav').count(), 0, 'No explore bar on the homepage');
         const menu = page.locator('.mbm-unified-menu > summary'); await menu.click();
         for (const [name, href] of [['Primary lessons', '/Lessons/primary/'], ['Made by Matt Play ↗', canonicalPlay + '/']]) {
           const link = page.locator('#mbm-navigation-panel').getByRole('link', { name, exact: true }); assert.equal(await link.getAttribute('href'), href); await target(link);
         }
+        // J93: the institutional audience routes are not doors; they stay menu rows, each a clear target.
+        for (const route of audienceRoutes) await target(page.locator(`#mbm-navigation-panel a[href="${route}"]`));
         await page.keyboard.press('Escape');
         const footerPlay = page.locator('footer').getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
         assert.equal(await footerPlay.getAttribute('href'), canonicalPlay + '/'); await target(footerPlay);
         await noOverflow(page);
         const prefix = `${width}-${home === '/' ? 'home' : 'main'}`;
         const entry = await shot(page, prefix + '-entrances');
-        await page.locator('#audiences').scrollIntoViewIfNeeded();
-        await page.locator('#audiences details > summary').click();
+        await page.locator('#doors').scrollIntoViewIfNeeded();
         const record = JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8')).audiences;
-        const expectedRows = Object.values(record).filter(a => a.route !== record.teachers.route && a.route !== record.pupils.route && a.route !== record.parents.route).map(a => [a.route, a.label]);
-        expectedRows.push(['/for/governors-trustees/', 'Governors & trustees']);
-        const rows = await page.locator('#audiences .audience-row').evaluateAll(nodes => nodes.map(a => [a.getAttribute('href'), a.textContent.replace(/\s*→\s*$/, '').trim()]));
-        assert.deepEqual(rows, expectedRows, 'Institutional rows follow the record; families have a direct entrance');
-        for (const route of audienceRoutes) await target(page.locator(`#audiences a[href="${route}"]`));
-        const audiences = await shot(page, prefix + '-audiences', page.locator('#audiences'));
+        const expectedDoors = ['pupils', 'teachers', 'parents', 'schools'].map(key => [record[key].route, record[key].label]);
+        const doors = await page.locator('#doors a.home-door-card').evaluateAll(nodes => nodes.map(a => [a.getAttribute('href'), (a.querySelector('h3')?.textContent || '').trim()]));
+        assert.deepEqual(doors, expectedDoors, 'The four door cards are the record routes and labels, in key order');
+        assert.equal(await page.locator('#audiences, .audience-row').count(), 0, 'The retired #audiences rows are gone');
+        for (const [route] of expectedDoors) await target(page.locator(`#doors a.home-door-card[href="${route}"]`));
+        const audiences = await shot(page, prefix + '-doors', page.locator('#doors'));
         const details = await educationOnly(page, requests, start);
-        await page.goto(url('/#audiences'));
-        assert(await page.locator('#audiences').isVisible(), 'The /#audiences anchor other pages link still resolves');
-        return { inspectedRoute: home, audienceShortcut: page.url(), audiences: audienceRoutes, primary: '/Lessons/primary/', ...details, screenshots: [entry, audiences] };
+        await page.goto(url('/#doors'));
+        assert(await page.locator('#doors').isVisible(), 'The /#doors anchor resolves to the door cards');
+        assert.equal(await page.locator('#doors a.home-door-card').count(), 4, 'The /#doors anchor shows four doors');
+        return { inspectedRoute: home, doorShortcut: page.url(), doors: expectedDoors.map(d => d[0]), menuAudiences: audienceRoutes, primary: '/Lessons/primary/', ...details, screenshots: [entry, audiences] };
       }, page);
       await check(`${width}-parents-education-only`, async () => {
         const start = requests.length; await goto(page, '/for/parents-carers/');
@@ -182,7 +188,9 @@ async function educationOnly(page, requests, start) {
           await page.keyboard.press('Escape');
           // SW2 U keeps Play in the native menu; the pupil footer is the approved learning subset.
           await noOverflow(page);
-          assert.equal((await page.request.get(url('/#audiences'))).status(), 200);
+          // J93: the homepage anchor is #doors; no page relies on the retired #audiences anchor.
+          assert.equal((await page.request.get(url('/#doors'))).status(), 200);
+          assert.equal(await page.locator('a[href$="#audiences"]').count(), 0, 'No link to the retired /#audiences anchor on ' + route);
         }
         return { routes: ['/for/teachers/', '/for/pupils/'], visibleEntrances: ['Primary', 'Working with schools and organisations', 'Made by Matt Play'] };
       }, page);
@@ -218,7 +226,7 @@ async function educationOnly(page, requests, start) {
         const screenshot = await shot(page, `${width}-play-education-return`);
         await Promise.all([page.waitForURL(canonicalEducation + '/'), educationLink.click()]); await settle(page);
         assert.equal(page.url(), canonicalEducation + '/');
-        assert(await page.locator('#audiences').count());
+        assert.equal(await page.locator('#doors a.home-door-card').count(), 4, 'The Education return lands on the J93 homepage and its four doors');
         return { outbound: canonicalPlay + '/', returned: canonicalEducation + '/', screenshot };
       }, page);
       // The canonical-play cases route madebymatt-play.uk through this context's

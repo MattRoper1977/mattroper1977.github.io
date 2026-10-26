@@ -34,10 +34,21 @@
 //                 external destination the pre-order page already carried.
 //   claims        R3: no served audience route carries a banned absolute (data/banned-claims.json);
 //                 R4: the teacher page carries the record's safety line verbatim.
-//   hero          the homepage brand mark and hero artwork decode with naturalWidth > 0; the
-//                 only non-PDF picture is the digest-bound approved artwork (EDU-HERO-20260915).
-//   tiles         the "Go straight to your subject" tiles equal the Lessons hub's own
-//                 subject cards (slug for slug, in order) — the same derivation, measured.
+//   brand mark    the header brand mark and the homepage emblem decode with naturalWidth > 0; the
+//                 one picture in <main> is the approved brand mark the header carries (J93 replaces
+//                 the EDU-HERO-20260915 hero artwork; data-hero-source/-sha are gone).
+//   doors         J93 (uz-6 (h)): the four door cards that replaced the hero — the record's routes
+//                 and labels (data/audience-homepages.json, by key), the owner's bylines of spec §6
+//                 byte-equal, painted, each route answering 200.
+//   pathways      J93: the three flagship cards that replaced the D-3 band and the Try-a-lesson
+//                 slide — BUILD, GROW, LAUNCH, the owner's bylines byte-equal, the measured badge
+//                 count, the lesson badge on its pathway's registry row (answering 200), the card
+//                 link on that row's subject page, no placement instrument named.
+//   tiles         the subject tiles equal the Lessons hub's own subject cards (slug for slug, in
+//                 order), and each tile's count is the hub's own distinctLessons over that card,
+//                 run by the hub's script on its own page — the same derivation, measured.
+//   added         J93 (uz-6 (f)): / carries no update feed (no "Added this half-term" rail, no
+//                 What's new); the rail is still the Lessons hub's own.
 //   sitemap       the authored sitemap.xml carries /commission/ and every overlay route.
 //
 // Red proofs (--red-proof): each planted mutation below is applied through page.route
@@ -45,9 +56,11 @@
 //   drop-relocated-target   strips the Lessons hub's #view-recommended control → reachability
 //   inject-kofi             plants a Ko-fi anchor on /                     → money
 //   inject-third-party      plants an off-origin script on /              → third-party
-//   break-copy              rewrites the homepage h1                       → copy
+//   break-copy              rewrites the J93 homepage h1 (the masthead of record) → copy
 //   strip-stats-everywhere  removes the relocated /stats/ link from every page that carries it
 //                           (/privacy/ and the teacher page's account area)   → reachability
+//   empty-flagship-byline   blanks the GROW flagship card's owner byline on /  → pathways
+//   hide-maker-note         sets hidden on the byte-equal maker's note on /   → copy
 //
 // env: MBM_EDUCATION_ORIGIN (default http://127.0.0.1:4173), MBM_DISCOVERY_SITE (repo root),
 //      MBM_UX2_OUTPUT (report dir). Exit 1 on any FAIL.
@@ -68,6 +81,11 @@ const fixtures = {
   consent: JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/consent-contract.json'), 'utf8')),
   pathways: JSON.parse(fs.readFileSync(path.join(__dirname, 'pathway-definitions.json'), 'utf8')),
 };
+// J93 (vb-3 (h), vc-4): the maker's note carries the region word, which is allowed in home/home.html
+// and the two built pages only. So it is not listed in any fixture: the gate reads the draft's own
+// note at run time and compares the rendered note to it by sha256, never retyping its words.
+const HOME_DRAFT = fs.readFileSync(path.join(__dirname, 'home/home.html'), 'utf8');
+const sha256 = text => require('node:crypto').createHash('sha256').update(text, 'utf8').digest('hex');
 // Lessons hub rules (assets/catalogue/hub.js cardOf/tierOf, UX2 A2), used only to find the subject
 // page and pathway segment a lesson row renders on.
 fixtures.relocations.lessonRows = {
@@ -103,11 +121,14 @@ const MUTATIONS = {
   'drop-relocated-target': { target: 'reachability', route: '/Lessons/', apply: html => html.replace(/id="view-recommended"/g, 'id="view-recommended-removed"') },
   'inject-kofi': { target: 'money', route: '/', apply: html => html.replace('</footer>', '<p><a href="https://ko-fi.com/madebymattuk">Support Made by Matt</a></p></footer>') },
   'inject-third-party': { target: 'third-party', route: '/', apply: html => html.replace('</head>', '<script src="https://cdn.example.net/planted.js"></script></head>') },
-  'break-copy': { target: 'copy', route: '/', apply: html => html.replace('<h1>Big on ideas. Light on prep.</h1>', '<h1>Big on ideas. Light on prep</h1>') },
+  // J93: the one h1 is the masthead of record; drop its last character.
+  'break-copy': { target: 'copy', route: '/', apply: html => html.replace('>' + fixtures.appendix.homeHeading + '</h1>', '>' + fixtures.appendix.homeHeading.slice(0, -1) + '</h1>') },
   'strip-teacher-safety': { target: 'claims', route: '/for/teachers/', apply: html => html.replace('Capability without unsupported claims', '') },
   'strip-stats-everywhere': { target: 'reachability', routes: ['/privacy/', '/for/teachers/'], apply: html => html.replace(/<a href="\/stats\/">[^<]*<\/a>/g, 'Shared activity') },
-  // D-3: blank the GROW definition on the homepage; the pathways case must red on it.
-  'empty-pathway-definition': { target: 'pathways', route: '/', apply: html => html.replace(fixtures.pathways.pathways[1].definition, '') },
+  // J93 (was D-3's empty-pathway-definition): blank the GROW flagship byline; the pathways case must red on it.
+  'empty-flagship-byline': { target: 'pathways', route: '/', apply: html => html.replace('<p class="home-pathway-byline">' + fixtures.appendix.homePathways[1].byline + '</p>', '<p class="home-pathway-byline"></p>') },
+  // R3-1: the maker's note stays byte-equal but is hidden; the copy case must red on it (rendered, not just present).
+  'hide-maker-note': { target: 'copy', route: '/', apply: html => html.replace(/<p(\b[^>]*data-slot="owner\.makerNote")/, '<p hidden$1') },
 };
 async function plant(context, mutation) {
   if (!mutation) return;
@@ -156,7 +177,7 @@ async function suite(browser, mutation) {
     // subject page at its pathway with every accordion expanded — and reported, never hidden.
     const catalogue = await (await page.request.get(origin + '/Lessons/resources.json')).json();
     const lessonByHref = new Map(catalogue.filter(r => String(r.type || '').toLowerCase() === 'lesson').map(r => ['/Lessons/' + (r.file || r.url || ''), r]));
-    const segmentCache = new Map(); const viaSegment = [];
+    const segmentCache = new Map(); const viaSegment = []; const linkedRelocations = [];
     const renderedAt = async (slug, tier) => {
       const id = slug + '|' + (tier || 'ALL');
       if (!segmentCache.has(id)) {
@@ -187,16 +208,36 @@ async function suite(browser, mutation) {
       if (!entry) { problems.push(`${href} (on ${route}) is no longer within two taps of / and is not a recorded relocation or retirement`); continue; }
       const dest = key(entry.to);
       if (!twoTap.has(dest)) { problems.push(`${href} → ${entry.to}: the recorded destination is not within two taps of /`); continue; }
-      if (entry.selector) {
+      // ve-2: a relocation goes to "a page within two taps that really lists the link". For a relocated FILE (its
+      // path has an extension) the destination must link that file, after the recorded control is clicked when
+      // the entry names one; a page href keeps the existing destination and control checks.
+      const target = decodeURIComponent(new URL(href, origin).pathname);
+      const isFile = /\.[A-Za-z0-9]+$/.test(target);
+      if (entry.selector || isFile) {
         const destRoute = new URL(entry.to, origin);
         await page.goto(destRoute.href, { waitUntil: 'load' }); await settle(page);
-        const count = await page.locator(entry.selector).count();
-        if (!count) problems.push(`${href} → ${entry.to} ${entry.selector}: the recorded control is not on that page`);
+        const count = entry.selector ? await page.locator(entry.selector).count() : 0;
+        if (entry.selector && !count) { problems.push(`${href} → ${entry.to} ${entry.selector}: the recorded control is not on that page`); continue; }
+        // A directory index recorded under its canonical route (/x/index.html -> /x/) is that page itself: the
+        // destination must serve the very same bytes (200), which is stricter than a link to it.
+        const selfIndex = isFile && !entry.selector && /\/index\.html$/.test(target)
+          && decodeURIComponent(destRoute.pathname) === target.slice(0, -'index.html'.length);
+        if (selfIndex) {
+          const [asFile, asRoute] = await Promise.all([page.request.get(origin + target), page.request.get(destRoute.href)]);
+          if (asFile.status() !== 200 || asRoute.status() !== 200 || !(await asFile.body()).equals(await asRoute.body()))
+            problems.push(`${href} → ${entry.to}: the canonical route does not serve that same file`);
+          else linkedRelocations.push(href);
+        } else if (isFile) {
+          if (entry.selector) { await page.locator(entry.selector).first().click(); await settle(page); }
+          const linked = await page.evaluate(t => [...document.querySelectorAll('a[href]')].some(a => { try { return decodeURIComponent(new URL(a.href).pathname) === t; } catch (_) { return false; } }), target);
+          if (!linked) problems.push(`${href} → ${entry.to}${entry.selector ? ' ' + entry.selector : ''}: the destination does not link it (ve-2: a page that really lists the link)`);
+          else linkedRelocations.push(href);
+        }
       }
     }
     assert.deepEqual(problems, [], 'Pre-order hrefs lost within two taps of /: '+JSON.stringify(problems));
     assert.deepEqual(stale, [], 'Recorded relocations/retirements that are in fact still reachable (stale ledger): '+JSON.stringify(stale));
-    return { oneTap: oneTap.size, twoTap: twoTap.size, expandedPages: Object.keys(expanded).length, preOrder: seen.size, lessonsViaPathwaySegment: viaSegment.length };
+    return { oneTap: oneTap.size, twoTap: twoTap.size, expandedPages: Object.keys(expanded).length, preOrder: seen.size, lessonsViaPathwaySegment: viaSegment.length, relocatedFilesLinked: linkedRelocations.length };
   });
 
   for (const route of GATED) {
@@ -208,6 +249,35 @@ async function suite(browser, mutation) {
       const set = fixtures.appendix.routeStrings[route] || [];
       const missing = set.filter(s => !text1.includes(norm(s)));
       assert.deepEqual(missing, [], 'Appendix A strings missing on ' + route + ': ' + JSON.stringify(missing));
+      // J93 (uz-6 (h)): the legacy h1 is replaced by the one J93 h1, the masthead of record.
+      if (route === '/') assert.deepEqual(await page.locator('h1').evaluateAll(n => n.map(h => h.textContent.trim())), [fixtures.appendix.homeHeading], 'Exactly one h1 on /, and it is the J93 masthead of record');
+      if (route === '/') {
+        const drafted = await page.evaluate(tpl => [...new DOMParser().parseFromString(tpl, 'text/html').querySelectorAll('p[data-slot="owner.makerNote"]')].map(p => p.textContent), HOME_DRAFT);
+        assert.equal(drafted.length, 1, 'MEASUREMENT INVALID: the draft of record (home/home.html) has exactly one maker\'s note');
+        const served = await page.locator('p[data-slot="owner.makerNote"]').evaluateAll(n => n.map(p => p.textContent));
+        assert.equal(served.length, 1, 'Exactly one maker\'s note on /');
+        assert.equal(sha256(served[0]), sha256(drafted[0]), 'The maker\'s note on / is the draft\'s own note (sha256 of its text)');
+        // R3-1: byte-equal is not enough, the note must also be rendered: a box, no hidden/display:none/
+        // visibility:hidden on it or any ancestor, and its rendered innerText equal to the draft's note
+        // (whitespace normalised), so a note present in the bytes but hidden from the reader fails.
+        const shown = await page.locator('p[data-slot="owner.makerNote"]').evaluate(p => {
+          const r = p.getBoundingClientRect(), hiddenBy = [];
+          for (let e = p; e && e.nodeType === 1; e = e.parentElement) {
+            const cs = getComputedStyle(e), tag = e.tagName.toLowerCase() + (e.id ? '#' + e.id : '');
+            if (e.hidden) hiddenBy.push(tag + '[hidden]');
+            if (cs.display === 'none') hiddenBy.push(tag + ' display:none');
+            if (cs.visibility === 'hidden' || cs.visibility === 'collapse') hiddenBy.push(tag + ' visibility:' + cs.visibility);
+            if (cs.contentVisibility === 'hidden') hiddenBy.push(tag + ' content-visibility:hidden');
+            if (Number(cs.opacity) === 0) hiddenBy.push(tag + ' opacity:0');
+          }
+          const checked = typeof p.checkVisibility === 'function' ? p.checkVisibility({ opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true }) : true;
+          return { w: r.width, h: r.height, hiddenBy, checked, innerText: p.innerText || '' };
+        });
+        const normNote = s => s.replace(/\s+/g, ' ').trim();
+        assert(shown.w > 0 && shown.h > 0 && shown.hiddenBy.length === 0 && shown.checked,
+          'The maker\'s note on / is rendered (box ' + Math.round(shown.w) + 'x' + Math.round(shown.h) + (shown.hiddenBy.length ? ', hidden by ' + shown.hiddenBy.join('; ') : '') + (shown.checked ? '' : ', checkVisibility false') + ')');
+        assert.equal(sha256(normNote(shown.innerText)), sha256(normNote(drafted[0])), 'The maker\'s note on / renders the draft\'s own note (sha256 of its normalised innerText)');
+      }
       // EDU-HEADER-BRAND-20260915: once in the header brand lock-up, once in the footer.
       const lbe = (text.match(/Learn • Build • Explore/g) || []).length;
       assert.equal(lbe, 2, '"Learn • Build • Explore" exactly twice on ' + route + ' (header brand and footer)');
@@ -240,29 +310,66 @@ async function suite(browser, mutation) {
     });
   }
 
-  // D-3 (16 September 2026): the three pathway chips carry a definition each, from one
-  // source. Measured on the served page: order, label, byte-equal definition, painted,
-  // no overflow inside its block, and no placement instrument named anywhere in the band.
+  // J93 (uz-6 (h)): the three flagship cards replace the D-3 pathway band (.fd-pathways, one
+  // definition per chip) and the Try-a-lesson slide. Measured on the served page: BUILD, GROW,
+  // LAUNCH in the order pathway-definitions.json names them, the pathway badge, the owner's byline
+  // of spec §6 byte-equal (ux2/appendix-a-site.json homePathways), painted, no overflow inside its
+  // card, the badge count of record, the lesson badge first and on its pathway's registry lesson row
+  // (or, vb-3 (a), on the card's subject page when that lesson file is not in the tree), answering
+  // 200, the card link on that row's subject page, one subject for all three, and no placement
+  // instrument named anywhere in the strip.
   await check('pathways /', async () => {
     await goto(page, '/');
-    const rows = await page.locator('.fd-pathways .fd-pathway').evaluateAll(nodes => nodes.map(n => {
-      const chip = n.querySelector('.fd-chip'); const def = n.querySelector('.fd-pathway-def');
-      const box = n.getBoundingClientRect(); const dbox = def ? def.getBoundingClientRect() : { width: 0, height: 0 };
-      return { key: n.getAttribute('data-pathway'), chip: chip ? chip.textContent.trim() : '', def: def ? def.textContent.trim() : '',
-        painted: box.width > 0 && box.height > 0 && dbox.width > 0 && dbox.height > 0, overflow: n.scrollWidth > n.clientWidth + 1 };
+    const cards = await page.locator('main article.home-pathway-card[data-pathway-card]').evaluateAll(nodes => nodes.map(n => {
+      const badge = n.querySelector('.home-pathway-badge'); const by = n.querySelector('.home-pathway-byline');
+      const first = n.querySelector('.home-pack-badges > li:first-child'); const lesson = first ? first.querySelector('a[href]') : null;
+      const link = n.querySelector('a.home-card-link');
+      const box = n.getBoundingClientRect(); const bbox = by ? by.getBoundingClientRect() : { width: 0, height: 0 };
+      return { key: n.getAttribute('data-pathway-card'), badge: badge ? badge.textContent.trim() : '', byline: by ? by.textContent.trim() : '',
+        week: (n.querySelector('.home-pathway-week') || { textContent: '' }).textContent.trim(),
+        badges: n.querySelectorAll('.home-pack-badges > li.home-pack-badge').length, lessonFirst: !!(first && first.getAttribute('data-fixed') === 'true' && lesson),
+        lesson: lesson ? lesson.getAttribute('href') : null, link: link ? link.getAttribute('href') : null,
+        painted: box.width > 0 && box.height > 0 && bbox.width > 0 && bbox.height > 0, overflow: n.scrollWidth > n.clientWidth + 1 };
     }));
-    const expected = fixtures.pathways.pathways;
-    assert.deepEqual(rows.map(r => r.key), expected.map(e => e.key), 'the band carries build, grow, launch in that order');
-    rows.forEach((r, i) => {
-      assert.equal(r.chip, expected[i].name, 'chip label for ' + r.key);
-      assert.equal(r.def, expected[i].definition, 'definition for ' + r.key + ' is byte-equal to pathway-definitions.json');
-      assert.ok(r.painted, 'pathway ' + r.key + ' and its definition are painted');
-      assert.ok(!r.overflow, 'pathway ' + r.key + ' does not overflow its block');
-    });
-    const bandText = (await page.locator('.fd-pathways').innerText()).toLowerCase();
-    const hits = fixtures.pathways.forbidden.filter(w => bandText.includes(String(w).toLowerCase()));
-    assert.deepEqual(hits, [], 'forbidden terms in the pathways band');
-    return { pathways: rows.length };
+    const names = fixtures.pathways.pathways.map(p => p.name);
+    const record = fixtures.appendix.homePathways;
+    assert.deepEqual(record.map(r => r.key), names, 'MEASUREMENT INVALID: the byline record and pathway-definitions.json name the same pathways in the same order');
+    assert.deepEqual(cards.map(c => c.key), names, 'the flagship strip carries BUILD, GROW, LAUNCH in that order');
+    const catalogue = await (await page.request.get(origin + '/Lessons/resources.json')).json();
+    const rows = new Map(catalogue.filter(r => String(r.type || '').toLowerCase() === 'lesson').map(r => [decodeURIComponent('/Lessons/' + (r.file || r.url || '')), r]));
+    const rules = fixtures.relocations.lessonRows; const subjects = new Set(); const onHub = []; let order = null;
+    for (const [i, c] of cards.entries()) {
+      assert.equal(c.badge, names[i], 'pathway badge for ' + c.key);
+      assert.equal(c.byline, record[i].byline, 'byline for ' + c.key + ' is byte-equal to the owner words of record');
+      assert.ok(c.painted, 'flagship card ' + c.key + ' and its byline are painted');
+      assert.ok(!c.overflow, 'flagship card ' + c.key + ' does not overflow');
+      assert.equal(c.badges, fixtures.appendix.homeFlagship.badgesPerCard, 'badge count of record on ' + c.key);
+      assert.ok(c.lessonFirst, 'the lesson badge comes first on ' + c.key);
+      assert.equal((await page.request.get(origin + c.lesson)).status(), 200, 'the lesson badge of ' + c.key + ' answers 200');
+      if (c.lesson === c.link) {
+        // vb-3 (a): the badge links the card's subject page ONLY when the lesson file is not in the tree. Find the card's
+        // registry lesson independently (its subject page, its pathway, the card's week label in the lesson order)
+        // and require that its file really answers 404.
+        order = order || await (await page.request.get(origin + '/Lessons/assets/catalogue/lesson-order.json')).json();
+        const slug = new URL(c.link, origin).searchParams.get('subject');
+        const due = [...rows.values()].filter(r => rules.cardOf(r) === slug && rules.tierOf(r) === c.key
+          && (((order.entries || {})[r.file || r.url] || {}).weeks || []).some(w => w && w.label === c.week));
+        assert.equal(due.length, 1, 'MEASUREMENT INVALID: the ' + c.key + ' card of week ' + JSON.stringify(c.week) + ' has exactly one registry lesson on ' + slug);
+        assert.equal((await page.request.get(origin + '/Lessons/' + encodeURI(due[0].file || due[0].url))).status(), 404,
+          'vb-3 (a): the lesson badge of ' + c.key + ' links the card\'s subject page only when its lesson file answers 404');
+        onHub.push(c.key); continue;
+      }
+      const row = rows.get(decodeURIComponent(new URL(c.lesson, origin).pathname));
+      assert.ok(row, 'the lesson badge of ' + c.key + ' is a registry lesson row');
+      assert.equal(rules.tierOf(row), c.key, 'the lesson badge of ' + c.key + ' is on that pathway');
+      assert.equal(c.link, '/Lessons/subject.html?subject=' + rules.cardOf(row), 'the card link of ' + c.key + ' is its row\'s subject page');
+      subjects.add(rules.cardOf(row));
+    }
+    assert.ok(subjects.size <= 1 && new Set(cards.map(c => c.link)).size === 1, 'one topic, three pathways: the three cards are on one subject page');
+    const stripText = (await page.locator('main #pathways').innerText()).toLowerCase();
+    const hits = fixtures.pathways.forbidden.filter(w => stripText.includes(String(w).toLowerCase()));
+    assert.deepEqual(hits, [], 'forbidden terms in the flagship strip');
+    return { pathways: cards.length, badges: cards.map(c => c.badges), lessonOnHubPage: onHub };
   });
 
   for (const route of ['/', ...PUPIL_ROUTES.filter(r => r !== '/')]) {
@@ -419,41 +526,90 @@ async function suite(browser, mutation) {
     return { cards, current, firstHT, flaggedInFirstKey: flagged, keyedRows: nonLessonKeyed.length };
   });
 
-  await check('hero /', async () => {
+  await check('brand mark /', async () => {
     await goto(page, '/');
-    const images = await page.locator(HEADER + ' img, .fd-hero-art img').evaluateAll(n => n.map(i => ({ src: (i.getAttribute('src') || '').slice(0, 40), w: i.naturalWidth, h: i.naturalHeight, complete: i.complete })));
-    assert(images.length >= 2, 'The approved brand mark and the approved hero artwork are present');
-    // EDU-HERO-20260915: the one picture besides PDF renders is the approved artwork, bound by digest (check_sw2_frontdoors proves the bytes).
-    assert.equal(await page.locator('main img:not([data-preview-source]):not([data-hero-source])').count(), 0, 'Homepage only uses verified source PDF renders and the digest-bound hero artwork');
-    assert.equal(await page.locator('main img[data-hero-source]').count(), 1, 'One hero artwork on the homepage');
+    const images = await page.locator(HEADER + ' img, main img').evaluateAll(n => n.map(i => ({ src: (i.getAttribute('src') || '').slice(0, 40), w: i.naturalWidth, h: i.naturalHeight, complete: i.complete })));
+    // J93 replaces the EDU-HERO-20260915 hero artwork: the one picture in <main> is the emblem, the same
+    // approved brand mark the header carries (its bytes are pinned elsewhere); no hero is left behind.
+    const headerMark = await page.locator(HEADER + ' img').evaluateAll(n => n.map(i => i.getAttribute('src')));
+    const mainImages = await page.locator('main img').evaluateAll(n => n.map(i => i.getAttribute('src')));
+    assert.equal(headerMark.length, 1, 'One brand mark in the header');
+    assert.deepEqual(mainImages, headerMark, 'The one picture in <main> is the approved brand mark the header carries');
+    assert.equal(await page.locator('[data-hero-source], [data-hero-sha]').count(), 0, 'The retired hero artwork is not on the homepage');
     for (const i of images) assert(i.complete && i.w > 0 && i.h > 0, 'Image decodes: ' + JSON.stringify(i));
     return images;
   });
 
+  // J93 (uz-6 (h)): the four door cards replace the hero. The routes and labels are the record's
+  // (data/audience-homepages.json, by the keys ux2/appendix-a-site.json homeDoors names, in order);
+  // the bylines are the owner's words of spec §6, byte-equal; each door is painted and answers 200.
+  await check('doors /', async () => {
+    await goto(page, '/');
+    const record = JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8')).audiences;
+    const doors = await page.locator('main a.home-door-card').evaluateAll(n => n.map(a => { const r = a.getBoundingClientRect(); return { href: a.getAttribute('href'), label: ((a.querySelector('h3') || {}).textContent || '').trim(), byline: ((a.querySelector('.home-door-byline') || {}).textContent || '').trim(), painted: r.width > 0 && r.height > 0 }; }));
+    const expected = fixtures.appendix.homeDoors;
+    assert.equal(doors.length, expected.length, 'The homepage carries the ' + expected.length + ' doors of record');
+    expected.forEach((d, i) => {
+      const entry = record[d.key];
+      assert(entry && entry.route && entry.label, 'MEASUREMENT INVALID: the audience record has no door entry ' + d.key);
+      assert.equal(doors[i].href, entry.route, 'Door ' + (i + 1) + ' is the record route of ' + d.key);
+      assert.equal(doors[i].label, entry.label, 'Door ' + (i + 1) + ' carries the record label of ' + d.key);
+      assert.equal(doors[i].byline, d.byline, 'Door ' + (i + 1) + ' byline is byte-equal to the owner words of record');
+      assert(doors[i].painted, 'Door ' + (i + 1) + ' is painted');
+    });
+    for (const d of doors) assert.equal((await page.request.get(origin + d.href)).status(), 200, 'Door route answers 200: ' + d.href);
+    return { doors: doors.map(d => d.href) };
+  });
+
   await check('tiles equal the Lessons hub cards', async () => {
     await goto(page, '/');
-    const tiles = await page.locator('[data-subject-tiles] a').evaluateAll(n => n.map(a => new URL(a.href).searchParams.get('subject')));
+    // J93: the homepage tiles are a.home-subject-tile (the [data-subject-tiles] strip is gone from /).
+    const homeTiles = await page.locator('main a.home-subject-tile').evaluateAll(n => n.map(a => ({ slug: new URL(a.href).searchParams.get('subject'), path: new URL(a.href).pathname,
+      name: ((a.querySelector('h3') || {}).textContent || '').trim(), count: ((a.querySelector('.home-subject-count strong') || {}).textContent || '').trim(),
+      halfTerms: [...a.querySelectorAll('.home-halfterm-strip li')].map(li => li.textContent.trim()) })));
+    const tiles = homeTiles.map(t => t.slug);
     await goto(page, '/Lessons/');
     await page.waitForFunction(() => document.querySelectorAll('.scard[data-card]').length > 0);
     const cards = await page.locator('.scard[data-card]').evaluateAll(n => n.map(c => c.dataset.card));
+    const cardNames = Object.fromEntries(await page.locator('.scard[data-card]').evaluateAll(n => n.map(c => [c.dataset.card, ((c.querySelector('h3') || {}).textContent || '').trim()])));
+    // The hub's own rule, run by the hub's own script on its own page: distinctLessons over each card.
+    const hub = await page.evaluate(async () => {
+      const H = window.MBM_HUB; if (!H || typeof H.loadAll !== 'function' || typeof H.cardsFromRows !== 'function' || typeof H.distinctLessons !== 'function') return null;
+      const state = await H.loadAll();
+      return { counts: Object.fromEntries(H.cardsFromRows(state.rows).map(c => [c.slug, String(H.distinctLessons(c.rows))])), halfTerms: Array.isArray(H.HALF_TERMS) ? H.HALF_TERMS.slice() : null };
+    });
+    assert(hub && hub.halfTerms, 'MEASUREMENT INVALID: the Lessons hub exposes no MBM_HUB count rule');
     assert.deepEqual(tiles, cards.filter(slug => !slug.startsWith('x-')), 'Homepage features the four real subject groups; the full catalogue remains behind View all');
+    assert(homeTiles.every(t => t.path === '/Lessons/subject.html'), 'Each homepage tile opens its subject page');
+    assert.deepEqual(homeTiles.map(t => t.name.toUpperCase()), tiles.map(s => String(cardNames[s]).toUpperCase()), 'Each tile is named as its hub card');
+    assert.deepEqual(homeTiles.map(t => t.count), tiles.map(s => hub.counts[s]), 'Each tile count is the hub\'s own distinctLessons over that card');
+    for (const t of homeTiles) assert.deepEqual(t.halfTerms, hub.halfTerms, 'The half-term strip of ' + t.slug + ' is the hub\'s HALF_TERMS');
     // SW2 U supersedes the triad/pathway links with the same subject tiles.
     for (const route of ['/for/teachers/', '/for/pupils/']) {
       await goto(page, route);
       const audienceTiles = await page.locator('[data-subject-tiles] a').evaluateAll(n => n.map(a => new URL(a.href).searchParams.get('subject')));
       assert.deepEqual(audienceTiles, cards, 'Audience subject tiles equal the actual hub cards: ' + route);
     }
-    return { tiles };
+    return { tiles, counts: homeTiles.map(t => t.count) };
   });
 
-  await check('added this half-term uses the first three hub rows', async () => {
+  // J93 (uz-6 (f), LD3): there is no Education updated feed, so the homepage carries neither the
+  // "Added this half-term" rail nor the draft's What's new section (the whole section is omitted, its
+  // items are never bound to Play data). The rail the old case compared / with is still the Lessons
+  // hub's own: present, under its Appendix A heading, with its rows.
+  await check('added this half-term stays on the hub; / carries no update feed', async () => {
     await goto(page, '/');
-    const home = await page.evaluate(() => ({ hidden: document.getElementById('added').hidden, heading: document.getElementById('added-h').textContent, rows: [...document.querySelectorAll('#added-rail .acard')].map(a => a.dataset.resourcePath) }));
+    const home = await page.evaluate(() => ({ added: document.querySelectorAll('#added, #added-rail, #added-h').length, whatsNew: document.querySelectorAll('#whats-new, .home-update-item, [data-slot^="manifest.updated"]').length, script: [...document.scripts].filter(s => /added-this-half-term/.test(s.src || '')).length }));
+    assert.deepEqual(home, { added: 0, whatsNew: 0, script: 0 }, 'No update feed on the homepage');
     await goto(page, '/Lessons/');
     await page.waitForFunction(() => document.querySelectorAll('.scard[data-card]').length > 0);
-    const hub = await page.evaluate(() => ({ hidden: document.getElementById('added').hidden, heading: document.getElementById('added-h').textContent, rows: [...document.querySelectorAll('#added-rail .acard')].slice(0,3).map(a => a.dataset.resourcePath) }));
-    assert.deepEqual(home, hub, 'Same date window, heading, ordering and real records; SW2 H displays three');
-    return home;
+    const hub = await page.evaluate(() => { const a = document.getElementById('added'); return { present: !!a, hidden: a ? a.hidden : null, heading: ((document.getElementById('added-h') || {}).textContent || '').trim(), rows: document.querySelectorAll('#added-rail .acard').length }; });
+    assert(hub.present, 'The Lessons hub still carries its Added this half-term rail');
+    if (!hub.hidden) {
+      assert([...fixtures.appendix.homeAdded, ...fixtures.appendix.homeAddedFallback].includes(hub.heading), 'The hub rail keeps its Appendix A heading');
+      assert(hub.rows > 0, 'A shown hub rail has rows');
+    }
+    return { home, hub: { hidden: hub.hidden, rows: hub.rows } };
   });
 
   await check('sitemap carries the overlay routes', async () => {
