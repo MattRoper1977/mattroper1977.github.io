@@ -47,7 +47,7 @@ HERE = Path(__file__).resolve().parent
 ADDITIONS = HERE / 'science-download-usage-additions.json'
 CHECKER = HERE / 'check_education_separation.py'
 ADMISSION = HERE / 'education-publication-admission.json'
-PREFIX = '/Lessons/Science_Teesside/Teaching_Packs/'
+PREFIX = '/Lessons/Science/Teaching_Packs/'
 LESSONS_TREE = 'education-lessons'
 BASIS = ('download registrations derived from the served estate under HUB-1 S3, '
          'signed by Matt Roper 2026-09-22 (pre-signed with the PASS F table)')
@@ -293,8 +293,8 @@ def self_test() -> int:
     try:
         with tempfile.TemporaryDirectory() as td:
             tmp = Path(td)
-            data = {'Science_Teesside/Teaching_Packs/BUILD/a.pdf': b'A',
-                    'Science_Teesside/Teaching_Packs/GROW/b.pdf': b'B'}
+            data = {'Science/Teaching_Packs/BUILD/a.pdf': b'A',
+                    'Science/Teaching_Packs/GROW/b.pdf': b'B'}
             out_dir = _sandbox(tmp, [a, b, outside], data, '0' * 64)
             ADDITIONS.write_bytes(serialise([]))
             check('end to end: --write writes the derivation and pins it',

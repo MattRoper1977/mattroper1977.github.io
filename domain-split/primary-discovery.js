@@ -107,8 +107,8 @@
       const saved = JSON.parse(sessionStorage.getItem('mbm.lesson.return.v1') || '{}')[location.pathname];
       const url = new URL(saved, location.origin);
       if (cleanText(saved) && url.origin === location.origin && ['/Lessons/', '/Lessons/index.html',
-        '/Lessons/Science_Teesside/', '/Lessons/Science_Teesside/index.html',
-        '/Lessons/Humanities_Teesside/', '/Lessons/Humanities_Teesside/index.html'].includes(url.pathname)) return;
+        '/Lessons/Science/', '/Lessons/Science/index.html',
+        '/Lessons/Humanities/', '/Lessons/Humanities/index.html'].includes(url.pathname)) return;
     } catch (_) {}
   }
   if (!back) {

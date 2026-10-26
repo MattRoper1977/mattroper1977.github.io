@@ -12,8 +12,8 @@ HUB = '/Lessons/primary/'
 ASSETS = '/Lessons/assets/catalogue/'
 SCRIPT = '<script defer src="'+ASSETS+'primary-discovery.js"></script>'
 CORE_SCRIPT = '<script defer src="'+ASSETS+'lesson-navigation.js"></script>'
-CORE_HUB_ANCHOR = "ROOT+'Humanities_Teesside/']);"
-CORE_PRIMARY_HUBS = "ROOT+'Humanities_Teesside/',ROOT+'primary/index.html',ROOT+'primary/']);"
+CORE_HUB_ANCHOR = "ROOT+'Humanities/']);"
+CORE_PRIMARY_HUBS = "ROOT+'Humanities/',ROOT+'primary/index.html',ROOT+'primary/']);"
 
 
 def read(path):

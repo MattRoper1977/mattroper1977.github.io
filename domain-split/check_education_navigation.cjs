@@ -23,7 +23,7 @@ const path = require('node:path');
 const assert = require('node:assert/strict');
 const origin = new URL(process.env.MBM_EDUCATION_ORIGIN || 'http://127.0.0.1:4173').origin;
 const out = path.resolve(process.env.MBM_NAVIGATION_OUTPUT || 'audit-output/education-navigation');
-const SURFACE = '/Lessons/Art_Teesside/Build/BUILD_ART_A2_W1_Surface_Hunt.html';
+const SURFACE = '/Lessons/Art/Build/BUILD_ART_A2_W1_Surface_Hunt.html';
 const RETURN_KEY = 'mbm.lesson.return.v1';
 const SAVE_KEY = 'mbm.lesson.saved.v1';
 const viewports = [
@@ -241,7 +241,7 @@ async function hubTests(browser) {
     return { returnedTo: page.url() };
   });
   await checkCase('science-shelf-preserves-term-week-and-version-context', page, async () => {
-    const route = '/Lessons/Science_Teesside/index.html?pathway=LAUNCH&term=Aut1&week=3&style=recommended';
+    const route = '/Lessons/Science/index.html?pathway=LAUNCH&term=Aut1&week=3&style=recommended';
     const response = await page.goto(targetURL(route), { waitUntil: 'domcontentloaded' });
     assert(response?.ok());
     await page.waitForFunction(() => window.__mbmLessonNavigation === true);

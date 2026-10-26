@@ -227,7 +227,7 @@ def registry_errors(output):
     # Re-frozen 16 September (CX2 §5 EDU-D3): the Lessons pin moves from 2c33266b to
     # the main that carries the EDU-Q1 companions (#551). Proved by diffing
     # registry_partition() output between a full build at 2c33266b (reproduces
-    # d2439c61 exactly, 926 rows) and one at the new pin: 51 Science_Teesside lesson
+    # d2439c61 exactly, 926 rows) and one at the new pin: 51 Science lesson
     # records join (the Spring/Summer batch and the CX2 pilots), 0 removed, and one
     # existing record changes in one field — the Sugar lesson's title after its
     # public-surface hygiene sweep (Lessons #547). Same digest the Lessons carrier
@@ -262,7 +262,7 @@ def registry_errors(output):
     # of the new one. Derived by the window runner from the built bytes, never transcribed.
     # LAND-A2 Science, window W1 (25 September, ruling R4 Q1) held a TRANSITION PAIR while the landing
     # was in flight: a6e96f29 (Lessons main 55eb2bd1, 1105 retained rows) and 2969dfef (the landing,
-    # 1294 rows: 189 joined, all under /Lessons/Science_Teesside/{Build,Grow,Launch}/Autumn_2_2026-27/).
+    # 1294 rows: 189 joined, all under /Lessons/Science/{Build,Grow,Launch}/Autumn_2_2026-27/).
     # Window W2 (25 September, ruling R6) collapses it to one digest, 632100c6, in the same change as
     # the search and provenance refresh that moves it. Proved by diffing registry_partition() output
     # between a full build of Site main 214749c0 with Lessons c0b9b51f (the landing's merge; reproduces
@@ -273,7 +273,7 @@ def registry_errors(output):
     # previous digests, a planted row, a removed row and a change to any other field are red (self_test).
     # Science Week 8, window W1 (4 October 2026, ruling ex item 2, Site #453) held a TRANSITION PAIR while the
     # landing was in flight: 632100c6 (Lessons main 7bb51069, 1294 retained rows) and 513399bc (the landing,
-    # 1336 rows: 42 joined, all under /Lessons/Science_Teesside/{Build,Grow,Launch}/Autumn_1_2026-27/).
+    # 1336 rows: 42 joined, all under /Lessons/Science/{Build,Grow,Launch}/Autumn_1_2026-27/).
     # Window W2 (4 October, ruling ex) collapses it to one digest, d283cc5e, in the same change as the search
     # and provenance refresh that moves it. Proved by diffing registry_partition() output between a full
     # build of Site main a71ee9d2 with Lessons 96620472 (the landing's merge, Lessons #683; reproduces
@@ -371,7 +371,7 @@ def registry_errors(output):
         return ['Unreviewed Science download registration metadata']
     if sha256(TEACHING_PACK_ADDITIONS.read_bytes()).hexdigest() != TEACHING_PACK_ADDITIONS_SHA256:
         return ['Unreviewed teaching-pack download registration metadata']
-    approved = {'/Lessons/Science_Teesside/Teaching_Packs/': json.loads(additions_path.read_text())}
+    approved = {'/Lessons/Science/Teaching_Packs/': json.loads(additions_path.read_text())}
     approved.update(json.loads(TEACHING_PACK_ADDITIONS.read_text()))
     if sha256(TEACHING_PACK_PENDING.read_bytes()).hexdigest() != TEACHING_PACK_PENDING_SHA256:
         return ['Unreviewed teaching-pack pending metadata']
@@ -506,7 +506,7 @@ def self_test():
     # HC6 §11: the reviewed-additions partition, proved on planted rows.
     row=lambda r:{'route':r,'kind':'resource'}
     approved={'/Lessons/Careers/Teaching_Packs/':[row('/Lessons/Careers/Teaching_Packs/BUILD/downloads/a.zip')]}
-    other=[row('/Lessons/Science_Teesside/x.html')]
+    other=[row('/Lessons/Science/x.html')]
     reg_cases=[  # (rows, installed, expected error count)
         (other+approved['/Lessons/Careers/Teaching_Packs/'], {'/Lessons/Careers/Teaching_Packs/':True}, 0),
         (other, {'/Lessons/Careers/Teaching_Packs/':False}, 0),
@@ -602,14 +602,14 @@ def self_test():
     # every field a real retained row carries (aliases, event_types, kind, resource_id, route, source, source_ids, title)
     full=lambda route,rid,title,kind: {**row(route),'aliases':[route],'event_types':['open'],'kind':kind,'resource_id':rid,
                                        'source':'lessons','source_ids':[rid[:8]],'title':title}
-    pre=[full('/Lessons/Humanities_Teesside/a.html','a'*64,'A','lesson'),
-         full('/Lessons/Science_Teesside/Build/Autumn_2_2026-27/X/X.html','b'*64,'X','lesson')]
+    pre=[full('/Lessons/Humanities/a.html','a'*64,'A','lesson'),
+         full('/Lessons/Science/Build/Autumn_2_2026-27/X/X.html','b'*64,'X','lesson')]
     post=[pre[0],{**pre[1],'source_ids':['lesson-'+pre[1]['source_ids'][0],pre[1]['source_ids'][0]]}]
     one=(digest(post),)
     collapse_cases=[
         ('the refreshed registry (the one accepted digest)', post, True),
         ('the pre-refresh registry (the old pair\'s second half)', pre, False),
-        ('a planted extra row', post+[row('/Lessons/Science_Teesside/planted.pdf')], False),
+        ('a planted extra row', post+[row('/Lessons/Science/planted.pdf')], False),
         ('a row removed', post[1:], False),
         ('the same rows reordered', [post[1],post[0]], False),
     ]
