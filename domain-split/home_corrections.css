@@ -1,8 +1,0 @@
-/* J93 landing corrections: lane decision LD10 under ruling vb-1, pending the supplier's next revision.
-   The draft of record (home.html r5, home.css r2) is served byte for byte; this file only adds what two estate
-   accessibility gates ask of every page: no sideways page overflow, and 44 px targets for links in <main>.
-   (a) The footer sits outside .home-main, where home.css r2 scopes its border-box reset, so its padded wrapper
-       overflowed by 32 px at phone widths. (b) The lesson badge link and the maker's-note link were 18 px tall. */
-body[data-page="home"] footer .home-wrap { box-sizing: border-box; }
-body[data-page="home"] .home-pack-badge > a { display: inline-flex; align-items: center; min-height: 44px; }
-body[data-page="home"] .home-maker-note a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
