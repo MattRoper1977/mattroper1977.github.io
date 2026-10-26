@@ -47,8 +47,8 @@ PUBLIC = {'.html', '.htm', '.css', '.js', '.mjs', '.json', '.svg', '.png', '.jpg
 REVIEWED_ARCHIVE_DOCUMENTS = {
     '_sciv3/build/POLICY_ALIGNMENT.md': '9d16fb2cbb314bd883ece6eb9249f268fa5bee0a82f48c3be229df551ad722d8',
     '_sciv3/launch/SOW_AND_POLICY_ALIGNMENT.md': '19695c68b5af03be7456741eb0a62ea9cebb986febca4547434c1017e4fe7e63',
-    '_finish/build_estate/Art_Teesside__SOW_POLICY_AND_AWARD_ALIGNMENT.md': 'b357278bbf285b8348a73a2b259710129d7b126145c618a88ba443eaa5802473',
-    '_finish/build_estate/Art_Teesside__ARTIST_IMAGE_PROVENANCE_GUIDE.md': '04ac1d4a351193171253a8e01125e7b4ae0172d177867759c0bb1afb404529de',
+    '_finish/build_estate/Art__SOW_POLICY_AND_AWARD_ALIGNMENT.md': 'b357278bbf285b8348a73a2b259710129d7b126145c618a88ba443eaa5802473',
+    '_finish/build_estate/Art__ARTIST_IMAGE_PROVENANCE_GUIDE.md': '04ac1d4a351193171253a8e01125e7b4ae0172d177867759c0bb1afb404529de',
     '_finish/build_estate/BUILD_ASDAN__CLAIMS_AND_SAFETY_READBACK.md': '4135dd1c9f522881f4b9f3d2af39a2d712a1138003f99caad9533e11eb89f0da',
 }
 
