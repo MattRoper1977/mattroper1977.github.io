@@ -53,6 +53,8 @@ exports.verify = async ({page, origin, rules, record}) => {
     const entries = (state.order && state.order.entries) || {};
     const fc = card(flagshipSlug);
     return {terms: H.HALF_TERMS.slice(), counts: Object.fromEntries(slugs.map(q => [q, card(q) ? H.distinctLessons(card(q).rows) : null])),
+      // vj-3 (c): each tile's pathway split, by the subject page's own rule (distinct lessons per tier).
+      splits: Object.fromEntries(slugs.map(q => [q, card(q) ? pathways.map(t => [t, H.distinctLessons(card(q).rows.filter(r => String(r._tier) === t))]) : null])),
       flagship: pathways.map(t => (fc ? fc.rows : []).filter(H.isLesson).filter(r => registry.has(r._path) && String(r._tier) === t).flatMap(r =>
         ((entries[r._path] && entries[r._path].weeks) || []).filter(w => w && w.label === weekLabel).map(w => ({file: r._path, title: H.displayTitle(r), desc: r.desc == null ? null : String(r.desc), term: w.term, week: w.week})))),
       // G1: how each week of record resolves on the hub, by term and week number (never by the page's label).
@@ -89,7 +91,8 @@ exports.verify = async ({page, origin, rules, record}) => {
       // required below to carry verified PDF provenance and decode correctly.
       owl:[...document.querySelectorAll('[src],[href]')].filter(e=>{
         const value=e.getAttribute('src')||e.getAttribute('href')||'';
-        return !/^data:image\/jpeg;base64,/i.test(value)&&/owl/i.test(value);
+        // r6 (vj-1): the pack badges link lesson files, and "Knowledge" (as in Knowledge_Organiser) spells owl inside it.
+        return !/^data:image\/jpeg;base64,/i.test(value)&&/owl/i.test(value.replace(/knowledge/gi,''));
       }).length
     }));
     assert.deepEqual(await measure(),{overflow:[],small:[],broken:[],owl:0},'H/U geometry, images and targets: '+route+' at '+width+' '+JSON.stringify(await measure()));
@@ -133,8 +136,8 @@ exports.verify = async ({page, origin, rules, record}) => {
       // J93 (data-try-slide / data-featured-lesson -> the three flagship cards).
       const cards=await page.locator('main #pathways article.home-pathway-card[data-pathway-card]').evaluateAll(es=>es.map(e=>{const t=s=>{const n=e.querySelector(s);return n?n.textContent.replace(/\s+/g,' ').trim():null;};
         return {key:e.getAttribute('data-pathway-card'),chip:t('.home-pathway-badge'),week:t('.home-pathway-week'),byline:t('.home-pathway-byline'),title:t('h3.home-unit-title'),outcome:t('.home-unit-outcome'),
-          link:e.querySelector('a.home-card-link')?.getAttribute('href'),linkName:t('a.home-card-link [data-slot="flagship.subject.name"]'),
-          badges:[...e.querySelectorAll('ul.home-pack-badges > li')].map(li=>({cls:li.className,fixed:li.getAttribute('data-fixed'),href:li.querySelector('a')?.getAttribute('href')||null,ext:li.querySelector('[data-derive="ext"]')?.textContent.trim(),label:li.querySelector('[data-derive="label"]')?.textContent.trim()}))};}));
+          link:e.querySelector('a.home-card-link')?.getAttribute('href'),start:e.querySelector('a.home-start-btn')?.getAttribute('href')||null,linkName:t('a.home-card-link [data-slot="flagship.subject.name"]'),
+          badges:[...e.querySelectorAll('ul.home-pack-badges > li')].map(li=>({cls:li.className,fixed:li.getAttribute('data-fixed'),href:li.querySelector('a')?.getAttribute('href')||null,title:li.querySelector('a')?.getAttribute('title')||null,ext:li.querySelector('[data-derive="ext"]')?.textContent.trim(),label:li.querySelector('[data-derive="label"]')?.textContent.trim()}))};}));
       assert.deepEqual(cards.map(c=>c.key),PATHWAYS,'Three flagship cards, BUILD, GROW, LAUNCH in order');
       assert.deepEqual(cards.map(c=>c.chip),PATHWAYS,'Each flagship card names its pathway');
       assert.deepEqual(cards.map(c=>c.byline),draft.pathwayBylines,'The pathway bylines are the owner words of the draft of record');
@@ -151,6 +154,7 @@ exports.verify = async ({page, origin, rules, record}) => {
         assert.equal(c.link,hubRoute,'The card link is the flagship subject hub');assert.equal(c.linkName,tileName.trim());
         // vb-3 (a): a lesson missing from the tree links the subject hub instead.
         const lessonHref=f.served?f.href:hubRoute;
+        assert.equal(c.start,lessonHref,'r6 (vj-1): the Start lesson button opens the flagship lesson: '+c.key);
         assert.equal(c.badges.length,9,'Each flagship card has 9 badges (the lesson + 8 pack members): '+c.key);
         const [lesson,...members]=c.badges;
         assert.deepEqual([lesson.fixed,lesson.href,lesson.ext,lesson.label],['true',lessonHref,'HTML','Interactive Lesson'],'The first badge is the fixed lesson badge and links the lesson: '+c.key);
@@ -159,9 +163,13 @@ exports.verify = async ({page, origin, rules, record}) => {
         const names=members.map(m=>code+'_'+String(m.label).replace(/ /g,'_')+'.'+String(m.ext).toLowerCase());
         assert.deepEqual(names,[...names].sort(),'Pack badges are in file-name order: '+c.key);
         for(let k=0;k<members.length;k++){const m=members[k];
-          assert(m.fixed===null&&m.href===null,'A pack badge is a label, not a link');assert(m.cls.split(' ').includes('home-format-'+String(m.ext).toLowerCase()),'Badge format class follows its extension');
+          // r6 (vj-1): a pack badge links its own file (it was a label in r5), titled with the file's size (vj-3 (b)).
+          assert(m.fixed===null,'A pack badge is not the fixed lesson badge');
+          assert.equal(decodeURIComponent(m.href||''),'/Lessons/'+folder+'/'+names[k],'A pack badge links its own file in the lesson folder: '+c.key+' '+k);assert(m.cls.split(' ').includes('home-format-'+String(m.ext).toLowerCase()),'Badge format class follows its extension');
           assert(!/\.(jpe?g|png|gif|svg|webp)$/i.test(names[k])&&names[k]!=='approved-mark.jpg','No image is a pack badge');
-          assert((await page.request.get(origin+'/Lessons/'+encodeURI(folder+'/'+names[k]))).ok(),'Pack badge is a served member of the lesson folder: '+c.key+' '+k);}
+          const res=await page.request.get(origin+m.href);assert(res.ok(),'Pack badge is a served member of the lesson folder: '+c.key+' '+k);
+          const n=(await res.body()).length,kb=Math.max(1,Math.floor((n+512)/1024));
+          assert.equal(m.title,kb<1024?kb+' KB':(n/1048576).toFixed(1)+' MB','The badge title is the served file size, half-up to whole KB: '+c.key+' '+k);}
         assert((await page.request.get(origin+lessonHref)).ok(),'Flagship lesson link resolves: '+c.key);}
       // The pathway switch (replaces the rotation controls): revealed by the script, 44px, filters without motion or announcements.
       const sw=page.locator('main #pathways [data-pathway-switch]');
@@ -178,10 +186,13 @@ exports.verify = async ({page, origin, rules, record}) => {
       assert.deepEqual([await shown(),await pressed()],[PATHWAYS,['ALL']],'The keyboard selects All again');
       assert.equal(await page.locator('main #pathways [aria-live]').count(),0,'No live announcements');
       // Subject tiles (rewritten): the four groups, each with its icon, the hub's own count and the hub's six half-terms.
-      const subjects=await page.locator('main a.home-subject-tile').evaluateAll(es=>es.map(e=>({href:e.getAttribute('href'),icons:e.querySelectorAll('.home-subject-icon svg').length,width:e.getBoundingClientRect().width,count:e.querySelector('.home-subject-count strong')?.textContent.trim(),terms:[...e.querySelectorAll('ul.home-halfterm-strip > li')].map(li=>li.textContent.trim())})));
+      const subjects=await page.locator('main a.home-subject-tile').evaluateAll(es=>es.map(e=>({href:e.getAttribute('href'),icons:e.querySelectorAll('.home-subject-icon svg').length,width:e.getBoundingClientRect().width,count:e.querySelector('.home-subject-count strong')?.textContent.trim(),terms:[...e.querySelectorAll('ul.home-halfterm-strip > li')].map(li=>li.textContent.trim()),
+        split:e.querySelector('.home-pathway-split')?.textContent.trim()??null,current:[...e.querySelectorAll('ul.home-halfterm-strip > li')].filter(li=>li.hasAttribute('data-current-term')||li.hasAttribute('aria-current')).map(li=>[li.textContent.trim(),li.getAttribute('data-current-term'),li.getAttribute('aria-current')])})));
       assert.deepEqual(subjects.map(s=>s.href.split('subject=')[1]),['science','humanities-re','art-studio','lifeskills'].filter(slug=>rows.some(r=>rules.cardOf(r)===slug)),'Homepage features the four actual subject groups');
       for(const s of subjects){const slug=s.href.split('subject=')[1];assert.equal(s.icons,1,'Each featured subject has a vector icon');assert(s.width<=page.viewportSize().width,'Subject tile fits the viewport');
-        assert.equal(s.count,String(hub.counts[slug]),'Tile count is the hub distinctLessons: '+slug);assert.deepEqual(s.terms,hub.terms,'Tile half-terms are the hub HALF_TERMS: '+slug);}
+        assert.equal(s.count,String(hub.counts[slug]),'Tile count is the hub distinctLessons: '+slug);assert.deepEqual(s.terms,hub.terms,'Tile half-terms are the hub HALF_TERMS: '+slug);
+        assert.equal(s.split,hub.splits[slug].filter(([,n])=>n>0).map(([t,n])=>t+' '+n).join(' · '),'vj-3 (c): the tile pathway split is the hub distinct lessons per tier: '+slug);
+        assert.deepEqual(s.current,[[weekLabel.split(' · ')[0],'true','step']],'vj-3 (d): the one current half-term is the flagship week\'s, marked data-current-term and aria-current=step: '+slug);}
       // J93 (previews / "no unproven pictures"): the one picture is the approved emblem at its provenance bytes.
       const imgs=await page.locator('main img').evaluateAll(es=>es.map(e=>({src:e.getAttribute('src'),alt:e.getAttribute('alt'),complete:e.complete,w:e.naturalWidth})));
       assert.deepEqual(imgs.map(i=>[i.src,i.alt]),[['/assets/brand/'+EMBLEM.file,'']],'The one homepage picture is the approved emblem, decorative');

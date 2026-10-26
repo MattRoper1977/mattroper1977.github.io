@@ -21,6 +21,9 @@
  *   e.g. node home_hub_counts.cjs L science humanities-re art-studio lifeskills --week science:Aut2:6
  * Prints one JSON object on stdout; any failure exits non-zero.
  *   counts:   {query: distinctLessons(card.rows)}
+ *   pathways: {query: {BUILD|GROW|LAUNCH: distinctLessons of the card rows the hub tiers to that
+ *              pathway (row._tier, as prepare() sets it)}}; a pathway with no rows is left out
+ *              (J93 revision 1, ruling vj-3 (c): the tile's pathway split, the subject page's tab counts)
  *   halfTerms: hub.js HALF_TERMS
  *   weeks:    {"<query>:<term>:<week>": [lesson rows of that card whose lesson-order
  *              entry lists that term and week: {file, registry, pathway, title, desc, weekLabel}]}
@@ -93,6 +96,15 @@ H.loadAll().then(state => {
   };
   const counts = {};
   for (const query of queries) counts[query] = H.distinctLessons(cardFor(query).rows);
+  const pathways = {};
+  for (const query of queries) {
+    const rows = cardFor(query).rows, by = {};
+    for (const p of ['BUILD', 'GROW', 'LAUNCH']) {
+      const pr = rows.filter(r => r._tier != null && String(r._tier) === p);
+      if (pr.length) by[p] = H.distinctLessons(pr);
+    }
+    pathways[query] = by;
+  }
   const entries = (state.order && state.order.entries) || {};
   // A registry row is a row of the tree's own resources.json (the file loadAll
   // read); lesson-order supplements are hub rows but not registry rows.
@@ -108,5 +120,5 @@ H.loadAll().then(state => {
                 weekLabel: hit.label == null ? null : String(hit.label) }];
     });
   }
-  process.stdout.write(JSON.stringify({ counts, halfTerms: H.HALF_TERMS.slice(), weeks: out, requests }) + '\n');
+  process.stdout.write(JSON.stringify({ counts, pathways, halfTerms: H.HALF_TERMS.slice(), weeks: out, requests }) + '\n');
 }).catch(err => fail('loadAll failed: ' + (err && err.message ? err.message : String(err))));
