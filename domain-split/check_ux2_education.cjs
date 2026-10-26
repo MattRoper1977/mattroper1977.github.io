@@ -60,6 +60,7 @@
 //   strip-stats-everywhere  removes the relocated /stats/ link from every page that carries it
 //                           (/privacy/ and the teacher page's account area)   → reachability
 //   empty-flagship-byline   blanks the GROW flagship card's owner byline on /  → pathways
+//   hide-maker-note         sets hidden on the byte-equal maker's note on /   → copy
 //
 // env: MBM_EDUCATION_ORIGIN (default http://127.0.0.1:4173), MBM_DISCOVERY_SITE (repo root),
 //      MBM_UX2_OUTPUT (report dir). Exit 1 on any FAIL.
@@ -126,6 +127,8 @@ const MUTATIONS = {
   'strip-stats-everywhere': { target: 'reachability', routes: ['/privacy/', '/for/teachers/'], apply: html => html.replace(/<a href="\/stats\/">[^<]*<\/a>/g, 'Shared activity') },
   // J93 (was D-3's empty-pathway-definition): blank the GROW flagship byline; the pathways case must red on it.
   'empty-flagship-byline': { target: 'pathways', route: '/', apply: html => html.replace('<p class="home-pathway-byline">' + fixtures.appendix.homePathways[1].byline + '</p>', '<p class="home-pathway-byline"></p>') },
+  // R3-1: the maker's note stays byte-equal but is hidden; the copy case must red on it (rendered, not just present).
+  'hide-maker-note': { target: 'copy', route: '/', apply: html => html.replace(/<p(\b[^>]*data-slot="owner\.makerNote")/, '<p hidden$1') },
 };
 async function plant(context, mutation) {
   if (!mutation) return;
@@ -254,6 +257,26 @@ async function suite(browser, mutation) {
         const served = await page.locator('p[data-slot="owner.makerNote"]').evaluateAll(n => n.map(p => p.textContent));
         assert.equal(served.length, 1, 'Exactly one maker\'s note on /');
         assert.equal(sha256(served[0]), sha256(drafted[0]), 'The maker\'s note on / is the draft\'s own note (sha256 of its text)');
+        // R3-1: byte-equal is not enough, the note must also be rendered: a box, no hidden/display:none/
+        // visibility:hidden on it or any ancestor, and its rendered innerText equal to the draft's note
+        // (whitespace normalised), so a note present in the bytes but hidden from the reader fails.
+        const shown = await page.locator('p[data-slot="owner.makerNote"]').evaluate(p => {
+          const r = p.getBoundingClientRect(), hiddenBy = [];
+          for (let e = p; e && e.nodeType === 1; e = e.parentElement) {
+            const cs = getComputedStyle(e), tag = e.tagName.toLowerCase() + (e.id ? '#' + e.id : '');
+            if (e.hidden) hiddenBy.push(tag + '[hidden]');
+            if (cs.display === 'none') hiddenBy.push(tag + ' display:none');
+            if (cs.visibility === 'hidden' || cs.visibility === 'collapse') hiddenBy.push(tag + ' visibility:' + cs.visibility);
+            if (cs.contentVisibility === 'hidden') hiddenBy.push(tag + ' content-visibility:hidden');
+            if (Number(cs.opacity) === 0) hiddenBy.push(tag + ' opacity:0');
+          }
+          const checked = typeof p.checkVisibility === 'function' ? p.checkVisibility({ opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true }) : true;
+          return { w: r.width, h: r.height, hiddenBy, checked, innerText: p.innerText || '' };
+        });
+        const normNote = s => s.replace(/\s+/g, ' ').trim();
+        assert(shown.w > 0 && shown.h > 0 && shown.hiddenBy.length === 0 && shown.checked,
+          'The maker\'s note on / is rendered (box ' + Math.round(shown.w) + 'x' + Math.round(shown.h) + (shown.hiddenBy.length ? ', hidden by ' + shown.hiddenBy.join('; ') : '') + (shown.checked ? '' : ', checkVisibility false') + ')');
+        assert.equal(sha256(normNote(shown.innerText)), sha256(normNote(drafted[0])), 'The maker\'s note on / renders the draft\'s own note (sha256 of its normalised innerText)');
       }
       // EDU-HEADER-BRAND-20260915: once in the header brand lock-up, once in the footer.
       const lbe = (text.match(/Learn • Build • Explore/g) || []).length;
