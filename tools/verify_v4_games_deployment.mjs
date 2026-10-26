@@ -31,6 +31,13 @@ const LIVE_ORIGIN = process.env.V4_LIVE_ORIGIN || '';
 const EDU_ORIGIN = process.env.V4_EDU_ORIGIN || '';
 const EDU_LITERAL = 'https://madebymatt.uk';
 const PLAY_LITERAL = 'https://madebymatt-play.uk';
+// The play origin answers on its bare host and on www (Pages redirects one to the other);
+// both are the same site, so neither counts as a remote request.
+const liveSameSite = href => {
+  if (!LIVE_ORIGIN) return false;
+  const live = new URL(LIVE_ORIGIN), url = new URL(href), bare = h => h.replace(/^www\./, '');
+  return url.protocol === live.protocol && url.port === live.port && bare(url.hostname) === bare(live.hostname);
+};
 const liveBytes = bytes => (LIVE_ORIGIN && new URL(LIVE_ORIGIN).hostname.includes('madebymatt-play'))
   ? Buffer.from(bytes.toString('utf8').split(EDU_LITERAL).join(PLAY_LITERAL), 'utf8') : bytes;
 
@@ -851,7 +858,7 @@ async function runOne(browser, profile, game, origin) {
   const errors = [], remote = [], failed = [];
   page.on('pageerror', error => errors.push(`pageerror: ${error.message || error}`));
   page.on('console', message => { if (message.type() === 'error') errors.push(`console: ${message.text()}`); });
-  page.on('request', request => { const url = new URL(request.url()); if (/^https?:$/.test(url.protocol) && url.origin !== origin && (!LIVE_ORIGIN || url.origin !== new URL(LIVE_ORIGIN).origin)) remote.push(request.url()); });
+  page.on('request', request => { const url = new URL(request.url()); if (/^https?:$/.test(url.protocol) && url.origin !== origin && !liveSameSite(url.href)) remote.push(request.url()); });
   page.on('requestfailed', request => { if (/^https?:/.test(request.url())) failed.push(`${request.url()} (${request.failure()?.errorText || 'failed'})`); });
   page.on('response', response => { const url = new URL(response.url()); if (response.status() >= 400 && url.pathname !== '/favicon.ico') failed.push(`${response.status()} ${response.url()}`); });
   const base = LIVE_ORIGIN || origin;
