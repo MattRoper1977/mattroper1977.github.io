@@ -3,7 +3,7 @@
 
 Ruling uz-6 (a)-(i), with the vb-3 pre-answers, as carried by the J93 build
 design. The page is the accepted draft of record, domain-split/home/home.html
-(r5, sha256 below), committed byte-identical with home.css r2 and home.js;
+(r6, sha256 below; J93 revision 1, ruling vj), committed byte-identical with home.css r3 and home.js;
 uz-6 (a): the build fills it, "never by editing the draft". This module reads
 that file, refuses it if a single byte has moved, fills every slot from its
 source of record and returns the page. education_frontdoors.render('home')
@@ -28,11 +28,24 @@ Where each slot comes from (uz-6 (b)):
   Lessons tree, the lesson badge links the card's subject hub instead.
 * packMembers (uz-6 (d), vb-3 (g)): the lesson folder's files minus the lesson
   page, approved-mark.jpg and any image, sorted by name. The badge list is
-  regenerated: the data-fixed lesson badge first, then one badge per member.
+  regenerated: the data-fixed lesson badge first, then one badge per member,
+  each a link (vj-3 (a): data-slot-attr carries "href:...;title:..." pairs)
+  to '/Lessons/' + the member's path, titled with its size (vj-3 (b)): the
+  file's bytes / 1024 rounded half up, at least 1, as "143 KB"; 1024 KB and
+  over as megabytes to one decimal, "1.4 MB".
+* The "Start lesson" button of each card (r6) links the card's lessonPath,
+  as the lesson badge does.
 * subjects.hubs.{0..3}: route and name from build_publications.SUBJECT_CARDS;
   the half-term labels from Lessons data/calendar-spine.json (they must be the
   hub's HALF_TERMS); liveCount is each hub's own distinctLessons over its card,
-  computed by hub.js.
+  computed by hub.js. pathwaySplit (vj-3 (c)) is one line, "BUILD 91 · GROW 92
+  · LAUNCH 91", from the same rule per pathway (the subject page's tab counts);
+  a pathway with no lessons is left out, and the line is empty when no lesson
+  of the card carries a pathway. The current half-term (vj-3 (d)) is the
+  half-term of the bound flagship week (its week label before " · ", which
+  must be one of the spine's labels): its <li> in each strip carries
+  data-current-term="true" and aria-current="step". It comes from the data,
+  not the build date, so a rebuild of the same sources gives the same bytes.
 * teacherTools (uz-6 (e), vb-3 (b)): routes and labels from
   shared_navigation.HUB_LINKS. Resources is always present; Apps is kept while
   HUB_LINKS carries it; /tools/ is kept only while the Site page it serves
@@ -41,7 +54,10 @@ Where each slot comes from (uz-6 (b)):
 * What's new (uz-6 (f), vd-1 (a)): there is no Education updated feed, so no
   item has a route of record and the whole section#whats-new is omitted: the
   bound page carries neither the section nor its heading (hidden by omission,
-  never an empty heading). Play data is never bound and never read.
+  never an empty heading). Play data is never bound and never read. r6 makes
+  each title a link to manifest.updated.{n}.route (vj-3 (e)); the multi-pair
+  attribute binder fills such a link once a feed of record exists, and until
+  then the section is omitted with its links (lane decision LD18).
 * owner.makerNote and the door and pathway bylines (uz-6 (g), vb-3 (h)) are
   the owner's words of spec section 6, verbatim; each is confirmed by digest,
   never retyped.
@@ -56,17 +72,15 @@ Where each slot comes from (uz-6 (b)):
   the Meet section) and the name. No contact details of any kind (no email,
   telephone, address, contactPoint, sameAs, url or similar on the Person).
 * No qualification badges and no awarding-body or exam-board text (vb-3 (d)).
-* LD10 (lane decision under vb-1): the build links /assets/home-corrections.css
-  (domain-split/home_corrections.css) right after /assets/home.css. The draft
-  files stay byte-identical; the corrections add only what the estate's
-  no-overflow and 44 px target gates ask of every page (the footer wrapper's
-  border-box; the lesson badge and maker's-note links at 44 px).
+* LD10 is retired (vj-4): home.css r3 carries the footer wrapper's border-box
+  and the 44 px badge and maker's-note links itself, so no correction
+  stylesheet is linked and the bound page must not carry one.
 
 data-sample is dropped from every element the build fills; every other
 attribute and all other markup is kept. The self-test proves that the output
 differs from the draft only by slot values, the regenerated badge lists, the
-omitted section and cards, PLAY_ROOT, the dropped data-sample, the stamped
-SEO-1 block and the LD10 correction link.
+omitted section and cards, PLAY_ROOT, the dropped data-sample, the current
+half-term marks and the stamped SEO-1 block.
 
 A slot that cannot be filled stops the build: the page is never published
 half-filled.
@@ -74,7 +88,7 @@ half-filled.
     python3 home_slots.py --self-test [--lessons <Lessons checkout>]
 """
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 import argparse
 import builtins
 import hashlib
@@ -90,9 +104,9 @@ import tempfile
 
 HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / 'home' / 'home.html'
-# home.html r5, the accepted draft of record (README_J93 section 12).
-# Pinned: the sha256 of home.html r5 (31,020 B), the file of record in rulings uz-6 and vb-3.
-TEMPLATE_SHA256 = '32f53a119ed9d3e6e88daee81d201c6cf737d1d6e06cc5c0b6e668e52287e7aa'
+# home.html r6, the accepted draft of record (J93 revision 1, ruling vj-1).
+# Pinned: the sha256 of home.html r6 (35,244 B), the file of record in ruling vj-1 (r5 was 32f53a11, uz-6 and vb-3).
+TEMPLATE_SHA256 = 'da25720750cf039cf9ac01fa7e84143ca5a7d6c05dfb7b837f2951a24058c04b'
 NODE_SCRIPT = HERE / 'home_hub_counts.cjs'
 RECORD = 'data/audience-homepages.json'
 HEADER = 'tools/chrome/header.html'
@@ -110,7 +124,7 @@ IMAGE = re.compile(r'\.(jpe?g|png|gif|svg|webp)$', re.I)
 # HUB_LINKS labels of the three Teacher Tools cards.
 TOOL_LABELS = {'resources': 'Resources', 'apps': 'Apps & tools', 'tools': 'Teacher tools'}
 # The owner's words (spec section 6), confirmed by digest of the draft's markup.
-# Pinned: the sha256 of each owner-word string as home.html r5 types it, in page order (masthead 1, door
+# Pinned: the sha256 of each owner-word string as home.html r6 types it (unchanged from r5), in page order (masthead 1, door
 # bylines 4, pathway bylines 3, maker's note 1): spec b3d3df9b section 6, an input of record under uz-6.
 OWNER_WORDS = {
     'masthead': ['945b7adcfbc710f3444046127d91a4d07553a3763a378acfea51b9ec40eb8b47'],
@@ -142,11 +156,11 @@ PACK_LIST = re.compile(r'(<ul class="home-pack-badges"[^>]*data-slot-each="flags
                        r'((?:[ ]*<li [^\n]*</li>\n)+)([ ]*</ul>)')
 TEXT_SLOT = re.compile(r'(<(\w+)\b([^>]*?)\sdata-slot="([^"]+)"([^>]*)>)([^<]*)(</\2>)')
 START_TAG = re.compile(r'<(\w+)\b[^>]*>')
-ATTR_SLOT = re.compile(r'\sdata-slot-attr="(\w+):([^"]+)"')
+ATTR_SLOT = re.compile(r'\sdata-slot-attr="([^"]+)"')
+CURRENT_TERM = ' data-current-term="true" aria-current="step"'
 SAMPLE = ' data-sample="none"'
 # vd-1 (b): the stamped SEO-1 line, and the keys a contact detail would use (none may appear).
 HOME_CSS_LINK = '<link rel="stylesheet" href="/assets/home.css">\n'
-CORRECTIONS_LINK = '<link rel="stylesheet" href="/assets/home-corrections.css">\n'
 LD_LINE = re.compile(r'<script type="application/ld\+json">[^\n]*</script>\n')
 CONTACT_KEYS = {'email', 'telephone', 'faxNumber', 'address', 'contactPoint', 'sameAs', 'url', 'contactType',
                 'areaServed', 'location', 'homeLocation', 'workLocation', 'image'}
@@ -164,6 +178,32 @@ def esc_attr(value):
 
 def sha256(text):
     return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+
+def attr_pairs(value):
+    """vj-3 (a): a data-slot-attr value is one or more "attr:path" pairs joined by ';'."""
+    pairs = []
+    for part in value.split(';'):
+        attr, sep, key = part.partition(':')
+        if not sep or not re.fullmatch(r'[a-z][a-z-]*', attr) or not key:
+            raise ValueError('A data-slot-attr pair is not attr:path: ' + part)
+        pairs.append((attr, key))
+    if len({a for a, _ in pairs}) != len(pairs):
+        raise ValueError('A data-slot-attr names one attribute twice: ' + value)
+    return pairs
+
+
+def size_label(size):
+    """vj-3 (b): bytes / 1024 rounded half up, at least 1 KB; from 1024 KB, MB to one decimal."""
+    kb = max(1, (size + 512) // 1024)
+    if kb < 1024:
+        return f'{kb} KB'
+    return f'{size / 1048576:.1f} MB'
+
+
+def pathway_split(counts):
+    """vj-3 (c): "BUILD 91 · GROW 92 · LAUNCH 91" from the per-pathway counts; empty where none are held."""
+    return ' · '.join(f'{p} {counts[p]}' for p in PATHWAYS if isinstance(counts.get(p), int) and counts[p] > 0)
 
 
 # --------------------------------------------------------------- sources --
@@ -280,12 +320,15 @@ def flagship(view, lessons_root, hubs):
                 lesson = Path(lessons_root) / Path(*row['file'].split('/'))
                 code = lesson.name.rsplit('.', 1)[0]
                 members = pack_members(lesson.parent, lesson.name)
+                folder_rel = row['file'].rsplit('/', 1)[0] if '/' in row['file'] else ''
+                member_hrefs = ['/Lessons/' + quote((folder_rel + '/' if folder_rel else '') + m, safe=URI_SAFE) for m in members]
+                member_sizes = [size_label((lesson.parent / m).stat().st_size) for m in members]
                 cards.append({'pathway': row['pathway'], 'week': row['weekLabel'], 'title': row['title'],
                               'outcome': row['desc'], 'file': row['file'], 'code': code,
                               'lessonExists': lesson.is_file(),
                               # vb-3 (a): a lesson page missing from the tree links the subject hub.
                               'lessonHref': ('/Lessons/' + quote(row['file'], safe=URI_SAFE)) if lesson.is_file() else hub['route'],
-                              'members': members,
+                              'members': members, 'memberHrefs': member_hrefs, 'memberSizes': member_sizes,
                               'badges': [derive(row['file'], code)] + [derive(m, code) for m in members]})
             return {'query': query, 'name': hub['name'], 'route': hub['route'], 'weekLabel': labels.pop(),
                     'fallback': (query, term, week) != FLAGSHIP, 'cards': cards}
@@ -305,7 +348,8 @@ def gather(origin, site_root, lessons_root, subject_cards, hub_links, play):
         count = view['counts'].get(slug)
         if not isinstance(count, int) or count < 1:
             raise ValueError('The hub reports no lessons for ' + slug)
-        hubs.append({'slug': slug, 'name': name, 'route': '/Lessons/subject.html?subject=' + slug, 'count': count})
+        hubs.append({'slug': slug, 'name': name, 'route': '/Lessons/subject.html?subject=' + slug, 'count': count,
+                     'pathways': dict(view.get('pathways', {}).get(slug) or {})})
     return {'origin': origin, 'credit': chrome_credit(site_root), 'doors': audience_doors(site_root),
             'hubs': hubs, 'halfTerms': half_terms(lessons_root, view['halfTerms']),
             'flagship': flagship(view, lessons_root, hubs),
@@ -345,10 +389,12 @@ def slot_values(sources):
             v[f'flagship.{i}.{field}'] = card[field]
         v[f'flagship.{i}.lessonPath'] = (card['lessonHref'], card['badges'][0])
         for k, badge in enumerate(card['badges'][1:]):
-            v[f'flagship.{i}.packMembers.{k}.path'] = (None, badge)
+            v[f'flagship.{i}.packMembers.{k}.path'] = (card['memberHrefs'][k], badge)
+            v[f'flagship.{i}.packMembers.{k}.sizeLabel'] = card['memberSizes'][k]
     for i, hub in enumerate(sources['hubs']):
         v[f'subjects.hubs.{i}.route'], v[f'subjects.hubs.{i}.name'] = hub['route'], hub['name']
         v[f'subjects.hubs.{i}.liveCount'] = str(hub['count'])
+        v[f'subjects.hubs.{i}.pathwaySplit'] = pathway_split(hub.get('pathways') or {})
         for j, label in enumerate(sources['halfTerms']):
             v[f'subjects.hubs.{i}.halfTermLabels.{j}'] = label
     for card, value in sources['tools'].items():
@@ -391,9 +437,11 @@ def pack_list(match, sources):
     out = [fixed[0]]
     for k, (ext, label) in enumerate(card['badges'][1:]):
         key = f'flagship.{i}.packMembers.{k}.path'
+        size = f'flagship.{i}.packMembers.{k}.sizeLabel'
         out.append(f'{indent}<li class="home-pack-badge home-format-{esc_attr(ext.lower())}">'
+                   f'<a data-slot-attr="href:{key};title:{size}"{SAMPLE}>'
                    f'<span data-slot="{key}" data-derive="ext">{esc_text(ext)}</span> '
-                   f'<span data-slot="{key}" data-derive="label">{esc_text(label)}</span></li>\n')
+                   f'<span data-slot="{key}" data-derive="label">{esc_text(label)}</span></a></li>\n')
     return head + ''.join(out) + tail
 
 
@@ -423,7 +471,7 @@ def seo_json_ld(text, sources):
 def bind(template, sources, check_digest=True):
     """The filled page. Refuses, rather than returning a half-filled page."""
     if check_digest and sha256(template) != TEMPLATE_SHA256:
-        raise ValueError('home.html is not the r5 draft of record (sha256 ' + sha256(template)[:8] + ')')
+        raise ValueError('home.html is not the r6 draft of record (sha256 ' + sha256(template)[:8] + ')')
     text = template
     confirm(text, sources)
     # uz-6 (f): no Education updated feed, so the whole What's new section goes.
@@ -442,6 +490,9 @@ def bind(template, sources, check_digest=True):
     text = PACK_LIST.sub(lambda m: pack_list(m, sources), text)
     values = slot_values(sources)
     used = set()
+    current = sources['flagship']['weekLabel'].split(' · ', 1)[0]
+    if current not in sources['halfTerms']:
+        raise ValueError('The flagship week names no half-term of the spine: ' + current)
 
     def flagship_span(page):
         return re.search(r'<section class="home-section home-flagship".*?</section>', page, re.S).span()
@@ -468,7 +519,11 @@ def bind(template, sources, check_digest=True):
             if not derive_kind:
                 raise ValueError('A path slot needs data-derive: ' + key)
             found = found[1][0 if derive_kind.group(1) == 'ext' else 1]
-        return start.replace(SAMPLE, '') + esc_text(found) + end
+        start = start.replace(SAMPLE, '')
+        if re.fullmatch(r'subjects\.hubs\.\d+\.halfTermLabels\.\d+', key) and found == current:
+            # vj-3 (d): the current half-term in each strip.
+            start = start[:-1] + CURRENT_TERM + '>'
+        return start + esc_text(found) + end
 
     text = TEXT_SLOT.sub(text_slot, text)
     span = flagship_span(text)  # positions moved with the text slots
@@ -478,29 +533,35 @@ def bind(template, sources, check_digest=True):
         slot = ATTR_SLOT.search(tag)
         if not slot:
             return tag
-        attr, key = slot.groups()
-        if key in CONFIRMED:
-            used.add(key)
-            return tag
-        found = value(key, m.start())
-        if isinstance(found, tuple):
-            found = found[0]
-        filled = ' ' + attr + '="' + esc_attr(found) + '"'
         tag = tag.replace(SAMPLE, '')
-        existing = re.search(r'\s' + attr + r'="[^"]*"', tag)
-        if existing:
-            return tag[:existing.start()] + filled + tag[existing.end():]
-        slot = ATTR_SLOT.search(tag)
-        return tag[:slot.end()] + filled + tag[slot.end():]
+        at = ATTR_SLOT.search(tag).end()  # filled attributes follow the slot, in pair order
+        for attr, key in attr_pairs(slot.group(1)):
+            if key in CONFIRMED:
+                used.add(key)
+                continue
+            found = value(key, m.start())
+            if isinstance(found, tuple):
+                found = found[0]
+            if found is None:
+                raise ValueError('Unresolved slot: ' + key)
+            filled = ' ' + attr + '="' + esc_attr(found) + '"'
+            existing = re.search(r'\s' + attr + r'="[^"]*"', tag)
+            if existing:
+                tag = tag[:existing.start()] + filled + tag[existing.end():]
+            else:
+                tag = tag[:at] + filled + tag[at:]
+                at += len(filled)
+        return tag
 
     text = START_TAG.sub(attr_slot, text)
     # Every slot left must be one the build confirms or keeps inert.
     for key in re.findall(r'\sdata-slot="([^"]+)"', text):
         if key not in values and key not in CONFIRMED and key not in INERT:
             raise ValueError('Unresolved slot: ' + key)
-    for key in re.findall(r'\sdata-slot-attr="\w+:([^"]+)"', text):
-        if key not in used:
-            raise ValueError('Unresolved slot: ' + key)
+    for found in re.findall(r'\sdata-slot-attr="([^"]+)"', text):
+        for _, key in attr_pairs(found):
+            if key not in used:
+                raise ValueError('Unresolved slot: ' + key)
     # LD5: the Play root the stamped chrome already links.
     if text.count(PLAY_ROOT) != 2:
         raise ValueError('The draft does not carry PLAY_ROOT/ twice (masthead and footer)')
@@ -510,10 +571,9 @@ def bind(template, sources, check_digest=True):
                         ('data-mailing-link', 'a mailing link'), ('PLAY_ROOT', 'PLAY_ROOT')):
         if needle in text:
             raise ValueError('The bound page still carries ' + why)
-    # LD10: the correction stylesheet, right after the draft's own stylesheet.
+    # vj-4: LD10 is retired; the page links the draft's own stylesheet once and no correction sheet.
     if text.count(HOME_CSS_LINK) != 1 or 'home-corrections.css' in text:
-        raise ValueError('The draft has no single home.css link to follow')
-    text = text.replace(HOME_CSS_LINK, HOME_CSS_LINK + CORRECTIONS_LINK, 1)
+        raise ValueError('The bound page does not link home.css once, or still links a correction stylesheet')
     # vd-1 (b): SEO-1 stamped at build, once, before </head>.
     if text.count('</head>') != 1:
         raise ValueError('The draft has no single </head>')
@@ -539,7 +599,7 @@ def neutral(text):
     byte for byte: slot values, badge lists, PLAY, What's new, data-sample."""
     text = WHATS_NEW.sub('', text)
     text = LD_LINE.sub('', text)
-    text = text.replace(CORRECTIONS_LINK, '')
+    text = text.replace(CURRENT_TERM, '')
     text = PACK_LIST.sub(lambda m: m.group(1) + m.group(3).splitlines(keepends=True)[0] + '§PACK§\n' + m.group(4), text)
     text = TEXT_SLOT.sub(lambda m: m.group(1).replace(SAMPLE, '') + '§' + m.group(7), text)
 
@@ -548,7 +608,9 @@ def neutral(text):
         slot = ATTR_SLOT.search(tag)
         if not slot:
             return tag
-        return re.sub(r'\s' + slot.group(1) + r'="[^"]*"', '', tag)
+        for attr, _ in attr_pairs(slot.group(1)):
+            tag = re.sub(r'\s' + attr + r'="[^"]*"', '', tag)
+        return tag
     return START_TAG.sub(blank, text)
 
 
@@ -573,7 +635,7 @@ def self_test(lessons_root=None):
 
     origin = 'https://education.example'
     play = shared_navigation.PLAY
-    control('the committed draft is r5 of record', sha256(template) == TEMPLATE_SHA256, sha256(template)[:8])
+    control('the committed draft is r6 of record (vj-1)', sha256(template) == TEMPLATE_SHA256, sha256(template)[:8])
 
     # A synthetic Lessons world, so the refusals run without a checkout: three
     # lesson folders whose pack files carry the draft's own badge labels.
@@ -597,8 +659,11 @@ def self_test(lessons_root=None):
             fake_cards.append({'pathway': pathway, 'file': f'Fixture/{pathway}/{code}/{code}.html', 'code': code})
 
         def fake_sources(**over):
-            hubs = [{'slug': s, 'name': n, 'route': '/Lessons/subject.html?subject=' + s, 'count': 10 + j}
+            hubs = [{'slug': s, 'name': n, 'route': '/Lessons/subject.html?subject=' + s, 'count': 10 + j,
+                     'pathways': {'BUILD': 4 + j, 'GROW': 3 + j, 'LAUNCH': 5 + j}}
                     for j, (s, n, *_) in enumerate(bp.SUBJECT_CARDS)]
+            for hub in over.pop('no_pathways', ()):
+                hubs[hub]['pathways'] = {}
             # weeks: which pathways have a registry row in the flagship week and in the fallback week
             present = over.pop('weeks', {FLAGSHIP: PATHWAYS, FALLBACK: ()})
             # mixed_labels: weeks whose LAUNCH row carries a different week label from the other two
@@ -608,7 +673,8 @@ def self_test(lessons_root=None):
                 view['weeks'][f'{q}:{t}:{w}'] = [
                     {'file': card['file'], 'registry': True, 'pathway': card['pathway'],
                      'title': card['pathway'] + ' fixture', 'desc': 'fixture outcome',
-                     'weekLabel': f'{t} · Week {w}' + (' (other)' if (q, t, w) in mixed and card['pathway'] == 'LAUNCH' else '')}
+                     'weekLabel': f"{over.get('term_label', {'Aut2': 'Autumn 2'}.get(t, t))} · Week {w}"
+                                  + (' (other)' if (q, t, w) in mixed and card['pathway'] == 'LAUNCH' else '')}
                     for card in fake_cards if card['pathway'] in pathways]
                 # a lesson-order supplement is a hub row but never a registry row
                 view['weeks'][f'{q}:{t}:{w}'].append({'file': 'x.html', 'registry': False, 'pathway': 'GROW',
@@ -617,6 +683,7 @@ def self_test(lessons_root=None):
                    'hubs': hubs, 'halfTerms': ['Autumn 1', 'Autumn 2', 'Spring 1', 'Spring 2', 'Summer 1', 'Summer 2'],
                    'flagship': flagship(view, temp, hubs),
                    'tools': teacher_tools(over.pop('site_root', site_root), shared_navigation.HUB_LINKS), 'play': play}
+            over.pop('term_label', None)
             src.update(over)
             return src
 
@@ -629,14 +696,42 @@ def self_test(lessons_root=None):
                 'id="whats-new"' not in page and 'home-update-item' not in page
                 and all(f'<template data-slot="{k}"></template>' in page for k in INERT))
         whats_new = WHATS_NEW.search(template).group(0)
-        play_titles = re.findall(r'class="home-update-title"[^>]*>([^<]+)<', whats_new)
+        play_titles = re.findall(r'data-slot="manifest\.updated\.\d\.title">([^<]+)<', whats_new)
         control('Play data is never bound: none of the draft Play update titles reaches the page',
                 len(play_titles) == 6 and not any(t in page for t in play_titles))
         control('PLAY_ROOT/ becomes shared_navigation.PLAY twice; no data-sample is left',
                 page.count('href="' + play + '"') == 2 and 'data-sample' not in page and 'PLAY_ROOT' not in page)
         control('no mailing link (vd-1 (c))', 'data-mailing-link' not in page)
-        control('LD10: the correction stylesheet is linked once, right after home.css',
-                page.count(CORRECTIONS_LINK) == 1 and HOME_CSS_LINK + CORRECTIONS_LINK in page)
+        control('vj-4: LD10 retired: home.css is linked once and no correction stylesheet is linked',
+                page.count(HOME_CSS_LINK) == 1 and 'home-corrections' not in page)
+        relinked = template.replace(HOME_CSS_LINK, HOME_CSS_LINK + '<link rel="stylesheet" href="/assets/home-corrections.css">\n', 1)
+        control('vj-4 plant: a draft that links the retired correction stylesheet is refused',
+                'correction stylesheet' in refusal(bind, relinked, base, check_digest=False))
+        member_links = re.findall(r'<li class="home-pack-badge home-format-\w+"><a data-slot-attr="href:flagship\.\d\.packMembers\.\d+\.path;'
+                                  r'title:flagship\.\d\.packMembers\.\d+\.sizeLabel" href="([^"]+)" title="([^"]+)">', page)
+        control('vj-3 (a): every pack badge is a link with href and title from one data-slot-attr pair list',
+                len(member_links) == 24 and all(h.startswith('/Lessons/Fixture/') and re.fullmatch(r'\d+ KB|\d+\.\d MB', t)
+                                                for h, t in member_links), f'{len(member_links)} links')
+        control('vj-3 (a) plant: an attribute named twice in one pair list is refused',
+                'twice' in refusal(attr_pairs, 'href:a.b;href:c.d'))
+        control('vj-3 (a) plant: a pair without ":" is refused', 'not attr:path' in refusal(attr_pairs, 'href:a.b;title'))
+        control('vj-3 (b): size labels: bytes / 1024 rounded half up, at least 1 KB; MB to one decimal from 1024 KB',
+                [size_label(n) for n in (0, 511, 512, 1536, 146000, 1047040, 1048064, 1468006)] == ['1 KB', '1 KB', '1 KB', '2 KB', '143 KB', '1023 KB', '1.0 MB', '1.4 MB'],
+                ', '.join(size_label(n) for n in (0, 146000, 1468006)))
+        splits = re.findall(r'data-slot="subjects\.hubs\.(\d)\.pathwaySplit">([^<]*)<', page)
+        control('vj-3 (c): each tile carries one pathway line, BUILD n · GROW n · LAUNCH n, from its counts',
+                [x for _, x in splits] == [f'BUILD {4 + j} · GROW {3 + j} · LAUNCH {5 + j}' for j in range(4)], splits[0][1] if splits else '')
+        bare_split = bind(template, fake_sources(no_pathways=(2,)))
+        control('vj-3 (c): a hub with no pathway counts gets an empty line, never a typed one',
+                'data-slot="subjects.hubs.2.pathwaySplit"></p>' in bare_split)
+        marked = re.findall(r'<li data-slot="subjects\.hubs\.\d\.halfTermLabels\.(\d)"' + re.escape(CURRENT_TERM) + r'>([^<]*)</li>', page)
+        control('vj-3 (d): the current half-term (the flagship week\'s) is marked once per strip, data-current-term and aria-current',
+                len(marked) == 4 and {lab for _, lab in marked} == {'Autumn 2'} and page.count('aria-current="step"') == 4, str(len(marked)))
+        control('vj-3 (d) plant: a flagship week naming no spine half-term is refused',
+                'no half-term' in refusal(bind, template, fake_sources(term_label='Aut2')))
+        starts = re.findall(r'<a class="home-btn home-btn-primary home-start-btn" data-slot-attr="href:flagship\.(\d)\.lessonPath" href="([^"]+)"', page)
+        control('r6: each card\'s Start lesson button links its lessonPath',
+                [h for _, h in starts] == [c['lessonHref'] for c in base['flagship']['cards']])
         blocks = LD_LINE.findall(page)
         ld = json.loads(blocks[0].split('>', 1)[1].rsplit('</script>', 1)[0]) if len(blocks) == 1 else {}
         graph = {g.get('@type'): g for g in ld.get('@graph', [])}
@@ -664,16 +759,16 @@ def self_test(lessons_root=None):
         badges = [len(re.findall(r'<li class="home-pack-badge', m.group(3))) for m in PACK_LIST.finditer(page)]
         control('badges per card = 1 lesson + the folder minus the page, approved-mark.jpg and images',
                 badges == [1 + len(samples[i][2:]) // 2 for i in range(3)] == [9, 9, 9], str(badges))
-        control('regenerated badge lists are the draft lists when the folder holds the draft files',
-                [m.group(3).splitlines()[1:] for m in PACK_LIST.finditer(page)]
-                == [m.group(3).splitlines()[1:] for m in PACK_LIST.finditer(template)])
+        control('regenerated badge lists are the draft lists when the folder holds the draft files (slot values blanked)',
+                [neutral(m.group(3)).splitlines()[1:] for m in PACK_LIST.finditer(page)]
+                == [neutral(m.group(3)).splitlines()[1:] for m in PACK_LIST.finditer(template)])
         doors = re.findall(r'<a class="home-door-card" data-slot-attr="href:audiences\.doors\.\d\.route" href="([^"]+)"', page)
         control('the four doors carry the record routes by key', doors == [r for r, _ in base['doors']], f'{len(doors)} doors')
 
         # Planted refusals and fallbacks.
         drift = template.replace('Choose your door', 'Choose your doors', 1)
         control('template drift: one changed byte of the draft is refused',
-                'not the r5 draft' in refusal(bind, drift, base))
+                'not the r6 draft' in refusal(bind, drift, base))
         unknown = template.replace('data-slot="subjects.hubs.3.name"', 'data-slot="subjects.hubs.9.name"', 1)
         control('unresolved slot: a key with no source is refused', 'Unresolved slot' in refusal(bind, unknown, base, check_digest=False))
         unknown_attr = template.replace('href:subjects.hubs.3.route', 'href:subjects.hubs.7.route', 1)
@@ -707,9 +802,11 @@ def self_test(lessons_root=None):
         (temp / fake_cards[1]['file']).unlink()
         gone = fake_sources()
         gone_page = bind(template, gone)
-        hrefs = re.findall(r'data-slot-attr="href:flagship\.(\d)\.lessonPath" href="([^"]+)"', gone_page)
-        control('vb-3 (a): a missing lesson file links the badge to the subject hub',
-                hrefs[1][1] == gone['flagship']['route'] and hrefs[0][1] == '/Lessons/' + fake_cards[0]['file'], str([h[1][:9] for h in hrefs]))
+        found = re.findall(r'data-slot-attr="href:flagship\.(\d)\.lessonPath" href="([^"]+)"', gone_page)
+        hrefs = {i: sorted({h for j, h in found if j == i}) for i in '012'}
+        control('vb-3 (a): a missing lesson file links the badge (and the Start button) to the subject hub',
+                len(found) == 6 and hrefs['1'] == [gone['flagship']['route']] and hrefs['0'] == ['/Lessons/' + fake_cards[0]['file']],
+                str(len(found)))
         (temp / fake_cards[1]['file']).write_text('lesson')
         no_tools = temp / 'site'
         (no_tools / 'tools').mkdir(parents=True)
@@ -755,9 +852,15 @@ def self_test(lessons_root=None):
                     all(c['lessonExists'] and c['lessonHref'] == '/Lessons/' + quote(c['file'], safe=URI_SAFE) for c in fl['cards']))
             real_badges = [len(c['badges']) for c in fl['cards']]
             control('real: badges per card', real_badges == [9, 9, 9], str(real_badges))
-            control('real: the regenerated badge lists equal the draft lists (ext, label and order)',
-                    [m.group(3).splitlines()[1:] for m in PACK_LIST.finditer(real_page)]
-                    == [m.group(3).splitlines()[1:] for m in PACK_LIST.finditer(template)])
+            control('real: the regenerated badge lists equal the draft lists (ext, label and order; slot values blanked)',
+                    [neutral(m.group(3)).splitlines()[1:] for m in PACK_LIST.finditer(real_page)]
+                    == [neutral(m.group(3)).splitlines()[1:] for m in PACK_LIST.finditer(template)])
+            real_links = re.findall(r'packMembers\.\d+\.sizeLabel" href="([^"]+)" title="([^"]+)"', real_page)
+            exists = [(lessons_root / unquote(h[len('/Lessons/'):])).is_file() for h, _ in real_links]
+            control('real: the 24 pack links resolve to files in the tree, each titled with its size',
+                    len(real_links) == 24 and all(exists), f'{sum(exists)}/{len(real_links)}')
+            real_splits = re.findall(r'data-slot="subjects\.hubs\.\d\.pathwaySplit">([^<]*)<', real_page)
+            control('real: four pathway lines from the hub counts', len(real_splits) == 4 and all(real_splits), ' | '.join(real_splits[:1]))
             control('real: the output differs from the draft only where the build fills it',
                     neutral(real_page.replace(play, PLAY_ROOT)) == neutral(template))
             control('real: no Play file is read', not any('/play/' in r or 'evidence.json' in r for r in reads), f'{len(reads)} reads')
@@ -765,7 +868,7 @@ def self_test(lessons_root=None):
                     len(LD_LINE.findall(real_page)) == 1 and not any('"' + k + '"' in LD_LINE.findall(real_page)[0]
                                                                   for k in CONTACT_KEYS - {'url'}))
             before = WHATS_NEW.sub('', template).splitlines()
-            after = LD_LINE.sub('', real_page).replace(CORRECTIONS_LINK, '').splitlines()
+            after = LD_LINE.sub('', real_page).splitlines()
             moved = [i for i, (a, b) in enumerate(zip(before, after)) if a != b]
             control('real: every line that moved is a slot line or a PLAY_ROOT line',
                     len(before) == len(after) and all('data-slot' in before[i] or PLAY_ROOT in before[i] for i in moved),
