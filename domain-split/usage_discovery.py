@@ -140,10 +140,15 @@ def registry(output, lessons, site_source, play_only=False):
                         provenance[('education',canonical(row['route']))].add(str(source_id))
         # Count only actual linked static downloads. Every destination must be
         # present in the assembled output; no guessed URLs or generated files.
-        for part,prefix in [('education-site','/'),('education-lessons','/Lessons/'),('education-apps','/Matt-s-Apps-/')]:
+        # The homepage's pack badges (J93 r6) link downloads its lesson pages
+        # already link; it is read last so the lesson pages keep naming them.
+        later=[]
+        for part,prefix in [('education-site','/'),('education-lessons','/Lessons/'),('education-apps','/Matt-s-Apps-/'),('later','')]:
             root=output/part
-            for path in sorted(root.rglob('*.html')):
-                page=prefix+path.relative_to(root).as_posix(); parser=Links()
+            for path in (later if part=='later' else sorted(root.rglob('*.html'))):
+                if part=='education-site' and path.relative_to(root).as_posix() in ('index.html','main/index.html'):
+                    later.append(path); continue
+                page=('/'+path.relative_to(output/'education-site').as_posix()) if part=='later' else prefix+path.relative_to(root).as_posix(); parser=Links()
                 try: parser.feed(path.read_text())
                 except (UnicodeError,ValueError): continue
                 for link in parser.rows:
