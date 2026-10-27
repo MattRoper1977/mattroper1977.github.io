@@ -193,7 +193,11 @@ jobs:
           # merge of Lessons #699, which moves 26 published paths (0 added, 26 changed: 23 Lessons files and 3 education-site files), all admitted in this
           # same commit by 26 transition pairs [main, Lessons #699], with the 15 new Humanities download rows in the approved list (861 -> 876). It moves WITH
           # its Apps companion below, per STANDING RULE L31. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '9ed44bdf1615f42967e7fd268a1b9dc00c61e8fa' }}
+          # Moved 2026-10-27 (M1 folder rename, rulings wd-8 and we-4, landed together with its admission): the Lessons pin 9ed44bdf -> 12ad298a25ce82118a945170dad076c029425f1d, the squash
+          # merge of Lessons #719 (the moves commit 9cbc5f83 plus the paths, data, gates and pins that follow it); the two admission rows it changes
+          # (Science/index.html, resources.json) are re-folded in this same commit under AB-4. Order of record we-4: Lessons, then this Site PR, then the Apps
+          # gate-copy companion (Apps #223), which moves no published path. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '12ad298a25ce82118a945170dad076c029425f1d' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
