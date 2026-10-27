@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Apex Kick: World Stage — V10 AAA Broadcast Edition</title>
+<title>Apex Kick: World Stage — V10.2 AAA Broadcast Edition</title>
 <style>
   :root {
     --bg: #070b14;
@@ -419,7 +419,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   <div class="modal-card">
     <div class="hero-header">
       <div>
-        <div class="brand-title">APEX KICK: WORLD STAGE V10</div>
+        <div class="brand-title">APEX KICK: WORLD STAGE V10.2</div>
         <div class="brand-sub">AAA Broadcast Edition · 9 Game Modes · Live Jumbotron · Shot Radar · Dynamic Weather</div>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -527,16 +527,16 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   // 1. STAGES, COSMETICS & TROPHY DEFINITIONS
   // =========================================================================
   const STAGES = [
-    { id: 1, name: "Academy Warmup", div: "Div 8", dist: 18, wall: 0, windMax: 1.0, keeperSpeed: 0.45, req: 3, shots: 5, targets: 2 },
-    { id: 2, name: "Curved Specifier", div: "Div 7", dist: 21, wall: 2, windMax: 2.2, keeperSpeed: 0.55, req: 3, shots: 5, targets: 3 },
-    { id: 3, name: "The 3-Man Wall", div: "Div 6", dist: 23, wall: 3, windMax: 3.0, keeperSpeed: 0.65, req: 3, shots: 5, targets: 3 },
-    { id: 4, name: "Crosswind Derby", div: "Div 5", dist: 25, wall: 3, windMax: 5.2, keeperSpeed: 0.72, req: 3, shots: 5, targets: 4 },
-    { id: 5, name: "Tight Angle Bend", div: "Div 4", dist: 24, wall: 4, windMax: 4.5, keeperSpeed: 0.78, req: 3, shots: 5, targets: 4, forceAngle: 13 },
-    { id: 6, name: "Top Bins Exam", div: "Div 3", dist: 27, wall: 4, windMax: 6.0, keeperSpeed: 0.84, req: 4, shots: 5, targets: 4 },
-    { id: 7, name: "Fortress Wall", div: "Div 2", dist: 26, wall: 5, windMax: 6.8, keeperSpeed: 0.88, req: 4, shots: 5, targets: 5 },
-    { id: 8, name: "30m Knuckleball", div: "Div 1", dist: 30, wall: 5, windMax: 7.5, keeperSpeed: 0.92, req: 4, shots: 5, targets: 5 },
-    { id: 9, name: "Continental Semi", div: "Elite", dist: 29, wall: 6, windMax: 8.5, keeperSpeed: 0.96, req: 4, shots: 5, targets: 5 },
-    { id: 10, name: "World Stage Final", div: "Champ", dist: 33, wall: 6, windMax: 10.0, keeperSpeed: 1.04, req: 4, shots: 5, targets: 6 }
+    { id: 1, name: "Academy Warmup", div: "Div 8", dist: 18, wall: 0, windMax: 1.0, keeperSpeed: 0.35, req: 3, shots: 5, targets: 2 },
+    { id: 2, name: "Curved Specifier", div: "Div 7", dist: 21, wall: 2, windMax: 2.2, keeperSpeed: 0.45, req: 3, shots: 5, targets: 3 },
+    { id: 3, name: "The 3-Man Wall", div: "Div 6", dist: 23, wall: 3, windMax: 3.0, keeperSpeed: 0.55, req: 3, shots: 5, targets: 3 },
+    { id: 4, name: "Crosswind Derby", div: "Div 5", dist: 25, wall: 3, windMax: 5.2, keeperSpeed: 0.65, req: 3, shots: 5, targets: 4 },
+    { id: 5, name: "Tight Angle Bend", div: "Div 4", dist: 24, wall: 4, windMax: 4.5, keeperSpeed: 0.72, req: 3, shots: 5, targets: 4, forceAngle: 13 },
+    { id: 6, name: "Top Bins Exam", div: "Div 3", dist: 27, wall: 4, windMax: 6.0, keeperSpeed: 0.78, req: 4, shots: 5, targets: 4 },
+    { id: 7, name: "Fortress Wall", div: "Div 2", dist: 26, wall: 5, windMax: 6.8, keeperSpeed: 0.84, req: 4, shots: 5, targets: 5 },
+    { id: 8, name: "30m Knuckleball", div: "Div 1", dist: 30, wall: 5, windMax: 7.5, keeperSpeed: 0.88, req: 4, shots: 5, targets: 5 },
+    { id: 9, name: "Continental Semi", div: "Elite", dist: 29, wall: 6, windMax: 8.5, keeperSpeed: 0.92, req: 4, shots: 5, targets: 5 },
+    { id: 10, name: "World Stage Final", div: "Champ", dist: 33, wall: 6, windMax: 10.0, keeperSpeed: 0.96, req: 4, shots: 5, targets: 6 }
   ];
 
   const KITS = [
@@ -752,7 +752,10 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x050914);
   scene.fog = new THREE.FogExp2(0x070d1d, 0.0075);
-  const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 300);
+  // Phones held upright get a wider lens so more of the pitch shows (AK10-AF); landscape and desktop keep 48°
+  const coarsePointer = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
+  const lensFov = () => (coarsePointer && coarsePointer.matches && window.innerWidth < 600 && window.innerWidth < window.innerHeight) ? 56 : 48;
+  const camera = new THREE.PerspectiveCamera(lensFov(), window.innerWidth / window.innerHeight, 0.1, 300);
 
   const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.58);
   scene.add(ambientLight);
@@ -863,7 +866,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     const actx = adCanvas.getContext('2d');
     actx.fillStyle = '#061224'; actx.fillRect(0, 0, 1024, 64);
     actx.fillStyle = '#00f5a0'; actx.font = '900 30px sans-serif';
-    actx.fillText('APEX KICK V10  •  AAA BROADCAST EDITION  •  MADE BY MATT PLAY', 20, 43);
+    actx.fillText('APEX KICK V10.2  •  AAA BROADCAST EDITION  •  MADE BY MATT PLAY', 20, 43);
     const adBoard = new THREE.Mesh(new THREE.BoxGeometry(74, 1.1, 0.4), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(adCanvas) }));
     adBoard.position.set(0, 0.55, -7.2);
     stadiumGroup.add(adBoard);
@@ -1511,6 +1514,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   function resizeCanvases() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
+    camera.fov = lensFov();
     camera.updateProjectionMatrix();
     swipeCanvas.width = window.innerWidth;
     swipeCanvas.height = window.innerHeight;
