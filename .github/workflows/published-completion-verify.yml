@@ -59,14 +59,7 @@ jobs:
           # Moved 2026-10-15 (Humanities Spring 1 window W1, ruling sb) with the two EQUAL pins, as RULING RS1-G3b R1 holds it: the
           # Lessons pin 127ad775 -> 9ed44bdf1615f42967e7fd268a1b9dc00c61e8fa, the squash merge of Lessons #699. Derived with git rev-parse on
           # the Lessons checkout, never typed.
-          # Moved 2026-10-27 (M1 folder rename, rulings wd-8 and we-4, landed together with its admission): the Lessons pin 9ed44bdf -> 12ad298a25ce82118a945170dad076c029425f1d, the squash
-          # merge of Lessons #719 (the moves commit 9cbc5f83 plus the paths, data, gates and pins that follow it); the two admission rows it changes
-          # (Science/index.html, resources.json) are re-folded in this same commit under AB-4. Order of record we-4: Lessons, then this Site PR, then the Apps
-          # gate-copy companion (Apps #223), which moves no published path. Derived with git rev-parse on the Lessons checkout, never typed.
-          # Moved again 2026-10-27 (ruling wf-3, L31) WITH its Apps companion below: the Lessons pin 12ad298a -> 9b2d03bb685bdf750d649add949e6d02097dca38, the squash
-          # merge of Lessons #721 (wf-2: the catalogue checker rejects an underivable companion-pack catalogue instead of crashing; no published
-          # path moves). Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: 9b2d03bb685bdf750d649add949e6d02097dca38
+          ref: 9ed44bdf1615f42967e7fd268a1b9dc00c61e8fa
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/setup-node@v4

@@ -45,7 +45,7 @@ if (!LESSONS) { console.error('Lessons checkout not found. Set LESSONS=/path/to/
 
 const CASES = [
   '/Lessons/primary/year5/science/autumn/forces/Lesson1_Friction.html',
-  '/Lessons/Science/Grow/SCI_G_W4_Mechanisms.html',
+  '/Lessons/Science_Teesside/Grow/SCI_G_W4_Mechanisms.html',
 ];
 
 const failures = [];

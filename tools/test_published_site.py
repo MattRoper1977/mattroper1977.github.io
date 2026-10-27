@@ -370,9 +370,9 @@ class PublishedChromeControls(unittest.TestCase):
         output = root / 'output'
         (output / 'education-site/assets').mkdir(parents=True)
         for path in ['education-lessons/index.html', 'education-lessons/primary/index.html',
-                     'education-apps/index.html', 'education-lessons/Science/index.html',
-                     'education-lessons/Humanities/index.html',
-                     'education-lessons/Humanities/David_Cover_Autumn1_W3-W7/index.html',
+                     'education-apps/index.html', 'education-lessons/Science_Teesside/index.html',
+                     'education-lessons/Humanities_Teesside/index.html',
+                     'education-lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html',
                      'education-site/asdan/index.html', 'education-site/uas/index.html']:
             target = output / path
             target.parent.mkdir(parents=True, exist_ok=True)

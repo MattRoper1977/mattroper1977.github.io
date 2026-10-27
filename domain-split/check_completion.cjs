@@ -11,10 +11,10 @@ const requirePacks = process.env.MBM_REQUIRE_TEACHING_PACKS === 'true';
 function sciencePackContract(root) {
   const contract = { lessons: [], decks: [], archives: [] };
   for (const pathway of ['BUILD', 'GROW', 'LAUNCH']) {
-    const packRoot = path.join(root, 'Science/Teaching_Packs', pathway);
+    const packRoot = path.join(root, 'Science_Teesside/Teaching_Packs', pathway);
     const source = JSON.parse(fs.readFileSync(path.join(packRoot, 'SOURCE_MANIFEST.json'), 'utf8'));
     const archives = JSON.parse(fs.readFileSync(path.join(packRoot, 'DOWNLOAD_INDEX.json'), 'utf8')).archives;
-    const route = file => '/Lessons/Science/Teaching_Packs/' + pathway + '/' + file;
+    const route = file => '/Lessons/Science_Teesside/Teaching_Packs/' + pathway + '/' + file;
     assert.equal(source.lessons.length, source.lessonCount, pathway + ' source lesson count');
     assert(source.lessons.length > 0, pathway + ' source lessons missing');
     // Ruling um-1a (wg-2): a pathway's three format collections are removed where its complete unit zip
@@ -80,7 +80,7 @@ fs.mkdirSync(output, { recursive: true });
 (async () => {
   const browser = await chromium.launch({headless: true});
   try {
-    const packsPath = path.join(lessonsRoot, 'Science/Teaching_Packs/index.html');
+    const packsPath = path.join(lessonsRoot, 'Science_Teesside/Teaching_Packs/index.html');
     if (requirePacks) assert(fs.existsSync(packsPath), 'Required Science download hub is missing from build');
     const expectedPacks = fs.existsSync(packsPath) ? sciencePackContract(lessonsRoot) : null;
     for (const width of [320, 390, 1280]) {
@@ -131,7 +131,7 @@ fs.mkdirSync(output, { recursive: true });
       assert((await page.request.get(new URL(await cover.getAttribute('href'), page.url()).href)).ok(), 'Cover teaching packs destination resolves');
       assert.equal((await page.goto(origin + '/for/pupils/')).status(), 200);
       assert.equal(await page.locator('[data-mbm-support-footer],a[href*="ko-fi.com"]').count(), 0);
-      assert.equal((await page.goto(origin + '/Lessons/Science/Build/SCI_B_W3_Backbones.html')).status(), 200);
+      assert.equal((await page.goto(origin + '/Lessons/Science_Teesside/Build/SCI_B_W3_Backbones.html')).status(), 200);
       assert.equal(await page.locator('[data-mbm-support-footer],a[href*="ko-fi.com"]').count(), 0);
       // UX2 (Lessons Part A): the hub is subject cards; its "BUILD Science" shortcut is a retired
       // href in Lessons' own ledger (the Science card's BUILD chip and "Browse Science →" replace
@@ -147,9 +147,9 @@ fs.mkdirSync(output, { recursive: true });
       await scienceCard.screenshot({path: path.join(output, `lesson-shortcuts-${width}.png`)});
       await page.goto(origin + '/Lessons/subject.html?subject=science&pathway=BUILD');
       await page.waitForFunction(() => document.querySelectorAll('#suites a[href], #rows a[href]').length > 0);
-      const shelf = page.locator('#suites a[href*="Science/index.html"]');
+      const shelf = page.locator('#suites a[href*="Science_Teesside/index.html"]');
       assert.equal(await shelf.count(), 1, 'The Science shelf is a catalogue row on the Science page');
-      const buildURL = new URL('/Lessons/Science/index.html?pathway=BUILD', page.url());
+      const buildURL = new URL('/Lessons/Science_Teesside/index.html?pathway=BUILD', page.url());
       assert.equal(buildURL.searchParams.has('style'), false);
       const science = JSON.parse(fs.readFileSync(path.join(lessonsRoot, 'assets/catalogue/science-shelf.json'), 'utf8')).lessons;
       const expectedBuild = science.filter(r => r.pathway === 'BUILD').map(r => r.path).sort();
@@ -189,7 +189,7 @@ fs.mkdirSync(output, { recursive: true });
       report.cases.push(`Public names, BUILD shortcut and subject/pathway coverage at ${width}px`);
       report.cases.push(`Homepage, supplied logo and pupil protection at ${width}px`);
       if (expectedPacks) {
-        await page.goto(origin + '/Lessons/Science/Teaching_Packs/');
+        await page.goto(origin + '/Lessons/Science_Teesside/Teaching_Packs/');
         assert.equal(await page.locator('h1').innerText(), 'Science teaching packs');
         assert.equal(await page.locator('[data-mbm-navigation="education"]').count(), 1);
         assert.equal(await page.locator('[data-mbm-support-footer]').count(), 1);

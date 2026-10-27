@@ -80,7 +80,7 @@ TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
 # RE Spring 1 window W1 (ruling sr, sr-3 step 1; 17 October 2026): the 216 download rows of the three reviewed RE Spring 1
 # pack roots join the Humanities prefix (876 -> 1092 rows, in the built order); all 876 reviewed rows are kept unchanged
 # and in order, and no other prefix moves. d56d0844 -> 88870c0d.
-TEACHING_PACK_ADDITIONS_SHA256 = '9c808891100aa33c41527a1fab6befc7978551ceeaf6ba4c1a76729ac2f179ee'  # M1: the same rows with the folder paths renamed (every difference is the rename map)
+TEACHING_PACK_ADDITIONS_SHA256 = '88870c0da698612a781cfe88b3bf1b61764f44476da326e41854900e61cb8e5e'
 # RE Spring 1 window W1 (ruling ss, ss-2: option A, the io-3 shape of #471; 17 October 2026): the transition form of the
 # reviewed list. While the RE Spring 1 landing is in flight the Site still builds its pinned Lessons (876 Humanities rows) and
 # the Lessons publication builds the landing (1092), so a prefix with a declared pending set passes with EITHER its reviewed
@@ -88,7 +88,7 @@ TEACHING_PACK_ADDITIONS_SHA256 = '9c808891100aa33c41527a1fab6befc7978551ceeaf6ba
 # set is the 216 download rows of the three reviewed RE Spring 1 pack roots (72 under each), pinned by digest below; a later
 # collapse window removes it.
 TEACHING_PACK_PENDING = HERE/'teaching-packs-download-usage-pending.json'
-TEACHING_PACK_PENDING_SHA256 = 'b1defb46c628c7a2ba9f6494d2160af5658f70f7a86b5050c0ee5bb1dd40b2fa'  # M1: the same rows with the folder paths renamed (every difference is the rename map)
+TEACHING_PACK_PENDING_SHA256 = 'ee7cb1b9595e0c1b45cdac95e148170c5913c1f055203752c0b45ce51f94bbcb'
 
 
 # um window W1 (rulings um, um add.1 (ii) and answer B, um-4 (a); 24 October 2026): the io-3 transition form again, as a
@@ -99,7 +99,7 @@ TEACHING_PACK_PENDING_SHA256 = 'b1defb46c628c7a2ba9f6494d2160af5658f70f7a86b5050
 # pending set), in no other state; a follow-up after the Lessons merge removes the rows from the reviewed lists and this set.
 TEACHING_PACK_RETIRING = HERE/'teaching-packs-download-usage-retiring.json'
 # Pinned by digest: the 378-row retiring set above, as measured from the um candidate build on 24 October 2026.
-TEACHING_PACK_RETIRING_SHA256 = 'dcba31f7bed38b959e16a4ed48948a54d332c526f01a0a5120a31c4c1e882c0b'  # M1: the same rows with the folder paths renamed (every difference is the rename map)
+TEACHING_PACK_RETIRING_SHA256 = '85f575621313902dc3580b8b6796dbe5647123c1497793a061d0898ac4e50305'
 
 
 def retiring_set_problems(retiring, approved):
@@ -191,7 +191,8 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by
 # it to its second half, the state every Site pin and every publication now builds (no refresh moves it). The
 # re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
-    'da9965cec2648588615be3972125d43f00f9c0cb883a7c6607e1469fb2ce544e',   # M1 (vr, vt, vt add.1, vu): the 2001 rows of cf03cb20 with the Lessons folder paths renamed and every resource identity kept (usage-route-aliases.json); built by the Site fallback Lessons pin and Lessons main once both carry the rename
+    '161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3',   # io-3 Autumn 2 Week 1 landed: 1417 rows; built by the Site fallback Lessons 9ed44bdf
+    'cf03cb20253c3b9817054e93377d9387c3a46b609aa0d326ecf246ab77ab0e16',   # vg landed (Lessons #716, aaed65a0): built by Lessons main, 2001 rows
 )
 
 
@@ -226,7 +227,7 @@ def registry_errors(output):
     # Re-frozen 16 September (CX2 §5 EDU-D3): the Lessons pin moves from 2c33266b to
     # the main that carries the EDU-Q1 companions (#551). Proved by diffing
     # registry_partition() output between a full build at 2c33266b (reproduces
-    # d2439c61 exactly, 926 rows) and one at the new pin: 51 Science lesson
+    # d2439c61 exactly, 926 rows) and one at the new pin: 51 Science_Teesside lesson
     # records join (the Spring/Summer batch and the CX2 pilots), 0 removed, and one
     # existing record changes in one field — the Sugar lesson's title after its
     # public-surface hygiene sweep (Lessons #547). Same digest the Lessons carrier
@@ -261,7 +262,7 @@ def registry_errors(output):
     # of the new one. Derived by the window runner from the built bytes, never transcribed.
     # LAND-A2 Science, window W1 (25 September, ruling R4 Q1) held a TRANSITION PAIR while the landing
     # was in flight: a6e96f29 (Lessons main 55eb2bd1, 1105 retained rows) and 2969dfef (the landing,
-    # 1294 rows: 189 joined, all under /Lessons/Science/{Build,Grow,Launch}/Autumn_2_2026-27/).
+    # 1294 rows: 189 joined, all under /Lessons/Science_Teesside/{Build,Grow,Launch}/Autumn_2_2026-27/).
     # Window W2 (25 September, ruling R6) collapses it to one digest, 632100c6, in the same change as
     # the search and provenance refresh that moves it. Proved by diffing registry_partition() output
     # between a full build of Site main 214749c0 with Lessons c0b9b51f (the landing's merge; reproduces
@@ -272,7 +273,7 @@ def registry_errors(output):
     # previous digests, a planted row, a removed row and a change to any other field are red (self_test).
     # Science Week 8, window W1 (4 October 2026, ruling ex item 2, Site #453) held a TRANSITION PAIR while the
     # landing was in flight: 632100c6 (Lessons main 7bb51069, 1294 retained rows) and 513399bc (the landing,
-    # 1336 rows: 42 joined, all under /Lessons/Science/{Build,Grow,Launch}/Autumn_1_2026-27/).
+    # 1336 rows: 42 joined, all under /Lessons/Science_Teesside/{Build,Grow,Launch}/Autumn_1_2026-27/).
     # Window W2 (4 October, ruling ex) collapses it to one digest, d283cc5e, in the same change as the search
     # and provenance refresh that moves it. Proved by diffing registry_partition() output between a full
     # build of Site main a71ee9d2 with Lessons 96620472 (the landing's merge, Lessons #683; reproduces
@@ -366,11 +367,11 @@ def registry_errors(output):
     # build's emitted DOWNLOAD rows for files the publication registry admits by digest, and
     # re-pins here in the same pass. A hand edit still reds below, on this very comparison.
     # The sibling teaching-packs pin above is NOT tool-owned and keeps its own rule.
-    if sha256(additions_path.read_bytes()).hexdigest() != 'aaf21a51dad89ef856c51005d9f8004fceadaa672c46272cab457f93e299b583':  # M1 (LD27): the same 910 rows with the folder paths renamed (proved = the reviewed file with the rename map); re-pinned by hand because --write would also drop the 342 rows the derivation already omits at Site main (unchanged by M1)
+    if sha256(additions_path.read_bytes()).hexdigest() != '3b750fe8fdf92279c38852abe58e4c3974c9aa3f4728584d0fac2de2f1e5d624':
         return ['Unreviewed Science download registration metadata']
     if sha256(TEACHING_PACK_ADDITIONS.read_bytes()).hexdigest() != TEACHING_PACK_ADDITIONS_SHA256:
         return ['Unreviewed teaching-pack download registration metadata']
-    approved = {'/Lessons/Science/Teaching_Packs/': json.loads(additions_path.read_text())}
+    approved = {'/Lessons/Science_Teesside/Teaching_Packs/': json.loads(additions_path.read_text())}
     approved.update(json.loads(TEACHING_PACK_ADDITIONS.read_text()))
     if sha256(TEACHING_PACK_PENDING.read_bytes()).hexdigest() != TEACHING_PACK_PENDING_SHA256:
         return ['Unreviewed teaching-pack pending metadata']
@@ -505,7 +506,7 @@ def self_test():
     # HC6 §11: the reviewed-additions partition, proved on planted rows.
     row=lambda r:{'route':r,'kind':'resource'}
     approved={'/Lessons/Careers/Teaching_Packs/':[row('/Lessons/Careers/Teaching_Packs/BUILD/downloads/a.zip')]}
-    other=[row('/Lessons/Science/x.html')]
+    other=[row('/Lessons/Science_Teesside/x.html')]
     reg_cases=[  # (rows, installed, expected error count)
         (other+approved['/Lessons/Careers/Teaching_Packs/'], {'/Lessons/Careers/Teaching_Packs/':True}, 0),
         (other, {'/Lessons/Careers/Teaching_Packs/':False}, 0),
@@ -601,14 +602,14 @@ def self_test():
     # every field a real retained row carries (aliases, event_types, kind, resource_id, route, source, source_ids, title)
     full=lambda route,rid,title,kind: {**row(route),'aliases':[route],'event_types':['open'],'kind':kind,'resource_id':rid,
                                        'source':'lessons','source_ids':[rid[:8]],'title':title}
-    pre=[full('/Lessons/Humanities/a.html','a'*64,'A','lesson'),
-         full('/Lessons/Science/Build/Autumn_2_2026-27/X/X.html','b'*64,'X','lesson')]
+    pre=[full('/Lessons/Humanities_Teesside/a.html','a'*64,'A','lesson'),
+         full('/Lessons/Science_Teesside/Build/Autumn_2_2026-27/X/X.html','b'*64,'X','lesson')]
     post=[pre[0],{**pre[1],'source_ids':['lesson-'+pre[1]['source_ids'][0],pre[1]['source_ids'][0]]}]
     one=(digest(post),)
     collapse_cases=[
         ('the refreshed registry (the one accepted digest)', post, True),
         ('the pre-refresh registry (the old pair\'s second half)', pre, False),
-        ('a planted extra row', post+[row('/Lessons/Science/planted.pdf')], False),
+        ('a planted extra row', post+[row('/Lessons/Science_Teesside/planted.pdf')], False),
         ('a row removed', post[1:], False),
         ('the same rows reordered', [post[1],post[0]], False),
     ]
@@ -626,8 +627,8 @@ def self_test():
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d',
               'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',
               '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd','60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b','1a358a41168f6d1205a3d3bd855753a6c6400855626c6660cf652e3947b89a57','5c4fc9892e60f5e50ae7712a1fe44f5c6ab355e7f0a872c8143d3e612af66c9b','dcc9096033c437337b4ee3014056d322292b600eebb4f9ea4b2cf0de717cfcd1','e8882f70613ab1301fe43a946e108a9a764128712ba8f1fdb6d3a7053406a76b')
-    passed=REGISTRY_BASELINES==('da9965cec2648588615be3972125d43f00f9c0cb883a7c6607e1469fb2ce544e',) and not set(previous+('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','cf03cb20253c3b9817054e93377d9387c3a46b609aa0d326ecf246ab77ab0e16'))&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly da9965ce (M1: cf03cb20's rows under the folder rename); 16195414 and cf03cb20 retired at M1; e8882f70 retired at the vg follow-up, dcc90960 at the us follow-up, 5c4fc989 at the up follow-up, 1a358a41 at the uj follow-up, 60e0cd4c at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
+    passed=REGISTRY_BASELINES==('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','cf03cb20253c3b9817054e93377d9387c3a46b609aa0d326ecf246ab77ab0e16') and not set(previous)&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the pair 16195414 (built by the Site fallback Lessons 9ed44bdf) and cf03cb20 (built by Lessons main since vg landed, Lessons #716); e8882f70 retired at the vg follow-up, dcc90960 at the us follow-up, 5c4fc989 at the up follow-up, 1a358a41 at the uj follow-up, 60e0cd4c at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')

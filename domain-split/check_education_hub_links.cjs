@@ -39,7 +39,7 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
   const overrides=[];
   const extraOwnerFixtures=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'sw2/nav-expanded-owner-fixtures.json'),'utf8'));
   const ownerFixtures=[
-    {route:'/Lessons/',file:'nav-lessons-published.html',sha256:'4069eda43caac696e7c2091c997909edbb481136619f915fc3cea3cc4dc97364'},
+    {route:'/Lessons/',file:'nav-lessons-published.html',sha256:'1a9937571efdbc7656486b949a7fd127bd160cb213b4ad3ba206e699c78b5a86'},
     {route:'/Matt-s-Apps-/',file:'nav-apps-published.html',sha256:'a2d5dedca49c9fa867c6ac2aabec83d877f1f9e4fe59bf79f2c75b771b6806bb'},
     ...extraOwnerFixtures,
   ];

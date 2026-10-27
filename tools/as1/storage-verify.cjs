@@ -5,15 +5,6 @@ const ROOT=path.resolve(__dirname,'../..'),BASELINE_PATH='tools/as1/baselines/st
 // AS1-H authorised and pinned on 2026-09-11: the immutable, already measured registry blob.
 // Its 51 conflicts are the ceiling; editing or backdating the baseline cannot enlarge it.
 const APPROVED_REGISTRY_BLOB='7872d57fdaadd81e517183059c68672e2d4a8436';
-// Ruling wd-5 (M1): owners are compared after mapping old Lessons paths to new through the move table.
-// The ceiling blob stays frozen; a mapping that is not 1:1 inside one key reds.
-const MOVES_PATH='domain-split/lesson-moves.json';
-function loadMoves(){const p=path.join(ROOT,MOVES_PATH);return fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')).routes:{};}
-let MOVES=null;
-function mapOwner(owner,moves){moves=moves||MOVES||(MOVES=loadMoves());
-  if(owner.startsWith('Lessons:')){const to=moves[owner.slice(8)];if(typeof to==='string')return 'Lessons:'+to;}return owner;}
-function mapOwners(id,owners,moves){const out=new Set();for(const o of owners){const m=mapOwner(o,moves);
-  assert(!out.has(m),'Owner does not map 1:1: '+id+' / '+m);out.add(m);}return out;}
 function collectClaims(registry){
   assert.equal(registry.schema,1,'Unsupported registry schema');
   assert(Array.isArray(registry.entries)&&registry.entries.length>0,'An empty registry is not evidence');
@@ -27,7 +18,7 @@ function collectClaims(registry){
     assert(Array.isArray(entry.reads)&&Array.isArray(entry.writes),'Separate read/write evidence required');
     assert(entry.reads.length+entry.writes.length>0,'An unevidenced claim is not valid');
     if(!entry.writes.length)continue;
-    const id=entry.storage+':'+entry.key,owners=claimed.get(id)||new Set();owners.add(mapOwner(entry.owner));claimed.set(id,owners);
+    const id=entry.storage+':'+entry.key,owners=claimed.get(id)||new Set();owners.add(entry.owner);claimed.set(id,owners);
   }
   assert(claimed.size>0,'A registry without writing ownership claims is not evidence');return claimed;
 }
@@ -46,7 +37,7 @@ function baselineMap(doc){
     assert.equal(e.observedOn,FROZEN_ON,'Baseline entry added after the freeze date or given an unreviewed date');
     assert(Array.isArray(e.owners)&&e.owners.length>1,'A baseline entry needs at least two claiming owners');
     assert(e.owners.every(o=>typeof o==='string'&&o.length),'Missing baseline owner');assert.equal(new Set(e.owners).size,e.owners.length,'Duplicate baseline owner');
-    const id=e.storage+':'+e.key;assert(!map.has(id),'Duplicate baseline entry: '+id);map.set(id,mapOwners(id,e.owners));
+    const id=e.storage+':'+e.key;assert(!map.has(id),'Duplicate baseline entry: '+id);map.set(id,new Set(e.owners));
   }return map;
 }
 function verifyBaseline(baseline,approved,previous){
@@ -104,10 +95,6 @@ function selfTest(){
     expect(1,'backdating cannot admit a new baseline entry',/Baseline may only shrink/);baseline=structuredClone(approved);expect(0,'baseline restored');
     const prior=structuredClone(approved);prior.entries.shift();assert.throws(()=>verifyBaseline(baseline,approved,prior),/removed entry re-added/);
     console.log('RED previously removed baseline entry re-added');verifyBaseline(prior,approved,prior);console.log('GREEN baseline shrink retained');
-    {const k=approved.entries.find(e=>e.owners.filter(o=>o.startsWith('Lessons:')).length>1);
-      const [a,b]=k.owners.filter(o=>o.startsWith('Lessons:'));const moves={[a.slice(8)]:'x.html',[b.slice(8)]:'x.html'};
-      assert.throws(()=>mapOwners(k.storage+':'+k.key,k.owners,moves),/does not map 1:1/);console.log('RED two owners collapsing onto one new path');
-      assert.equal(mapOwners(k.storage+':'+k.key,k.owners,{[a.slice(8)]:'x.html'}).size,k.owners.length);console.log('GREEN a 1:1 mapping keeps every owner');}
     doc.entries=[];expect(1,'empty registry rejected',/empty registry/);doc=structuredClone(registry);expect(0,'registry restored');
   }finally{fs.rmSync(dir,{recursive:true,force:true});}
 }
@@ -120,4 +107,4 @@ if(require.main===module){try{
     console.log('GREEN no new storage conflict '+JSON.stringify({...result,previousBaseline:previous===null?'first introduction':previous.entries.length,freeze:FROZEN_ON}));
   }
 }catch(error){console.error('RED '+error.message);if(error.conflicts)for(const e of error.conflicts)console.error(e.key+' — '+e.owners.join(', '));process.exitCode=1;}}
-module.exports={collectClaims,makeBaseline,verifyBaseline,verify,mapOwner,mapOwners};
+module.exports={collectClaims,makeBaseline,verifyBaseline,verify};

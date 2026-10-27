@@ -28,10 +28,10 @@ assert expected['/for/teachers/'] and expected['/teach/'] and expected['/for/gov
 assert expected['/Lessons/liveteach/teacher.html'] and expected['/Matt-s-Apps-/Seating_Studio.html']
 assert expected['/Lessons/Tutor_Time/Lesson_Plans.html']   # a catalogue teacher resource no pupil path reaches
 # the two reviewed adult Lessons hubs keep it even though a pupil path reaches them
-assert expected['/Lessons/Science/Teaching_Packs/'] and expected['/Lessons/Humanities/David_Cover_Autumn1_W3-W7/']
-assert '/Lessons/Science/Teaching_Packs/' in adult_only
+assert expected['/Lessons/Science_Teesside/Teaching_Packs/'] and expected['/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/']
+assert '/Lessons/Science_Teesside/Teaching_Packs/' in adult_only
 # pupil entries and pupil-reachable shared surfaces do not
-for route in ['/', '/for/pupils/', '/Lessons/', '/Lessons/primary/', '/Lessons/Science/', '/Lessons/Humanities/',
+for route in ['/', '/for/pupils/', '/Lessons/', '/Lessons/primary/', '/Lessons/Science_Teesside/', '/Lessons/Humanities_Teesside/',
               '/resources/', '/stats/on-this-device/', '/Matt-s-Apps-/',
               '/Matt-s-Apps-/LundyLoop_Professional_OS/pupil_tools/01_LundyLoop_Pupil_Explainer_PRO.html',
               '/Lessons/5 Intervention 10/Lesson_VIR_Pupil_App.html']:

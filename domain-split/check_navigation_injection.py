@@ -51,7 +51,7 @@ def main():
     checked = 0
     for page in output.rglob('*.html'):
         text = page.read_text()
-        if 'data-game-moved' in text or 'data-lesson-moved' in text:  # M1: a moved-lesson stub carries no adapter
+        if 'data-game-moved' in text:
             assert count(text) == 0, page
         else:
             assert count(text) == 1, page

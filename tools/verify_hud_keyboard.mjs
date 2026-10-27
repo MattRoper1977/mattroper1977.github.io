@@ -50,7 +50,7 @@ if (!LESSONS || !fs.existsSync(LESSONS)) {
 const CASES = [
   { rel: '/Lessons/primary/year5/science/autumn/forces/Lesson1_Friction.html',
     guardedByLesson: false },
-  { rel: '/Lessons/Science/Grow/SCI_G_W4_Mechanisms.html',
+  { rel: '/Lessons/Science_Teesside/Grow/SCI_G_W4_Mechanisms.html',
     guardedByLesson: true },
 ];
 

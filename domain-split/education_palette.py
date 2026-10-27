@@ -87,7 +87,7 @@ def adopt_palette(text, route, adult, template):
     if parsed.body is None: raise ValueError('Missing palette owner body: ' + route)
     start, end = parsed.body
     if 'data-mbm-palette' in text[start:end]: raise ValueError('Palette owner already applied: ' + route)
-    kind = 'register' if route in {'/asdan/','/uas/'} else 'science-packs' if route == '/Lessons/Science/Teaching_Packs/' else 'front-door'
+    kind = 'register' if route in {'/asdan/','/uas/'} else 'science-packs' if route == '/Lessons/Science_Teesside/Teaching_Packs/' else 'front-door'
     text = text[:end-1] + ' data-mbm-palette="education" data-mbm-page-type="' + kind + '"' + text[end-1:]
     if '/assets/shared-footer.css' not in text:
         text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-footer.css"></head>', 1)

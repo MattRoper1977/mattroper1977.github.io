@@ -47,8 +47,8 @@ PUBLIC = {'.html', '.htm', '.css', '.js', '.mjs', '.json', '.svg', '.png', '.jpg
 REVIEWED_ARCHIVE_DOCUMENTS = {
     '_sciv3/build/POLICY_ALIGNMENT.md': '9d16fb2cbb314bd883ece6eb9249f268fa5bee0a82f48c3be229df551ad722d8',
     '_sciv3/launch/SOW_AND_POLICY_ALIGNMENT.md': '19695c68b5af03be7456741eb0a62ea9cebb986febca4547434c1017e4fe7e63',
-    '_finish/build_estate/Art__SOW_POLICY_AND_AWARD_ALIGNMENT.md': 'b357278bbf285b8348a73a2b259710129d7b126145c618a88ba443eaa5802473',
-    '_finish/build_estate/Art__ARTIST_IMAGE_PROVENANCE_GUIDE.md': '04ac1d4a351193171253a8e01125e7b4ae0172d177867759c0bb1afb404529de',
+    '_finish/build_estate/Art_Teesside__SOW_POLICY_AND_AWARD_ALIGNMENT.md': 'b357278bbf285b8348a73a2b259710129d7b126145c618a88ba443eaa5802473',
+    '_finish/build_estate/Art_Teesside__ARTIST_IMAGE_PROVENANCE_GUIDE.md': '04ac1d4a351193171253a8e01125e7b4ae0172d177867759c0bb1afb404529de',
     '_finish/build_estate/BUILD_ASDAN__CLAIMS_AND_SAFETY_READBACK.md': '4135dd1c9f522881f4b9f3d2af39a2d712a1138003f99caad9533e11eb89f0da',
 }
 
@@ -121,7 +121,7 @@ def self_test():
         print(f"  [{'ok' if passed else 'FAIL'}] {name}{'  — ' + detail if detail else ''}")
     control('run 1: tools/artsaward/SLOTS.json is public', public_file('tools/artsaward/SLOTS.json'))
     control('run 1: the teacher-tools hub is public', public_file('tools/index.html'))
-    control('run 1: a lesson is public', public_file('Art/Launch/START_HERE.html'))
+    control('run 1: a lesson is public', public_file('Art_Teesside/Launch/START_HERE.html'))
     control('run 2: a sibling tool file is NOT public by extension', not public_file('tools/artsaward/BRONZE_PLAN.json'))
     control('run 2: a tool script is NOT public', not public_file('tools/artsaward/build.py'))
     control('run 2: a tools directory index other than the hub is NOT public', not public_file('tools/artsaward/index.html'))
@@ -199,7 +199,7 @@ def with_lesson_navigation(text, relative=None):
     position = document.body_ends[-1] if document.body_ends else len(text)
     script = '<script defer src="/Lessons/assets/catalogue/lesson-navigation.js"></script>'
     extra = WRAPPED_NAVIGATION if relative in WRAPPED_LESSONS else ''
-    if relative == 'Science/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html':
+    if relative == 'Science_Teesside/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html':
         # The lab prints its dark simulation panels. Its original print rule
         # changes only the body text to black, making inherited headings and
         # readings illegible. Preserve the active theme's text colour; source
@@ -223,32 +223,6 @@ def moved_page(route):
             '<p>Made by Matt games now have their own website.</p>'
             '<p><a id="play-game" href="'+escape(destination, quote=True)+'">Open the game</a></p></main>'
             '<script>const a=document.getElementById("play-game");const u=new URL(a.href);u.search=location.search;u.hash=location.hash;a.href=u.href;</script>'
-            '</body></html>')
-
-# M1 (rulings vr, vt, vt add.1, vu): Lessons folders renamed. Each old page route is served as a
-# stub: "This lesson has moved." and ONE link to the new page, noindex, canonical to the new page,
-# under 2 KB, no script, absent from the sitemap and the search index. The table lists only the
-# old routes M1 moved; a stub is written only where the old file is gone and the new one is
-# published, so an older Lessons checkout (the fallback pin) builds exactly as before.
-LESSON_MOVES = HERE / 'lesson-moves.json'
-
-def lesson_moves():
-    if not LESSON_MOVES.is_file():
-        return {}
-    return json.loads(LESSON_MOVES.read_text(encoding='utf-8'))['routes']
-
-def lesson_moved_page(new_relative):
-    from html import escape
-    from urllib.parse import quote
-    brand = re.search(r' · (Made by [^<]+)</title>', moved_page('/')).group(1)
-    destination = escape(LEARN + '/Lessons/' + quote(new_relative), quote=True)
-    return ('<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
-            '<meta name="viewport" content="width=device-width,initial-scale=1">'
-            '<meta name="robots" content="noindex"><title>This lesson has moved · ' + escape(brand) + '</title>'
-            '<link rel="canonical" href="' + destination + '">'
-            '<style>body{font:1.1rem/1.65 system-ui;max-width:42rem;margin:4rem auto;padding:0 1.25rem;color:#161d3d}a{color:#174e45}a:focus-visible{outline:3px solid #e39129;outline-offset:4px}</style>'
-            '</head><body data-lesson-moved><main><h1>This lesson has moved.</h1>'
-            '<p><a id="lesson-moved" href="' + destination + '">Open the lesson</a></p></main>'
             '</body></html>')
 
 def make_classifier(lessons):
@@ -346,13 +320,6 @@ def build(output, lessons, apps=None, allow_sparse=False):
                 updated=with_lesson_navigation(text, relative)
                 if updated != text:
                     write(dest,relative,updated);changed.append(relative)
-        moved_lessons=[]
-        if name=='lessons':
-            present=set(tracked(root))
-            for old, new in lesson_moves().items():
-                if old in present or new not in present or not public_file(new):
-                    continue
-                write(dest, old, lesson_moved_page(new)); moved_lessons.append(old)
         if name=='site':
             # Released receiver proof is recorded in the HC3 handoff plan.
             # Only the reviewed Glitch stub uses this same-origin sender.
@@ -386,10 +353,7 @@ def build(output, lessons, apps=None, allow_sparse=False):
         write(dest,'.nojekyll','')
         for relative in migrated:
             assert 'data-game-moved' in (dest/relative).read_text()
-        for relative in moved_lessons:
-            text=(dest/relative).read_text()
-            assert 'data-lesson-moved' in text and len(text.encode()) < 2048 and '<script' not in text, relative
-        report['publications'][name]={'root':str(dest),'source_files':len(copied),'archived_not_published':len(archived),'moved_game_pages':migrated,'moved_lesson_pages':len(moved_lessons),'transformed_discovery_files':changed,'output_files':sum(p.is_file() for p in dest.rglob('*'))}
+        report['publications'][name]={'root':str(dest),'source_files':len(copied),'archived_not_published':len(archived),'moved_game_pages':migrated,'transformed_discovery_files':changed,'output_files':sum(p.is_file() for p in dest.rglob('*'))}
     if report['missing_source_files']:
         report['status']='PARTIAL_SPARSE_REVIEW_ONLY'
         if not allow_sparse:raise ValueError('Full source checkout required; missing '+str(len(report['missing_source_files']))+' files')

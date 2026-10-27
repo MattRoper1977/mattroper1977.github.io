@@ -10,7 +10,7 @@ async function run(){
   const context=await browser.newContext({viewport:{width:390,height:900},reducedMotion:'reduce'});
   await context.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());
   const page=await context.newPage();
-  const native=['/Lessons/','/Matt-s-Apps-/','/Lessons/Science/','/Lessons/Humanities/','/Lessons/subject.html'];
+  const native=['/Lessons/','/Matt-s-Apps-/','/Lessons/Science_Teesside/','/Lessons/Humanities_Teesside/','/Lessons/subject.html'];
   const themes={pink:['rgb(249, 232, 236)','rgb(255, 249, 250)'],blue:['rgb(231, 238, 247)','rgb(248, 251, 255)'],light:['rgb(247, 247, 244)','rgb(255, 255, 255)'],highlumen:['rgb(255, 255, 255)','rgb(255, 255, 255)']};
   for(const width of [390,900,1280]){
    await page.setViewportSize({width,height:900});

@@ -294,14 +294,14 @@ def refresh(output, site_source):
     # Auth controls remain server-side. These mixed teaching catalogues are not
     # declared adult surfaces, so they take the privacy-only drawer, as the
     # subject pages do: undeclared = privacy-only.
-    for relative in ['Science/index.html','Humanities/index.html',
-                     'Humanities/David_Cover_Autumn1_W3-W7/index.html']:
+    for relative in ['Science_Teesside/index.html','Humanities_Teesside/index.html',
+                     'Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html']:
         pages.append((output/'education-lessons'/relative,'/Lessons/'+relative.removesuffix('index.html'),False))
     inserted = {'/asdan/','/uas/'}
     pages += [(site/route.strip('/')/'index.html',route,route.strip('/')+'/index.html' in adult_pages) for route in sorted(inserted)]
-    pack_hub = output/'education-lessons/Science/Teaching_Packs/index.html'
+    pack_hub = output/'education-lessons/Science_Teesside/Teaching_Packs/index.html'
     if pack_hub.is_file():
-        pack_route = '/Lessons/Science/Teaching_Packs/'
+        pack_route = '/Lessons/Science_Teesside/Teaching_Packs/'
         pages.append((pack_hub, pack_route, False))
         inserted.add(pack_route)
     # Ruling tm moves the drawer, not the footer. adopt_palette() appends the
