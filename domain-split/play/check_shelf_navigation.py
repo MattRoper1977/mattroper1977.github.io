@@ -9,7 +9,8 @@ from, never the template, and proves four things:
   2. every manifest game appears on the shelves exactly once (a series edition
      counts where its Play anchor sits, on its lead's card), and every
      classroom activity appears exactly once, in the Classroom shelf;
-  3. the spotlight is exactly the manifest's featured rows, in manifest order;
+  3. the spotlight is the manifest's one spotlight row, then its featured rows,
+     in manifest order (AK10-AB);
   4. every shelf is a manifest category that exists on the page's own data
      (no invented category), and the Classroom shelf is the only home of the
      activities.
@@ -134,8 +135,11 @@ def limbs(page: dict, out: Path, manifest: list, discovery: dict) -> dict:
     if len(card_ids) != len(set(card_ids)):
         errors.append('a card id appears twice on the shelves')
 
-    # 3. spotlight == featured rows, manifest order
-    featured = [key(g['href']) for g in manifest if g.get('featured') is True]
+    # 3. spotlight == the one spotlight row, then the featured rows, manifest order (AK10-AB)
+    lead = [key(g['href']) for g in manifest if g.get('spotlight') is True]
+    if len(lead) > 1:
+        errors.append('the manifest flags more than one spotlight game: %s' % lead)
+    featured = lead + [key(g['href']) for g in manifest if g.get('featured') is True and g.get('spotlight') is not True]
     spot = [key(h) for s in page['spot'] for h in s['hrefs'][:1]]
     if not featured:
         errors.append('the manifest flags no featured game')
@@ -178,6 +182,17 @@ def self_test(page, out, manifest, discovery):
     bites('duplicate-card', lambda p, m: p['shelves'][-1]['cards'].append(copy.deepcopy(game_card)), 'twice')
     bites('spotlight-drift', lambda p, m: p['spot'].pop(), 'spotlight')
     bites('flag-drift', lambda p, m: m.__setitem__(0, {**m[0], 'featured': not m[0].get('featured')}), 'spotlight')
+    # AK10-AB: the spotlight flag moved to another game, and a second one added.
+    def move_spot(p, m):
+        for i, g in enumerate(m):
+            if g.get('spotlight') is True: m[i] = {k: v for k, v in g.items() if k != 'spotlight'}
+        j = next(i for i, g in enumerate(m) if g.get('featured') is not True and g.get('hero') is not True and g.get('spotlight') is not True)
+        m[j] = {**m[j], 'spotlight': True}
+    bites('spotlight-moved', move_spot, 'spotlight')
+    def second_spot(p, m):
+        j = next(i for i, g in enumerate(m) if g.get('spotlight') is not True)
+        m[j] = {**m[j], 'spotlight': True}
+    bites('second-spotlight', second_spot, 'more than one spotlight')
     bites('invented-category', lambda p, m: p['shelves'][-1].__setitem__('name', 'Top Picks'), 'invented')
     return plants
 

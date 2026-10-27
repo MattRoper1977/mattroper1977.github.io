@@ -25,6 +25,8 @@ let currentPage=null;
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 // Populations, derived from the data the page was built from.
 const catalogue=data.games.filter(g=>g.group==='games'),activities=data.games.filter(g=>g.group!=='games');
+// AK10-AB: the Spotlight is the one spotlight row, then every featured row, in manifest order.
+const spotRows=[...catalogue.filter(g=>g.spotlight),...catalogue.filter(g=>g.featured&&!g.spotlight)];
 const routesOf=rows=>new Set(rows.map(g=>g.route));
 const normalizeWord=v=>String(v).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const seriesLeads=new Set(catalogue.filter(g=>g.editions&&g.editions.find(id=>catalogue.some(c=>c.id===id))===g.id).map(g=>g.id));
@@ -82,13 +84,13 @@ await test('reviewed-discovery-and-real-screen-bindings',async()=>{
 await test('static-shelf-one-dom-vocabulary-and-one-count',async()=>{const html=await (await fetch(base+'/')).text();for(const word of ['In-game screenshot','Cover artwork','Ver.'])assert.equal((html.match(new RegExp(word.replace('.','\\.'),'g'))||[]).length,0,'retired vocabulary present: '+word);for(const old of ['games and activities','catalogue games ·','large-number','Choose your next adventure','Recently updated'])assert(!html.includes(old),'old shelf copy present: '+old);
  const countStatements=html.match(/<p id="result-count"[^>]*>([^<]*)<\/p>/g)||[];assert.equal(countStatements.length,1,'exactly one count statement');assert.equal(countStatements[0].replace(/<[^>]+>/g,''),catalogue.length+' games','count statement is derived from the catalogue');
  const cardIds=[...html.matchAll(/data-card="([^"]+)"/g)].map(m=>m[1]);assert.equal(cardIds.length,new Set(cardIds).size,'duplicate data-card ids');assert.equal(cardIds.length,expectedCards,'grid cards = leads + singles');
- const featuredRows=catalogue.filter(g=>g.featured);assert(featuredRows.length,'the manifest carries a featured flag');const featured=featuredRows[0];assert.deepEqual([...html.matchAll(/data-spot="([^"]+)"/g)].map(m=>m[1]),featuredRows.map(g=>g.id),'Spotlight is every featured:true row, in manifest order');assert.equal((html.match(/data-feature="/g)||[]).length,0,'the single Featured card is retired');
+ const featuredRows=catalogue.filter(g=>g.featured);assert(featuredRows.length,'the manifest carries a featured flag');assert.equal(catalogue.filter(g=>g.spotlight).length,1,'the manifest flags exactly one spotlight row');const featured=spotRows[0];assert.deepEqual([...html.matchAll(/data-spot="([^"]+)"/g)].map(m=>m[1]),spotRows.map(g=>g.id),'Spotlight is the spotlight row, then every featured:true row, in manifest order');assert.equal((html.match(/data-feature="/g)||[]).length,0,'the single Featured card is retired');
  const gridHtml=html.slice(html.indexOf('id="game-grid"'));for(const retired of ['data-info=','data-watch=','<video','lane-track','see-all'])assert(!gridHtml.slice(0,gridHtml.indexOf('</main>')).includes(retired),'cards carry Play only; found '+retired);
  const shelfNames=[...html.matchAll(/data-shelf="([^"]+)"/g)].map(m=>m[1]);const genres=[...new Set(catalogue.map(g=>g.genre))];assert.equal(shelfNames[0],'Classroom','Classroom shelf first');assert.deepEqual([...shelfNames].sort(),[...new Set(['Classroom',...genres])].sort(),'one shelf per existing category, none invented');
  for(const g of catalogue.filter(x=>x.editions)){const n=new Set(g.editions).size;assert(html.includes('>'+n+' editions<'),'editions chip for '+g.series+' shows '+n);}
  for(const literal of ['Pick a game. <span>Make it yours.</span>','YOUR NEXT GAME STARTS HERE.','placeholder="Search games"','>Filters<','>All games<','>For your classroom<','Classroom games, whole-class quizzes and a staff training activity.','Every game, A to Z','Privacy and saved progress','Report a problem','Made by Matt Education ↗','Made by Matt Play','Optional usage statistics — off until you allow it.','Read what is counted.','>Allow<','>Keep off<','usage-client.js','>Editions<','>Your progress<','id="dialog-saves"','>Transfer saves<','>Favourite<','>Share<'])assert(html.includes(literal),'copy missing: '+literal);
  assert(!/<(a|button)[\s>][^>]*>(?:(?!<\/(a|button)>).)*<(a|button)[\s>]/s.test(html.replace(/<script[\s\S]*?<\/script>/g,'')),'nested interactive elements');
- return{cards:cardIds.length,featured:featured.route,spotlight:featuredRows.length,shelves:shelfNames,countStatement:countStatements[0].replace(/<[^>]+>/g,''),retiredVocabulary:0};});
+ return{cards:cardIds.length,featured:featured.route,spotlight:spotRows.length,shelves:shelfNames,countStatement:countStatements[0].replace(/<[^>]+>/g,''),retiredVocabulary:0};});
 for(const width of [320,390,768,1280,1440]){
  const ctx=await browser.newContext({viewport:{width,height:width<700?844:900},isMobile:width<700,hasTouch:width<700,reducedMotion:'reduce'}),page=await ctx.newPage();page.setDefaultTimeout(10000);currentPage=page;const requests=[];page.on('request',r=>requests.push(r.url()));page.on('pageerror',e=>report.errors.push({width,message:e.message}));
  await test(width+'-layout-navigation-and-first-load',async()=>{await page.goto(base);await ready(page);await overflow(page);
@@ -154,12 +156,12 @@ for(const width of [320,390,768,1280,1440]){
  // TX (a) and (g): the Spotlight shows one featured game at a time, moves only on Next, never
  // plays video, and on a phone stacks its picture above its words while the chips scroll sideways.
  await test(width+'-tx-spotlight-next-and-mobile-layout',async()=>{await page.goto(base);await ready(page);
-  const featuredRows=catalogue.filter(g=>g.featured),n=featuredRows.length;const shown=()=>page.locator('#spotlight [data-spot]:visible').evaluateAll(e=>e.map(x=>x.dataset.spot));
-  assert.deepEqual(await shown(),[featuredRows[0].id],'one spotlight game at a time, the first featured row');assert.equal(await page.locator('#spot-status').innerText(),'1 of '+n);
+  const featuredRows=spotRows,n=featuredRows.length;const shown=()=>page.locator('#spotlight [data-spot]:visible').evaluateAll(e=>e.map(x=>x.dataset.spot));
+  assert.deepEqual(await shown(),[featuredRows[0].id],'one spotlight game at a time, the spotlight row first');assert.equal(await page.locator('#spot-status').innerText(),'1 of '+n);
   await pause(2500);assert.deepEqual(await shown(),[featuredRows[0].id],'nothing advances on its own (reduced motion set)');
   const next=page.locator('#spot-next');const box=await next.boundingBox();assert(box.width>=43.5&&box.height>=43.5,'Next is a 44px target');
   const order=[];for(let i=0;i<n;i++){order.push((await shown())[0]);await next.click();assert(await next.evaluate(e=>e===document.activeElement),'focus stays on Next');}
-  assert.deepEqual(order,featuredRows.map(g=>g.id),'Next walks every featured row in manifest order');assert.deepEqual(await shown(),[featuredRows[0].id],'and wraps');
+  assert.deepEqual(order,featuredRows.map(g=>g.id),'Next walks the spotlight row, then every featured row in manifest order');assert.deepEqual(await shown(),[featuredRows[0].id],'and wraps');
   assert.equal(await page.locator('#spotlight video, #game-grid video').count(),0,'no video on the spotlight or the shelves');
   assert(await page.locator('#spotlight [data-spot]:visible a[data-play]').evaluate(a=>a.href.length>0),'the spotlight game has a Play link');
   const layout=await page.evaluate(()=>{const card=[...document.querySelectorAll('#spotlight [data-spot]')].find(e=>!e.hidden),t=card.querySelector('.thumb').getBoundingClientRect(),b=card.querySelector('.feature-body').getBoundingClientRect(),row=document.querySelector('.chip-row'),cs=getComputedStyle(row);return{stacked:t.bottom<=b.top+1,thumbW:t.width,cardW:card.getBoundingClientRect().width,chipsScroll:cs.overflowX,chipsWrap:cs.flexWrap,chipOverflow:row.scrollWidth>row.clientWidth};});

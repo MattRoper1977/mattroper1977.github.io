@@ -197,7 +197,8 @@ def shelf(name, cards, count_text, note=''):
 
 def spotlight(rows):
     """TX (a): every featured row, manifest order, one shown at a time once
-    play.js runs. A visible Next control; nothing advances on its own; no video.
+    play.js runs; AK10-AB puts the manifest's one spotlight row first.
+    A visible Next control; nothing advances on its own; no video.
     J92 R17: pagination dots and a featured playlist rail (one 44px control per
     featured row) are derived from the same rows; both are inert markup, hidden
     until play.js wires them, so the no-script page still shows every item.
@@ -249,7 +250,7 @@ def slim(row):
     # J92: of the landed enrichment, only what the shelf shows travels -- the kicker,
     # the body, the sheet's "What you do" lines and input pills, the band pill and
     # the facet filter. session_modes stay in the manifest.
-    for k in ('id', 'title', 'displayTitle', 'description', 'line', 'route', 'image', 'imageCaption', 'genre', 'group', 'controls', 'modes', 'instructions', 'moods', 'moodReason', 'details', 'series', 'editions', 'featured', 'chapter',
+    for k in ('id', 'title', 'displayTitle', 'description', 'line', 'route', 'image', 'imageCaption', 'genre', 'group', 'controls', 'modes', 'instructions', 'moods', 'moodReason', 'details', 'series', 'editions', 'featured', 'spotlight', 'chapter',
               'subGenre', 'pitch', 'whatYouDo', 'inputs', 'sessionBand', 'facets'):
         if k in row and row[k] not in (None, '', [], False):
             out[k] = row[k]
@@ -332,7 +333,7 @@ def refresh(output, review=False, source_revisions=None):
                 m = manifest_rows.get(key(path))
                 if m is None: raise ValueError('catalogue game missing from the manifest: ' + entry['title'])
                 band = m.get('session_band')
-                row.update(tag=m['tag'], subGenre=m.get('sub_genre', ''), pitch=m.get('pitch', ''), whatYouDo=list(m.get('what_you_do', [])),
+                row.update(tag=m['tag'], spotlight=m.get('spotlight') is True, subGenre=m.get('sub_genre', ''), pitch=m.get('pitch', ''), whatYouDo=list(m.get('what_you_do', [])),
                            inputs=list(m.get('controls', [])), facets=list(m.get('classroom_facets', [])),
                            sessionBand=band if band in band_labels and band != 'unstated' else '')
                 row['sessionBandLabel'] = band_labels.get(row['sessionBand'], '') if row['sessionBand'] else ''
@@ -466,8 +467,12 @@ def refresh(output, review=False, source_revisions=None):
         facet_row = ('<div class="chip-row facet-row" role="group" aria-label="Classroom facets">'
                      + ''.join('<button type="button" class="facet-chip" data-chip="facet" data-facet="' + esc(f) + '" aria-pressed="false">' + esc(f[:1].upper() + f[1:]) + '</button>' for f in facet_names) + '</div>')
     # TX (a): the spotlight is every row the manifest flags featured, in manifest
-    # order. That flag is the single truth; no other list is read here.
-    featured = [r for r in games if r['featured']]
+    # order. AK10-AB (AB-1, AB-2): the one row the manifest flags spotlight leads
+    # it, then the featured rows follow; no new section, and hero is not read.
+    spot_lead = [r for r in games if r.get('spotlight')]
+    if len(spot_lead) > 1:
+        raise ValueError('more than one spotlight row: ' + ', '.join(r['title'] for r in spot_lead))
+    featured = spot_lead + [r for r in games if r['featured'] and not r.get('spotlight')]
     by_shelf, covered = OrderedDict((n, []) for n in shelf_names), []
     for r in games:
         members = r.get('editions') or [r['id']]

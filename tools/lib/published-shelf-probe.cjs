@@ -4,7 +4,7 @@
 // release window -- the UX2 grid (#game-grid > .game-card, #classroom .class-row, mood chips,
 // one Featured card) or the TX shelves (#game-grid [data-shelf] tracks, activities as
 // [data-activity] cards on the Classroom shelf, category + Keyboard/Touch chips, a Spotlight of
-// every featured row). shelfShape() reads which one is served and every limb asserts the
+// every featured row, led by the one spotlight row). shelfShape() reads which one is served and every limb asserts the
 // contract of THAT shape, each derived from the same independent data as before.
 // Derive complete membership independently from Games main and the accepted W7 census.
 const assert = require('node:assert/strict');
@@ -315,10 +315,14 @@ async function verify({ href }) {
           assert.equal(features[0].id, featured.id); assert.equal(route(features[0].href), route(featured.route));
         } else {
           // TX (a): the Spotlight is every featured row, in served order, one shown at a time.
+          // AK10-AB: a served spotlight row (at most one) leads it, ahead of the featured rows.
+          const leads = games.filter(g => g.spotlight);
+          assert(leads.length <= 1, 'more than one served spotlight row');
+          const spotRows = [...leads, ...featuredRows.filter(g => !g.spotlight)];
           const spots = await page.locator('#spotlight [data-spot]').evaluateAll(ns => ns.map(n => ({id:n.dataset.spot, href:n.querySelector('a[data-play]')?.href, shown:!!n.getClientRects().length})));
-          assert.deepEqual(spots.map(x => x.id), featuredRows.map(g => g.id), 'Spotlight differs from the featured flag');
-          for (const x of spots) assert.equal(route(x.href), route(featuredRows.find(g => g.id === x.id).route), 'Spotlight destination');
-          assert.deepEqual(spots.filter(x => x.shown).map(x => x.id), [featured.id], 'Spotlight shows one featured game at a time');
+          assert.deepEqual(spots.map(x => x.id), spotRows.map(g => g.id), 'Spotlight differs from the spotlight and featured flags');
+          for (const x of spots) assert.equal(route(x.href), route(spotRows.find(g => g.id === x.id).route), 'Spotlight destination');
+          assert.deepEqual(spots.filter(x => x.shown).map(x => x.id), [spotRows[0].id], 'Spotlight shows one game at a time, the first in order');
         }
         const normalize = text => text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
         const words = normalize(selected.title).split(/\s+/).filter(Boolean);
