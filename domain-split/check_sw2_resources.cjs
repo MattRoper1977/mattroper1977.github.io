@@ -20,7 +20,9 @@ const lightSkip = "if (lum(surface) > 0.18) return { selector: sel(el), skip: 'l
 assert(focusSource.includes(lightSkip), 'Existing focus instrument has its documented light-surface boundary');
 const measureFocus = Function(focusSource.replace(lightSkip, '') + ';return FOCUS_STEP')();
 
-exports.verify = async ({page, origin, rules}) => {
+exports.verify = async ({page, origin, rules, archive}) => {
+  // wg-2: an archived member's file links to its download at the archive record's pinned commit.
+  const hrefOf = p => archive && archive.download('/Lessons/' + p) ? decodeURI(archive.download('/Lessons/' + p)) : '/Lessons/' + p;
   const rows = await (await page.request.get(origin + '/Lessons/resources.json')).json();
   const keys = new Map();
   for (const row of rows) {
@@ -42,7 +44,7 @@ exports.verify = async ({page, origin, rules}) => {
   const report = {units: keys.size, packs: 0, files: 0, groups: 0, viewportThemes: [], controls: []};
   let planted = false;
   const expectedFor = rs => rs.filter(r => r.kind === 'pack').map(r => ({id:r.id, lesson:r.companionOf || r.id, drift:!!r.packRevisionDrift,
-    files:r.files.map(f => ({path:f.path, href:'/Lessons/'+f.path})).sort((a,b)=>a.path.localeCompare(b.path))})).sort((a,b)=>a.id.localeCompare(b.id));
+    files:r.files.map(f => ({path:f.path, href:hrefOf(f.path)})).sort((a,b)=>a.path.localeCompare(b.path))})).sort((a,b)=>a.id.localeCompare(b.id));
   const measured = () => page.locator('#rxSheet .pack-version').evaluateAll(es => es.map(e => ({id:e.dataset.pack,lesson:e.closest('[data-lesson]').dataset.lesson,drift:!!e.querySelector('.drift'),
     files:[...e.querySelectorAll('[data-file]')].map(f=>({path:f.dataset.file,href:decodeURI(f.querySelector('a').getAttribute('href'))})).sort((a,b)=>a.path.localeCompare(b.path))})).sort((a,b)=>a.id.localeCompare(b.id)));
   const samePacks = async expected => assert.deepEqual(await measured(), expected, 'Every companion file belongs to its record lesson, exactly once per pack');
@@ -140,7 +142,9 @@ exports.verify = async ({page, origin, rules}) => {
   console.log('Resources contrast census '+JSON.stringify({states:report.viewportThemes,failures:contrastFailures}));
   assert.deepEqual(contrastFailures, [], 'Every changed text surface and keyboard ring has measured passing contrast');
   const paths=[...allPaths];let cursor=0;const failed=[];
-  await Promise.all(Array.from({length:8},async()=>{while(cursor<paths.length){const p=paths[cursor++];const r=await page.request.get(origin+'/Lessons/'+encodeURI(p));if(!r.ok())failed.push({path:p,status:r.status()});await r.dispose();}}));
-  assert.deepEqual(failed,[],'Every sheet file resolves on the publication');report.resolvedFiles=paths.length;
+  // wg-2: a file in the archive record is unpublished by rule, so its old route answers 404; every other file resolves.
+  const isArchived=p=>!!(archive&&archive.download('/Lessons/'+p));
+  await Promise.all(Array.from({length:8},async()=>{while(cursor<paths.length){const p=paths[cursor++];const r=await page.request.get(origin+'/Lessons/'+encodeURI(p));if(isArchived(p)?r.status()!==404:!r.ok())failed.push({path:p,status:r.status(),archived:isArchived(p)});await r.dispose();}}));
+  assert.deepEqual(failed,[],'Every sheet file resolves on the publication');report.resolvedFiles=paths.filter(p=>!isArchived(p)).length;report.archivedFiles=paths.filter(isArchived).length;
   return report;
 };

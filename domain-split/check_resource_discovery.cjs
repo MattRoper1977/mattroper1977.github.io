@@ -27,6 +27,18 @@ const excludedGameRoutes = new Set();
 const educationOverrides = new Set();
 const sourceJSON = (root, name) => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8'));
 const errorText = e => e?.stack || e?.message || String(e);
+// Ruling wg-2 (um-4 (a)): the Lessons archive record is the one source for pack members that stay in
+// the repository but are not published; each is offered as a download at the record's pinned commit.
+// A Lessons tree from before the record has none, so nothing is archived there.
+const archive = (() => {
+  const file = path.join(lessonsRoot, 'tools/catalogue/PUBLICATION_ARCHIVE.json');
+  if (!fs.existsSync(file)) return { files: {}, base: null };
+  const record = JSON.parse(fs.readFileSync(file, 'utf8'));
+  assert(/^https:\/\/github\.com\/[^/]+\/[^/]+\/raw\/[0-9a-f]{40}\/$/.test(record.base) && record.base.endsWith('/raw/' + record.commit + '/'), 'The archive downloads from the repository at its pinned commit');
+  return { files: record.files, base: record.base };
+})();
+const archived = new Map();
+const archivedPath = route => route.startsWith('/Lessons/') && Object.hasOwn(archive.files, route.slice(9)) ? route.slice(9) : null;
 const urlFor = route => new URL(route, origin).href;
 fs.mkdirSync(out, { recursive: true });
 
@@ -52,6 +64,12 @@ function addExpected(map, value, base, label, kind) {
   if (route === '/games' || route.startsWith('/games/') || excludedGameRoutes.has(route)) return;
   const original = sourceFile(route);
   if (!original) { report.absentFromSource.push({ label, route, kind }); return; }
+  if (archivedPath(route)) {
+    const known = archived.get(route);
+    if (known) known.sources.push({ label, kind });
+    else archived.set(route, { route, download: archive.base + archivedPath(route), sources: [{ label, kind }] });
+    return;
+  }
   const previous = map.get(route);
   if (previous) previous.sources.push({ label, kind });
   else map.set(route, { route, sourceFile: path.relative(siteRoot, original), sources: [{ label, kind }], hub: kind === 'hub' });
@@ -280,7 +298,7 @@ async function responsiveChecks(browser) {
 async function catalogueChecks(browser, expected) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   const page = await context.newPage(); page.setDefaultTimeout(15000);
-  const cards = new Map(), navigation = new Set(), externalCards = new Set();
+  const cards = new Map(), navigation = new Set(), externalCards = new Set(), rendered = new Set();
   await check('all-working-education-destinations-in-rendered-cards', page, async () => {
     // UX2 B4: lessons are discovered on the Lessons hub's subject pages (every card, every pathway
     // segment, every accordion and "Show n more" expanded); teacher destinations on the teacher page.
@@ -309,7 +327,7 @@ async function catalogueChecks(browser, expected) {
         if (key !== null) cards.set(key, { hub: route, text: item.text });
         else externalCards.add(item.href);
       }
-      for (const item of await visibleLinks(page, 'a[href]')) { const key = routeOf(item.href); if (key !== null) navigation.add(key); }
+      for (const item of await visibleLinks(page, 'a[href]')) { const key = routeOf(item.href); if (key !== null) navigation.add(key); rendered.add(item.href); }
     }
     assert.deepEqual([...cards.keys()].filter(route=>excludedGameRoutes.has(route)), [], 'Recreational resources must not appear in Education discovery');
     const missing = [];
@@ -318,9 +336,12 @@ async function catalogueChecks(browser, expected) {
       if (!entry.rendered) missing.push({ route: entry.route, title: entry.sources[0].label });
     }
     assert.deepEqual(missing, [], 'Working old/current education destinations are absent from rendered discovery');
+    // wg-2: an archived member is discovered through its repository download link instead.
+    const archivedMissing = [...archived.values()].filter(entry => !rendered.has(new URL(entry.download).href)).map(entry => ({ route: entry.route, download: entry.download }));
+    assert.deepEqual(archivedMissing, [], 'Archived education members are absent from rendered discovery as their download link');
     const externalMissing = [...new Set(report.external.map(item => new URL(item.href).href))].filter(href => !externalCards.has(href));
     assert.deepEqual(externalMissing, [], 'Existing external education references are absent from rendered discovery');
-    return { expected: expected.size, uniqueCardDestinations: cards.size, preservedExternalReferences: externalCards.size, absentFromOriginalSource: report.absentFromSource.length };
+    return { expected: expected.size, archived: archived.size, uniqueCardDestinations: cards.size, preservedExternalReferences: externalCards.size, absentFromOriginalSource: report.absentFromSource.length };
   });
   await check('every-working-education-destination-returns-local-200', page, async () => {
     const rows = [...expected.values()], failures = []; let next = 0;
@@ -333,7 +354,12 @@ async function catalogueChecks(browser, expected) {
     }));
     report.destinations = rows;
     assert.deepEqual(failures, [], 'A preserved education resource is unavailable in the assembled publication');
-    return { checked: rows.length, http200: rows.filter(r => r.status === 200).length };
+    // wg-2: an archived member is unpublished by rule, so its old route must not be served.
+    const served = [];
+    for (const entry of archived.values()) { const response = await page.request.get(urlFor(entry.route), { timeout: 30000 }); entry.status = response.status(); if (entry.status !== 404) served.push({ route: entry.route, status: entry.status }); }
+    report.archived = [...archived.values()];
+    assert.deepEqual(served, [], 'An archived education member is still served at its old route');
+    return { checked: rows.length, http200: rows.filter(r => r.status === 200).length, archived404: archived.size };
   });
   await check('current-app-items-and-original-categories-preserved', page, async () => {
     const response = await page.request.get(urlFor('/Matt-s-Apps-/apps.json')); assert.equal(response.status(), 200);
