@@ -197,7 +197,10 @@ jobs:
           # merge of Lessons #719 (the moves commit 9cbc5f83 plus the paths, data, gates and pins that follow it); the two admission rows it changes
           # (Science/index.html, resources.json) are re-folded in this same commit under AB-4. Order of record we-4: Lessons, then this Site PR, then the Apps
           # gate-copy companion (Apps #223), which moves no published path. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '12ad298a25ce82118a945170dad076c029425f1d' }}
+          # Moved again 2026-10-27 (ruling wf-3, L31) WITH its Apps companion below: the Lessons pin 12ad298a -> 9b2d03bb685bdf750d649add949e6d02097dca38, the squash
+          # merge of Lessons #721 (wf-2: the catalogue checker rejects an underivable companion-pack catalogue instead of crashing; no published
+          # path moves). Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '9b2d03bb685bdf750d649add949e6d02097dca38' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -300,7 +303,10 @@ jobs:
           # Moved 2026-10-15 (Humanities Spring 1 window W1, ruling sb) WITH the Lessons pin above, per STANDING RULE L31: the Apps pin
           # ddd07331 -> 49708f6d28a3c87aae7011b434e251e9e67eaa53, the squash merge of Apps #205, which changes only the gate copy (no published path).
           # Both gate copies byte-identical there at fcb874249b4d. Derived with git rev-parse on the Apps checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || '49708f6d28a3c87aae7011b434e251e9e67eaa53' }}
+          # Moved 2026-10-27 (M1, ruling wf-3) WITH the Lessons pin above, per STANDING RULE L31: the Apps pin 49708f6d -> dd908441664339a27dc59f5bd0364024c7a1c231,
+          # the squash merge of Apps #223, M1's gate-copy companion, which moves no published path. Both gate copies byte-identical there.
+          # Derived with git rev-parse on the Apps checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'dd908441664339a27dc59f5bd0364024c7a1c231' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5

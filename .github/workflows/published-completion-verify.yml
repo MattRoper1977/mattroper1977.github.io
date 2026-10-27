@@ -63,7 +63,10 @@ jobs:
           # merge of Lessons #719 (the moves commit 9cbc5f83 plus the paths, data, gates and pins that follow it); the two admission rows it changes
           # (Science/index.html, resources.json) are re-folded in this same commit under AB-4. Order of record we-4: Lessons, then this Site PR, then the Apps
           # gate-copy companion (Apps #223), which moves no published path. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: 12ad298a25ce82118a945170dad076c029425f1d
+          # Moved again 2026-10-27 (ruling wf-3, L31) WITH its Apps companion below: the Lessons pin 12ad298a -> 9b2d03bb685bdf750d649add949e6d02097dca38, the squash
+          # merge of Lessons #721 (wf-2: the catalogue checker rejects an underivable companion-pack catalogue instead of crashing; no published
+          # path moves). Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: 9b2d03bb685bdf750d649add949e6d02097dca38
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/setup-node@v4
