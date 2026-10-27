@@ -17,7 +17,15 @@ function sciencePackContract(root) {
     const route = file => '/Lessons/Science_Teesside/Teaching_Packs/' + pathway + '/' + file;
     assert.equal(source.lessons.length, source.lessonCount, pathway + ' source lesson count');
     assert(source.lessons.length > 0, pathway + ' source lessons missing');
-    assert.deepEqual(archives.filter(a => a.kind === 'format').map(a => a.format).sort(), ['DOCX', 'PDF', 'PPTX'], pathway + ' format collections');
+    // Ruling um-1a (wg-2): a pathway's three format collections are removed where its complete unit zip
+    // already holds every lesson file, so a pathway carries all three or none, and none only beside that zip.
+    const formats = archives.filter(a => a.kind === 'format').map(a => a.format).sort();
+    if (formats.length) assert.deepEqual(formats, ['DOCX', 'PDF', 'PPTX'], pathway + ' format collections');
+    else {
+      const lessonFiles = source.lessons.flatMap(lesson => lesson.files.map(f => f.file));
+      const unitZip = archives.find(a => a.kind === 'whole' && source.lessons.every(lesson => a.lessonIds.includes(lesson.id)) && lessonFiles.every(file => Object.values(a.members || {}).includes(file)));
+      assert(unitZip, pathway + ' format collections removed without a complete unit zip that holds every lesson file');
+    }
     for (const lesson of source.lessons) {
       const decks = lesson.files.filter(f => f.format === 'PPTX');
       assert.equal(decks.length, 1, pathway + '/' + lesson.id + ' requires one PowerPoint');

@@ -30,8 +30,14 @@
 //                 EDU-HEADER-BRAND-20260915); the vocabulary grep terms occur only
 //                 where ux2/appendix-a-site.json lists a defect with a reason.
 //   hrefs         every same-origin href on the gated routes answers 200 on the mount;
-//                 off-origin hrefs are listed and must be the Play origin or an existing
-//                 external destination the pre-order page already carried.
+//                 off-origin hrefs are listed and must be the Play origin, an existing
+//                 external destination the pre-order page already carried, or the
+//                 download link of a member of the Lessons archive record (wg-2).
+//
+// Archived members (ruling wg-2, um-4 (a)): tools/catalogue/PUBLICATION_ARCHIVE.json in the
+// mounted Lessons source is the one record of pack members kept in the repository but not
+// published. Such a member is reached through its download link at the record's pinned
+// commit, so reachability, hrefs and resources-packs accept that link in place of its old route.
 //   claims        R3: no served audience route carries a banned absolute (data/banned-claims.json);
 //                 R4: the teacher page carries the record's safety line verbatim.
 //   brand mark    the header brand mark and the homepage emblem decode with naturalWidth > 0; the
@@ -73,6 +79,22 @@ const siteRoot = path.resolve(process.env.MBM_DISCOVERY_SITE || path.join(__dirn
 const origin = new URL(process.env.MBM_EDUCATION_ORIGIN || 'http://127.0.0.1:4173').origin;
 const out = path.resolve(process.env.MBM_UX2_OUTPUT || 'audit-output/ux2-education');
 const RED = process.argv.includes('--red-proof');
+const lessonsRoot = path.resolve(process.env.MBM_DISCOVERY_LESSONS || path.join(siteRoot, '.sources/Lessons'));
+const archive = (() => {
+  const file = path.join(lessonsRoot, 'tools/catalogue/PUBLICATION_ARCHIVE.json');
+  if (!fs.existsSync(file)) return { files: {}, base: null };  // a Lessons tree from before the record archives nothing
+  const record = JSON.parse(fs.readFileSync(file, 'utf8'));
+  assert(/^https:\/\/github\.com\/[^/]+\/[^/]+\/raw\/[0-9a-f]{40}\/$/.test(record.base) && record.base.endsWith('/raw/' + record.commit + '/'), 'The archive downloads from the repository at its pinned commit');
+  return { files: record.files, base: record.base };
+})();
+// The download link of an archived member, from its decoded same-origin path; null when it is not archived.
+archive.download = pathname => pathname.startsWith('/Lessons/') && Object.hasOwn(archive.files, pathname.slice(9)) ? new URL(archive.base + pathname.slice(9)).href : null;
+// True when an href is the download link of an archived member.
+archive.isDownload = href => {
+  if (!archive.base) return false;
+  try { const base = new URL(archive.base), u = new URL(href), p = decodeURIComponent(u.pathname); return u.origin === base.origin && p.startsWith(base.pathname) && Object.hasOwn(archive.files, p.slice(base.pathname.length)); }
+  catch (_) { return false; }
+};
 const PLAY = 'https://www.madebymatt-play.uk';
 const fixtures = {
   appendix: JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/appendix-a-site.json'), 'utf8')),
@@ -177,7 +199,7 @@ async function suite(browser, mutation) {
     // subject page at its pathway with every accordion expanded — and reported, never hidden.
     const catalogue = await (await page.request.get(origin + '/Lessons/resources.json')).json();
     const lessonByHref = new Map(catalogue.filter(r => String(r.type || '').toLowerCase() === 'lesson').map(r => ['/Lessons/' + (r.file || r.url || ''), r]));
-    const segmentCache = new Map(); const viaSegment = []; const linkedRelocations = [];
+    const segmentCache = new Map(); const viaSegment = []; const linkedRelocations = []; const viaDownload = [];
     const renderedAt = async (slug, tier) => {
       const id = slug + '|' + (tier || 'ALL');
       if (!segmentCache.has(id)) {
@@ -204,6 +226,8 @@ async function suite(browser, mutation) {
         else viaSegment.push(href);
         continue;
       }
+      const download = archive.download(decodeURIComponent(new URL(href, origin).pathname));
+      if (download && twoTap.has(download)) { viaDownload.push(href); continue; }
       const entry = relocated[href];
       if (!entry) { problems.push(`${href} (on ${route}) is no longer within two taps of / and is not a recorded relocation or retirement`); continue; }
       const dest = key(entry.to);
@@ -229,7 +253,7 @@ async function suite(browser, mutation) {
           else linkedRelocations.push(href);
         } else if (isFile) {
           if (entry.selector) { await page.locator(entry.selector).first().click(); await settle(page); }
-          const linked = await page.evaluate(t => [...document.querySelectorAll('a[href]')].some(a => { try { return decodeURIComponent(new URL(a.href).pathname) === t; } catch (_) { return false; } }), target);
+          const linked = await page.evaluate(([t, dl]) => [...document.querySelectorAll('a[href]')].some(a => { try { return decodeURIComponent(new URL(a.href).pathname) === t || (!!dl && new URL(a.href).href === dl); } catch (_) { return false; } }), [target, archive.download(target)]);
           if (!linked) problems.push(`${href} → ${entry.to}${entry.selector ? ' ' + entry.selector : ''}: the destination does not link it (ve-2: a page that really lists the link)`);
           else linkedRelocations.push(href);
         }
@@ -237,7 +261,7 @@ async function suite(browser, mutation) {
     }
     assert.deepEqual(problems, [], 'Pre-order hrefs lost within two taps of /: '+JSON.stringify(problems));
     assert.deepEqual(stale, [], 'Recorded relocations/retirements that are in fact still reachable (stale ledger): '+JSON.stringify(stale));
-    return { oneTap: oneTap.size, twoTap: twoTap.size, expandedPages: Object.keys(expanded).length, preOrder: seen.size, lessonsViaPathwaySegment: viaSegment.length, relocatedFilesLinked: linkedRelocations.length };
+    return { oneTap: oneTap.size, twoTap: twoTap.size, expandedPages: Object.keys(expanded).length, preOrder: seen.size, lessonsViaPathwaySegment: viaSegment.length, relocatedFilesLinked: linkedRelocations.length, archivedViaDownload: viaDownload.length };
   });
 
   for (const route of GATED) {
@@ -304,7 +328,7 @@ async function suite(browser, mutation) {
       assert.deepEqual(failed, [], 'Same-origin hrefs that do not resolve on ' + route);
       const external = [...new Set(anchors.filter(a => new URL(a.abs).origin !== origin).map(a => a.abs))];
       const preOrderExternal = new Set(Object.values(fixtures.preOrder.routes).flat().filter(isExternal));
-      const unexpected = external.filter(u => !u.startsWith(PLAY + '/') && !u.startsWith('mailto:') && !preOrderExternal.has(u.replace(/#.*$/, '')));
+      const unexpected = external.filter(u => !u.startsWith(PLAY + '/') && !u.startsWith('mailto:') && !preOrderExternal.has(u.replace(/#.*$/, '')) && !archive.isDownload(u));
       assert.deepEqual(unexpected, [], 'Off-origin hrefs that are neither Play nor a pre-order external destination on ' + route);
       return { sameOrigin: same.length, external };
     });
@@ -459,7 +483,7 @@ async function suite(browser, mutation) {
   if (!mutation) await check('SW2 H/U front doors', async () => require('./check_sw2_frontdoors.cjs').verify({page, origin, rules: fixtures.relocations.lessonRows, record: JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8'))}));
 
   if (!mutation && GATED.includes('/resources/')) await check('edud2-discovery', async () => require('./check_edud2_discovery.cjs').verify({page, origin}));
-  if (!mutation && GATED.includes('/resources/')) await check('resources-packs', async () => require('./check_sw2_resources.cjs').verify({page, origin, rules: fixtures.relocations.lessonRows}));
+  if (!mutation && GATED.includes('/resources/')) await check('resources-packs', async () => require('./check_sw2_resources.cjs').verify({page, origin, rules: fixtures.relocations.lessonRows, archive}));
   if (GATED.includes('/resources/')) await check('resources', async () => {
     // Appendix A §RESOURCES on the built page: pills (no Type pill — kind scored below 18/20),
     // replaceState params, "This half-term first", one card per key with its chips, the sheet
