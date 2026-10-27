@@ -11,10 +11,10 @@ const routes = [
   'Assembly/KCSIE/emergency_kcsie_assembly (1).html',
   'Assembly/Behaviour Focus/resilience_assembly.html',
   'Assembly/British Value/rule_of_law_assembly.html',
-  'Science_Teesside/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html',
-  'Science_Teesside/Build/v4_fieldops/02_Tees_Estuary_Field_Investigation_Lab.html',
-  'Science_Teesside/Build/v4_fieldops/03_Wilton_Carbon_Process_Control_Lab.html',
-  'Science_Teesside/Build/v4_fieldops/04_Tees_Bay_Wind_Operations_Lab.html'
+  'Science/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html',
+  'Science/Build/v4_fieldops/02_Tees_Estuary_Field_Investigation_Lab.html',
+  'Science/Build/v4_fieldops/03_Wilton_Carbon_Process_Control_Lab.html',
+  'Science/Build/v4_fieldops/04_Tees_Bay_Wind_Operations_Lab.html'
 ];
 (async () => {
   fs.mkdirSync(output, {recursive:true});
@@ -29,7 +29,7 @@ const routes = [
         const response=await page.goto(new URL('/Lessons/'+route,origin).href,{waitUntil:'networkidle'});
         assert.equal(response.status(),200);
         assert.equal(await page.locator('script[src$="/assets/catalogue/lesson-navigation.js"]').count(),1);
-        if (route.startsWith('Science_Teesside/Build/v4_fieldops/')) {
+        if (route.startsWith('Science/Build/v4_fieldops/')) {
           // These lessons deliberately retain their native toolbar; the adapter updates its return link.
           const home = page.locator('a.mbmhome');
           await home.waitFor({state:'visible'});
@@ -69,7 +69,7 @@ const routes = [
     // Exercise the browser's real print media and PDF renderer as well as
     // the screen navigation controls above. PDFs are retained for visual QA.
     for (const [index,route] of ['/', '/for/governors-trustees/',
-      '/Lessons/Science_Teesside/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html'].entries()) {
+      '/Lessons/Science/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html'].entries()) {
       const context=await browser.newContext({viewport:{width:1280,height:900},reducedMotion:'reduce'});
       await context.route('**/*', req=>new URL(req.request().url()).origin===new URL(origin).origin ? req.continue() : req.abort());
       const page=await context.newPage();

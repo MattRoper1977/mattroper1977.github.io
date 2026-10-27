@@ -18,12 +18,12 @@ const routes = ['/', '/main/', '/account/', '/members/', '/mailing-list/', '/pri
   '/for/teachers/', '/for/pupils/', '/for/parents-carers/', '/for/schools-semh/',
   '/for/trusts/', '/for/councils-organisations/', '/for/partners/',
   '/for/governors-trustees/', '/Lessons/', '/Lessons/primary/', '/Matt-s-Apps-/',
-  '/stats/on-this-device/', '/asdan/', '/uas/', '/commission/', '/Lessons/Science_Teesside/',
-  '/Lessons/Humanities_Teesside/', '/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/',
-  '/Lessons/Science_Teesside/Teaching_Packs/', '/Lessons/subject.html'];
+  '/stats/on-this-device/', '/asdan/', '/uas/', '/commission/', '/Lessons/Science/',
+  '/Lessons/Humanities/', '/Lessons/Humanities/David_Cover_Autumn1_W3-W7/',
+  '/Lessons/Science/Teaching_Packs/', '/Lessons/subject.html'];
 const restricted = ['/for/pupils/', '/resources/', '/Lessons/primary/', '/Lessons/subject.html'];
 const ux2Routes = ['/', '/commission/', '/for/pupils/', '/for/teachers/', '/resources/'];
-const themeRoutes = ['/Lessons/', '/Matt-s-Apps-/', '/Lessons/Science_Teesside/', '/Lessons/Humanities_Teesside/', '/Lessons/subject.html'];
+const themeRoutes = ['/Lessons/', '/Matt-s-Apps-/', '/Lessons/Science/', '/Lessons/Humanities/', '/Lessons/subject.html'];
 const {deviceStatsSkip}=require('./check_device_stats.cjs');
 const {assertChrome, tokenReference, proveChromeControls}=require('./check_chrome_tokens.cjs');
 function colourContrast(a,b) {

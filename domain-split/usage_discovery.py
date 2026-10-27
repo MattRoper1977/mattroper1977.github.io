@@ -21,7 +21,7 @@ EDUCATION_HOSTS = {'madebymatt.uk', 'www.madebymatt.uk', 'mattroper1977.github.i
 PLAY_HOSTS = {'madebymatt-play.uk', 'www.madebymatt-play.uk'}
 # Confirmed complete teaching packs. A poster bundle or a generic ZIP is a
 # resource, not automatically a lesson pack. Extend this reviewed set explicitly.
-LESSON_PACK_ROUTES = {'/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/David_'+pathway+'_Humanities_RE_Pack.zip' for pathway in ['BUILD','GROW','LAUNCH']}
+LESSON_PACK_ROUTES = {'/Lessons/Humanities/David_Cover_Autumn1_W3-W7/David_'+pathway+'_Humanities_RE_Pack.zip' for pathway in ['BUILD','GROW','LAUNCH']}
 
 
 def read(path):
@@ -121,13 +121,13 @@ def registry(output, lessons, site_source, play_only=False):
                         add('education','/Lessons/'+row['path'],row['title'],'lesson_open',row.get('id',''))
         # David's completed cover sequence is catalogued at hub level. Its
         # authored lesson-card links are the authority for these 25 lessons.
-        david=lessons/'Humanities_Teesside/David_Cover_Autumn1_W3-W7/index.html'
+        david=lessons/'Humanities/David_Cover_Autumn1_W3-W7/index.html'
         if david.is_file():
             parser=Links();parser.feed(david.read_text())
             for link in parser.rows:
                 child=link['href']
                 if re.fullmatch(r'(?:BH|BR|GH|GR|LH)_W[3-7]\.html',child):
-                    add('education','/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/'+child,
+                    add('education','/Lessons/Humanities/David_Cover_Autumn1_W3-W7/'+child,
                         link['title'] or link['text'],'lesson_open')
         # Primary is its own classification; only the real sequence lessons,
         # never a year/unit hub or a scheme, count as lesson destinations.
@@ -161,6 +161,7 @@ def registry(output, lessons, site_source, play_only=False):
     aliases=site_source/'domain-split/usage-route-aliases.json'
     if aliases.is_file():
         for alias in read(aliases):
+            if play_only and alias['source']!='play': continue  # M1: education identities are not part of the Play registry
             key=(alias['source'],canonical(alias['route']))
             if key not in records or not re.fullmatch(r'[a-f0-9]{64}',alias['resource_id']): raise ValueError('Invalid usage alias record')
             records[key]['resource_id']=alias['resource_id']
@@ -318,8 +319,8 @@ def teaching_download_pages(output, lessons, site_source, rows):
     candidates.add('/Lessons/primary/')
     # These authored companion pages support the current Science periods;
     # their own copy explicitly says they do not add another lesson.
-    for pattern in ['Science_Teesside/Grow/resources/GS_W[3-7][AB].html',
-                    'Science_Teesside/Launch/resources/W[3-7]L[1-3].html']:
+    for pattern in ['Science/Grow/resources/GS_W[3-7][AB].html',
+                    'Science/Launch/resources/W[3-7]L[1-3].html']:
         candidates.update('/Lessons/'+p.relative_to(lessons).as_posix() for p in lessons.glob(pattern))
     downloads={canonical(r['route']) for r in rows if r['source']=='education' and 'download_request' in r['event_types']}
     approved=[]
@@ -331,7 +332,7 @@ def teaching_download_pages(output, lessons, site_source, rows):
         target=local_file(output,route)
         if not target or not target.is_file() or target.suffix.lower()!='.html':continue
         text=target.read_text()
-        if 'data-game-moved' in text:continue
+        if 'data-game-moved' in text or 'data-lesson-moved' in text:continue  # M1: moved-lesson stubs name no download
         parser=Links();parser.feed(text)
         hits=[]
         for link in parser.rows:

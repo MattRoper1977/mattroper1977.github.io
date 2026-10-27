@@ -28,10 +28,10 @@ const cases=[
   ['/for/governors-trustees/','governors','.gv-card'],['/Lessons/','lessons','.scard'],
   ['/Lessons/primary/','primary','.primary-unit'],['/Matt-s-Apps-/','apps','.card'],
   ['/stats/on-this-device/','device statistics','.sx-card'],['/asdan/','ASDAN','.card'],['/uas/','UAS','.card'],
-  ['/commission/','commission','.subject-card'],['/Lessons/Science_Teesside/','science catalogue','.card'],
-  ['/Lessons/Humanities_Teesside/','humanities catalogue','.card'],
-  ['/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/','humanities packs','.lesson-card'],
-  ['/Lessons/Science_Teesside/Teaching_Packs/','science packs','.lesson'],
+  ['/commission/','commission','.subject-card'],['/Lessons/Science/','science catalogue','.card'],
+  ['/Lessons/Humanities/','humanities catalogue','.card'],
+  ['/Lessons/Humanities/David_Cover_Autumn1_W3-W7/','humanities packs','.lesson-card'],
+  ['/Lessons/Science/Teaching_Packs/','science packs','.lesson'],
   ['/Lessons/subject.html','subject chooser','#chooser a'],
 ];
 const expectedRoutes=JSON.parse('['+fs.readFileSync(path.join(__dirname,'check_shared_navigation.cjs'),'utf8').match(/const routes = \[([\s\S]*?)\];/)[1].replaceAll("'",'"')+']');
@@ -69,7 +69,7 @@ async function run(){
     if(await h.count()){row.heading=await h.evaluate(e=>({text:e.textContent.trim(),colour:getComputedStyle(e).color}));
      // Part R places Resources' heading on the body surface; every other role is unchanged.
      const sw2=await page.locator('body[data-sw2-frontdoor],main[data-sw2-apps-hub]').count();
-     const onDark=!sw2&&['/account/','/members/','/mailing-list/','/privacy/','/tools/','/teach/','/education-hub/','/for/teachers/','/for/pupils/','/Matt-s-Apps-/','/stats/on-this-device/','/asdan/','/uas/','/commission/','/Lessons/Science_Teesside/','/Lessons/Humanities_Teesside/'].includes(route);
+     const onDark=!sw2&&['/account/','/members/','/mailing-list/','/privacy/','/tools/','/teach/','/education-hub/','/for/teachers/','/for/pupils/','/Matt-s-Apps-/','/stats/on-this-device/','/asdan/','/uas/','/commission/','/Lessons/Science/','/Lessons/Humanities/'].includes(route);
      assert.equal(row.heading.colour,onDark?'rgb(255, 254, 250)':row.ink,'Matched primary heading role '+route);
      // J93: the homepage h1 is the masthead descriptor on the body surface (no dark hero band).
      if(['/','/main/'].includes(route)){

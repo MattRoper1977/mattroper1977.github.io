@@ -37,7 +37,7 @@ def universe(site: Path, document: dict) -> list:
                '/Lessons/Games/', 'https://www.madebymatt-play.uk/townlife/',
                'https://www.madebymatt-play.uk/', 'https://madebymatt.uk/townlife/',
                'https://mattroper1977.github.io/townlife/', '/games/index.html',
-               '/Science_Teesside/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html'}
+               '/Science/Build/v4_fieldops/01_Newport_Bridge_Lift_Permit_Lab.html'}
     return sorted(routes)
 
 

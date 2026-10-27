@@ -21,8 +21,8 @@ SITE_ADULT = {
     '/uas/app.html', '/evidence-binder/moderator-pro/',
 }
 LESSON_ADULT = {
-    '/Lessons/Humanities_Teesside/David_Cover_Autumn1_W3-W7/',
-    '/Lessons/Science_Teesside/Teaching_Packs/',
+    '/Lessons/Humanities/David_Cover_Autumn1_W3-W7/',
+    '/Lessons/Science/Teaching_Packs/',
 }
 # HC3 §8. The Lessons index and the Science / Humanities hubs are where a pupil
 # lands; they carry no support footer. More generally NO route a pupil can reach
@@ -72,7 +72,7 @@ def pupil_protected(route, document):
     body = document.body
     return (route in PROTECTED or '/pupil_tools/' in route or
             body.get('data-page') == 'pupils' or body.get('data-mbm-audience-face') == 'pupils' or
-            body.get('data-mbm-adult-features') == 'off' or 'data-game-moved' in body)
+            body.get('data-mbm-adult-features') == 'off' or 'data-game-moved' in body or 'data-lesson-moved' in body)
 
 
 class Links(HTMLParser):

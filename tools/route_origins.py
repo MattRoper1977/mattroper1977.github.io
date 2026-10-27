@@ -199,7 +199,7 @@ def self_test():
     control('run 1: an alias stub points at its play destination',
             url_for(table, rec, '/Lessons/Games/Voxel_Frontier.html') == rec['play'] + '/voxel/')
     control('run 1: a lesson is education, unchanged',
-            origin_for(table, rec, '/Lessons/Science_Teesside/Build/SCI_B_W3_Backbones.html')[0] == rec['education'])
+            origin_for(table, rec, '/Lessons/Science/Build/SCI_B_W3_Backbones.html')[0] == rec['education'])
     n_stubs = len(stub_routes(table))
     control('run 1: the stub set is non-empty and every shelf route is in it',
             n_stubs > 0 and all(r in stub_routes(table) for r in rec['shelf'] if r not in rec['retained']),
