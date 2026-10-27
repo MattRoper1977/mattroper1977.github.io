@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { EstateMap } from '../lib/estate-map.cjs';
-import { fetchRoute as estateFetch } from '../lib/estate-fetch.cjs';
+import { fetchRoute as estateFetch, RouteMovedError } from '../lib/estate-fetch.cjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const REPOSITORY = 'MattRoper1977/mattroper1977.github.io';
@@ -87,8 +87,39 @@ async function waitForCanonicalTown() {
 // from the route, asserts the final URL, and raises OffOriginError before any
 // content assertion when the served page's canonical points off-origin. The
 // header names below are preserved so the evidence file's shape is unchanged.
+//
+// AK10-AE add.1: the games shelf moved off the education origin.
+// madebymatt.uk/Games/games.json now redirects to the Play origin's /games.json,
+// so the host AND the path change. estate-fetch rightly raises RouteMovedError
+// for that, so this file names the one move it accepts. Any other move, or this
+// route landing anywhere else, still throws. The shelf is then fetched from its
+// new URL with the same final-URL check, and the byte comparisons further down
+// (Games main and the committed Site mirror) are unchanged.
+const MOVED_ROUTES = { '/Games/games.json': new URL('/games.json', ESTATE.play).href };
+
+function acceptedMove(route, error) {
+  if (!(error instanceof RouteMovedError) || MOVED_ROUTES[route] !== error.finalUrl) throw error;
+  return new URL(error.finalUrl);
+}
+
+function proveMovedRouteControl() {
+  const elsewhere = new RouteMovedError('/Games/games.json', 'https://madebymatt.uk/Games/games.json',
+    new URL('/games/', ESTATE.play).href);
+  assert.throws(() => acceptedMove('/Games/games.json', elsewhere), RouteMovedError);
+  const otherRoute = new RouteMovedError('/games/', 'https://madebymatt.uk/games/', MOVED_ROUTES['/Games/games.json']);
+  assert.throws(() => acceptedMove('/games/', otherRoute), RouteMovedError);
+  console.log('MOVED ROUTE NEGATIVE CONTROL RED — a move to any other URL, or of any other route, still throws');
+}
+
 async function fetchRoute(route) {
-  const served = await estateFetch(route, { map: ESTATE, agent: 'townlife-live-closeout' });
+  let served;
+  try {
+    served = await estateFetch(route, { map: ESTATE, agent: 'townlife-live-closeout' });
+  } catch (error) {
+    const moved = acceptedMove(route, error);
+    console.log(`ROUTE MOVED (accepted) — ${route} -> ${moved.href}`);
+    served = await estateFetch(moved.pathname, { map: ESTATE, origin: moved.origin, agent: 'townlife-live-closeout' });
+  }
   return {
     route,
     origin: served.origin,
@@ -215,6 +246,7 @@ async function observeBrowser() {
 const deployment = await waitForDeployment();
 const canonical = await waitForCanonicalTown();
 proveRouteMarkerControl('games/index.html', 'id="genreSections"');
+proveMovedRouteControl();
 const [gamesRoute, pupilsRoute, manifestRoute, mirrorRoute, townRoute] = await Promise.all([
   fetchRoute('/games/'),
   fetchRoute('/for/pupils/'),
