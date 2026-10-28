@@ -47,3 +47,7 @@ tools/verify_emberwild_bayer.mjs <root>`) with a padded copy of the file:
   the wire check reds at 176,946 B gzipped
 
 Both were observed red by name on the day of the ruling.
+
+## 3.5.1 (27 Oct 2026)
+
+- emberwild/index.html 1,013,599 B raw against the 1,048,576 B release gate (B1 in tools/verify_emberwild.js), headroom 34,977 B
