@@ -123,6 +123,10 @@ if baseline:
  landed=len(before)!=len(baseline.get('doors',[]))
  req(survivors==before,f'every pre-existing door survives byte-equivalent and ordered ({len(survivors)} of them; baseline is the {"post" if landed else "pre"}-landing state)')
  before_catalog=[x for x in baseline.get('features',{}).get('downloads',{}).get('catalog',[]) if x.get('key') not in NEW_KEYS]
+ # Ruled re-pin (xs-3 F1, as xl-2): the expected title of three catalogue entries moves to the ruled neutral strings,
+ # keyed by sha256(key)[:12]; every other field and entry stays byte-equivalent. A no-op once the change is on main.
+ RULED_CATALOG_TITLE={'18b0ee46c4db':'Awards Register','2e15ceb3ff15':'Programme Register','3ba1efb937ba':'Programme suite'}
+ before_catalog=[{**x,**({'title':RULED_CATALOG_TITLE[h]} if (h:=hashlib.sha256(str(x.get('key','')).encode()).hexdigest()[:12]) in RULED_CATALOG_TITLE else {})} for x in before_catalog]
  after_catalog=[x for x in site.get('features',{}).get('downloads',{}).get('catalog',[]) if x.get('key') not in NEW_KEYS]
  req(after_catalog==before_catalog,f'existing count catalogue survives byte-equivalent and ordered ({len(after_catalog)} entries)')
 catalog=site.get('features',{}).get('downloads',{}).get('catalog',[]);keys=[x.get('key') for x in catalog]
