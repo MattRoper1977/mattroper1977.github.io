@@ -89,7 +89,7 @@
   }
 
   /* ------------------------------------------------------------- what syncs
-     An allow-list, not everything in localStorage. Two reasons: the UAS
+     An allow-list, not everything in localStorage. Two reasons: the awards
      register holds real pupil names and marks and must NEVER leave the device
      under any circumstances, and a blanket sync would carry whatever any future
      page happens to store. Adding a prefix here is a deliberate act. */
