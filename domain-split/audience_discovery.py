@@ -119,7 +119,7 @@ def pathway_section():
     return section('asdan-learning', 'ASDAN learning collections',
         f'<div class="ad-grid">{cards}</div><p>{link("Find ASDAN resources from every year", "/Lessons/?subject=ASDAN%20%26%20life%20skills&year=all")} · '
         f'{link("Search the ASDAN catalogue", "/resources/?q=asdan")}</p>',
-        'Choose a collection for learning activities. The ASDAN Register in Teacher tools is a separate evidence tool.')
+        'Choose a collection for learning activities. The Programme Register in Teacher tools is a separate evidence tool.')
 
 
 def professional_content(key, audience):

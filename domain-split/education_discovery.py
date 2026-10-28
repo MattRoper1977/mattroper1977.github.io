@@ -71,7 +71,7 @@ def collections():
             'Browse the existing pathway collections, including older resources.</p>'+asdan_links+
             '<a href="'+escape(ASDAN, quote=True)+'">Find ASDAN resources · all years</a>'
             '<p class="collection-note">For recording evidence and progress, use the separate '
-            '<a href="/asdan/">ASDAN Register</a>.</p></article>'
+            '<a href="/asdan/">Programme Register</a>.</p></article>'
             '<article class="collection-card"><h3>Worksheets, packs &amp; downloads</h3>'
             '<p>Open a subject collection for its existing teaching sheets and downloads.</p>'
             '<a href="/Lessons/Humanities/David_Cover_Autumn1_W3-W7/index.html">Humanities &amp; RE teaching packs</a>'
