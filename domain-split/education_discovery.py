@@ -186,8 +186,8 @@ def refresh(output, lessons, apps, site_source):
             '<a class="go" href="'+PDF+'">OPEN PDF STUDIO →</a></article>')
     text = replace_once(text, '<div class="tgrid" data-sec="util">', '<div class="tgrid" data-sec="util">'+card)
     for pathway in PATHWAYS:
-        card = ('<article class="tcard" data-cat="browse" data-s="asdan '+pathway.lower()+' learning resources worksheets packs collection">'
-                '<h3>'+pathway+' ASDAN learning resources</h3><p>Open the existing lesson collection and teaching resources.</p>'
+        card = ('<article class="tcard" data-cat="browse" data-s="programme studio '+pathway.lower()+' learning resources worksheets packs collection">'
+                '<h3>'+pathway+' Programme Studio learning resources</h3><p>Open the existing lesson collection and teaching resources.</p>'
                 '<a class="go" href="/Lessons/'+pathway+'_ASDAN/'+pathway+'_ASDAN_Hub.html">OPEN LEARNING COLLECTION →</a></article>')
         text = replace_once(text, '<div class="tgrid" data-sec="browse">', '<div class="tgrid" data-sec="browse">'+card)
     text = replace_once(text, '<a href="#drawer">Find a tool</a>', '<a href="#drawer">Find a tool</a><a href="'+PDF+'">PDF Studio</a><a href="/Matt-s-Apps-/">All apps &amp; studios</a>')
