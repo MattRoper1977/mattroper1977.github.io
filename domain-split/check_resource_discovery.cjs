@@ -232,7 +232,7 @@ async function responsiveChecks(browser) {
         assert(await page.locator('#pdf-studio-feature').isVisible(), 'Apps PDF promotion must return after clearing filters');
         return { searches, documentCategory: true };
       });
-      if (route === '/tools/') await check(`${width}-teacher-tools-pdf-and-asdan-learning`, page, async () => {
+      if (route === '/tools/') await check(`${width}-teacher-tools-pdf-and-programme-studio-learning`, page, async () => {
         await goto(page, route);
         const links = await visibleLinks(page, 'main a[href]');
         assert(links.some(a => routeOf(a.href) === PDF), 'Teacher tools lacks a visible PDF Studio link');
