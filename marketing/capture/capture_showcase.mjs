@@ -313,8 +313,8 @@ await captureScene(browser, {
     await gotoLive(page, `${BASE}tools/`, scene.id);
     scene.interactions.push('Tools Hub loaded');
     await page.waitForTimeout(1500);
-    const uasHeading = page.getByRole('heading', { name: /AWARDS REGISTER/i }).first();
-    if (await visible(uasHeading, 1500)) await uasHeading.scrollIntoViewIfNeeded(); else await smoothScroll(page, 520, 1200);
+    const awardsHeading = page.getByRole('heading', { name: /AWARDS REGISTER/i }).first();
+    if (await visible(awardsHeading, 1500)) await awardsHeading.scrollIntoViewIfNeeded(); else await smoothScroll(page, 520, 1200);
     await page.waitForTimeout(1500);
     if (await clickTextLink(page, /OPEN AWARDS REGISTER/i, 1600)) { scene.interactions.push('opened Awards Register'); await settle(page, 1000); }
     else { await gotoLive(page, `${BASE}uas/app.html`, scene.id); scene.interactions.push('opened UAS Register direct fallback'); }
