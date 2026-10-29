@@ -245,7 +245,7 @@ async function responsiveChecks(browser) {
           await page.locator('#tq').scrollIntoViewIfNeeded();
           searches.push({ query, screenshot: await shot(page, `${width}-tools-${query}`) });
         }
-        await page.locator('#tq').fill('programme register'); await settle(page);
+        await page.locator('#tq').fill('programme'); await settle(page);
         const asdan = await visibleLinks(page, '.tcard a[href]');
         assert(asdan.some(a => routeOf(a.href) === '/asdan'), 'ASDAN search lost the existing register');
         assert(asdan.some(a => new URL(a.href).hash === '#asdan-learning' || /\/(?:BUILD|GROW|LAUNCH)_ASDAN\//.test(new URL(a.href).pathname)), 'ASDAN search hides its distinct learning collection');
