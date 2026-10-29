@@ -236,7 +236,7 @@ async function responsiveChecks(browser) {
         await goto(page, route);
         const links = await visibleLinks(page, 'main a[href]');
         assert(links.some(a => routeOf(a.href) === PDF), 'Teacher tools lacks a visible PDF Studio link');
-        assert(links.some(a => /Programme Studio/i.test(a.text) && (new URL(a.href).hash === '#asdan-learning' || /ASDAN/.test(new URL(a.href).pathname))), 'Teacher tools must distinguish ASDAN learning resources from the register');
+        assert(links.some(a => /Programme Studio/i.test(a.text) && (new URL(a.href).hash === '#asdan-learning' || /ASDAN/.test(new URL(a.href).pathname))), 'Teacher tools must distinguish Programme Studio learning resources from the register');
         const searches = [];
         for (const query of ['PDF', 'PDF generator', 'PDF Studio']) {
           await page.locator('#tq').fill(query); await settle(page);
@@ -250,7 +250,7 @@ async function responsiveChecks(browser) {
         assert(asdan.some(a => routeOf(a.href) === '/asdan'), 'ASDAN search lost the existing register');
         assert(asdan.some(a => new URL(a.href).hash === '#asdan-learning' || /\/(?:BUILD|GROW|LAUNCH)_ASDAN\//.test(new URL(a.href).pathname)), 'ASDAN search hides its distinct learning collection');
         await page.locator('#tq').scrollIntoViewIfNeeded();
-        searches.push({ query: 'ASDAN', screenshot: await shot(page, `${width}-tools-ASDAN`) });
+        searches.push({ query: 'programme', screenshot: await shot(page, `${width}-tools-programme`) });
         await page.locator('#tq').fill(''); await settle(page);
         return { searches };
       });
