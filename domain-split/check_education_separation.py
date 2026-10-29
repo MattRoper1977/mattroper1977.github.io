@@ -192,8 +192,7 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by
 # re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
     'da9965cec2648588615be3972125d43f00f9c0cb883a7c6607e1469fb2ce544e',   # M1 (vr, vt, vt add.1, vu): the 2001 rows of cf03cb20 with the Lessons folder paths renamed and every resource identity kept (usage-route-aliases.json); built by the Site fallback Lessons pin and Lessons main once both carry the rename
-    'd8066b840f2bf288555e737f78f06658d4f273b2ebd4aca401d1351bf8549b80',   # C in flight (xj-3, xl-1): da9965ce's 2001 rows kept in order and unchanged plus the 234 documents Lessons #725 brings
-    '1dec49a1961fb51f5db28441f101501ccec7e9868f54f9c325a55cb8811357fc',   # B in flight (yh-4, yk-4): d8066b84's 2235 rows kept in order and unchanged plus the 39 documents chain B brings
+    '1dec49a1961fb51f5db28441f101501ccec7e9868f54f9c325a55cb8811357fc',   # B landed (Lessons #729, 34f4c955): built by Lessons main, 2274 rows (d8066b84's 2235 kept in order and unchanged plus the 39 documents chain B brought)
 )
 
 
@@ -374,6 +373,10 @@ def registry_errors(output):
     # brings: 18 pdf, 18 docx, 3 pptx), measured from built bytes of Site a3b43c40 with that candidate; removing the 39 rows
     # from it reproduces d8066b84 exactly. The fence is da9965ce (the Site fallback Lessons 9b2d03bb), d8066b84 (Lessons main)
     # and 1dec49a1. After the Lessons merge, Lessons main builds 1dec49a1 and d8066b84 is retired by a follow-up.
+    # B follow-up (ruling yl-1): Lessons #729 merged (34f4c955), so 1dec49a1 is what Lessons main builds and d8066b84 (the C
+    # state, built by nothing now: the Site fallback Lessons 9b2d03bb builds da9965ce) is dropped; it joins the previous
+    # digests below. The fence is the pair da9965ce (the Site fallback Lessons 9b2d03bb) and 1dec49a1 (Lessons main). The
+    # collapse window is unchanged.
     baseline_shas = REGISTRY_BASELINES
     additions_path = HERE/'science-download-usage-additions.json'
     # This Science pin is TOOL-OWNED from 2026-09-22 (STOP-F3, option 1): move it only with
@@ -641,8 +644,8 @@ def self_test():
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d',
               'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',
               '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd','60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b','1a358a41168f6d1205a3d3bd855753a6c6400855626c6660cf652e3947b89a57','5c4fc9892e60f5e50ae7712a1fe44f5c6ab355e7f0a872c8143d3e612af66c9b','dcc9096033c437337b4ee3014056d322292b600eebb4f9ea4b2cf0de717cfcd1','e8882f70613ab1301fe43a946e108a9a764128712ba8f1fdb6d3a7053406a76b')
-    passed=REGISTRY_BASELINES==('da9965cec2648588615be3972125d43f00f9c0cb883a7c6607e1469fb2ce544e','d8066b840f2bf288555e737f78f06658d4f273b2ebd4aca401d1351bf8549b80','1dec49a1961fb51f5db28441f101501ccec7e9868f54f9c325a55cb8811357fc') and not set(previous+('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','cf03cb20253c3b9817054e93377d9387c3a46b609aa0d326ecf246ab77ab0e16'))&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly da9965ce (M1: cf03cb20's rows under the folder rename) and d8066b84 (C in flight: da9965ce's rows plus 234 landing documents) and 1dec49a1 (B in flight: d8066b84's rows plus 39 landing documents); 16195414 and cf03cb20 retired at M1; e8882f70 retired at the vg follow-up, dcc90960 at the us follow-up, 5c4fc989 at the up follow-up, 1a358a41 at the uj follow-up, 60e0cd4c at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
+    passed=REGISTRY_BASELINES==('da9965cec2648588615be3972125d43f00f9c0cb883a7c6607e1469fb2ce544e','1dec49a1961fb51f5db28441f101501ccec7e9868f54f9c325a55cb8811357fc') and not set(previous+('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','cf03cb20253c3b9817054e93377d9387c3a46b609aa0d326ecf246ab77ab0e16','d8066b840f2bf288555e737f78f06658d4f273b2ebd4aca401d1351bf8549b80'))&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the pair da9965ce (M1: cf03cb20's rows under the folder rename) and 1dec49a1 (B landed, Lessons #729: d8066b84's rows plus 39 landing documents); d8066b84 retired at the B follow-up; 16195414 and cf03cb20 retired at M1; e8882f70 retired at the vg follow-up, dcc90960 at the us follow-up, 5c4fc989 at the up follow-up, 1a358a41 at the uj follow-up, 60e0cd4c at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
