@@ -44,6 +44,9 @@ const KEY = 'mbm_splash_last';
  * evidence: a composited fade runs where rAF cannot see it, and a main-thread fade
  * can sit at opacity 0 on screen while rAF keeps counting frames. Threshold 280. */
 const SHOWN_OPACITY = 0.5;
+// The region's own automatic deadline: hard=setTimeout(dismiss, reduced?450:2100), set
+// when the layer is inserted (tools/render_maker_splash.py). Used by verify's dismissal predicate (yr-5).
+const AUTOMATIC_DEADLINE_MS = 2100;
 const SPLASH_LAYER = "SECTION id='mbmSplash'";
 const COMPOSITOR_TRACE = ['devtools.timeline', 'disabled-by-default-devtools.timeline', 'blink.animations', 'disabled-by-default-cc.debug', 'graphics.pipeline'];
 /* CyberPulse's CP4c gate proves renderer=2d reaches its authored Canvas
@@ -94,6 +97,21 @@ function applied(root) {
   return list.map(item => typeof item === 'string' ? item : item.route);
 }
 
+// yr-2: every control plant replace must match exactly once, or the control is not
+// testing what it claims (a plant that matches nothing serves the real bytes).
+function plantOnce(body, from, to, label) {
+  const n = body.split(from).length - 1;
+  if (n !== 1) throw new Error(`plant ${label}: expected exactly one ${JSON.stringify(from)}, found ${n}`);
+  return body.replace(from, to);
+}
+// yr-3: the inline visibility call exists only in the fixed region; a pre-fix region has
+// nothing to neutralise, so this one replace may match zero times but never more than once.
+function plantAtMostOnce(body, from, to, label) {
+  const n = body.split(from).length - 1;
+  if (n > 1) throw new Error(`plant ${label}: expected at most one ${JSON.stringify(from)}, found ${n}`);
+  return n ? body.replace(from, to) : body;
+}
+
 function makeServer({ stripRoute = null, slowReducedRoute = null, prematureWriteRoute = null, plantRoute = null, plant = null } = {}) {
   const server = http.createServer((req, res) => {
     let pathname;
@@ -114,9 +132,16 @@ function makeServer({ stripRoute = null, slowReducedRoute = null, prematureWrite
       let body = fs.readFileSync(file, 'utf8');
       if (stripRoute === pathname) body = body.replace(REGION, '');
       // yn-2 (8): the reduced-motion control is a build that fades anyway, and slowly.
-      if (slowReducedRoute === pathname) body = body
-        .replace('#mbmSplash[data-mbm-maker-splash]{animation:none!important}', '#mbmSplash[data-mbm-maker-splash]{animation-duration:.7s!important}')
-        .replace('reduced?450:2100', 'reduced?900:2100');
+      // yr-2: the served bytes carry the source rule {animation-duration:.28s}; the
+      // generator rewrites it to animation:none only at run time, so the plant targets
+      // the served rule (the run-time rewrite then finds nothing to replace).
+      if (slowReducedRoute === pathname) {
+        // The full shorthand at !important: a route whose own CSS stops every animation under
+        // reduced motion (/townlife/: *{animation:none!important}) would otherwise keep the
+        // planted build still, and the control would not be a build that fades.
+        body = plantOnce(body, '#mbmSplash[data-mbm-maker-splash]{animation-duration:.28s}', '#mbmSplash[data-mbm-maker-splash]{animation:mbmSplash .7s cubic-bezier(.2,.8,.2,1) both!important}', 'slowReduced');
+        body = plantOnce(body, 'reduced?450:2100', 'reduced?900:2100', 'slowReduced');
+      }
       if (prematureWriteRoute === pathname) body = body.replace(
         '(document.body||document.documentElement).appendChild(el);',
         '(document.body||document.documentElement).appendChild(el);if(MODE!=="force")writeNow();',
@@ -218,13 +243,25 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
           const p = window.__makerProbe;
           if (!makerIds.has(el)) makerIds.set(el, nextMakerId++);
           p.additions.push({ t: performance.now(), id: makerIds.get(el), connected: el.isConnected, maker: el.matches('[data-mbm-maker-splash]') });
+          if (el.matches('[data-mbm-maker-splash]') && !p.makerAnimation) {
+            const cs = getComputedStyle(el);
+            p.makerAnimation = { name: cs.animationName, duration: cs.animationDuration };
+          }
           p.seen = true;
           if (p.first === null) p.first = performance.now();
         }
       }
     }
     new MutationObserver(records => {
-      for (const record of records) for (const node of record.addedNodes) observeAdded(node);
+      for (const record of records) {
+        for (const node of record.addedNodes) observeAdded(node);
+        // yr-5: the time the maker layer leaves the document, for the within-load dismissal predicate.
+        for (const node of record.removedNodes) {
+          if (node.nodeType !== 1) continue;
+          const removed = node.matches?.('[data-mbm-maker-splash]') ? node : node.querySelector?.('[data-mbm-maker-splash]');
+          if (removed && window.__makerProbe.makerRemovedAt == null) window.__makerProbe.makerRemovedAt = performance.now();
+        }
+      }
     }).observe(document, { childList: true, subtree: true });
     function sample() {
       const p = window.__makerProbe;
@@ -355,8 +392,12 @@ function plantSplash(body, plant) {
       .replace('(document.body||document.documentElement).appendChild(el);',
         '(document.body||document.documentElement).appendChild(el);requestAnimationFrame(function(){var t=performance.now();while(performance.now()-t<1500){}});');
   } else if (plant === 'shortFade') {
-    body = body.replace('animation:mbmSplash 1.9s', 'animation:mbmSplash .15s')
-      .replace('@keyframes mbmSplash{', '#mbmSplash[data-mbm-maker-splash]{visibility:visible!important}@keyframes mbmSplash{');
+    // yr-3: anchor on the maker rule (the page's own older #mbmSplash rule has the same
+    // prefix and lower specificity), and in this planted copy only drop the region's
+    // inline visibility:hidden on animationend, so the layer stays attached and visible.
+    body = plantOnce(body, 'animation:mbmSplash 1.9s cubic-bezier(.2,.8,.2,1) both}', 'animation:mbmSplash .15s cubic-bezier(.2,.8,.2,1) both}', plant);
+    body = plantOnce(body, '@keyframes mbmSplash{', '#mbmSplash[data-mbm-maker-splash]{visibility:visible!important}@keyframes mbmSplash{', plant);
+    body = plantAtMostOnce(body, 'el.style.setProperty("visibility","hidden","important");dismiss();', 'dismiss();', plant);
   }
   if (body === before) throw new Error(`plant ${plant} matched nothing in the served region`);
   return body;
@@ -829,14 +870,17 @@ async function controls(browser, origin) {
   ]) {
     const plantServer = await makeServer({ plantRoute: siteRoute, plant });
     const plantOrigin = `http://127.0.0.1:${plantServer.address().port}`;
-    ctx = await newContext(browser); const planted = await pageProbe(ctx, plantOrigin, siteRoute, { action: 'key', waitAbsent: 5000, trace: true }); await ctx.close();
+    // yr-3: the short-fade control runs on the automatic path, as the routes' 280 ms rule does (yn-2 (7)).
+    ctx = await newContext(browser); const planted = await pageProbe(ctx, plantOrigin, siteRoute, { action: plant === 'shortFade' ? 'auto' : 'key', waitAbsent: 5000, trace: true }); await ctx.close();
     await new Promise(resolve => plantServer.close(resolve));
     const c = planted.compositor || {}, spanMs = attachSpan(planted.probe), failedCode = c.compositeFailed?.mbmSplash?.code ?? 0;
     // Preconditions: the stalled plant took (its fade cannot composite; the stall is real), the
     // compositor drew the layer, and the old rAF span would have passed it.
-    const took = plant === 'stalledNonComposited' ? (failedCode & 8192) !== 0 && c.stallMs >= 1000 : true;
+    // yr-3: the short-fade plant took only if the maker layer really runs the 0.15 s animation.
+    const took = plant === 'stalledNonComposited' ? (failedCode & 8192) !== 0 && c.stallMs >= 1000
+      : planted.probe?.makerAnimation?.name === 'mbmSplash' && planted.probe?.makerAnimation?.duration === '0.15s';
     check(planted.probe?.seen && took && c.drawnFrames > 0 && spanMs >= 280 && !(c.ms >= 280), label,
-      JSON.stringify({ shownMs: c.ms, attachSpanMs: spanMs, compositeFailed: failedCode, stallMs: c.stallMs, drawnFrames: c.drawnFrames, presentedFrames: c.presentedFrames, spans: c.spans }));
+      JSON.stringify({ shownMs: c.ms, attachSpanMs: spanMs, took, makerAnimation: planted.probe?.makerAnimation ?? null, compositeFailed: failedCode, stallMs: c.stallMs, drawnFrames: c.drawnFrames, presentedFrames: c.presentedFrames, spans: c.spans }));
   }
   return { siteRoute, lessonRoute, assertions, pass: assertions.every(a => a.pass) };
 }
@@ -880,6 +924,12 @@ async function verify(browser, origin) {
       const dismissed = await pageProbe(dismissContext, origin, route, { action: 'key', waitAbsent: 5000 });
       await dismissContext.close();
       const dismissSpanMs = attachSpan(dismissed.probe), autoSpanMs = attachSpan(result.probe);
+      // yr-5: compare within the dismissed load: the dismissal must remove the layer before
+      // that same load's own automatic deadline, the region's hard timer (2100 ms after the
+      // layer is inserted). Two separate loads are no longer compared.
+      const dismissInsertAt = dismissed.probe?.additions?.find(a => a.maker)?.t ?? null;
+      const dismissRemovedAt = dismissed.probe?.makerRemovedAt ?? null;
+      const dismissWithinMs = Number.isFinite(dismissInsertAt) && Number.isFinite(dismissRemovedAt) ? dismissRemovedAt - dismissInsertAt : null;
       const skipContext = await newContext(browser, { viewport });
       const skipped = await pageProbe(skipContext, origin, `${route}${route.includes('?') ? '&' : '?'}splash=skip`, { waitAbsent: 700 });
       await skipContext.close();
@@ -887,8 +937,10 @@ async function verify(browser, origin) {
       const addedErrors = addedFrom(result.errors, skipped.errors);
       const addedExternal = addedFrom(result.external, skipped.external);
       observations.push({ viewport, seen: !!result.probe?.seen, duration, attachSpanMs: autoSpanMs, compositor: result.compositor, detached: result.detached,
-        dismissSeen: !!dismissed.probe?.seen, dismissDetached: dismissed.detached, dismissSpanMs,
-        dismissHides: !!dismissed.probe?.seen && dismissed.detached === true && dismissSpanMs !== null && autoSpanMs !== null && dismissSpanMs < autoSpanMs, makerPresent: result.makerPresent, active: result.active, primary: result.primaryRect,
+        dismissSeen: !!dismissed.probe?.seen, dismissDetached: dismissed.detached, dismissSpanMs, dismissWithinMs, automaticDeadlineMs: AUTOMATIC_DEADLINE_MS,
+        dismissHides: !!dismissed.probe?.seen && dismissed.detached === true && dismissWithinMs !== null && dismissWithinMs < AUTOMATIC_DEADLINE_MS, makerPresent: result.makerPresent,
+        // yr-4: focus is read on the dismissal path, as main's check does; the 280 ms rule stays on the automatic path.
+        active: dismissed.active, primary: dismissed.primaryRect, automaticActive: result.active, automaticPrimary: result.primaryRect,
         shownReadyAfterFrames: result.probe?.readyAfterFrames === true, suppressedReadyAfterFrames: skipped.probe?.readyAfterFrames === true,
         makerMarkup: result.makerMarkup, makerRuntimeFlag: result.makerRuntimeFlag, local: result.local, session: result.session,
         writes: result.probe?.writeEvents || [], additions: result.probe?.additions || [], finalUrl: result.finalUrl, navigations: result.navigations,
