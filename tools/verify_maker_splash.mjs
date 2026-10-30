@@ -403,7 +403,10 @@ function plantSplash(body, plant) {
   return body;
 }
 /* What the compositor showed of the splash layer. Frames come from renderer
- * cc::LayerTreeHostImpl snapshots (one per drawn frame). Each is timed at the end
+ * cc::LayerTreeHostImpl snapshots (one per drawn frame): the 'LayerTreeHostImpl:snapshot'
+ * instant event, or the 'cc::LayerTreeHostImpl' object snapshot (ph O) that earlier
+ * builds emit instead, among them the Chromium that CI's pinned Playwright installs.
+ * Both carry the same args.snapshot. Each is timed at the end
  * of the display frame that aggregated it when graphics.pipeline links them, else
  * at its draw. On screen = from the first frame at SHOWN_OPACITY or more to the
  * first later frame below it or without the layer. */
@@ -418,7 +421,7 @@ function compositorShown(buffer) {
   const snaps = [], subs = [], aggs = [], draws = new Map(), failed = {}, names = {};
   let paint = null;
   for (const e of events) {
-    if (e.name === 'LayerTreeHostImpl:snapshot' && e.args?.snapshot) {
+    if ((e.name === 'LayerTreeHostImpl:snapshot' || (e.name === 'cc::LayerTreeHostImpl' && e.ph === 'O')) && e.args?.snapshot) {
       const layers = e.args.snapshot.active_tree?.layers || [];
       if (!layers.some(l => String(l.layer_name || '').startsWith('LayoutView'))) continue;
       const splash = layers.filter(l => String(l.layer_name || '').includes(SPLASH_LAYER));
