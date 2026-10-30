@@ -3,6 +3,8 @@
  *
  * Modes:
  *   --mode=controls  SS1–SS8 plus the four dismissal paths and a removal control
+ *                    (the 280 ms rule is for the automatic fade: the undismissed paths are
+ *                    measured against it; the dismissal paths must hide the splash sooner)
  *   --mode=census    classify the canonical inventory before application
  *   --mode=verify    judge every applied route after application
  *   --mode=lesson-timing prove shown/suppressed slide timing and cross-route suppression
@@ -34,6 +36,16 @@ const SITE = path.resolve(arg('site-root') || DEFAULT_SITE);
 const LESSONS = path.resolve(arg('lessons-root') || path.join(SITE, '_lessons'));
 const REPORT = path.resolve(arg('report') || path.join(SITE, 'artifacts', `maker-splash-${MODE}.json`));
 const KEY = 'mbm_splash_last';
+/* Ruling yl-3 (b): the splash counts as on screen only while the compositor shows
+ * it at least half opaque. The evidence is the compositor's own frames: one
+ * cc::LayerTreeHostImpl snapshot per drawn frame (disabled-by-default-cc.debug),
+ * read for the layer cc names after the splash element, each timed at the end of
+ * the display frame that first showed it (graphics.pipeline). rAF samples are not
+ * evidence: a composited fade runs where rAF cannot see it, and a main-thread fade
+ * can sit at opacity 0 on screen while rAF keeps counting frames. Threshold 280. */
+const SHOWN_OPACITY = 0.5;
+const SPLASH_LAYER = "SECTION id='mbmSplash'";
+const COMPOSITOR_TRACE = ['devtools.timeline', 'disabled-by-default-devtools.timeline', 'blink.animations', 'disabled-by-default-cc.debug', 'graphics.pipeline'];
 /* CyberPulse's CP4c gate proves renderer=2d reaches its authored Canvas
  * fallback. This verifier judges the generated splash, focus handoff and way
  * out, not renderer fidelity, so every CyberPulse probe uses that proved hatch
@@ -82,7 +94,7 @@ function applied(root) {
   return list.map(item => typeof item === 'string' ? item : item.route);
 }
 
-function makeServer({ stripRoute = null, slowReducedRoute = null, prematureWriteRoute = null } = {}) {
+function makeServer({ stripRoute = null, slowReducedRoute = null, prematureWriteRoute = null, plantRoute = null, plant = null } = {}) {
   const server = http.createServer((req, res) => {
     let pathname;
     try { pathname = decodeURIComponent(new URL(req.url, 'http://127.0.0.1').pathname); }
@@ -98,16 +110,18 @@ function makeServer({ stripRoute = null, slowReducedRoute = null, prematureWrite
     }
     if (!file) { res.writeHead(404); return res.end('not found'); }
     const type = MIME[path.extname(file).toLowerCase()] || 'application/octet-stream';
-    if (type.startsWith('text/html') && (stripRoute === pathname || slowReducedRoute === pathname || prematureWriteRoute === pathname)) {
+    if (type.startsWith('text/html') && (stripRoute === pathname || slowReducedRoute === pathname || prematureWriteRoute === pathname || plantRoute === pathname)) {
       let body = fs.readFileSync(file, 'utf8');
       if (stripRoute === pathname) body = body.replace(REGION, '');
+      // yn-2 (8): the reduced-motion control is a build that fades anyway, and slowly.
       if (slowReducedRoute === pathname) body = body
-        .replace('animation-duration:.35s', 'animation-duration:.7s')
+        .replace('#mbmSplash[data-mbm-maker-splash]{animation:none!important}', '#mbmSplash[data-mbm-maker-splash]{animation-duration:.7s!important}')
         .replace('reduced?450:2100', 'reduced?900:2100');
       if (prematureWriteRoute === pathname) body = body.replace(
         '(document.body||document.documentElement).appendChild(el);',
         '(document.body||document.documentElement).appendChild(el);if(MODE!=="force")writeNow();',
       );
+      if (plantRoute === pathname) body = plantSplash(body, plant);
       res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store' });
       return res.end(body);
     }
@@ -142,8 +156,9 @@ async function settleProbeFrames(page) {
   await page.waitForFunction(() => window.__makerProbe?.readyAfterFrames === true, null, { polling: 50, timeout: 5000 });
 }
 
-async function pageProbe(context, origin, route, { action = 'none', waitAbsent = 650, mutateUnderlay = false, mutateContent = false, mutateFocus = false } = {}) {
+async function pageProbe(context, origin, route, { action = 'none', waitAbsent = 650, mutateUnderlay = false, mutateContent = false, mutateFocus = false, trace = false } = {}) {
   const page = await context.newPage();
+  const tracer = trace ? context.browser() : null;
   const errors = [], external = [], navigations = [];
   page.on('pageerror', error => errors.push(`pageerror: ${error.message}`));
   page.on('console', msg => { if (msg.type() === 'error') errors.push(`console: ${msg.text()}`); });
@@ -226,6 +241,9 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
     }
     requestAnimationFrame(sample);
   }, { mutateContent, mutateFocus });
+  if (tracer) await tracer.startTracing(page, { categories: COMPOSITOR_TRACE });
+  let compositor = null;
+  try {
   const wall = Date.now();
   let response = null;
   try { response = await page.goto(origin + encodeURI(splashProbeRoute(route)), { waitUntil: 'commit', timeout: 30000 }); }
@@ -311,15 +329,94 @@ async function pageProbe(context, origin, route, { action = 'none', waitAbsent =
       ready: document.readyState,
     };
   }, KEY).catch(error => ({ probe: {}, error: error.message }));
-  const result = { ...state, appeared, detached, wall, shownUnderlayRect, visibleWallMs, status: response?.status() ?? null, finalUrl: page.url(), navigations, errors, external };
+  if (tracer) { compositor = compositorShown(await tracer.stopTracing()); }
+  const result = { ...state, appeared, detached, wall, shownUnderlayRect, visibleWallMs, status: response?.status() ?? null, finalUrl: page.url(), navigations, errors, external, compositor };
   await page.close();
   return result;
+  } finally { if (tracer && compositor === null) await tracer.stopTracing().catch(() => {}); }
 }
 
 function writesOnlyAfterDismissal(result) {
   const writes = result.probe?.writeEvents || [];
   return writes.length > 0 && writes.every(write => write.ariaHidden === 'true' && write.pointerEvents === 'none');
 }
+
+/* yl-3 (b) red-first plants. 'stalledNonComposited': the mbmSplash keyframes go back
+ * to the pre-fix form (opacity with visibility and pointer-events, which Chromium
+ * cannot composite: compositeFailed 8192) and the
+ * main thread stalls 1.5 s in the frame after the layer attaches, so the screen
+ * keeps the attach frame's opacity 0. 'shortFade': the opacity fade runs in
+ * 0.15 s while the layer stays attached and visible, so it is drawn half opaque for
+ * about 110 ms but the old rAF span still counts it to removal. */
+function plantSplash(body, plant) {
+  const before = body;
+  if (plant === 'stalledNonComposited') {
+    body = body.replace(/@keyframes mbmSplash\{.*?\}\}/, '@keyframes mbmSplash{0%{opacity:0;visibility:visible;pointer-events:auto}12%,70%{opacity:1;visibility:visible;pointer-events:auto}100%{opacity:0;visibility:hidden;pointer-events:none}}')
+      .replace('(document.body||document.documentElement).appendChild(el);',
+        '(document.body||document.documentElement).appendChild(el);requestAnimationFrame(function(){var t=performance.now();while(performance.now()-t<1500){}});');
+  } else if (plant === 'shortFade') {
+    body = body.replace('animation:mbmSplash 1.9s', 'animation:mbmSplash .15s')
+      .replace('@keyframes mbmSplash{', '#mbmSplash[data-mbm-maker-splash]{visibility:visible!important}@keyframes mbmSplash{');
+  }
+  if (body === before) throw new Error(`plant ${plant} matched nothing in the served region`);
+  return body;
+}
+/* What the compositor showed of the splash layer. Frames come from renderer
+ * cc::LayerTreeHostImpl snapshots (one per drawn frame). Each is timed at the end
+ * of the display frame that aggregated it when graphics.pipeline links them, else
+ * at its draw. On screen = from the first frame at SHOWN_OPACITY or more to the
+ * first later frame below it or without the layer. */
+function compositorShown(buffer) {
+  let data;
+  // Frame trace ids are 64-bit; keep them as strings so JSON.parse does not round them together.
+  const text = buffer.toString('utf8')
+    .replace(/("(?:surface_frame_trace_id|display_trace_id)":\s*)(-?\d+)/g, '$1"$2"')
+    .replace(/("aggregated_surface_frame_trace_ids":\s*\[)([-\d,\s]*)\]/g, (m, head, list) => head + list.split(',').map(x => x.trim()).filter(Boolean).map(x => `"${x}"`).join(',') + ']');
+  try { data = JSON.parse(text); } catch (error) { return { ms: null, error: `trace: ${error.message}`, frames: 0 }; }
+  const events = Array.isArray(data) ? data : data.traceEvents || [];
+  const snaps = [], subs = [], aggs = [], draws = new Map(), failed = {}, names = {};
+  let paint = null;
+  for (const e of events) {
+    if (e.name === 'LayerTreeHostImpl:snapshot' && e.args?.snapshot) {
+      const layers = e.args.snapshot.active_tree?.layers || [];
+      if (!layers.some(l => String(l.layer_name || '').startsWith('LayoutView'))) continue;
+      const splash = layers.filter(l => String(l.layer_name || '').includes(SPLASH_LAYER));
+      snaps.push({ ts: e.ts, pid: e.pid, tid: e.tid, present: splash.length > 0, opacity: splash.length ? Math.max(...splash.map(l => Number(l.opacity) || 0)) : 0 });
+    } else if (e.name === 'Graphics.Pipeline' && (e.ph === 'X' || e.ph === 'B')) {
+      const g = e.args?.chrome_graphics_pipeline || {};
+      if (g.step === 'STEP_SUBMIT_COMPOSITOR_FRAME') subs.push({ ts: e.ts, pid: e.pid, tid: e.tid, id: g.surface_frame_trace_id });
+      else if (g.step === 'STEP_SURFACE_AGGREGATION') aggs.push({ ts: e.ts, display: g.display_trace_id, ids: new Set(g.aggregated_surface_frame_trace_ids || []) });
+      else if (g.step === 'STEP_DRAW_AND_SWAP' && e.ph === 'X') draws.set(g.display_trace_id, e.ts + (e.dur || 0));
+    } else if (e.name === 'Animation') {
+      const d = e.args?.data || {}, key = JSON.stringify(e.id2 ?? e.id);
+      if (d.displayName) names[key] = d.displayName;
+      if ('compositeFailed' in d) failed[key] = { code: d.compositeFailed, unsupported: d.unsupportedProperties || [] };
+    } else if (!paint && e.name === 'Paint' && e.ph === 'X') paint = e;
+  }
+  let stallMs = 0;
+  if (paint) for (const e of events) if (e.name === 'RunTask' && e.ph === 'X' && e.pid === paint.pid && e.tid === paint.tid) stallMs = Math.max(stallMs, (e.dur || 0) / 1000);
+  const compositeFailed = Object.fromEntries(Object.entries(failed).map(([k, v]) => [names[k] || k, v]));
+  const pid = snaps.find(f => f.present)?.pid;
+  if (pid === undefined) return { ms: null, frames: snaps.length, drawnFrames: 0, presentedFrames: 0, spans: [], compositeFailed, stallMs };
+  subs.sort((a, b) => a.ts - b.ts); aggs.sort((a, b) => a.ts - b.ts);
+  const frames = snaps.filter(f => f.pid === pid).sort((a, b) => a.ts - b.ts).map(f => {
+    const sub = subs.find(x => x.ts >= f.ts && x.pid === f.pid && x.tid === f.tid);
+    const agg = sub && aggs.find(a => a.ts >= sub.ts && a.ids.has(sub.id));
+    const shown = agg && draws.get(agg.display);
+    return { ...f, at: (shown ?? f.ts) / 1000, presented: shown !== undefined };
+  }).sort((a, b) => a.at - b.at);
+  const spans = [];
+  let open = null;
+  for (const f of frames) {
+    if (f.opacity >= SHOWN_OPACITY && open === null) open = f.at;
+    else if (f.opacity < SHOWN_OPACITY && open !== null) { spans.push([open, f.at]); open = null; }
+  }
+  if (open !== null) spans.push([open, frames.at(-1).at]);
+  const t0 = frames[0].at;
+  return { ms: spans.length ? spans.reduce((sum, [a, b]) => sum + (b - a), 0) : null, spans: spans.map(([a, b]) => [+(a - t0).toFixed(1), +(b - t0).toFixed(1)]),
+    frames: frames.length, drawnFrames: frames.filter(f => f.present).length, presentedFrames: frames.filter(f => f.presented).length, compositeFailed, stallMs: +stallMs.toFixed(1) };
+}
+function attachSpan(probe) { return probe?.first == null ? null : probe.last - probe.first; }
 
 async function wayOutProbe(browser, origin, route, activation, { disableWayOut = false } = {}) {
   const context = await newContext(browser);
@@ -385,7 +482,26 @@ async function reducedMotionProbe(browser, origin, route) {
       started: false,
       endElapsed: null,
       endAt: null,
+      // yn-2 (8): the static hold. Every frame from attach to clearance records how many
+      // animations run on the splash (its pseudo-elements and children included) and its
+      // lowest opacity, so a hold that fades is told apart from one that stays still.
+      samples: 0,
+      maxAnimations: 0,
+      minOpacity: null,
     };
+    const sampleHold = () => {
+      const probe = window.__mbmReducedProbe;
+      const el = document.querySelector('[data-mbm-maker-splash]');
+      if (el && probe.attached && probe.clearedAt === null) {
+        const running = typeof el.getAnimations === 'function' ? el.getAnimations({ subtree: true }).length : 0;
+        probe.maxAnimations = Math.max(probe.maxAnimations, running);
+        const opacity = Number.parseFloat(getComputedStyle(el).opacity);
+        if (Number.isFinite(opacity)) probe.minOpacity = probe.minOpacity === null ? opacity : Math.min(probe.minOpacity, opacity);
+        probe.samples += 1;
+      }
+      if (probe.detachedAt === null) requestAnimationFrame(sampleHold);
+    };
+    requestAnimationFrame(sampleHold);
     document.addEventListener('animationstart', event => {
       if (event.animationName !== 'mbmSplash' || !event.target?.matches?.('[data-mbm-maker-splash]')) return;
       window.__mbmReducedProbe.started = true;
@@ -449,6 +565,16 @@ function reducedMotionObservedElapsed(result) {
 function reducedMotionClearsWithinDeadline(result) {
   const elapsed = reducedMotionObservedElapsed(result);
   return result.probe?.attached === true && elapsed >= 300 && elapsed <= 500 && result.final.pointerEvents === 'none';
+}
+
+// yn-2 (8): under reduced motion the splash is a static hold. It is shown for at
+// least 280 ms with no animated property (no mbmSplash animation starts, nothing
+// runs on the layer in any sampled frame, opacity stays at 0.5 or more), then hidden.
+function reducedMotionHoldsStill(result) {
+  const probe = result.probe || {};
+  const held = reducedMotionClearanceElapsed(result);
+  return probe.attached === true && probe.started === false && probe.samples > 0 && probe.maxAnimations === 0 &&
+    probe.minOpacity !== null && probe.minOpacity >= SHOWN_OPACITY && held !== null && held >= 280 && result.final.pointerEvents === 'none';
 }
 
 async function census(browser, origin) {
@@ -638,7 +764,7 @@ async function controls(browser, origin) {
   check(forced.probe?.focus?.t <= (forced.probe?.last ?? 0) + 350,
     'shown time-to-interactive does not extend beyond the visible splash', JSON.stringify({ interactiveMs: forced.probe?.focus?.t, splashLastMs: forced.probe?.last }));
   const reduced = await reducedMotionProbe(browser, origin, reducedRoute);
-  check(reducedMotionClearsWithinDeadline(reduced), 'SS8 reduced motion paints and clears within 500 ms', JSON.stringify(reduced));
+  check(reducedMotionHoldsStill(reduced) && reducedMotionClearsWithinDeadline(reduced), 'SS8 reduced motion holds the splash still for at least 280 ms, then clears within 500 ms', JSON.stringify(reduced));
   check(reduced.local && Math.abs(Number(reduced.local) - reduced.wall) <= 5000, 'SS8 reduced motion still writes the daily timestamp', reduced.local);
   const slowServer = await makeServer({ slowReducedRoute: reducedRoute });
   const slowOrigin = `http://127.0.0.1:${slowServer.address().port}`;
@@ -648,16 +774,32 @@ async function controls(browser, origin) {
   const slowMissedDeadline = Number.isFinite(slowObservedElapsed)
     ? slowObservedElapsed > 500
     : slowReduced.final.pointerEvents !== 'none';
-  check(slowReduced.probe?.attached && slowMissedDeadline && !reducedMotionClearsWithinDeadline(slowReduced),
-    'RL4 reduced-motion slow-animation control turns the clearance predicate red', JSON.stringify(slowReduced));
+  check(slowReduced.probe?.attached && slowReduced.probe?.started === true && slowMissedDeadline &&
+    !reducedMotionClearsWithinDeadline(slowReduced) && !reducedMotionHoldsStill(slowReduced),
+    'RL4 reduced-motion fading control turns the static-hold and clearance predicates red', JSON.stringify(slowReduced));
+  // yn-2 (7): the 280 ms rule is for the automatic fade. The two undismissed paths (auto, timeout)
+  // are measured against it; the two dismissal paths (key, pointer) are asserted separately: the
+  // dismissal control works and hides the splash, earlier than the automatic path on the same
+  // route and viewport does.
   for (const viewport of VIEWPORTS) {
-    for (const action of ['key', 'pointer', 'auto', 'timeout']) {
+    const paths = {};
+    for (const action of ['auto', 'timeout', 'key', 'pointer']) {
       ctx = await newContext(browser, { viewport });
-      const result = await pageProbe(ctx, origin, `${siteRoute}?splash=force`, { action, waitAbsent: 700 });
+      paths[action] = await pageProbe(ctx, origin, `${siteRoute}?splash=force`, { action, waitAbsent: 700, trace: action === 'auto' || action === 'timeout' });
       await ctx.close();
-      const duration = result.probe?.first == null ? null : result.probe.last - result.probe.first;
+    }
+    for (const action of ['key', 'pointer', 'auto', 'timeout']) {
+      const result = paths[action];
+      const duration = result.compositor?.ms ?? null;
       check(result.probe?.seen, `${action} path paints at ${viewport.width}x${viewport.height}`);
-      check(duration !== null && duration >= 280, `${action} path stays visible at least 300 ms (two-frame tolerance)`, String(duration));
+      if (action === 'key' || action === 'pointer') {
+        const spanMs = attachSpan(result.probe), autoSpanMs = attachSpan(paths.auto.probe);
+        check(result.detached === true && spanMs !== null && autoSpanMs !== null && spanMs < autoSpanMs,
+          `${action} path: the dismissal control hides the splash before the automatic fade ends at ${viewport.width}x${viewport.height}`,
+          JSON.stringify({ detached: result.detached, dismissedSpanMs: spanMs, automaticSpanMs: autoSpanMs }));
+      } else {
+        check(duration !== null && duration >= 280, `${action} path stays visible at least 300 ms (two-frame tolerance)`, JSON.stringify({ shownMs: duration, attachSpanMs: attachSpan(result.probe), compositor: result.compositor }));
+      }
       check(!result.makerPresent && !result.anySplashPresent, `${action} path leaves no pointer or accessibility-tree overlay at ${viewport.width}x${viewport.height}`);
       check(result.active?.id === result.primaryRect?.id && result.active?.tag === result.primaryRect?.tag, `${action} path focuses the primary control at ${viewport.width}x${viewport.height}`, JSON.stringify({ active: result.active, primary: result.primaryRect }));
       check(result.errors.length === 0 && result.external.length === 0, `${action} path has zero error/external request`, result.errors.concat(result.external).join(' | '));
@@ -681,6 +823,21 @@ async function controls(browser, origin) {
   ctx = await newContext(browser); const premature = await pageProbe(ctx, prematureOrigin, siteRoute, { action: 'key', waitAbsent: 700 }); await ctx.close();
   await new Promise(resolve => prematureServer.close(resolve));
   check(!writesOnlyAfterDismissal(premature), 'RL4 premature-write control turns the dismissal-only predicate red', JSON.stringify(premature.probe?.writeEvents || []));
+  for (const [plant, label] of [
+    ['stalledNonComposited', 'RL4 stalled non-composited fade control turns the compositor-shown predicate red'],
+    ['shortFade', 'RL4 short-fade control turns the compositor-shown predicate red'],
+  ]) {
+    const plantServer = await makeServer({ plantRoute: siteRoute, plant });
+    const plantOrigin = `http://127.0.0.1:${plantServer.address().port}`;
+    ctx = await newContext(browser); const planted = await pageProbe(ctx, plantOrigin, siteRoute, { action: 'key', waitAbsent: 5000, trace: true }); await ctx.close();
+    await new Promise(resolve => plantServer.close(resolve));
+    const c = planted.compositor || {}, spanMs = attachSpan(planted.probe), failedCode = c.compositeFailed?.mbmSplash?.code ?? 0;
+    // Preconditions: the stalled plant took (its fade cannot composite; the stall is real), the
+    // compositor drew the layer, and the old rAF span would have passed it.
+    const took = plant === 'stalledNonComposited' ? (failedCode & 8192) !== 0 && c.stallMs >= 1000 : true;
+    check(planted.probe?.seen && took && c.drawnFrames > 0 && spanMs >= 280 && !(c.ms >= 280), label,
+      JSON.stringify({ shownMs: c.ms, attachSpanMs: spanMs, compositeFailed: failedCode, stallMs: c.stallMs, drawnFrames: c.drawnFrames, presentedFrames: c.presentedFrames, spans: c.spans }));
+  }
   return { siteRoute, lessonRoute, assertions, pass: assertions.every(a => a.pass) };
 }
 
@@ -714,15 +871,24 @@ async function verify(browser, origin) {
       // real dismissal write and turned a route's legitimate boot reload into
       // a second artificial splash; force/skip semantics are covered above by
       // the dedicated SS controls.
-      const result = await pageProbe(ctx, origin, route, { action: 'key', waitAbsent: 5000 });
+      // yn-2 (7): the threshold is measured on the undismissed (automatic) path; a
+      // second fresh context presses the dismissal key and must see the splash hide
+      // earlier than the automatic path did.
+      const result = await pageProbe(ctx, origin, route, { action: 'auto', waitAbsent: 5000, trace: true });
       await ctx.close();
+      const dismissContext = await newContext(browser, { viewport });
+      const dismissed = await pageProbe(dismissContext, origin, route, { action: 'key', waitAbsent: 5000 });
+      await dismissContext.close();
+      const dismissSpanMs = attachSpan(dismissed.probe), autoSpanMs = attachSpan(result.probe);
       const skipContext = await newContext(browser, { viewport });
       const skipped = await pageProbe(skipContext, origin, `${route}${route.includes('?') ? '&' : '?'}splash=skip`, { waitAbsent: 700 });
       await skipContext.close();
-      const duration = result.probe?.first == null ? null : result.probe.last - result.probe.first;
+      const duration = result.compositor?.ms ?? null;
       const addedErrors = addedFrom(result.errors, skipped.errors);
       const addedExternal = addedFrom(result.external, skipped.external);
-      observations.push({ viewport, seen: !!result.probe?.seen, duration, detached: result.detached, makerPresent: result.makerPresent, active: result.active, primary: result.primaryRect,
+      observations.push({ viewport, seen: !!result.probe?.seen, duration, attachSpanMs: autoSpanMs, compositor: result.compositor, detached: result.detached,
+        dismissSeen: !!dismissed.probe?.seen, dismissDetached: dismissed.detached, dismissSpanMs,
+        dismissHides: !!dismissed.probe?.seen && dismissed.detached === true && dismissSpanMs !== null && autoSpanMs !== null && dismissSpanMs < autoSpanMs, makerPresent: result.makerPresent, active: result.active, primary: result.primaryRect,
         shownReadyAfterFrames: result.probe?.readyAfterFrames === true, suppressedReadyAfterFrames: skipped.probe?.readyAfterFrames === true,
         makerMarkup: result.makerMarkup, makerRuntimeFlag: result.makerRuntimeFlag, local: result.local, session: result.session,
         writes: result.probe?.writeEvents || [], additions: result.probe?.additions || [], finalUrl: result.finalUrl, navigations: result.navigations,
@@ -735,11 +901,12 @@ async function verify(browser, origin) {
         baselineErrors: skipped.errors, baselineExternal: skipped.external });
     }
     const wayOut = await wayOutProbe(browser, origin, route, 'Enter');
-    const pass = observations.every(o => o.shownReadyAfterFrames && o.suppressedReadyAfterFrames && o.seen && o.duration >= 280 && o.detached && !o.makerPresent && !o.suppressedSeen && o.firstPaintGeometryMatch && o.overflowDelta <= 0 &&
+    const pass = observations.every(o => o.shownReadyAfterFrames && o.suppressedReadyAfterFrames && o.seen && o.duration >= 280 && o.detached && o.dismissHides && !o.makerPresent && !o.suppressedSeen && o.firstPaintGeometryMatch && o.overflowDelta <= 0 &&
       o.addedErrors.length === 0 && o.addedExternal.length === 0 && o.active.id === o.primary?.id && o.active.tag === o.primary?.tag &&
       o.suppressedActive.id === o.suppressedPrimary?.id && o.suppressedActive.tag === o.suppressedPrimary?.tag) &&
       wayOut.handoff?.ready && wayOut.reached && wayOut.tabs <= 30 && wayOut.navigated && wayOut.errors.length === 0 && wayOut.external.length === 0;
     rows.push({ route, repository: routeRepo(route), class: pass ? 'SPLASH OK' : 'SPLASH BROKEN', observations, wayOut });
+    console.log(`shown ${route} ${observations.map(o => `${o.viewport.width}x${o.viewport.height} ${o.duration == null ? 'null' : o.duration.toFixed(1)} ms (frames ${o.compositor?.drawnFrames ?? 0}/${o.compositor?.frames ?? 0}, attach span ${o.attachSpanMs == null ? 'null' : o.attachSpanMs.toFixed(1)}, dismissed span ${o.dismissSpanMs == null ? 'null' : o.dismissSpanMs.toFixed(1)}${o.dismissHides ? '' : ' NOT HIDDEN BY DISMISSAL'})`).join(', ')}`);
     if ((i + 1) % 25 === 0) console.log(`verify ${i + 1}/${routes.length}`);
   }
   return rows;
@@ -765,14 +932,15 @@ async function lessonTiming(browser, origin) {
   for (let i = 0; i < routes.length; i += 1) {
     const route = routes[i], nextRoute = routes[(i + 1) % routes.length];
     const context = await newContext(browser, { viewport: VIEWPORTS[0] });
-    const shown = await pageProbe(context, origin, route, { action: 'key', waitAbsent: 700 });
+    // yn-2 (7): the 280 ms rule is for the automatic fade, so the shown probe is undismissed.
+    const shown = await pageProbe(context, origin, route, { action: 'auto', waitAbsent: 5000, trace: true });
     const written = shown.local;
     const second = await pageProbe(context, origin, nextRoute, { waitAbsent: 700 });
     await context.close();
     const skipContext = await newContext(browser, { viewport: VIEWPORTS[0] });
     const skipped = await pageProbe(skipContext, origin, `${route}?splash=skip`, { waitAbsent: 700 });
     await skipContext.close();
-    const duration = shown.probe?.first == null ? null : shown.probe.last - shown.probe.first;
+    const duration = shown.compositor?.ms ?? null;
     const shownSlide = shown.probe?.contentFirst;
     const suppressedSlide = skipped.probe?.contentFirst;
     const delay = Number.isFinite(shownSlide) && Number.isFinite(suppressedSlide) ? shownSlide - suppressedSlide : null;
