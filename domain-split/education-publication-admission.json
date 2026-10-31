@@ -107,10 +107,11 @@
   "Audience pages (ruling ye-2; 2026-10-29): education-site assets/audience-discovery.css, one rule so the audience-discovery body sections are never left at opacity 0 by the platform scroll reveal (the parents-carers, schools-semh, trusts, partners and councils-organisations pages showed an empty body in phone captures). Pair: old side 483f42ee (Site main 25e0255f as built), new side 9ce17c5d (this change as built with Lessons e82625ea and Apps dd908441; the stylesheet is copied byte for byte). Red-first: the dry build at 16a5deba blocked exactly CHANGED education-site/assets/audience-discovery.css.",
   "Chain B, BUILD Vocational Autumn 2 Weeks 5-7 (rulings yh-4, yk-4; 2026-10-29): education-lessons, 45 ARRIVING rows for the Public editions of vocational_build_a2_w05, w06 and w07 (15 files each: the Public folder of 7 and the 8 shared print resources at the lesson root), byte copies of VOCATIONAL_BUILD_A2_W05_W06 cbaea82a and VOCATIONAL_BUILD_A2_W07 967c7203 checked by sum; three transition pairs for the files they change (the BUILD Autumn 2 START_HERE with three Vocational cards, that folder's SHA256SUMS.txt and data/resource-sizes.json) and the education-site usage-registry pair, each keeping the state built from the Site's fallback Lessons pin as its first element; and the fence's third, in-flight digest 1dec49a1 (2274 rows: d8066b84's 2235 kept in order and unchanged plus the 39 documents the landing brings). The two gap sets (c5946cc9, b1fc7a3c) land nothing: their 45 original Public files are superseded by the evidence-record correction already live, and every other member is served identical, School edition or bookkeeping.",
   "D4 Tools hub (Site PR #525; ruling: admission allowed): 4 paths ARRIVING in education-site, the four new hub files (assets/tools-hub.css, assets/tools-hub.js, data/tools-shelves.json, data/tools-shelves.src.json), and 35 transition pairs, old side the digest main builds and the live site serves (each verified against the live bytes on 2026-10-31), new side as built by the Site CI build of PR #525 with Lessons 9b2d03bb and Apps dd908441: education-site tools/index.html (the hub on the live shell), data/adult-surfaces.json (the hub template declared beside the page), data/copy-authorisation.json (the D4 drawer authorisation) and 24 pages whose shared header carries the one-entry Tools nav (the shared-navigation patch), plus the same header change on 7 education-lessons pages and education-apps index.html. 21 of these rows held an old merged pair (September); its superseded side, which main no longer builds and the live site no longer serves, is dropped so the pair stays two digests. No other row moves; 0 removed.",
-  "Marking-wording pilot PR 2 (GROW_ASDAN/Autumn2_W1-W6_2026-27/PSHE/grow_pshe_a2_w03..w07, 40 files): 40 education-lessons paths become transition pairs [Lessons main 34f4c955, pending argonb/marking-wording-grow-pshe-a2 993c3040] for the R1/R2 marking-wording and metadata-normalised build, dropping stale ARRIVING markers; no other path moves.",
-  "Marking-wording PR 1 (BUILD_ASDAN/Autumn2_W1-W6_2026-27/CAREERS, RSHE and VOC, 141 files, Lessons #739 candidate abe9238f): 141 ARRIVING rows in education-lessons updated to the candidate's R1/R2 marking-wording and metadata-normalised digests (absent from Site's pinned Lessons 9b2d03bb, so ARRIVING is retained); no other path moves.",
-  "Marking-wording PR 3 (LAUNCH_ASDAN/W7-W12_2026-27/lessons/CAREERS, ICT and VOC, 81 files, Lessons #742 candidate 89ad29df): 81 transition pairs in education-lessons updated to [pinned 9b2d03bb digest, candidate R1/R2 marking-wording and metadata-normalised digest]; no other path moves.",
-  "Marking-wording PR 4 (LAUNCH_ASDAN/W7-W12_2026-27/lessons/DT and PSHE, 112 files, Lessons #743 candidate a34b13e8): 112 transition pairs in education-lessons updated to [pinned 9b2d03bb digest, candidate R1/R2 marking-wording and metadata-normalised digest]; no other path moves."
+  "Lessons #737 blank-fixes admission: transition pairs for biology/Lesson_2_Absorption_v4-6.html, data/resource-sizes.json, three Autumn 1 START_HERE.html pages and their SHA256SUMS.txt files.",
+  "Marking-wording pilot PR 2 (the GROW tree's Autumn 2 PSHE strand, grow_pshe_a2_w03..w07, 40 files): 40 education-lessons paths become transition pairs [Lessons main 34f4c955, pending argonb/marking-wording-grow-pshe-a2 993c3040] for the R1/R2 marking-wording and metadata-normalised build, dropping stale ARRIVING markers; no other path moves.",
+  "Marking-wording PR 1 (the BUILD tree's Autumn 2 CAREERS, RSHE and VOC strands, 141 files, Lessons #739 candidate abe9238f): 141 ARRIVING rows in education-lessons updated to the candidate's R1/R2 marking-wording and metadata-normalised digests (absent from Site's pinned Lessons 9b2d03bb, so ARRIVING is retained); no other path moves.",
+  "Marking-wording PR 3 (the LAUNCH tree's Autumn 2 CAREERS, ICT and VOC strands, 81 files, Lessons #742 candidate 89ad29df): 81 transition pairs in education-lessons updated to [pinned 9b2d03bb digest, candidate R1/R2 marking-wording and metadata-normalised digest]; no other path moves.",
+  "Marking-wording PR 4 (the LAUNCH tree's Autumn 2 DT and PSHE strands, 112 files, Lessons #743 candidate a34b13e8): 112 transition pairs in education-lessons updated to [pinned 9b2d03bb digest, candidate R1/R2 marking-wording and metadata-normalised digest]; no other path moves."
  ],
  "trees": {
   "education-site": {
@@ -2948,13 +2949,25 @@
    "GROW_ASDAN/Autumn1_W1-W7_2026-27/GROW_ASDAN_W5_Practise_Working_With_Others_On_A_Task.html": "f9f6c2694ca2d43ae154038a67bee681283985daca6519464d165918d3962809",
    "GROW_ASDAN/Autumn1_W1-W7_2026-27/GROW_ASDAN_W6_Prepare_Questions_For_An_Employer_Encounter.html": "491b2fa08c2d9e05ddf0fc7e8faa196c31557e4b42c60f5693054cd59ce26484",
    "GROW_ASDAN/Autumn1_W1-W7_2026-27/GROW_ASDAN_W7_Record_Challenge_Evidence.html": "d7e4890fdbd4b8dfcfc53ec5398fd303bc04280b30c80e6d792885fbc3f2575a",
-   "GROW_ASDAN/Autumn1_W1-W7_2026-27/SHA256SUMS.txt": "04eb3c74b5b5cea2c591e607fd0238d4ba6343f1083c30f72de5cfc62e1dbfa1",
-   "GROW_ASDAN/Autumn1_W1-W7_2026-27/START_HERE.html": "59d3882df8dd213b27b5a821a23a358b6cc04f63fc9b18513dbe8fdecc6cfa39",
+   "GROW_ASDAN/Autumn1_W1-W7_2026-27/SHA256SUMS.txt": [
+    "04eb3c74b5b5cea2c591e607fd0238d4ba6343f1083c30f72de5cfc62e1dbfa1",
+    "492030508f3b5113ec828f1800c743d056fa70e0526c5188610a9ffd68ffc85a"
+   ],
+   "GROW_ASDAN/Autumn1_W1-W7_2026-27/START_HERE.html": [
+    "59d3882df8dd213b27b5a821a23a358b6cc04f63fc9b18513dbe8fdecc6cfa39",
+    "9b1310e6b681e9bd6257a948499e687fe1cba1a7cbc73f5769f5840b82ec93b1"
+   ],
    "GROW_ASDAN/Autumn1_W1-W7_2026-27/manifest.json": "36a9024948ef34a0faa2759a6c41a25bc8c15c57967039d29ec0985d73acc7e8",
    "GROW_ASDAN/Autumn1_W1_2026-27/GROW_ASDAN_W1_Choose_My_Young_Duke_Challenge.html": "2a0cd41dc62846f3d0e3a1fcb419c799612c275eb859db43e3cbe609b31ccefc",
    "GROW_ASDAN/Autumn1_W1_2026-27/GROW_ASDAN_W1_What_I_Am_Good_At_And_What_Our_Area_Needs.html": "ee58df014ea3d53b787b0a704c1ea7f812c0b9b95fec7edeef63f1f22e4aec1b",
-   "GROW_ASDAN/Autumn1_W1_2026-27/SHA256SUMS.txt": "f71df0841c7836b355e6c7cf022992913d426d05731242bfde112eb6eee8ba1e",
-   "GROW_ASDAN/Autumn1_W1_2026-27/START_HERE.html": "bb2cb7617842aeebdb73ec586f77aa0d96deee662b2811dcff4d4af40e19c0e8",
+   "GROW_ASDAN/Autumn1_W1_2026-27/SHA256SUMS.txt": [
+    "f71df0841c7836b355e6c7cf022992913d426d05731242bfde112eb6eee8ba1e",
+    "bfd1ddc6eb641105f6252e6500e96f0511300b9259eb43eca6c864ddce4764ff"
+   ],
+   "GROW_ASDAN/Autumn1_W1_2026-27/START_HERE.html": [
+    "bb2cb7617842aeebdb73ec586f77aa0d96deee662b2811dcff4d4af40e19c0e8",
+    "f046721bdad891c495ba150dfb7d4cb03449081409058fdb92934a50d1729856"
+   ],
    "GROW_ASDAN/Autumn1_W1_2026-27/manifest.json": "aa2308b599896e29b90dae1f0a54c89fedc17254a1049f53aea8f8e8efcb4dfe",
    "GROW_ASDAN/Autumn1_W7_2026-27/GROW_ASDAN_W7_A_Visitor_And_The_Evidence_We_Keep.html": "e669c207b19d6c909809b2ebaf09e60405a6c947f166d15216fe9bcc75154f64",
    "GROW_ASDAN/Autumn1_W7_2026-27/SHA256SUMS.txt": "80e25bb84f25238703575a52f957dd8eb1da1489a24473c0b6c127b60792c5a8",
@@ -7896,8 +7909,14 @@
    "LAUNCH_ASDAN/Autumn1_W1-W7_2026-27/LAUNCH_ASDAN_W6_Communication_Skills_Review_Progress_And_Sign_Off.html": "f51d4e28e08ddac293b63ab633fb3e5a3ee72aa9f4930d853df16b67c7582291",
    "LAUNCH_ASDAN/Autumn1_W1-W7_2026-27/LAUNCH_ASDAN_W6_Record_Evidence_Reflect.html": "e05204187f6747cc714a2ad32bfbfc802c812388c4dce910b2b608ab4b7d9114",
    "LAUNCH_ASDAN/Autumn1_W1-W7_2026-27/LAUNCH_ASDAN_W7_Personal_Challenge_Outcome.html": "0e15d284725639732badbe21eec6d6c869ecbaf67f0b9fbfc302f14d78bb9649",
-   "LAUNCH_ASDAN/Autumn1_W1-W7_2026-27/SHA256SUMS.txt": "c8fa3ede2212415b43544e3d3b83061803125ae8d9b0d9efa1a06925fd282481",
-   "LAUNCH_ASDAN/Autumn1_W1-W7_2026-27/START_HERE.html": "7133167ab5c61dfe12d74ae42544e0d187446d25f6253715615cd092199c909c",
+   "LAUNCH_ASDAN/Autumn1_W1-W7_2026-27/SHA256SUMS.txt": [
+    "c8fa3ede2212415b43544e3d3b83061803125ae8d9b0d9efa1a06925fd282481",
+    "07c69340a4b6509bc14e144c0b94dec79c0989cb15beb678a7be52e71486bdea"
+   ],
+   "LAUNCH_ASDAN/Autumn1_W1-W7_2026-27/START_HERE.html": [
+    "7133167ab5c61dfe12d74ae42544e0d187446d25f6253715615cd092199c909c",
+    "e1bb4a68047686d64b88c3fcca253c29153c89789f5927998c802c1b95bd43ef"
+   ],
    "LAUNCH_ASDAN/Autumn1_W1-W7_2026-27/manifest.json": "fc3548aa73f5ca50098929890d3fa3a0c2c82e5a00b75b3c33836e34ec84875e",
    "LAUNCH_ASDAN/Careers/CAREERS_W1_Know_Myself_for_Work.html": "d08b482de9b3f39f7d7dd9562513abd836f3164ffe9ba780a1431d19332d6cdc",
    "LAUNCH_ASDAN/Careers/CAREERS_W2_The_World_of_Work_and_Its_Sectors.html": "6258eb92a7e52dbccdfd701071495ab53acd6f01f531172e495d27228b943f5a",
@@ -13321,7 +13340,10 @@
    "biology/L4_Aerobic_Bridge_Sheet_Support.pdf": "816e85e5136611165f90b70bed6ed543306e463b3f77dfaf32aa4cb3bfc60d02",
    "biology/L4_Aerobic_Respiration.html": "f61ae60f892387b7968911facce362b0c064396e8ecc1c9c9f2428e5223b9b6e",
    "biology/L5_Anaerobic.html": "04a2c7a3b610f014dd30b177f47f62bc49a903a0f3d064288361125d7d691f11",
-   "biology/Lesson_2_Absorption_v4-6.html": "62b3ac8d13b39916f2c7eca3f784f9a71b1b3b146d087d373fa8f10c4fd6c427",
+   "biology/Lesson_2_Absorption_v4-6.html": [
+    "62b3ac8d13b39916f2c7eca3f784f9a71b1b3b146d087d373fa8f10c4fd6c427",
+    "a70d582052e9bdc0a3ab6874afbe800ff59965eb062d7e85eae14b42101b215e"
+   ],
    "biology/Respiration_ATP_Recap.html": "8ec619d5b83f368a9be8be47286ba34ba54a198df8568323891919e01464da65",
    "biology/Respiration_and_ATP_Lesson_1.html": "ec846e77f3bce036c63a7e881c6bd1a46c6a32cbb672ef9430b802ba593c9702",
    "biology/Structure_of_the_Thorax.html": "880c94872863e28d1a409cc0eef75c1b0d75abbf5f42037e85c984841b189f37",
@@ -13380,7 +13402,7 @@
    "data/planning-keys.json": "5d1944f5dba42aea2e203f667e6b1b23bdf08157c3c451b0a22757132076c56e",
    "data/resource-sizes.json": [
     "d5124b5e202d856fb39dd0aa3bb2c3b9c7a81acd499388608f9fcb71f73c1c60",
-    "284fc4751736cfb59239356229949008db052fbe2b67b22796db9aec79569381"
+    "5a132fdadb09dce51c665421d6a198edab69c5c64d6ec9110ff88e081106dc61"
    ],
    "grow-anim/README.md": "131b5159f2b9da63291126da0cee13f7548bd4a9a0511eb8bf2e13b2633dcde0",
    "grow-anim/compat-build-anim.js": "ce4fd029211cf449c86d759909fa19e0b03d5c45094c5206ec3ba226e0caa951",
