@@ -94,7 +94,7 @@ async function run(){
      row.cardRole=row.cardRoles[0];
     }else{assert(notApplicable);row.cardNotApplicable=notApplicable}
     const nav=page.locator('.mbm-unified-nav');
-    const hub=['/Lessons/','/resources/','/Matt-s-Apps-/','/tools/'].includes(route);
+    const hub=['/Lessons/','/resources/','/tools/'].includes(route);
     // NAV-2: the public row is complete on every shared-header surface;
     // the adult/pupil variant continues to govern Saved and the menu separately.
     row.hubLinkStyles=await require('./check_education_hub_links.cjs').assertPlainLinks(page,hub?1:0);
