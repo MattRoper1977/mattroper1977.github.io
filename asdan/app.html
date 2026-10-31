@@ -361,7 +361,7 @@ table.list tr:last-child td{border-bottom:none}
       <input type="file" id="bk-file" accept=".json,application/json" hidden>
     </div>
   </div>
-  <div class="panel"><h2>Danger zone</h2><button class="btn danger" id="wipe">Delete all data</button></div>
+  <div class="panel"><h2>Danger zone</h2><button type="button" class="btn danger" id="wipe">Delete all data on this device</button><div id="wipe-confirm-bar" class="row" style="display:none;margin-top:8px;align-items:center"><span class="hint" style="color:var(--danger);font-weight:600">Permanently delete all local pupil, programme and evidence data on this device?</span><button type="button" class="btn danger" id="wipe-confirm-yes">Confirm delete all data</button><button type="button" class="btn ghost" id="wipe-confirm-no">Cancel</button></div></div>
 </section>
 
 </main>
@@ -413,7 +413,7 @@ function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show"
 /* ---------- IndexedDB ---------- */
 const DB_NAME="asdan_register",DB_VER=1;
 let db=null;
-function openDB(){return new Promise((res,rej)=>{
+function openDB(){if(window.name==="mbm_wiped_asdan")window.name="";return new Promise((res,rej)=>{
   const rq=indexedDB.open(DB_NAME,DB_VER);
   rq.onupgradeneeded=e=>{
     const d=e.target.result;
@@ -424,7 +424,7 @@ function openDB(){return new Promise((res,rej)=>{
   rq.onsuccess=e=>{db=e.target.result;res(db)};
   rq.onerror=()=>rej(rq.error);
 })}
-function tx(store,mode,fn){return new Promise((res,rej)=>{
+async function tx(store,mode,fn){if(!db)await openDB();return new Promise((res,rej)=>{
   const t=db.transaction(store,mode),s=t.objectStore(store);
   let out;try{out=fn(s)}catch(err){rej(err);return}
   t.oncomplete=()=>res(out&&"result"in out?out.result:undefined);
@@ -433,8 +433,8 @@ function tx(store,mode,fn){return new Promise((res,rej)=>{
 const dbPut=(st,v)=>tx(st,"readwrite",s=>s.put(v));
 const dbDel=(st,k)=>tx(st,"readwrite",s=>s.delete(k));
 const dbClear=st=>tx(st,"readwrite",s=>s.clear());
-function dbAll(st){return new Promise((res,rej)=>{const rq=db.transaction(st,"readonly").objectStore(st).getAll();rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>rej(rq.error)})}
-function dbGet(st,k){return new Promise((res,rej)=>{const rq=db.transaction(st,"readonly").objectStore(st).get(k);rq.onsuccess=()=>res(rq.result);rq.onerror=()=>rej(rq.error)})}
+function dbAll(st){if(!db)return Promise.resolve([]);return new Promise((res,rej)=>{const rq=db.transaction(st,"readonly").objectStore(st).getAll();rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>rej(rq.error)})}
+function dbGet(st,k){if(!db)return Promise.resolve(undefined);return new Promise((res,rej)=>{const rq=db.transaction(st,"readonly").objectStore(st).get(k);rq.onsuccess=()=>res(rq.result);rq.onerror=()=>rej(rq.error)})}
 
 /* ---------- state ---------- */
 const S={pupils:[],progs:[],trio:[],stamps:[],hours:[],docs:[],evidence:[],
@@ -1137,12 +1137,25 @@ $("#bk-file").addEventListener("change",async e=>{
     await loadAll();await v25Load();showView("pupils");toast("Backup restored");
   }catch(err){alert("Import failed: "+(err.message||err))}
 });
-$("#wipe").addEventListener("click",async()=>{
-  if(!confirm("Delete every pupil, programme and record? Export a backup first if in doubt."))return;
-  if(!confirm("Really sure? This cannot be undone."))return;
-  for(const st of["pupils","progs","trio","stamps","hours","docs","evidence","kv"])await dbClear(st);
+$("#wipe").addEventListener("click",()=>{
+  const bar=$("#wipe-confirm-bar");if(bar){bar.style.display="flex";$("#wipe-confirm-yes")?.focus();}
+});
+$("#wipe-confirm-no").addEventListener("click",()=>{
+  const bar=$("#wipe-confirm-bar");if(bar)bar.style.display="none";$("#wipe")?.focus();
+});
+$("#wipe-confirm-yes").addEventListener("click",async()=>{
   evURLs.forEach(u=>URL.revokeObjectURL(u));evURLs.clear();
-  await loadAll();showView("pupils");toast("All data deleted");
+  S.pupils=[];S.progs=[];S.trio=[];S.stamps=[];S.hours=[];S.docs=[];S.evidence=[];S.settings={centre:"",centreNo:"",teacher:""};
+  V25={school:{on:true,name:"Your centre"},terms:[],slots:[],privacy:false,pathway:""};REG={};
+  try{localStorage.removeItem("mbm_asdan_v25");localStorage.removeItem("mbm_asdan_v1");localStorage.clear();}catch(e){}
+  try{sessionStorage.removeItem("mbm-bknag-hidden");sessionStorage.clear();}catch(e){}
+  try{if(window.caches&&typeof caches.keys==="function"){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
+  if(db){try{db.close();}catch(e){}db=null;}
+  const dbs=new Set([DB_NAME,"mbm_asdan_evidence_v1"]);
+  try{if(indexedDB.databases){for(const d of await indexedDB.databases())if(d&&d.name)dbs.add(d.name);}}catch(e){}
+  for(const n of dbs){await new Promise(r=>{try{const rq=indexedDB.deleteDatabase(n);rq.onsuccess=rq.onerror=rq.onblocked=()=>r();}catch(e){r();}});}
+  window.name="mbm_wiped_asdan";
+  location.reload();
 });
 
 
@@ -1244,7 +1257,7 @@ $("#pw-seed").addEventListener("click",()=>seedPathway($("#pw-select").value));
 $("#pw-select").addEventListener("change",renderPathwayPreview);
 
 /* ---------- init ---------- */
-async function init(){await openDB();await loadAll();await v25Load();renderPupils();renderToday()}
+async function init(){if(window.name==="mbm_wiped_asdan"){renderPupils();renderToday();return;}await openDB();await loadAll();await v25Load();renderPupils();renderToday()}
 init();
 
 /* ===== v2.5 · Today / Lesson Mode / Terms / Branding ===== */

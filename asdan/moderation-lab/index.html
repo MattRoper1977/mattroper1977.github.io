@@ -312,7 +312,7 @@ main{max-width:1480px;margin:0 auto;padding:20px 16px 90px}.view{display:none}.v
       <div class="panel-head"><h2>Last three rolling snapshots</h2><button class="btn secondary small" id="refresh-snapshots">Refresh</button></div><div id="snapshot-list"></div>
     </div>
     <div class="panel">
-      <h2>Demonstration data</h2><p class="subtle">The Lab opens with fictional records so every workflow can be explored safely. Anything printed while demonstration data is loaded is stamped <b>DEMONSTRATION DATA</b> so it can never be mistaken for real centre paperwork. Clear it before you enter real candidates.</p><div class="row"><button class="btn secondary" id="reset-demo">Reset fictional demo</button><button class="btn danger" id="wipe-test">Delete everything in the Lab</button></div>
+      <h2>Demonstration data</h2><p class="subtle">The Lab opens with fictional records so every workflow can be explored safely. Anything printed while demonstration data is loaded is stamped <b>DEMONSTRATION DATA</b> so it can never be mistaken for real centre paperwork. Clear it before you enter real candidates.</p><div class="row"><button class="btn secondary" id="reset-demo">Reset fictional demo</button><button class="btn danger" id="wipe-test">Delete everything in the Lab</button><button type="button" class="btn danger" id="wipe-device-btn">Delete all data on this device</button></div><div class="row" id="wipe-device-confirm" style="display:none;margin-top:8px;align-items:center"><span class="subtle" style="color:var(--danger);font-weight:700">Permanently delete all local databases, snapshots and caches on this device?</span><button type="button" class="btn danger" id="wipe-device-yes">Confirm delete all data</button><button type="button" class="btn secondary" id="wipe-device-no">Cancel</button></div>
     </div>
   </div>
 </section>
@@ -472,6 +472,7 @@ let blurStartX = 0, blurStartY = 0;
 
 /* ------------------------- IndexedDB ------------------------- */
 function openDB(){
+  if(window.name==="mbm_wiped_modlab")window.name="";
   return new Promise((resolve,reject)=>{
     const request=indexedDB.open(DB_NAME,DB_VERSION);
     request.onupgradeneeded=event=>{
@@ -506,30 +507,34 @@ function txDone(tx){
   });
 }
 async function kvGet(key){
+  if(!db)return undefined;
   const tx=db.transaction(STORE_KV,"readonly");
   return idbRequest(tx.objectStore(STORE_KV).get(key)).then(x=>x?x.value:undefined);
 }
 async function kvPutMany(rows){
+  if(!db)await openDB();
   const tx=db.transaction(STORE_KV,"readwrite"),store=tx.objectStore(STORE_KV);
   for(const row of rows)store.put(row);
   await txDone(tx);
 }
 async function assetPut(asset){
+  if(!db)await openDB();
   const tx=db.transaction(STORE_ASSETS,"readwrite");
   tx.objectStore(STORE_ASSETS).put(asset);
   await txDone(tx);
 }
 async function assetGet(id){
-  if(!id)return null;
+  if(!id||!db)return null;
   const tx=db.transaction(STORE_ASSETS,"readonly");
   return idbRequest(tx.objectStore(STORE_ASSETS).get(id));
 }
 async function assetAll(){
+  if(!db)return [];
   const tx=db.transaction(STORE_ASSETS,"readonly");
   return idbRequest(tx.objectStore(STORE_ASSETS).getAll());
 }
 async function assetGetByHash(hash){
-  if(!hash)return null;
+  if(!hash||!db)return null;
   const tx=db.transaction(STORE_ASSETS,"readonly"),store=tx.objectStore(STORE_ASSETS);
   if(store.indexNames.contains("sha256"))return idbRequest(store.index("sha256").get(hash));
   const rows=await idbRequest(store.getAll());return rows.find(x=>x.sha256===hash)||null;
@@ -539,6 +544,7 @@ async function assetDelete(id){
     URL.revokeObjectURL(assetURLCache.get(id));
     assetURLCache.delete(id);
   }
+  if(!db)return;
   const tx=db.transaction(STORE_ASSETS,"readwrite");
   tx.objectStore(STORE_ASSETS).delete(id);
   await txDone(tx);
@@ -546,16 +552,19 @@ async function assetDelete(id){
 async function assetClear(){
   assetURLCache.forEach(url=>URL.revokeObjectURL(url));
   assetURLCache.clear();
+  if(!db)return;
   const tx=db.transaction(STORE_ASSETS,"readwrite");
   tx.objectStore(STORE_ASSETS).clear();
   await txDone(tx);
 }
 async function snapshotAll(){
+  if(!db)return [];
   const tx=db.transaction(STORE_SNAPSHOTS,"readonly");
   const rows=await idbRequest(tx.objectStore(STORE_SNAPSHOTS).getAll());
   return rows.sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
 }
 async function snapshotAdd(label){
+  if(!db)await openDB();
   const record={id:uid("snap"),createdAt:new Date().toISOString(),label,state:deepClone(S)};
   const tx=db.transaction(STORE_SNAPSHOTS,"readwrite");
   tx.objectStore(STORE_SNAPSHOTS).put(record);
@@ -1867,11 +1876,33 @@ function bindEvents(){
   $("#refresh-snapshots").addEventListener("click",renderSnapshots);
   $("#reset-demo").addEventListener("click",async()=>{if(!confirm("Reset the Lab to fictional demonstration data? Anything you have entered here will be replaced."))return;await assetClear();await snapshotClear();S=seedDemoState();undoStack=[];await ensureDemoAsset();await persistState("Fictional demo reset",true);selectedProgrammeId=S.programmes[0]?.id||"";await renderCurrentView();updateGlobalUI();await updateStorageStats();showToast("Fictional demo restored");});
   $("#wipe-test").addEventListener("click",async()=>{if(!confirm("Delete every record and image from the Lab? The daily ASDAN Register is not affected."))return;if(!confirm("This test data will be removed. Continue?"))return;await assetClear();await snapshotClear();S=blankState();undoStack=[];await persistState("Isolated test database cleared",true);selectedProgrammeId="";UI={trackProgramme:"",trackPupil:"",matrixProgramme:"",readyProgramme:"",ivProgramme:"",evidencePupil:"",evidenceProgramme:"",printProgramme:"",printPupil:""};await renderCurrentView();updateGlobalUI();await updateStorageStats();showToast("All isolated test data deleted");});
+  $("#wipe-device-btn")?.addEventListener("click",()=>{const bar=$("#wipe-device-confirm");if(bar){bar.style.display="flex";$("#wipe-device-yes")?.focus();}});
+  $("#wipe-device-no")?.addEventListener("click",()=>{const bar=$("#wipe-device-confirm");if(bar)bar.style.display="none";$("#wipe-device-btn")?.focus();});
+  $("#wipe-device-yes")?.addEventListener("click",async()=>{
+    assetURLCache.forEach(u=>URL.revokeObjectURL(u));assetURLCache.clear();
+    S=blankState();undoStack=[];
+    try{localStorage.clear();}catch(e){}
+    try{sessionStorage.removeItem("mbm_splash_asdanlab");sessionStorage.clear();}catch(e){}
+    try{if(window.caches&&typeof caches.keys==="function"){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(e){}
+    if(db){try{db.close();}catch(e){}db=null;}
+    const dbs=new Set([DB_NAME,"asdan_moderation_lab_v1"]);
+    try{if(indexedDB.databases){for(const d of await indexedDB.databases())if(d&&d.name)dbs.add(d.name);}}catch(e){}
+    for(const n of dbs){await new Promise(r=>{try{const rq=indexedDB.deleteDatabase(n);rq.onsuccess=rq.onerror=rq.onblocked=()=>r();}catch(e){r();}});}
+    window.name="mbm_wiped_modlab";
+    location.reload();
+  });
 }
 
 /* ------------------------- Bootstrap ------------------------- */
 async function init(){
   try{
+    if(window.name==="mbm_wiped_modlab"){
+      S=blankState();bindEvents();bindStudioEvents();
+      $("#track-date").value=todayISO();selectedProgrammeId="";
+      await showView("today");updateGlobalUI();await updateStorageStats();
+      window.ASDAN_TEST={get state(){return S;},evidencePlateItems,evidenceBuckets,evidencePageMap,buildEvidencePages,buildIndexPage,auditCandidate,trackHoursPanel,openMatrixInspector,generateVerificationStamp,riskProfile,stratifiedRiskSample,renderStudioCanvas,saveEvidenceCapture,exportFullBackup,DB_NAME,SCHEMA_VERSION};
+      return;
+    }
     await openDB();
     const stored=await kvGet(STATE_KEY),expected=await kvGet("state_checksum");
     let recoveryMessage="";
@@ -1921,6 +1952,7 @@ init();
   try{
     var KEY="mbm_splash_asdanlab", el=document.getElementById("mbm-splash");
     if(!el)return;
+    if(window.name==="mbm_wiped_modlab"){el.remove();return;}
     var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var seen=false; try{seen=sessionStorage.getItem(KEY)==="1";}catch(e){}
     if(seen){el.remove();return;}
