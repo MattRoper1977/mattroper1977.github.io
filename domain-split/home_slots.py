@@ -122,7 +122,7 @@ FALLBACK = ('humanities-re', 'Aut2', 1)
 BRAND_ASSET = 'approved-mark.jpg'
 IMAGE = re.compile(r'\.(jpe?g|png|gif|svg|webp)$', re.I)
 # HUB_LINKS labels of the three Teacher Tools cards.
-TOOL_LABELS = {'resources': 'Resources', 'apps': 'Apps & tools', 'tools': 'Teacher tools'}
+TOOL_LABELS = {'resources': 'Resources', 'apps': 'Apps & tools', 'tools': 'Tools'}
 # The owner's words (spec section 6), confirmed by digest of the draft's markup.
 # Pinned: the sha256 of each owner-word string as home.html r6 types it (unchanged from r5), in page order (masthead 1, door
 # bylines 4, pathway bylines 3, maker's note 1): spec b3d3df9b section 6, an input of record under uz-6.
@@ -689,9 +689,10 @@ def self_test(lessons_root=None):
 
         base = fake_sources()
         page = bind(template, base)
+        omitted_cards = lambda src, text: TOOL_CARD.sub(lambda m: m.group(0) if src['tools'][m.group(1)] else '', text)
         control('green: the draft binds against a complete set of sources', bool(page))
         control('the output differs from the draft only by slot values, badge lists, the omitted section and cards, PLAY_ROOT and data-sample',
-                neutral(page.replace(play, PLAY_ROOT)) == neutral(template))
+                neutral(page.replace(play, PLAY_ROOT)) == neutral(omitted_cards(base, template)))
         control("What's new is omitted whole (uz-6 (f)); the four <template> slots stay inert",
                 'id="whats-new"' not in page and 'home-update-item' not in page
                 and all(f'<template data-slot="{k}"></template>' in page for k in INERT))
@@ -812,8 +813,9 @@ def self_test(lessons_root=None):
         (no_tools / 'tools').mkdir(parents=True)
         plain = bind(template, fake_sources(site_root=no_tools))
         control('vb-3 (b): an unserved tools page omits the /tools/ card (not left empty); the others stay',
-                plain.count('<a class="home-tool-card"') == 2 and 'teacherTools.tools' not in plain
-                and 'teacherTools.resources.route' in plain and 'teacherTools.apps.route' in plain)
+                page.count('<a class="home-tool-card"') == 2 and 'teacherTools.tools.route' in page
+                and plain.count('<a class="home-tool-card"') == 1 and 'teacherTools.tools' not in plain
+                and 'teacherTools.resources.route' in plain and 'teacherTools.apps' not in plain)
         record = json.loads((site_root / RECORD).read_text(encoding='utf-8'))
         record['audiences'].pop('schools')
         (no_tools / 'data').mkdir()
@@ -862,12 +864,12 @@ def self_test(lessons_root=None):
             real_splits = re.findall(r'data-slot="subjects\.hubs\.\d\.pathwaySplit">([^<]*)<', real_page)
             control('real: four pathway lines from the hub counts', len(real_splits) == 4 and all(real_splits), ' | '.join(real_splits[:1]))
             control('real: the output differs from the draft only where the build fills it',
-                    neutral(real_page.replace(play, PLAY_ROOT)) == neutral(template))
+                    neutral(real_page.replace(play, PLAY_ROOT)) == neutral(omitted_cards(real, template)))
             control('real: no Play file is read', not any('/play/' in r or 'evidence.json' in r for r in reads), f'{len(reads)} reads')
             control('real: one SEO-1 block, named with the brand line, no contact detail',
                     len(LD_LINE.findall(real_page)) == 1 and not any('"' + k + '"' in LD_LINE.findall(real_page)[0]
                                                                   for k in CONTACT_KEYS - {'url'}))
-            before = WHATS_NEW.sub('', template).splitlines()
+            before = omitted_cards(real, WHATS_NEW.sub('', template)).splitlines()
             after = LD_LINE.sub('', real_page).splitlines()
             moved = [i for i, (a, b) in enumerate(zip(before, after)) if a != b]
             control('real: every line that moved is a slot line or a PLAY_ROOT line',

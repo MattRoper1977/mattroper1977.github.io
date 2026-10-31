@@ -102,7 +102,7 @@ async function chromeFocus(control,surface,label,redProof=false) {
           // catalogue return selection (asserted above); compare that row by path.
           const groups = await page.locator(panel + ' .mbm-menu-group').evaluateAll(nodes => nodes.map(n => [...n.querySelectorAll('a')].map(a => { const h = a.getAttribute('href'); return [new URL(h, location.href).pathname === '/Lessons/' ? '/Lessons/' : h, a.textContent.trim()]; })));
           const learning = pupil ? [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/Lessons/primary/', 'Primary lessons']]
-            : [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/Matt-s-Apps-/', 'Apps & tools'], ['/Lessons/primary/', 'Primary lessons']];
+            : [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/tools/', 'Tools'], ['/Lessons/primary/', 'Primary lessons']];
           assert.deepEqual(groups[0], learning, 'Learning group: ' + route);
           const who = Object.values(record).map(a => [a.route, a.label]);
           if (!who.some(r => r[0] === '/for/governors-trustees/')) who.push(['/for/governors-trustees/', 'Governors & trustees']);
