@@ -2,8 +2,9 @@
 // J93 (rulings uz-6 (h), vb-3 (e)): on / and /main/ the card line icons are the J93 subject-tile icons
 // (#subjects a.home-subject-tile .home-subject-icon svg, exactly 4) in place of the SW2 .fd-symbol icons.
 const assert=require('node:assert/strict'),fs=require('node:fs');
-const expected=[['/Lessons/','Lessons'],['/resources/','Resources'],['/Matt-s-Apps-/','Apps & tools'],['/tools/','Teacher tools']];
-const routes=[...expected.map(([route])=>route),'/','/main/'];
+const expected=[['/Lessons/','Lessons'],['/resources/','Resources'],['/tools/','Tools']];
+// D4: the Apps index left the public row (one Tools entry) but still carries the shared header, so it stays a checked route.
+const routes=[...expected.map(([route])=>route),'/Matt-s-Apps-/','/','/main/'];
 const slugs={'/Lessons/':'lessons','/resources/':'resources','/Matt-s-Apps-/':'apps','/tools/':'tools','/':'home','/main/':'main'};
 exports.assertPublicRow=async(page,route)=>{
   const rows=await page.locator('nav[data-mbm-hub-links]').evaluateAll(es=>es.map(e=>({
@@ -27,7 +28,7 @@ exports.assertPlainLinks=async(page,activeCount=1)=>{
     const s=getComputedStyle(e);return {active:e.getAttribute('aria-current')==='page',background:s.backgroundColor,image:s.backgroundImage,
       borders:[s.borderTopWidth,s.borderRightWidth,s.borderBottomWidth,s.borderLeftWidth],shadow:s.boxShadow,decoration:s.textDecorationLine,colour:s.color};
   }));
-  assert.equal(styles.length,4,'Four styled public links');
+  assert.equal(styles.length,expected.length,'Every public link is styled (one per shared destination)');
   assert(styles.every(s=>s.background==='rgba(0, 0, 0, 0)'&&s.image==='none'&&s.borders.every(b=>parseFloat(b)===0)&&s.shadow==='none'),'Plain text navigation: no filled or boxed buttons');
   assert.equal(styles.filter(s=>s.active).length,activeCount,'Only the current hub is active; homepage has no false active hub');
   if(activeCount)assert(styles.find(s=>s.active).decoration.includes('underline'),'Current hub has the agreed underline');
@@ -39,8 +40,8 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
   const overrides=[];
   const extraOwnerFixtures=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'sw2/nav-expanded-owner-fixtures.json'),'utf8'));
   const ownerFixtures=[
-    {route:'/Lessons/',file:'nav-lessons-published.html',sha256:'4069eda43caac696e7c2091c997909edbb481136619f915fc3cea3cc4dc97364'},
-    {route:'/Matt-s-Apps-/',file:'nav-apps-published.html',sha256:'a2d5dedca49c9fa867c6ac2aabec83d877f1f9e4fe59bf79f2c75b771b6806bb'},
+    {route:'/Lessons/',file:'nav-lessons-published.html',sha256:'2625a5f4993013d515c2a2d87c73f1237904e11d5c01bd24392f6a466307ef59'},
+    {route:'/Matt-s-Apps-/',file:'nav-apps-published.html',sha256:'4a85764f2ea71e402cdc9f883eae4ea0ddfc5ecff9567e69dcb64cf81a6f6afe'},
     ...extraOwnerFixtures,
   ];
   if(consumerFixtures) for(const item of ownerFixtures){
