@@ -21,7 +21,7 @@ const cases=[
   ['/account/','account','.ma-panel'],['/members/','members','.ma-panel'],['/mailing-list/','updates','.ma-panel'],
   ['/privacy/','privacy','.pv-note'],['/stats/','statistics','.usage-card'],
   ['/owner/stats/','owner statistics',null,'Individual statistics require the existing service; the static console has no result card.'],
-  ['/resources/','resources','.rx-cardx'],['/tools/','tools','.tcard'],
+  ['/resources/','resources','.rx-cardx'],['/tools/','tools','.th-card'],
   ['/teach/','teacher workspace','.mbm-task-card'],['/education-hub/','education guidance','.mbm-start-card'],
   ['/for/teachers/','teachers','.fd-subject'],['/for/pupils/','pupils','.fd-subject'],
   ...['parents-carers','schools-semh','trusts','councils-organisations','partners'].map(s=>['/for/'+s+'/','audience '+s,'.ad-card']),
