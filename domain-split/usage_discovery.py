@@ -393,7 +393,7 @@ def refresh(output, lessons, apps, site_source):
     # Stop painting legacy local counters as if they were shared activity. Their
     # stored data remains in place, and the old device view stays reachable.
     site_config=read(site/'site.json');site_config['features']['stats'].update({'enabled':False,'remote':False,'geo':False});site_config['features']['downloads']['enabled']=False
-    site_config['strap']='Lessons, resources and teaching tools — built in Teesside.'
+    site_config['strap']='Lessons, resources and teaching tools — built one file at a time.'
     game_keys={row.get('countKey') for row in read(site_source/'site.json')['doors'] if row.get('zone')=='games'}
     site_config['features']['downloads']['catalog']=[row for row in site_config['features']['downloads'].get('catalog',[]) if row.get('key') not in game_keys]
     site_config['features']['analytics']['goatcounter']='';save(site/'site.json',site_config)

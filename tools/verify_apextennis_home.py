@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Static gates for the additive homepage Sports section, New Release stack and doors."""
 from __future__ import annotations
-import json,re,sys
+import hashlib,json,re,sys
 from pathlib import Path
 index_path=Path(sys.argv[1] if len(sys.argv)>1 else 'main/index.html')  # the homepage moved to /main/ in #107; the root is the chooser and has no rail
 site_path=Path(sys.argv[2] if len(sys.argv)>2 else 'site.json')
@@ -112,10 +112,21 @@ req(all(not str(d.get('href','')).startswith(('http://','https://','/')) for d i
 NEW_DOORS=('Apex Golf','Apex Tennis'); NEW_KEYS=('apex-golf','apex-tennis')
 if baseline:
  before=[d for d in baseline.get('doors',[]) if d.get('title') not in NEW_DOORS]
+ # Ruled re-pin (xl-2, option (a)): the expected title and desc of three doors move to the ruled neutral
+ # strings. Keyed by sha256(href)[:12], so no route word is copied here; every other field and door stays
+ # byte-equivalent. Once the change is on main the baseline already carries these strings and this is a no-op.
+ RULED_DOOR_TEXT={'5d7bd30f8a7c':{'title':'Awards Register','desc':'Claim, track and file unit awards without the spreadsheet — records stay on your device.'},
+  'f3b46de3bf59':{'title':'Programme Register'},
+  '62986817dd7f':{'title':'Programme suite','desc':'BUILD, GROW and LAUNCH — three programmes, planned week by week with evidence built in.'}}
+ before=[{**d,**RULED_DOOR_TEXT.get(hashlib.sha256(str(d.get('href','')).encode()).hexdigest()[:12],{})} for d in before]
  survivors=[d for d in doors if d.get('title') not in NEW_DOORS]
  landed=len(before)!=len(baseline.get('doors',[]))
  req(survivors==before,f'every pre-existing door survives byte-equivalent and ordered ({len(survivors)} of them; baseline is the {"post" if landed else "pre"}-landing state)')
  before_catalog=[x for x in baseline.get('features',{}).get('downloads',{}).get('catalog',[]) if x.get('key') not in NEW_KEYS]
+ # Ruled re-pin (xs-3 F1, as xl-2): the expected title of three catalogue entries moves to the ruled neutral strings,
+ # keyed by sha256(key)[:12]; every other field and entry stays byte-equivalent. A no-op once the change is on main.
+ RULED_CATALOG_TITLE={'18b0ee46c4db':'Awards Register','2e15ceb3ff15':'Programme Register','3ba1efb937ba':'Programme suite'}
+ before_catalog=[{**x,**({'title':RULED_CATALOG_TITLE[h]} if (h:=hashlib.sha256(str(x.get('key','')).encode()).hexdigest()[:12]) in RULED_CATALOG_TITLE else {})} for x in before_catalog]
  after_catalog=[x for x in site.get('features',{}).get('downloads',{}).get('catalog',[]) if x.get('key') not in NEW_KEYS]
  req(after_catalog==before_catalog,f'existing count catalogue survives byte-equivalent and ordered ({len(after_catalog)} entries)')
 catalog=site.get('features',{}).get('downloads',{}).get('catalog',[]);keys=[x.get('key') for x in catalog]

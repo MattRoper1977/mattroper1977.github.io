@@ -153,7 +153,29 @@ const TOOLS_TRUTH_REGIONS = Object.freeze([
 
 /* The September education refresh is an exact reversible copy change, not a
  * new sentinel exemption. The declaration records both accepted wordings and
- * the only two accepted section orders; all unchanged wording is retained. */
+ * the only two accepted section orders; all unchanged wording is retained.
+ * An entry may record the old wording by digest instead (beforeDigest, the
+ * SHA-256 of one whole text node's old wording, with the new wording in after
+ * as one whole text node), so that wording the names rule keeps off served
+ * pages is not copied into this served declaration. Both wordings are then
+ * replaced by the same marker, and exactly one of them must be present. */
+function digestReplacement(s, change, failures, label) {
+  const sha = value => require('crypto').createHash('sha256').update(value, 'utf8').digest('hex');
+  if (!change.name || Object.prototype.hasOwnProperty.call(change, 'before') ||
+      typeof change.beforeDigest !== 'string' || !/^[0-9a-f]{64}$/.test(change.beforeDigest) ||
+      typeof change.after !== 'string' || !change.after || /[<>]/.test(change.after) || sha(change.after) === change.beforeDigest) {
+    failures.push(`${label}: approved tools refresh has an invalid exact replacement`);
+    return s;
+  }
+  const nodes = [...s.matchAll(/>([^<]+)</g)];
+  const matches = nodes.filter(node => node[1] === change.after || sha(node[1]) === change.beforeDigest);
+  assert(matches.length === 1,
+    `${label}: approved tools refresh ${change.name} matched ${matches.length} exact versions (expected 1)`, failures);
+  if (matches.length !== 1) return s;
+  const start = matches[0].index + 1;
+  return s.slice(0, start) + `__MBM_APPROVED_TOOLS_REFRESH_${change.name}__` + s.slice(start + matches[0][1].length);
+}
+
 function canonicalToolsCopy(html, failures, label) {
   let s = canonicalRegions(html, TOOLS_TRUTH_REGIONS, failures, label);
   const page = AUTHORISATION.pages['tools/index.html'];
@@ -166,6 +188,10 @@ function canonicalToolsCopy(html, failures, label) {
     return s;
   }
   for (const change of refresh.exactReplacements) {
+    if (Object.prototype.hasOwnProperty.call(change, 'beforeDigest')) {
+      s = digestReplacement(s, change, failures, label);
+      continue;
+    }
     if (!change.name || typeof change.before !== 'string' || !change.before ||
         typeof change.after !== 'string' || !change.after || change.before === change.after) {
       failures.push(`${label}: approved tools refresh has an invalid exact replacement`);
@@ -563,6 +589,13 @@ const SELF_TEST_CONTROLS = Object.freeze([
     name: 'tools hub: approved shortcut destination remains pinned',
     page: 'tools/index.html',
     mutate: html => requireMutation(html, 'href="/Lessons/?view=saved"', 'href="/members/"', 'tools shortcut mutation'),
+    expect: 'new-finding-matching',
+    needle: 'approved tools refresh'
+  },
+  {
+    name: 'tools hub: a digest-recorded replacement whose new wording is altered is rejected',
+    page: 'tools/index.html',
+    mutate: html => requireMutation(html, '>Programme Studio — the lesson programmes<', '>Programme Studio — every lesson programme<', 'tools digest-replacement mutation'),
     expect: 'new-finding-matching',
     needle: 'approved tools refresh'
   },
