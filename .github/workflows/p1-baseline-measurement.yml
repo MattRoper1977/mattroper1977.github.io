@@ -1,0 +1,252 @@
+name: Baseline comparison
+'on':
+  push:
+    branches:
+    - gpt-lane/play-p1-baseline
+    paths:
+    - .github/workflows/p1-baseline-measurement.yml
+permissions:
+  contents: read
+  deployments: read
+  pages: read
+concurrency:
+  group: p1-baseline-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  measure:
+    name: ${{ matrix.revision }} / ${{ matrix.check }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+        - revision: P
+          sha: 20867f541c0338a9d67471259ef4cfa15fa935c8
+          check: a
+          timeout: 45
+        - revision: P
+          sha: 20867f541c0338a9d67471259ef4cfa15fa935c8
+          check: b
+          timeout: 30
+        - revision: P
+          sha: 20867f541c0338a9d67471259ef4cfa15fa935c8
+          check: c
+          timeout: 90
+        - revision: M
+          sha: 1f3065f7ce7188b960f9b2a808e72908ada57f4c
+          check: a
+          timeout: 45
+        - revision: M
+          sha: 1f3065f7ce7188b960f9b2a808e72908ada57f4c
+          check: b
+          timeout: 30
+        - revision: M
+          sha: 1f3065f7ce7188b960f9b2a808e72908ada57f4c
+          check: c
+          timeout: 90
+    env:
+      REVISION: ${{ matrix.revision }}
+      SUBJECT_SHA: ${{ matrix.sha }}
+      CHECK: ${{ matrix.check }}
+    steps:
+    - name: Check out the exact subject
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ matrix.sha }}
+        fetch-depth: 1
+        persist-credentials: false
+    - name: Prepare runtime
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Prepare dependencies
+      id: install
+      run: |-
+        set -euo pipefail
+        npm install --no-save --no-package-lock playwright@1.56.1 acorn@8.18.0
+        if [ "$CHECK" = "a" ]; then
+          npx playwright install --with-deps --no-shell chromium
+        elif [ "$CHECK" = "b" ]; then
+          npx playwright install --with-deps chromium firefox webkit
+        else
+          npx playwright install --with-deps chromium
+        fi
+    - name: Record subject and unchanged check identities
+      run: |-
+        set -euo pipefail
+        mkdir -p artifacts/baseline
+        test "$(git rev-parse HEAD)" = "$SUBJECT_SHA"
+        test "$(git hash-object tools/townlife/benchmark_splash.mjs)" = "3840bc4d67eae2686a3505d0dd435e9dd8face81"
+        test "$(git hash-object tools/townlife/verify_live.mjs)" = "9a5701b239e37e17884750db088d872e44e2ef2e"
+        test "$(git hash-object tools/verify_maker_splash.mjs)" = "731c6135f7f41392bff9612f1197ce951674eff7"
+        git rev-parse HEAD
+        sha256sum tools/townlife/benchmark_splash.mjs tools/townlife/verify_live.mjs tools/verify_maker_splash.mjs
+        node --version
+        cat /etc/os-release
+    - name: Check out the fixed comparison subjects
+      if: matrix.check == 'a'
+      uses: actions/checkout@v4
+      with:
+        repository: MattRoper1977/Lessons
+        ref: 34f4c9553225a3a797b5869b6c8b9e34e2a7c89a
+        path: lessons-mirror
+        fetch-depth: 1
+        persist-credentials: false
+    - name: Record comparison subjects
+      run: |
+        set -euo pipefail
+        mkdir -p artifacts/townlife
+        {
+          echo "lessons_repository=MattRoper1977/Lessons"
+          echo "lessons_sha=$(git -C lessons-mirror rev-parse HEAD)"
+          echo "lessons_executables=$(find lessons-mirror/Games -name '*.html' | wc -l)"
+        } | tee artifacts/townlife/comparator-checkout.txt
+      if: matrix.check == 'a'
+    - name: Resolve immutable baseline
+      env:
+        PRE_SPLASH_SHA: 7041e767c5eed08b05bb01a2b1cd90356cb378fa
+        PRE_SPLASH_SHA256: 4e0b718217bc95932e3e7fc9ca87c3965b56b9d62a3325ca2cee76388d9be125
+      run: |
+        set -euo pipefail
+        mkdir -p artifacts/townlife
+        git fetch --depth=1 origin "$PRE_SPLASH_SHA"
+        git show "$PRE_SPLASH_SHA:townlife/index.html" > "$RUNNER_TEMP/townlife-before.html"
+        python3 - "$RUNNER_TEMP/townlife-before.html" townlife/index.html "$PRE_SPLASH_SHA256" <<'PY'
+        import hashlib
+        import pathlib
+        import sys
+        marker = b'MBM-MAKER-SPLASH:BEGIN'
+        before, after = (pathlib.Path(value).read_bytes() for value in sys.argv[1:3])
+        expected_sha256 = sys.argv[3]
+
+        def validate(baseline, candidate):
+            problems = []
+            actual_sha256 = hashlib.sha256(baseline).hexdigest()
+            if actual_sha256 != expected_sha256:
+                problems.append(f'resolved baseline SHA-256 mismatch: {actual_sha256}')
+            if marker in baseline:
+                problems.append('resolved baseline already contains the maker splash')
+            if marker not in candidate:
+                problems.append('candidate does not contain the maker splash')
+            return problems
+
+        problems = validate(before, after)
+        if problems:
+            raise SystemExit('; '.join(problems))
+        print('baseline identity and baseline/candidate marker controls green')
+
+        baseline_control = validate(marker + before, after)
+        if (len(baseline_control) != 2
+                or not baseline_control[0].startswith('resolved baseline SHA-256 mismatch: ')
+                or baseline_control[1] != 'resolved baseline already contains the maker splash'):
+            raise SystemExit(f'baseline marker negative control did not red exactly: {baseline_control}')
+        candidate_control = validate(before, before)
+        if candidate_control != ['candidate does not contain the maker splash']:
+            raise SystemExit(f'candidate marker negative control did not red exactly: {candidate_control}')
+        identity_control = validate(before + b'\n', after)
+        if (len(identity_control) != 1
+                or not identity_control[0].startswith('resolved baseline SHA-256 mismatch: ')):
+            raise SystemExit(f'baseline identity negative control did not red exactly: {identity_control}')
+        print('baseline identity and baseline/candidate marker negative controls red exactly')
+        PY
+        {
+          echo "base_sha=$PRE_SPLASH_SHA"
+          echo "expected_baseline_sha256=$PRE_SPLASH_SHA256"
+          sha256sum "$RUNNER_TEMP/townlife-before.html" townlife/index.html
+          wc -c "$RUNNER_TEMP/townlife-before.html" townlife/index.html
+        } | tee artifacts/townlife/splash-subjects.txt
+      if: matrix.check == 'a'
+    - name: Prepare the unchanged three-round comparison
+      env:
+        LESSONS_ROOT: ${{ github.workspace }}/lessons-mirror
+      run: "set -euo pipefail\nmkdir -p artifacts/townlife\nsha256sum tools/townlife/benchmark.mjs | tee artifacts/townlife/performance-harness.txt\n\
+        for round in 1 2 3; do\n  node tools/townlife/benchmark.mjs --round=\"$round\" | tee \"artifacts/townlife/performance-round-$round.log\"\
+        \ndone\naggregate_control_dir=$(mktemp -d)\ncp artifacts/townlife/performance-round-*.json \"$aggregate_control_dir/\"\
+        \npython3 - \"$aggregate_control_dir/performance-round-2.json\" <<'PY'\nimport json\nimport pathlib\nimport\
+        \ sys\ntarget = pathlib.Path(sys.argv[1])\nreport = json.loads(target.read_text(encoding='utf-8'))\nreport['protocol']['harnessSha256']\
+        \ = '0' * 64\ntarget.write_text(json.dumps(report) + '\\n', encoding='utf-8')\nPY\nif node tools/townlife/benchmark.mjs\
+        \ --aggregate=\"$aggregate_control_dir\" > artifacts/townlife/aggregate-negative-control.log 2>&1; then\n\
+        \  echo 'aggregate negative control unexpectedly passed'\n  exit 1\nfi\ngrep -Fq 'round 2 used another harness'\
+        \ artifacts/townlife/aggregate-negative-control.log\necho 'PASS aggregate negative control \u2014 tampered\
+        \ round 2 harness was rejected'\nnode tools/townlife/benchmark.mjs --aggregate=artifacts/townlife | tee\
+        \ artifacts/townlife/performance.log\n"
+      if: matrix.check == 'a'
+    - name: Measure paired frame-rate sign gate
+      run: |
+        set -euo pipefail
+        sha256sum tools/townlife/benchmark_splash.mjs | tee artifacts/townlife/splash-performance-harness.txt
+        # RL23. The regression gate's decision rule is a sign test, and a
+        # decision rule nobody exercises is the next thing to rot. This runs
+        # it over three fixtures - the measured noise that used to red the
+        # build, the busy-frame control, and a real one-sided regression -
+        # and reds if any of them lands on the wrong side.
+        node tools/townlife/benchmark_splash.mjs --selftest \
+          | tee artifacts/townlife/splash-performance-gate-selftest.log
+        node tools/townlife/benchmark_splash.mjs \
+          --baseline-html="$RUNNER_TEMP/townlife-before.html" \
+          --shipped-report=artifacts/townlife/performance.json \
+          | tee artifacts/townlife/splash-performance.log
+      if: matrix.check == 'a'
+    - name: Measure live marker
+      if: matrix.check == 'b'
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |-
+        set -euo pipefail
+        mkdir -p artifacts/townlife
+        node tools/townlife/verify_live.mjs --expected-sha "$SUBJECT_SHA" 2>&1 | tee artifacts/townlife/live.log
+    - name: Run unchanged live splash controls
+      if: matrix.check == 'c'
+      run: |-
+        set -o pipefail
+        mkdir -p artifacts/maker-splash
+        node tools/verify_maker_splash.mjs \
+          --mode=controls --scope=site \
+          --site-route=/townlife/ --second-route=/echovault/ \
+          --origin=https://www.madebymatt-play.uk \
+          --site-root="$GITHUB_WORKSPACE" \
+          --report=artifacts/maker-splash/live-controls.json \
+          | tee artifacts/maker-splash/live-controls.log
+    - name: Measure every live splash route
+      if: ${{ !cancelled() && matrix.check == 'c' && steps.install.outcome == 'success' }}
+      run: |-
+        set -o pipefail
+        mkdir -p artifacts/maker-splash
+        node tools/verify_maker_splash.mjs \
+          --mode=verify --scope=site \
+          --origin=https://www.madebymatt-play.uk \
+          --site-root="$GITHUB_WORKSPACE" \
+          --report=artifacts/maker-splash/live-routes.json \
+          | tee artifacts/maker-splash/live-routes.log
+    - name: Print exact measurements for the report
+      if: always()
+      run: |-
+        python3 - <<'PY'
+        import json, os, pathlib
+        root=pathlib.Path('artifacts')
+        result={'revision':os.environ['REVISION'],'subjectSha':os.environ['SUBJECT_SHA'],'check':os.environ['CHECK']}
+        p=root/'townlife/splash-performance.json'
+        if p.is_file():
+            d=json.loads(p.read_text())
+            result['performance']={k:d[k] for k in ['identities','before','after','paired','gates']}
+        p=root/'townlife/live.log'
+        if p.is_file():
+            result['markerLog']=p.read_text()
+        p=root/'maker-splash/live-routes.json'
+        if p.is_file():
+            d=json.loads(p.read_text())
+            result['routes']=[{'route':r['route'],'result':r['class'],'samples':[{'viewport':o['viewport'],'durationMs':o['duration']} for o in r['observations']]} for r in d['rows']]
+        root.mkdir(exist_ok=True)
+        (root/'baseline-measurement.json').write_text(json.dumps(result,indent=2)+'\n')
+        print('BASELINE_MEASUREMENT_JSON '+json.dumps(result))
+        PY
+    - name: Keep all measurement evidence
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: baseline-${{ matrix.revision }}-${{ matrix.check }}
+        path: artifacts/
+        if-no-files-found: error
+
