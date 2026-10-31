@@ -2,8 +2,9 @@
 // J93 (rulings uz-6 (h), vb-3 (e)): on / and /main/ the card line icons are the J93 subject-tile icons
 // (#subjects a.home-subject-tile .home-subject-icon svg, exactly 4) in place of the SW2 .fd-symbol icons.
 const assert=require('node:assert/strict'),fs=require('node:fs');
-const expected=[['/Lessons/','Lessons'],['/resources/','Resources'],['/Matt-s-Apps-/','Apps & tools'],['/tools/','Teacher tools']];
-const routes=[...expected.map(([route])=>route),'/','/main/'];
+const expected=[['/Lessons/','Lessons'],['/resources/','Resources'],['/tools/','Tools']];
+// D4: the Apps index left the public row (one Tools entry) but still carries the shared header, so it stays a checked route.
+const routes=[...expected.map(([route])=>route),'/Matt-s-Apps-/','/','/main/'];
 const slugs={'/Lessons/':'lessons','/resources/':'resources','/Matt-s-Apps-/':'apps','/tools/':'tools','/':'home','/main/':'main'};
 exports.assertPublicRow=async(page,route)=>{
   const rows=await page.locator('nav[data-mbm-hub-links]').evaluateAll(es=>es.map(e=>({
@@ -27,7 +28,7 @@ exports.assertPlainLinks=async(page,activeCount=1)=>{
     const s=getComputedStyle(e);return {active:e.getAttribute('aria-current')==='page',background:s.backgroundColor,image:s.backgroundImage,
       borders:[s.borderTopWidth,s.borderRightWidth,s.borderBottomWidth,s.borderLeftWidth],shadow:s.boxShadow,decoration:s.textDecorationLine,colour:s.color};
   }));
-  assert.equal(styles.length,4,'Four styled public links');
+  assert.equal(styles.length,expected.length,'Every public link is styled (one per shared destination)');
   assert(styles.every(s=>s.background==='rgba(0, 0, 0, 0)'&&s.image==='none'&&s.borders.every(b=>parseFloat(b)===0)&&s.shadow==='none'),'Plain text navigation: no filled or boxed buttons');
   assert.equal(styles.filter(s=>s.active).length,activeCount,'Only the current hub is active; homepage has no false active hub');
   if(activeCount)assert(styles.find(s=>s.active).decoration.includes('underline'),'Current hub has the agreed underline');

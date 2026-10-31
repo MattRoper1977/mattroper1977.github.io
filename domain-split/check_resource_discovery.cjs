@@ -165,7 +165,7 @@ async function responsiveChecks(browser) {
       // NAV-2: Matt explicitly includes both homepages in the shared four-link row.
       await require('./check_education_hub_links.cjs').assertPublicRow(page,home);
       const links = [];
-      for (const [target, name] of [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/Matt-s-Apps-/', 'Apps & tools']]) {
+      for (const [target, name] of [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/tools/', 'Tools']]) {
         // SW2 H retires the duplicate place cards. The native menu preserves all three destinations.
         const menu = page.locator('.mbm-unified-menu');
         // J93 (uz-6 (c)): the menu panel nests its own Display options <details>, so a bare
@@ -185,10 +185,10 @@ async function responsiveChecks(browser) {
         await goto(page, route);
         assert.equal(await page.locator(collectionNav).count(), 1, 'Each hub needs one obvious Learning areas navigation');
         const nav = page.locator(collectionNav), labels = await nav.innerText();
-        for (const label of ['Lessons', 'Resources', 'Apps', 'Teacher tools']) assert(labels.includes(label), `${route} lacks ${label}`);
+        for (const label of ['Lessons', 'Resources', 'Tools']) assert(labels.includes(label), `${route} lacks ${label}`);
         const links = [];
-        for (const target of ['/Lessons/', '/resources/', '/Matt-s-Apps-/', '/tools/']) {
-          const link = nav.locator('a').filter({ hasText: target === '/Lessons/' ? /^Lessons$/ : target === '/resources/' ? /^Resources$/ : target === '/tools/' ? /^Teacher tools$/ : /^Apps(?:\s*&\s*tools)?$/ }).first();
+        for (const target of ['/Lessons/', '/resources/', '/tools/']) {
+          const link = nav.locator('a').filter({ hasText: target === '/Lessons/' ? /^Lessons$/ : target === '/resources/' ? /^Resources$/ : /^Tools$/ }).first();
           assert.equal(routeOf(await link.getAttribute('href'), route), routeOf(target));
           links.push({ target, bounds: await hitTarget(link) });
         }
@@ -238,7 +238,7 @@ async function responsiveChecks(browser) {
         assert(links.some(a => routeOf(a.href) === PDF), 'Teacher tools lacks a visible PDF Studio link');
         assert(links.some(a => /Programme Studio learning resources/.test(a.text) && /\/(?:BUILD|GROW|LAUNCH)_ASDAN\//.test(new URL(a.href).pathname)), 'Teacher tools must distinguish ASDAN learning resources from the register');
         const searches = [];
-        for (const query of ['PDF', 'PDF generator', 'PDF Studio']) {
+        for (const query of ['PDF', 'annotate', 'PDF Studio']) {
           await page.locator('#tq').fill(query); await settle(page);
           const results = await visibleLinks(page, '.tcard a[href]');
           assert(results.some(a => routeOf(a.href) === PDF), `Teacher tools search ${query} hides PDF Studio`);

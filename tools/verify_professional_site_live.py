@@ -439,7 +439,7 @@ for _route in J93_HOME_ROUTES:
         marker for marker in LEGACY_EDUCATION_HOME_MARKERS[_route]
         if marker not in {'mbm-site-header', 'aria-current="page">Tools'}
     ) + EDUCATION_NAVIGATION_MARKERS
-EDUCATION_PAGE_MARKERS["/tools/"] += ('aria-current="page">Teacher tools',)
+EDUCATION_PAGE_MARKERS["/tools/"] += ('aria-current="page">Tools',)
 
 ASSETS: dict[str, Path] = {
     "/assets/mbm-platform.css": Path("assets/mbm-platform.css"),

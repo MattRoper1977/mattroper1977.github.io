@@ -98,7 +98,7 @@ async function run(){
     // NAV-2: the public row is complete on every shared-header surface;
     // the adult/pupil variant continues to govern Saved and the menu separately.
     row.hubLinkStyles=await require('./check_education_hub_links.cjs').assertPlainLinks(page,hub?1:0);
-    assert.deepEqual(await nav.locator('a').allTextContents(),['Lessons','Resources','Apps & tools','Teacher tools'],'Actual complete public navigation '+route);
+    assert.deepEqual(await nav.locator('a').allTextContents(),['Lessons','Resources','Tools'],'Actual complete public navigation '+route);
     assert.equal(await page.locator('.mbm-unified-saved').count(),row.variant==='adult'?1:0,'Saved ownership '+route);
     assert.equal(await nav.locator('.mbm-unified-about').count(),0,'The public row contains only the four agreed destinations at every width');
     assert.equal(await page.locator('footer .mbm-chrome-signoff').count(),1,'One actual shared footer');
