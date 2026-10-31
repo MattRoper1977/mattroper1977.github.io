@@ -21,7 +21,7 @@ const cases=[
   ['/account/','account','.ma-panel'],['/members/','members','.ma-panel'],['/mailing-list/','updates','.ma-panel'],
   ['/privacy/','privacy','.pv-note'],['/stats/','statistics','.usage-card'],
   ['/owner/stats/','owner statistics',null,'Individual statistics require the existing service; the static console has no result card.'],
-  ['/resources/','resources','.rx-cardx'],['/tools/','tools','.tcard'],
+  ['/resources/','resources','.rx-cardx'],['/tools/','tools','.th-card'],
   ['/teach/','teacher workspace','.mbm-task-card'],['/education-hub/','education guidance','.mbm-start-card'],
   ['/for/teachers/','teachers','.fd-subject'],['/for/pupils/','pupils','.fd-subject'],
   ...['parents-carers','schools-semh','trusts','councils-organisations','partners'].map(s=>['/for/'+s+'/','audience '+s,'.ad-card']),
@@ -94,11 +94,11 @@ async function run(){
      row.cardRole=row.cardRoles[0];
     }else{assert(notApplicable);row.cardNotApplicable=notApplicable}
     const nav=page.locator('.mbm-unified-nav');
-    const hub=['/Lessons/','/resources/','/Matt-s-Apps-/','/tools/'].includes(route);
+    const hub=['/Lessons/','/resources/','/tools/'].includes(route);
     // NAV-2: the public row is complete on every shared-header surface;
     // the adult/pupil variant continues to govern Saved and the menu separately.
     row.hubLinkStyles=await require('./check_education_hub_links.cjs').assertPlainLinks(page,hub?1:0);
-    assert.deepEqual(await nav.locator('a').allTextContents(),['Lessons','Resources','Apps & tools','Teacher tools'],'Actual complete public navigation '+route);
+    assert.deepEqual(await nav.locator('a').allTextContents(),['Lessons','Resources','Tools'],'Actual complete public navigation '+route);
     assert.equal(await page.locator('.mbm-unified-saved').count(),row.variant==='adult'?1:0,'Saved ownership '+route);
     assert.equal(await nav.locator('.mbm-unified-about').count(),0,'The public row contains only the four agreed destinations at every width');
     assert.equal(await page.locator('footer .mbm-chrome-signoff').count(),1,'One actual shared footer');

@@ -1,0 +1,193 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Tools Hub — Made by Matt</title>
+<link rel="canonical" href="https://madebymatt.uk/tools/">
+<meta property="og:url" content="https://madebymatt.uk/tools/">
+<meta name="description" content="Offline-first teacher tools — the UAS and ASDAN Registers plus classroom utilities. Free, nothing uploaded, built in a real classroom.">
+<meta name="theme-color" content="#161D3D"><meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt"><meta property="og:image" content="https://madebymatt.uk/assets/og-cover.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://madebymatt.uk/assets/og-cover.png"><link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><link rel="stylesheet" href="../styles.css">
+<style>
+:root{--navy:#161D3D;--lt:#232C55;--mint:#B9E6CD;--mintd:#2F6B4D;--amber:#F2A24A;--ambd:#C97F2E;--cream:#F6F1E4;--dk:#EDE5D2;--card:#FFFDF6;--ink:#1B2140;--mut:#4A5170;--max:1000px}
+.tx-wrap{max-width:var(--max);margin:auto;padding:0 1rem}
+.tx-hero{background:linear-gradient(180deg,var(--cream),var(--dk));border-bottom:1.5px solid #E0D6C0;padding:1.9rem 0 1.4rem}
+.tx-hero .eyebrow{font-size:.7rem;font-weight:800;letter-spacing:.22em;color:var(--ambd)}
+.tx-hero .toprow{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;flex-wrap:wrap}
+.tx-hero h1{font-size:clamp(1.4rem,4.6vw,2rem);color:var(--navy);line-height:1.25;margin:.3rem 0 .2rem;max-width:34rem}
+.tx-hero h1 b{color:var(--ambd)}
+.tx-pill{font-size:.72rem;font-weight:800;background:var(--card);border:1.5px solid #C9C0AB;border-radius:999px;padding:.4rem .9rem;color:var(--ink);white-space:nowrap}
+.tx-trio{display:flex;gap:1.8rem;flex-wrap:wrap;justify-content:flex-start;margin:1.2rem 0 .2rem}
+.tx-trio>div{display:flex;flex-direction:column;align-items:center;gap:.2rem;max-width:170px;text-align:center}
+.tx-trio svg{width:44px;height:44px}
+.tx-trio b{font-size:.78rem;letter-spacing:.12em;color:var(--navy)}
+.tx-trio p{font-size:.7rem;color:var(--mut);line-height:1.4;margin:0}
+.tx-flag{background:var(--cream);padding:1.4rem 0 .4rem}
+.tx-duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1rem}
+.fcard{background:linear-gradient(160deg,#FDF6E4,#FBEDD8);border:2px solid #E0B87A;border-radius:18px;padding:1.1rem 1.1rem 1.15rem;display:flex;flex-direction:column;gap:.55rem}
+.fcard .art{align-self:center;width:min(210px,70%)}
+.fcard .art svg{width:100%;height:auto}
+.fcard .kind{font-size:.64rem;font-weight:800;letter-spacing:.16em;color:var(--ambd)}
+.fcard h2{font-size:1.15rem;color:var(--navy);letter-spacing:.02em}
+.fcard p{font-size:.82rem;color:var(--mut);line-height:1.55;flex:1}
+.facts{display:flex;gap:.55rem;flex-wrap:wrap}
+a.fbtn{font-size:.72rem;font-weight:800;letter-spacing:.06em;text-decoration:none;border-radius:999px;padding:.55rem 1.05rem}
+a.fbtn.p{background:var(--navy);color:#FFF6E8}
+a.fbtn.p:hover{background:var(--lt)}
+a.fbtn.s{border:1.5px solid var(--navy);color:var(--navy)}
+a.fbtn.s:hover{background:var(--card)}
+.tx-tools{background:var(--cream);padding:.9rem 0 1.6rem}
+.tbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin:.4rem 0 .3rem}
+.tsearch{flex:1;min-width:220px;display:flex;background:var(--card);border:2px solid var(--navy);border-radius:999px;overflow:hidden}
+.tsearch input{flex:1;border:0;background:transparent;font:inherit;font-size:.9rem;padding:.6rem 1.1rem;color:var(--ink)}
+.tsearch input:focus{outline:none}
+.tsearch svg{width:20px;height:20px;margin:auto .9rem auto 0}
+.tchips{display:flex;gap:.45rem;flex-wrap:wrap}
+.tchip{font:inherit;font-size:.72rem;font-weight:800;letter-spacing:.06em;color:var(--ink);background:var(--card);border:1.5px solid #C9C0AB;border-radius:999px;padding:.42rem .95rem;cursor:pointer}
+.tchip[aria-pressed="true"]{background:var(--navy);color:var(--mint);border-color:var(--navy)}
+.tcount{font-size:.76rem;color:var(--mut);margin:.3rem 0 .6rem}
+.tx-watch{max-width:520px;margin:1.4rem auto;padding:0 1rem;display:flex;flex-direction:column;gap:.6rem}
+.tx-vidbtn{position:relative;display:block;width:100%;padding:0;border:1.5px solid var(--navy);background:var(--navy);border-radius:16px;overflow:hidden;cursor:pointer;aspect-ratio:16/9}
+.tx-vidbtn img{display:block;width:100%;height:100%;object-fit:cover}
+.tx-vidbtn::after{content:"";position:absolute;left:50%;top:50%;width:60px;height:60px;transform:translate(-50%,-50%);border-radius:50%;background:var(--amber-lt) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 7.5v9l7.5-4.5z' fill='%23161D3D'/%3E%3C/svg%3E") center/58% no-repeat;box-shadow:0 6px 18px rgba(22,29,61,.4)}
+.tx-vidbtn:hover{border-color:var(--mint)}
+.tx-vidbtn:focus-visible{outline:3px solid #B9E6CD;outline-offset:3px}
+.tx-watch iframe{display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:16px;background:var(--navy)}
+.tx-watchcap{font-size:.82rem;line-height:1.5;color:var(--mut);text-align:center;margin:0}
+.tx-watchcap b{color:var(--ink)}
+.tsec{margin:1rem 0 .4rem;font-size:.86rem;letter-spacing:.1em;color:var(--navy);text-transform:uppercase;font-weight:800}
+.tsec small{color:var(--mut);font-weight:700}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.7rem}
+.tcard{background:var(--card);border:1.5px solid #E0D6C0;border-radius:14px;padding:.8rem .85rem;display:flex;flex-direction:column;gap:.35rem}
+.tcard .ci{font-size:1.6rem}
+.tcard h3{font-size:.9rem;color:var(--navy);line-height:1.25;margin:0}
+.tcard p{font-size:.74rem;color:var(--mut);line-height:1.45;margin:0;flex:1}
+a.go{align-self:flex-start;font-size:.66rem;font-weight:800;letter-spacing:.07em;text-decoration:none;color:#FFF6E8;background:var(--navy);border-radius:999px;padding:.42rem .85rem;margin-top:.25rem}
+a.go:hover{background:var(--lt)}
+.bridge{grid-column:1/-1;background:linear-gradient(150deg,#FDF6E4,#FBEDD8);border:2px solid var(--amber);border-radius:14px;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.45rem}
+.bridge .stamp{align-self:flex-start;font-size:.6rem;font-weight:800;letter-spacing:.1em;background:#E4F0E8;color:#2F6B4D;border:1.5px solid #2F6B4D;border-radius:999px;padding:.22rem .65rem}
+.bridge h3{font-size:.95rem;color:var(--navy);margin:0}
+.bridge p{font-size:.78rem;color:var(--mut);line-height:1.5;margin:0}
+.bridge .acts{display:flex;gap:.5rem;flex-wrap:wrap}
+.bridge .acts a{font-size:.68rem;font-weight:800;letter-spacing:.06em;text-decoration:none;border:1.5px solid var(--navy);color:var(--navy);background:var(--card);border-radius:999px;padding:.4rem .9rem}
+.bridge .acts a:hover{background:var(--navy);color:#FFF6E8}
+.commit{background:var(--dk);border-top:1.5px solid #E0D6C0;padding:1.6rem 0}
+.commit blockquote{max-width:640px;margin:auto;font-size:.95rem;line-height:1.65;color:var(--ink);border-left:4px solid var(--amber);padding-left:1rem}
+.commit blockquote b{color:var(--ambd)}
+.commit .sig{display:block;margin-top:.5rem;font-size:.78rem;font-weight:800;letter-spacing:.08em;color:var(--mut)}
+a.fbtn:focus-visible,a.go:focus-visible,.tchip:focus-visible,.bridge .acts a:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.hidden{display:none!important}
+</style><style id="mbmTheme">
+/* Made by Matt — reading themes (shared key mbm_reading_theme) */
+[data-theme="pink"]{--cream:#F9E8EC;--dk:#F3DCE2;--card:#FFF9FA;--ink:#1B2140;--mut:#4A5170}
+[data-theme="blue"]{--cream:#E7EEF7;--dk:#DCE7F3;--card:#F8FBFF;--ink:#1B2140;--mut:#4A5170}
+[data-theme="light"]{--cream:#F7F7F4;--dk:#EFEFEC;--card:#FFFFFF;--ink:#1B2140;--mut:#4A5170}
+[data-theme="dark"]{--cream:#121834;--dk:#0E1430;--card:#1B234A;--ink:#E8E2D4;--mut:#A9B2CC}
+[data-theme="pink"] body{background:#F9E8EC}
+[data-theme="blue"] body{background:#E7EEF7}
+[data-theme="light"] body{background:#F7F7F4}
+[data-theme="dark"] body{background:#121834}
+[data-theme="dark"] .tx-hero,[data-theme="dark"] .tcard,[data-theme="dark"] .commit{border-color:#2E3860}
+[data-theme="dark"] .fcard,[data-theme="dark"] .bridge{background:linear-gradient(150deg,#1F2A52,#182142);border-color:#C97F2E}
+[data-theme="dark"] .bridge .stamp{background:#1E3A2C;color:#B9E6CD;border-color:#2F6B4D}
+[data-theme="dark"] a.fbtn.p,[data-theme="dark"] a.go,[data-theme="dark"] .bridge .acts a:hover{background:#F2A24A;color:#161D3D}
+/* High lumen — projector / IWB. Additive, and measured on the rendered
+   page rather than eyeballed from hex values. Amber stays light: it is a
+   background here, and near-black on it is already 9.05:1. */
+[data-theme="highlumen"]{--cream:#FFFFFF;--dk:#FFFFFF;--card:#FFFFFF;--ink:#000000;--mut:#3A3A3A;--ambd:#7A4A00;--mint:#FFFFFF;--mintd:#0F5132}
+[data-theme="highlumen"] body{background:#FFFFFF}
+[data-theme="highlumen"] .tx-hero,[data-theme="highlumen"] .tcard,[data-theme="highlumen"] .commit{background:#FFFFFF;border-color:#4A4A4A}
+html[data-theme="highlumen"] .tcard h3 em{color:#5C4A00!important}
+[data-theme="highlumen"] .fcard,[data-theme="highlumen"] .bridge{background:#FFFFFF;border-color:#4A4A4A}
+[data-theme="highlumen"] .bridge .stamp{background:#FFFFFF;color:#0F5132;border-color:#0F5132}
+[data-theme="highlumen"] a.fbtn.p,[data-theme="highlumen"] a.go,[data-theme="highlumen"] .bridge .acts a:hover{background:#7A4A00;color:#FFFFFF}
+[data-theme="highlumen"] :focus-visible{outline:3px solid #0B1020;outline-offset:2px}
+</style>
+<script>try{var t=localStorage.getItem('mbm_reading_theme');if(t&&t!=='cream')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="/assets/mbm-platform.css">
+<!-- mbm-chrome:tokens --><link rel="stylesheet" href="/assets/mbm-tokens.css"><!-- /mbm-chrome:tokens -->
+<!-- D4 Tools hub: the drawer below is written by domain-split/tools_hub.py from the Apps catalogue
+     (apps.json) and data/tools-shelves.src.json; every other part of this page is the live shell. -->
+<link rel="stylesheet" href="/assets/tools-hub.css">
+<script defer src="/assets/tools-hub.js"></script>
+</head><body class="mbm-education-hub" data-mbm-adult-features="on">
+<a class="skip" href="#main">Skip to content</a>
+<header class="header mbm-site-header"><div class="bar"><a class="brand" href="/main/"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong></span></a><!-- mbm-chrome:menu --><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><!-- /mbm-chrome:menu --><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/games/">Games</a><a href="/Lessons/">Lessons</a><a href="/Matt-s-Apps-/">Apps</a><a href="/tools/" aria-current="page">Tools</a><a href="/resources/">Resources</a></div><details class="mbm-nav-more"><summary>More</summary><div class="mbm-nav-panel"><a href="/main/">Main homepage</a><a href="/">Choose homepage</a><a href="/stats/">Stats</a><a href="/members/">Members</a><a href="/main/#about">About</a><a href="/privacy/">Privacy</a></div></details><details class="mbm-theme-menu"><summary>Display</summary><div class="mbm-theme-panel"><div class="mbm-theme-slot" data-mbm-theme-slot></div></div></details></nav></div></header>
+<main id="main">
+<section class="tx-hero"><div class="tx-wrap">
+<nav class="education-breadcrumb" aria-label="Breadcrumb"><a href="/">Learning home</a><a href="/Lessons/">Lessons</a><a href="/resources/">All resources</a></nav><p class="eyebrow">Teacher tools</p>
+<div class="toprow"><h1>More teaching.<br>Less paperwork.</h1><span class="tx-pill" id="txTotal">Every tool free</span></div>
+<p class="lead">Find a classroom tool, track evidence or plan your next session. Search below, or choose a collection.</p><nav class="education-jumps" aria-label="Quick tool choices"><a href="#drawer">Find a tool</a><a href="/Matt-s-Apps-/Classroom_Toolkit.html">Timer &amp; name picker</a><a href="/Lessons/?view=saved">Your saved lessons</a></nav><div class="tx-trio" aria-label="How every tool behaves">
+<div class="k1"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="18" y="28" width="28" height="24" rx="6" fill="none" stroke="#B96A14" stroke-width="4"/><path d="M23 28 v-6 a9 9 0 0 1 18 0 v6" fill="none" stroke="#B96A14" stroke-width="4"/><circle cx="32" cy="40" r="3.4" fill="#B96A14"/></svg><b>SECURE</b><p>Nothing uploaded. Data stays on your device.</p></div>
+<div class="k2"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 28 q18-14 36 0 M21 36 q11-9 22 0 M27.5 44 q4.5-4 9 0" fill="none" stroke="#2F6B4D" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="50" r="3" fill="#2F6B4D"/><path d="M16 16 L48 52" stroke="#C25B4E" stroke-width="4.4" stroke-linecap="round"/></svg><b>OFFLINE</b><p>Single-file. Runs without internet.</p></div>
+<div class="k3"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 46 L38 22 l6 6 L20 52 l-8 2 z" fill="none" stroke="#8F7311" stroke-width="4" stroke-linejoin="round"/><path d="M34 26 l6 6" stroke="#8F7311" stroke-width="3"/><path d="M46 14 l6 6" stroke="#8F7311" stroke-width="4" stroke-linecap="round"/></svg><b>TEACHER-BUILT</b><p>Classroom ready. Purpose-built for speed.</p></div>
+</div>
+</div></section>
+<section class="tx-tools" id="drawer"><div class="tx-wrap">
+<form class="th-search" role="search" action="/tools/" method="get" data-tools-search>
+<label for="tq">{{search_label}}</label>
+<div class="th-search-row"><input id="tq" name="q" type="search" autocomplete="off" spellcheck="false"><button type="submit" class="th-btn th-btn-primary">Search</button></div>
+<div class="tchips th-chips" role="group" aria-label="Filter tools">{{chips}}</div>
+<p class="tcount th-status" id="tcount" role="status" aria-live="polite" data-total="{{total_count}}">Showing {{total_count}} of {{total_count}} tools</p>
+</form>
+<nav class="th-shelf-nav" aria-label="Shelves"><a class="th-btn th-btn-outline" href="#classroom">{{classroom_heading}} <span class="th-count">{{classroom_count}}</span></a><a class="th-btn th-btn-outline" href="#studios">{{studios_heading}} <span class="th-count">{{studios_count}}</span></a></nav>
+<div class="th-section" id="classroom" role="region" aria-labelledby="classroom-h" data-shelf-section>
+<div class="th-section-head"><h2 id="classroom-h">{{classroom_heading}}</h2><p class="th-shelf-count"><strong>{{classroom_count}}</strong> classroom tools</p><p class="th-lead">{{classroom_lead}}</p></div>
+{{classroom_groups}}
+<div class="th-collections"><h3>{{collections_heading}}</h3><ul>{{collections}}</ul></div>
+</div>
+<div class="th-section" id="studios" role="region" aria-labelledby="studios-h" data-shelf-section>
+<div class="th-section-head"><h2 id="studios-h">{{studios_heading}}</h2><p class="th-shelf-count"><strong>{{studios_count}}</strong> studios</p><p class="th-lead">{{studios_lead}}</p></div>
+{{studio_groups}}
+</div>
+<p class="th-empty" id="th-empty" hidden>No tool matches that search. <button type="button" class="th-btn th-btn-outline" id="th-clear">Clear the search</button></p>
+</div></section>
+
+
+<section class="tx-flag"><div class="tx-wrap"><div class="tx-duo">
+<article class="fcard"><div class="art"><svg viewBox="0 0 240 210" role="img" aria-label="Stamped AQA outcome sheet — Unit claimed, September 2026"><defs><filter id="txsh1"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#1B2140" flood-opacity=".3"/></filter></defs>
+<g filter="url(#txsh1)"><rect x="52" y="26" width="128" height="160" rx="8" fill="#FFFFFF" transform="rotate(5 116 106)"/><rect x="40" y="20" width="132" height="166" rx="8" fill="#FFFDF6" stroke="#1B214022"/><path d="M148 20 h24 l-0 24 z" fill="#EDE6D4"/><g stroke="#B8BDD1" stroke-width="5" stroke-linecap="round"><path d="M56 52h84M56 68h96M56 84h72M56 100h90M56 116h60"/></g><g stroke="#B9E6CD" stroke-width="5" stroke-linecap="round"><path d="M56 140h44M56 156h58"/></g></g>
+<g filter="url(#txsh1)" transform="rotate(-9 120 128)"><rect x="34" y="96" width="172" height="66" rx="10" fill="#1C2447" stroke="#B9E6CD" stroke-width="4"/><text x="120" y="123" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="17" fill="#B9E6CD" letter-spacing="1">UNIT CLAIMED</text><text x="120" y="149" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="21" fill="#F2A24A">✓ SEPT 2026</text></g></svg></div>
+<span class="kind">TEACHER TOOL · AQA UNIT AWARD SCHEME</span><h2>UAS REGISTER</h2>
+<p>AQA UAS without the paperwork. Import the outcome sheet and it reads the unit for you; tap pupils to date-stamp outcomes; snap photos of work and they file themselves with real AQA references; then download the cover, official summary sheet and every work example as one email-ready PDF.</p>
+<div class="facts"><a class="fbtn p" href="../uas/app.html">OPEN UAS REGISTER →</a><a class="fbtn s" href="../uas/">About &amp; guide</a></div></article>
+<article class="fcard"><div class="art"><svg viewBox="0 0 240 210" role="img" aria-label="Stamped evidence record — Signed off, evidence filed"><defs><filter id="txsh2"><feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#1B2140" flood-opacity=".3"/></filter></defs>
+<g filter="url(#txsh2)"><rect x="52" y="26" width="128" height="160" rx="8" fill="#FFF8EC" transform="rotate(-5 116 106)"/><rect x="40" y="20" width="132" height="166" rx="8" fill="#FFFDF6" stroke="#1B214022"/><path d="M148 20 h24 l0 24 z" fill="#F5DDB8"/><g stroke="#C9BCA4" stroke-width="5" stroke-linecap="round"><path d="M56 52h84M56 68h96M56 84h72M56 100h90M56 116h60"/></g><g stroke="#F2A24A" stroke-width="5" stroke-linecap="round"><path d="M56 140h44M56 156h58"/></g></g>
+<g filter="url(#txsh2)" transform="rotate(7 120 128)"><rect x="34" y="96" width="172" height="66" rx="10" fill="#1C2447" stroke="#F2A24A" stroke-width="4"/><text x="120" y="123" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="20" fill="#F2A24A" letter-spacing="1.5">SIGNED OFF</text><text x="120" y="149" text-anchor="middle" font-family="Poppins,Segoe UI,sans-serif" font-weight="800" font-size="17" fill="#B9E6CD">✓ EVIDENCE FILED</text></g></svg></div>
+<span class="kind">TEACHER TOOL · ASDAN PEQ &amp; SHORT COURSES</span><h2>ASDAN REGISTER</h2>
+<p>PEQ &amp; Short Courses tracking without the spreadsheet wrangling — capture evidence, record sign-off as you go, and export clean records when you need them.</p>
+<div class="facts"><a class="fbtn p" href="../asdan/app.html">OPEN ASDAN REGISTER →</a><a class="fbtn s" href="../asdan/">About &amp; guide</a></div></article>
+</div></div></section>
+
+<section class="tx-watch">
+  <button class="tx-vidbtn" type="button" data-yt="aGy0z4mZEXg"
+    aria-label="Play video: the registers and the PfA toolkit, 27 seconds">
+    <img src="/assets/video/poster-asdan.webp" alt="" width="1280" height="720" loading="lazy">
+  </button>
+  <p class="tx-watchcap"><b>▶ Watch — 27 seconds.</b> The register, the evidence tracker and the 79 lessons behind them.</p>
+</section>
+<style>.hudcard{background:#232C55;border:1.5px solid #3A4470;border-radius:14px;padding:.8rem .85rem;display:flex;flex-direction:column;gap:.35rem}.hudcard .ci{font-size:1.6rem}.hudcard h3{font-size:.9rem;line-height:1.25;margin:0}.hudcard p{font-size:.74rem;line-height:1.45;margin:0}</style>
+<section class="tx-flag" id="hud"><div class="tx-wrap">
+<div class="fcard" style="border-color:#161D3D;background:linear-gradient(160deg,#1B2447,#161D3D);color:#E8E2D4">
+<span class="kind" style="color:#F2A24A">NEW · BUILT INTO 221 LESSONS</span>
+<h2 style="color:#FFF6E8">⚡ THE LIVE-TEACH HUD</h2>
+<p style="color:#C9D1E2;flex:none">Open any current lesson and tap the <b style="color:#B9E6CD">⚡ TEACH</b> pill at the bottom of the screen. A floating dock brings the classroom essentials to you — no tab-switching, no losing the room.</p>
+<div class="tgrid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+<div class="hudcard"><span class="ci" aria-hidden="true">⏱️</span><h3 style="color:#FFF6E8">Quick Timer</h3><p style="color:#AEB6CE">1, 5 or 10 minutes overlaid on the corner of your slides — no jarring alarm, just a gentle pulse at zero.</p></div>
+<div class="hudcard"><span class="ci" aria-hidden="true">🎲</span><h3 style="color:#FFF6E8">Name Picker</h3><p style="color:#AEB6CE">Paste your class list once — it follows you into every lesson and won't repeat until everyone's had a turn.</p></div>
+<div class="hudcard"><span class="ci" aria-hidden="true">📊</span><h3 style="color:#FFF6E8">Noise Meter</h3><p style="color:#AEB6CE">A live volume visualiser using this device's mic only — nothing is ever recorded or uploaded.</p></div>
+<div class="hudcard"><span class="ci" aria-hidden="true">🌿</span><h3 style="color:#FFF6E8">Calm Reset</h3><p style="color:#AEB6CE">One tap replaces the screen with a slow breathing guide — connection before correction, then tap to return.</p></div>
+</div>
+<div class="facts" style="margin-top:.6rem"><a class="fbtn p" style="background:#F2A24A;color:#161D3D" href="../Lessons/">Open a lesson and try it →</a></div>
+</div>
+</div></section>
+
+
+
+<section class="commit"><div class="tx-wrap">
+<blockquote>"All my tools are <b>free</b> to use. Absolutely <b>nothing is uploaded</b> — your data stays on your device. Everything is <b>offline-friendly</b> and <b>teacher-built</b>, tried and tested in front of real classes."
+<span class="sig">— MATT · MADE BY MATT</span></blockquote>
+</div></section>
+</main>
+<footer class="footer"><div class="bar"><div class="brand"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></div><span class="muted">Lessons and teaching tools · madebymatt.uk</span></div><div class="mbm-kofi" style="max-width:640px;margin:18px auto 6px;background:#161D3D;border:1px solid rgba(185,230,205,.35);border-radius:10px;padding:16px 18px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;justify-content:space-between"><p style="font-size:.85rem;color:#C9D1E2;line-height:1.45;max-width:380px;margin:0;text-align:left;text-transform:none;letter-spacing:normal"><strong style="color:#E8E2D4">Everything here is free to use.</strong> If a tool has saved you an evening, a coffee helps cover hosting, domains and development time.</p><a href="https://ko-fi.com/madebymattuk" rel="noopener noreferrer" target="_blank" aria-label="Support Made by Matt on Ko-fi — opens in a new tab" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;background:#F2A24A;color:#161D3D;font-weight:700;font-size:.9rem;padding:10px 18px;border-radius:8px;text-decoration:none;box-shadow:0 2px 0 #C97F2E">☕ Support Made by Matt</a></div>
+<p class="mbm-contact" style="text-align:center;font-size:.85rem;opacity:.85;margin:16px auto 10px;max-width:90%">Questions, ideas or bug reports — <a href="mailto:contactmadebymatt@gmail.com" style="color:inherit;font-weight:600">contactmadebymatt@gmail.com</a></p></footer>
+<script>(function(){var m=document.getElementById("menu"),n=document.getElementById("nav");if(m&&n)m.addEventListener("click",function(){var open=n.classList.toggle("open");m.setAttribute("aria-expanded",open?"true":"false")})})();</script>
+<script defer src="/theme.js"></script>
+<script defer src="/assets/mbm-platform.js"></script>
+</body></html>

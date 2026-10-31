@@ -146,8 +146,8 @@ const HOME_TRUTH_REGIONS = Object.freeze([
 const TOOLS_TRUTH_REGIONS = Object.freeze([
   {
     name: 'accreditation-tool-cards',
-    pattern: /(<div\b(?=[^>]*\bclass=["']tgrid["'])(?=[^>]*\bdata-sec=["']acc["'])[^>]*>)\s*(?:<article\b(?=[^>]*\bclass=["']tcard["'])(?=[^>]*\bdata-cat=["']acc["'])[^>]*>[\s\S]*?<\/article>\s*)+/i,
-    replacement: '$1__MBM_AUTHORISED_TOOLS_ACC_CARDS__\n'
+    pattern: /(<div\b(?=[^>]*\bclass=["']tgrid["'])(?=[^>]*\bdata-sec=["']acc["'])[^>]*>)\s*(?:<article\b(?=[^>]*\bclass=["']tcard["'])(?=[^>]*\bdata-cat=["']acc["'])[^>]*>[\s\S]*?<\/article>\s*)+|(<div\b(?=[^>]*\bclass=["']th-group["'])(?=[^>]*\bid=["']classroom-accreditation["'])[^>]*>\s*<h3\b[\s\S]*?<\/h3>\s*<ul\b[^>]*\bclass=["']th-grid["'][^>]*>)\s*(?:<li\b(?=[^>]*\bclass=["']tcard["'])(?=[^>]*\bdata-cat=["']acc["'])[^>]*>[\s\S]*?<\/li>\s*)+/i,
+    replacement: '$1$2__MBM_AUTHORISED_TOOLS_ACC_CARDS__\n'
   }
 ]);
 
@@ -576,7 +576,7 @@ const SELF_TEST_CONTROLS = Object.freeze([
   {
     name: 'tools hub: unrelated utility wording stays protected after reorder',
     page: 'tools/index.html',
-    mutate: html => requireMutation(html, 'Name picker, timer, groups and noise meter — ready on the whiteboard.', 'Unapproved new classroom claim.', 'tools utility wording mutation'),
+    mutate: html => requireMutation(html, '<h2 id="classroom-h">Classroom tools</h2>', '<h2 id="classroom-h">Unapproved new classroom claim</h2>', 'tools utility wording mutation'),
     expect: 'new-finding-matching',
     needle: 'authored body wording changed'
   },
@@ -603,8 +603,8 @@ const SELF_TEST_CONTROLS = Object.freeze([
     page: 'tools/index.html',
     mutate: (html) => requireMutation(
       html,
-      '<div class="bridge">',
-      '<article class="tcard" data-cat="acc" data-s="control probe"><span class="ci" aria-hidden="true">\u2705</span><h3>Control Probe</h3><p>Inserted by the self-test.</p><a class="go" href="../tools/">OPEN →</a></article>\n<div class="bridge">',
+      '</ul></div><div class="th-group" id="classroom-utilities"',
+      '<li class="tcard" data-cat="acc" data-s="control probe"><a class="th-card" href="/tools/" data-shelf="classroom" data-search="control probe"><span class="th-card-body"><span class="th-card-title">Control Probe</span><span class="th-card-desc">Inserted by the self-test.</span></span></a></li></ul></div><div class="th-group" id="classroom-utilities"',
       'tools accreditation-card mutation'
     ),
     expect: 'no-new-findings'
@@ -614,8 +614,8 @@ const SELF_TEST_CONTROLS = Object.freeze([
     page: 'tools/index.html',
     mutate: (html) => requireMutation(
       html,
-      'THE PROGRAMMES THE REGISTERS TRACK',
-      'THE PROGRAMMES THESE REGISTERS TRACK',
+      'Lesson collections that feed these registers',
+      'Lesson collections that feed all registers',
       'tools out-of-region prose mutation'
     ),
     expect: 'new-finding-matching',
