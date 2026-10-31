@@ -1,9 +1,12 @@
 /* Tools hub (D4). Same vocabulary as the homepage sheet (home.css): tokens only,
-   card radius and shadow from the token sheet, 44 px targets, no colour typed here. */
-.th-main{color:var(--mbm-primary);background-color:var(--mbm-bg)}
-.th-main *,.th-main *::before,.th-main *::after{box-sizing:border-box}
-/* The page owns its footer, so its links meet the 44 px rule here even where the estate footer does not yet. */
-.th-main ~ .footer .footer-links a{display:inline-flex;align-items:center;min-height:var(--mbm-tap);padding-inline:.25rem}
+   card radius and shadow from the token sheet, 44 px targets, no colour typed here.
+   The hub lives inside the live page's drawer (#drawer); the page shell styles everything else. */
+#drawer *,#drawer *::before,#drawer *::after{box-sizing:border-box}
+/* Drawer items carry the page's existing card class (.tcard) for its search and filter
+   controls; the card box itself is the link inside, so the item wrapper draws nothing. */
+#drawer li.tcard{display:block;background:none;border:0;border-radius:0;padding:0;gap:0}
+#drawer .th-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
+#drawer .th-chips .tchip{min-height:var(--mbm-tap)}
 .th-wrap{width:100%;max-width:72rem;margin-inline:auto;padding-inline:16px}
 .th-kicker{margin:0 0 .25rem;font-size:.8125rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mbm-accent)}
 .th-masthead{padding-block:2rem 1.5rem;background-color:var(--mbm-card);border-bottom:1px solid var(--mbm-primary)}

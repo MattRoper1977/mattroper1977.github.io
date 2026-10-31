@@ -180,9 +180,11 @@ def refresh(output, lessons, apps, site_source):
     app_path.write_text(text)
 
     # D4: tools/index.html is written by tools_hub.build() (see below); nothing is injected here.
+    # The page copy above (shell cleaning, the education-navigation stylesheet) is preserved:
+    # the build replaces only the page's drawer.
     from tools_hub import build as build_tools_hub
     build_tools_hub(app_root/'apps.json', site_source/'data/tools-shelves.src.json',
-                    site_source/'tools/index.template.html', site, '/Matt-s-Apps-/')
+                    site_source/'tools/index.template.html', site, '/Matt-s-Apps-/', preserve_shell=True)
 
     # UX2 B2: the homepage carries no learning-areas bar (its "Three places, one
     # site" cards and the menu's Learning group are those destinations) and no

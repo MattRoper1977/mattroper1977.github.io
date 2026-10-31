@@ -128,7 +128,22 @@ def verify_tree_census(actual, name, registry):
 
 def verify(output, registry_path=REGISTRY):
     registry = load_registry(registry_path)
-    return [verify_tree(output/name, name, registry) for name in TREES]
+    # TEMPORARY DIAGNOSTIC (landing lane, reverted in the next commit): census all three trees
+    # before refusing, and print each refused path's built digest and size so the admission rows
+    # are generated from the bytes CI builds. Every refusal still blocks publication.
+    results, problems = [], []
+    for name in TREES:
+        try:
+            results.append(verify_tree(output/name, name, registry))
+        except ValueError as error:
+            if not str(error).startswith('Education file admission blocked publication:'):
+                raise
+            for line in str(error).splitlines()[1:]:
+                file = output/line.split(' ', 1)[1]
+                problems.append(line + (' sha256=%s bytes=%d' % (hashlib.sha256(file.read_bytes()).hexdigest(), file.stat().st_size) if file.is_file() else ''))
+    if problems:
+        raise ValueError('Education file admission blocked publication:\n'+'\n'.join(problems))
+    return results
 
 
 def propose(output, destination, source_notes):

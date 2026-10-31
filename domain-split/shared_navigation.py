@@ -290,7 +290,7 @@ def refresh(output, site_source):
               # out of their shared menu and leave the source catalogue intact.
               (output / 'education-lessons/subject.html', '/Lessons/subject.html', False),
               (output / 'education-lessons/primary/index.html', '/Lessons/primary/', False),
-              ]
+              (output / 'education-apps/index.html', '/Matt-s-Apps-/', False)]
     # Auth controls remain server-side. These mixed teaching catalogues are not
     # declared adult surfaces, so they take the privacy-only drawer, as the
     # subject pages do: undeclared = privacy-only.

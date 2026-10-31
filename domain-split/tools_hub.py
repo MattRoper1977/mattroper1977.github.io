@@ -3,11 +3,18 @@
 Usage: python3 tools_hub.py <apps.json> <tools-shelves.src.json> <template.html> <out-dir> [<apps-route>]
 
 Writes <out-dir>/tools/index.html and <out-dir>/data/tools-shelves.json (the
-registry of record for the two shelf counts). Every string on the page comes
-from apps.json or the source file; the template holds markup and slots only.
-The build refuses: a catalogue item left off both shelves, an item placed
-twice, a classroom item without a group, an unknown group or space glyph, a
-slot left unfilled, or a leftover slot in the output.
+registry of record for the two shelf counts). Every string in the drawer comes
+from apps.json or the source file; the template is the live /tools/ shell with
+the drawer's interior as slots. The build refuses: a catalogue item left off
+both shelves, an item placed twice, a classroom item without a group, an
+unknown group or space glyph, a slot left unfilled, or a leftover slot in the
+output, and it holds the shell contract: one h1, the tq control, the tcount
+status, exactly one drawer, and no section inside the drawer (the approved
+section order of the page is unchanged).
+
+With preserve_shell=True (the education build), an existing tools/index.html in
+<out-dir> keeps everything the page copy added; only its drawer is replaced by
+the freshly built drawer.
 """
 import json, re, sys
 from html import escape
@@ -28,6 +35,10 @@ GLYPHS = {
  'pencil': '<path d="M4 20l4-1L19 8l-3-3L5 16l-1 4Z"/><path d="m14 7 3 3"/>',
  'arrow': '<path d="M5 12h14M13 6l6 6-6 6"/>',
 }
+# Filter categories carried on every drawer item (data-cat), read by the chips.
+GROUP_CATEGORY = {'accreditation': 'acc', 'utilities': 'util', 'planning': 'plan'}
+STUDIO_CATEGORY, COLLECTION_CATEGORY = 'studio', 'collection'
+DRAWER = re.compile(r'<section class="tx-tools" id="drawer">[\s\S]*?</section>')
 
 def svg(name, size=24):
     if name not in GLYPHS: raise ValueError('Unknown glyph: ' + name)
@@ -40,22 +51,35 @@ def slug(text):
 def href_for(file, apps_route):
     return file if file.startswith(('http://', 'https://', '/')) else apps_route + file
 
-def card(title, desc, href, glyph, shelf, group, new=False):
-    search = ' '.join([title, desc or '', group]).lower()
+def card(title, desc, href, glyph, shelf, group, category, new=False):
+    search = escape(' '.join([title, desc or '', group]).lower(), quote=True)
     badge = '<span class="th-badge">New</span>' if new else ''
-    return ('<li><a class="th-card" href="%s" data-shelf="%s" data-search="%s">'
+    return ('<li class="tcard" data-cat="%s" data-s="%s"><a class="th-card" href="%s" data-shelf="%s" data-search="%s">'
             '<span class="th-card-icon">%s</span><span class="th-card-body"><span class="th-card-title">%s%s</span>'
             '<span class="th-card-desc">%s</span></span><span class="th-card-arrow" aria-hidden="true">%s</span></a></li>'
-            % (escape(href, quote=True), shelf, escape(search, quote=True), svg(glyph), escape(title), badge,
+            % (category, search, escape(href, quote=True), shelf, search, svg(glyph), escape(title), badge,
                escape(desc or ''), svg('arrow', 18)))
 
 def group_block(gid, title, glyph, cards, shelf):
     n = len(cards)
-    return ('<section class="th-group" id="%s-%s" data-group aria-labelledby="%s-%s-h">'
+    return ('<div class="th-group" id="%s-%s" data-group role="region" aria-labelledby="%s-%s-h">'
             '<h3 id="%s-%s-h"><span class="th-group-icon">%s</span>%s <span class="th-count" data-group-count>%d</span></h3>'
-            '<ul class="th-grid">%s</ul></section>' % (shelf, gid, shelf, gid, shelf, gid, svg(glyph, 20), escape(title), n, ''.join(cards)))
+            '<ul class="th-grid">%s</ul></div>' % (shelf, gid, shelf, gid, shelf, gid, svg(glyph, 20), escape(title), n, ''.join(cards)))
 
-def build(apps_path, src_path, template_path, out_dir, apps_route='/apps/'):
+def drawer_of(text, label):
+    found = DRAWER.findall(text)
+    if len(found) != 1: raise ValueError('Shell contract: exactly one drawer in ' + label)
+    return found[0]
+
+def check_contract(text):
+    if text.count('<h1') != 1 or 'id="tq"' not in text or 'id="tcount"' not in text:
+        raise ValueError('Page contract: one h1, the tq search control and the tcount status')
+    if drawer_of(text, 'page').count('<section') != 1:
+        raise ValueError('Shell contract: no section inside the drawer (approved section order)')
+    for asset in ('/assets/tools-hub.css', '/assets/tools-hub.js'):
+        if asset not in text: raise ValueError('Page contract: missing ' + asset)
+
+def build(apps_path, src_path, template_path, out_dir, apps_route='/apps/', preserve_shell=False):
     apps = json.loads(Path(apps_path).read_text(encoding='utf8'))
     src = json.loads(Path(src_path).read_text(encoding='utf8'))
     s = src['strings']
@@ -74,19 +98,19 @@ def build(apps_path, src_path, template_path, out_dir, apps_route='/apps/'):
             if cat == src['classroomSpace']:
                 gid = by_file.get(key)
                 if gid is None or gid not in groups: raise ValueError('Classroom item without a known group: ' + key)
-                classroom[gid].append(card(item['n'], item.get('d'), href, groups[gid]['glyph'], 'classroom', groups[gid]['title'], item.get('new')))
+                classroom[gid].append(card(item['n'], item.get('d'), href, groups[gid]['glyph'], 'classroom', groups[gid]['title'], GROUP_CATEGORY[gid], item.get('new')))
                 registry['classroom'].append({'title': item['n'], 'href': href, 'group': gid, 'source': 'apps.json'})
             else:
                 glyph = src['studioGlyphs'].get(cat)
                 if glyph is None: raise ValueError('Space without a glyph: ' + cat)
-                studios.append((cat, glyph, card(item['n'], item.get('d'), href, glyph, 'studios', cat, item.get('new'))))
+                studios.append((cat, glyph, card(item['n'], item.get('d'), href, glyph, 'studios', cat, STUDIO_CATEGORY, item.get('new'))))
                 registry['studios'].append({'title': item['n'], 'href': href, 'space': cat, 'source': 'apps.json'})
             placed[key] = True
     for t in src['siteTools']:
         if t['group'] not in groups: raise ValueError('Site tool with unknown group: ' + t['title'])
         if t['href'] in placed: raise ValueError('Site tool duplicates a catalogue route: ' + t['href'])
         placed[t['href']] = True
-        classroom[t['group']].append(card(t['title'], t['description'], t['href'], groups[t['group']]['glyph'], 'classroom', groups[t['group']]['title']))
+        classroom[t['group']].append(card(t['title'], t['description'], t['href'], groups[t['group']]['glyph'], 'classroom', groups[t['group']]['title'], GROUP_CATEGORY[t['group']]))
         registry['classroom'].append({'title': t['title'], 'href': t['href'], 'group': t['group'], 'source': 'tools-shelves.src.json'})
     total_manifest = sum(len(sp['items']) for sp in apps['spaces'])
     if len(registry['classroom']) + len(registry['studios']) != total_manifest + len(src['siteTools']):
@@ -99,37 +123,41 @@ def build(apps_path, src_path, template_path, out_dir, apps_route='/apps/'):
         if cat not in by_space: spaces_order.append((cat, glyph)); by_space[cat] = []
         by_space[cat].append(c)
     studios_html = ''.join(group_block(slug(cat), cat, glyph, by_space[cat], 'studios') for cat, glyph in spaces_order)
-    facts = ''.join('<li><span class="th-fact-icon">%s</span><b>%s</b><span>%s</span></li>' % (svg(f['glyph'], 22), escape(f['title']), escape(f['text'])) for f in s['facts'])
-    dock = ''.join('<li><h3>%s</h3><p>%s</p></li>' % (escape(d['title']), escape(d['text'])) for d in s['dock'])
-    collections = ''.join('<li><a href="%s">%s</a></li>' % (escape(c['href'], quote=True), escape(c['label'])) for c in s['collections'])
+    collections = ''.join('<li class="tcard th-collection" data-cat="%s" data-s="%s"><a href="%s">%s</a></li>'
+                          % (COLLECTION_CATEGORY, escape((c['label'] + ' ' + c['href']).lower(), quote=True),
+                             escape(c['href'], quote=True), escape(c['label'])) for c in s['collections'])
+    chip = '<button type="button" class="tchip" data-cat="%s" aria-pressed="%s">%s</button>'
+    chips = (chip % ('', 'true', escape(s['allChip']))
+             + ''.join(chip % (GROUP_CATEGORY[g['id']], 'false', escape(g['title'])) for g in src['classroomGroups'] if classroom[g['id']])
+             + (chip % (STUDIO_CATEGORY, 'false', escape(s['studiosHeading'])) if studios else ''))
     values = {
-        'title': s['title'], 'kicker': s['kicker'], 'h1': s['h1'], 'descriptor': s['descriptor'],
-        'meta_description': s['metaDescription'], 'search_label': s['searchLabel'],
+        'search_label': s['searchLabel'],
         'classroom_heading': s['classroomHeading'], 'classroom_lead': s['classroomLead'],
         'studios_heading': s['studiosHeading'], 'studios_lead': s['studiosLead'],
         'classroom_count': str(n_class), 'studios_count': str(n_stud), 'total_count': str(n_class + n_stud),
-        'dock_heading': s['dockHeading'], 'dock_lead': s['dockLead'],
-        'dock_href': s['dockLink']['href'], 'dock_label': s['dockLink']['label'],
         'collections_heading': s['collectionsHeading'],
-        'quote': s['quote'], 'quote_by': s['quoteBy'],
-        'lessons_href': s['lessonsLink']['href'], 'lessons_label': s['lessonsLink']['label'],
-        'resources_href': s['resourcesLink']['href'], 'resources_label': s['resourcesLink']['label'],
     }
-    raw = {'classroom_groups': classroom_html, 'studio_groups': studios_html, 'facts': facts, 'dock': dock,
-           'collections': collections, 'glyph_search': svg('arrow', 18)}
+    raw = {'classroom_groups': classroom_html, 'studio_groups': studios_html, 'collections': collections, 'chips': chips}
     text = Path(template_path).read_text(encoding='utf8')
     for k, v in values.items(): text = text.replace('{{' + k + '}}', escape(v))
     for k, v in raw.items(): text = text.replace('{{' + k + '}}', v)
     left = re.findall(r'\{\{[a-z_]+\}\}', text)
     if left: raise ValueError('Unfilled slots: ' + ', '.join(sorted(set(left))))
-    if text.count('<h1') != 1 or 'id="tq"' not in text: raise ValueError('Page contract: one h1 and the tq search control')
+    check_contract(text)
     out = Path(out_dir)
+    page = out / 'tools' / 'index.html'
+    if preserve_shell and page.is_file():
+        # Keep every element the page copy added (shell cleaning, stylesheets); replace only the drawer.
+        existing = page.read_text(encoding='utf8')
+        text = existing.replace(drawer_of(existing, str(page)), drawer_of(text, 'template'), 1)
+        check_contract(text)
     (out / 'tools').mkdir(parents=True, exist_ok=True); (out / 'data').mkdir(parents=True, exist_ok=True)
-    (out / 'tools' / 'index.html').write_text(text, encoding='utf8')
+    with open(page, 'w', encoding='utf8', newline='\n') as f: f.write(text)
     reg = {'version': 1, 'route': src['route'], 'counts': {'classroom': n_class, 'studios': n_stud, 'total': n_class + n_stud},
            'labels': {'classroom': '%d classroom tools' % n_class, 'studios': '%d studios' % n_stud},
            'shelves': registry}
-    (out / 'data' / 'tools-shelves.json').write_text(json.dumps(reg, ensure_ascii=False, indent=1) + '\n', encoding='utf8')
+    with open(out / 'data' / 'tools-shelves.json', 'w', encoding='utf8', newline='\n') as f:
+        f.write(json.dumps(reg, ensure_ascii=False, indent=1) + '\n')
     return reg['counts']
 
 if __name__ == '__main__':
