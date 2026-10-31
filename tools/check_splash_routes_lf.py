@@ -16,7 +16,11 @@ loudly and by name, instead of quietly agreeing.
 
 Reads in binary on purpose: a text-mode read is exactly what hides the CR.
 
-    python3 tools/check_splash_routes_lf.py [--root .] [--self-test]
+    python3 tools/check_splash_routes_lf.py [--root .] [--self-test] [--lessons <Lessons checkout>]
+
+The ledger lists Site routes only, so the cross-check compares it with the Site-owned coverage rows.
+With --lessons, the Lessons-owned rows at the current region are LF-checked too, as files in that
+checkout (the Lessons-owned rows job passes its pinned checkout).
 """
 import argparse
 import json
@@ -49,9 +53,19 @@ def agrees_with_coverage(root, derived):
     """
     record = json.loads((root / COVERAGE).read_text(encoding='utf-8'))
     current = record['summary']['generatorRegionSha256']
-    rows = {r['route'] for r in record['rows'] if r.get('regionSha256') == current}
+    # The ledger declares Site routes only; Lessons-owned rows carry the region from the Lessons
+    # re-stamp and are checked against the Lessons checkout instead (lessons_current below).
+    rows = {r['route'] for r in record['rows'] if r.get('regionSha256') == current and r.get('owner') == 'Site'}
     ledger = {'/' + str(p.parent.relative_to(root)) + '/' for p in derived}
     return rows, ledger
+
+
+def lessons_current(root, lessons):
+    """The Lessons-owned rows the coverage record marks current, as files in the Lessons checkout."""
+    record = json.loads((root / COVERAGE).read_text(encoding='utf-8'))
+    current = record['summary']['generatorRegionSha256']
+    return [lessons / r['file'] for r in record['rows']
+            if r.get('owner') == 'Lessons' and r.get('regionSha256') == current]
 
 
 def offenders(paths):
@@ -70,6 +84,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=pathlib.Path, default=pathlib.Path('.'))
     parser.add_argument('--self-test', action='store_true')
+    parser.add_argument('--lessons', type=pathlib.Path, help='Lessons checkout: also refuse a CR in its current rows')
     args = parser.parse_args()
 
     if args.self_test:
@@ -103,6 +118,8 @@ def main():
         print('  in coverage only   :', sorted(rows - ledger) or 'none')
         return 1
     paths = derived + [args.root / CANONICAL]
+    if args.lessons:
+        paths += lessons_current(args.root, args.lessons)
     found = offenders(paths)
     if found:
         print('CR bytes in splash-stamped files -- %d path(s)' % len(found))
