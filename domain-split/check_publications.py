@@ -32,6 +32,13 @@ def main():
     assert set(education['publications'])=={'site','lessons','apps'}
     assert (site/'CNAME').read_text().strip()=='madebymatt.uk'
     assert (games/'CNAME').read_text().strip()=='madebymatt-play.uk'
+    robots_txt = (games/'robots.txt').read_text(encoding='utf-8')
+    assert 'Sitemap: https://www.madebymatt-play.uk/sitemap.xml' in robots_txt
+    sitemap_xml = (games/'sitemap.xml').read_text(encoding='utf-8')
+    locs = re.findall(r'<loc>([^<]+)</loc>', sitemap_xml)
+    assert len(locs) == 75 and all(u.startswith('https://www.madebymatt-play.uk/') and ' ' not in u and '(' not in u and ')' not in u for u in locs)
+    for util_r in ('/privacy/', '/game-saves/', '/stats/', '/stats/on-this-device/'):
+        assert f'https://www.madebymatt-play.uk{util_r}' in locs
     assert len(report['payloads'])==69
     for item in report['payloads']:
         p=games/item['path'];assert p.is_file()
