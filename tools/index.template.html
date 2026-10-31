@@ -1,0 +1,62 @@
+<!doctype html><html lang="en-GB"><head>
+<!-- mbm-support-buttons-2026-08-12 -->
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{title}}</title>
+<link rel="canonical" href="https://madebymatt.uk/tools/"><meta name="description" content="{{meta_description}}"><meta name="theme-color" content="#0F1530"><meta property="og:title" content="{{title}}"><meta property="og:description" content="{{descriptor}}"><meta property="og:type" content="website"><meta property="og:url" content="https://madebymatt.uk/tools/">
+<link rel="icon" href="../favicon.svg"><link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<!--
+  D4 Tools hub (owner decision 26 Oct 2026): one hub, two shelves, one route.
+  Built by domain-split/tools_hub.py from the Apps catalogue (apps.json) and
+  data/tools-shelves.src.json. Counts are written at build and recorded in
+  data/tools-shelves.json; nothing on this page is counted in the browser.
+-->
+<script>try{var t=localStorage.getItem('mbm_reading_theme');if(t&&t!=='cream')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<link rel="stylesheet" href="/assets/mbm-platform.css"><script defer src="/assets/mbm-platform.js"></script>
+<!-- mbm-chrome:tokens --><link rel="stylesheet" href="/assets/mbm-tokens.css"><!-- /mbm-chrome:tokens -->
+<link rel="stylesheet" href="/assets/tools-hub.css">
+<script defer src="/assets/tools-hub.js"></script>
+</head><body class="mbm-education-hub" data-mbm-adult-features="on">
+<a class="skip" href="#main">Skip to content</a>
+<header class="header mbm-site-header"><div class="bar"><a class="brand" href="/main/"><img src="../assets/brand/micro_mark.svg" alt=""><span><strong>MADE BY MATT</strong></span></a><!-- mbm-chrome:menu --><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><!-- /mbm-chrome:menu --><nav class="nav mbm-site-nav" id="nav" aria-label="Site navigation"><div class="mbm-primary-links"><a href="/games/">Games</a><a href="/Lessons/">Lessons</a><a href="/tools/" aria-current="page">Tools</a><a href="/resources/">Resources</a></div></nav></div></header>
+<main id="main" class="th-main">
+<section class="th-masthead" aria-labelledby="th-title"><div class="th-wrap">
+<p class="th-kicker">{{kicker}}</p>
+<h1 id="th-title">{{h1}}</h1>
+<p class="th-descriptor">{{descriptor}}</p>
+<form class="th-search" role="search" action="/tools/" method="get" data-tools-search>
+<label for="tq">{{search_label}}</label>
+<div class="th-search-row"><input id="tq" name="q" type="search" autocomplete="off" spellcheck="false"><button type="submit" class="th-btn th-btn-primary">Search</button></div>
+<p class="th-status" id="th-count" role="status" aria-live="polite" data-total="{{total_count}}"></p>
+</form>
+<nav class="th-shelf-nav" aria-label="Shelves">
+<a class="th-btn th-btn-outline" href="#classroom">{{classroom_heading}} <span class="th-count">{{classroom_count}}</span></a>
+<a class="th-btn th-btn-outline" href="#studios">{{studios_heading}} <span class="th-count">{{studios_count}}</span></a>
+</nav>
+<ul class="th-facts" aria-label="How every tool behaves">{{facts}}</ul>
+</div></section>
+
+<section class="th-section" id="classroom" aria-labelledby="classroom-h" data-shelf-section><div class="th-wrap">
+<div class="th-section-head"><h2 id="classroom-h">{{classroom_heading}}</h2><p class="th-shelf-count"><strong>{{classroom_count}}</strong> classroom tools</p><p class="th-lead">{{classroom_lead}}</p></div>
+{{classroom_groups}}
+<div class="th-collections"><h3>{{collections_heading}}</h3><ul>{{collections}}</ul></div>
+</div></section>
+
+<section class="th-section" id="studios" aria-labelledby="studios-h" data-shelf-section><div class="th-wrap">
+<div class="th-section-head"><h2 id="studios-h">{{studios_heading}}</h2><p class="th-shelf-count"><strong>{{studios_count}}</strong> studios</p><p class="th-lead">{{studios_lead}}</p></div>
+{{studio_groups}}
+</div></section>
+
+<p class="th-empty th-wrap" id="th-empty" hidden>No tool matches that search. <button type="button" class="th-btn th-btn-outline" id="th-clear">Clear the search</button></p>
+
+<section class="th-section th-dock" id="dock" aria-labelledby="dock-h" data-static><div class="th-wrap">
+<div class="th-section-head"><h2 id="dock-h">{{dock_heading}}</h2><p class="th-lead">{{dock_lead}}</p></div>
+<ul class="th-dock-list">{{dock}}</ul>
+<p><a class="th-btn th-btn-primary" href="{{dock_href}}">{{dock_label}} <span aria-hidden="true">→</span></a></p>
+</div></section>
+
+<section class="th-section th-maker" aria-label="A note from the maker" data-static><div class="th-wrap th-maker-inner">
+<blockquote class="th-quote"><p>{{quote}}</p><footer>{{quote_by}}</footer></blockquote>
+<p class="th-elsewhere"><a href="{{lessons_href}}">{{lessons_label}} <span aria-hidden="true">→</span></a> <a href="{{resources_href}}">{{resources_label}} <span aria-hidden="true">→</span></a></p>
+</div></section>
+</main>
+<footer class="footer"><div class="wrap footer-row"><nav class="footer-links" aria-label="Learning footer"><a href="/Lessons/">Lessons</a><span aria-hidden="true"> · </span><a href="/resources/">Resources</a><span aria-hidden="true"> · </span><a href="/tools/">Tools</a><span aria-hidden="true"> · </span><a href="/privacy/">Privacy</a><span aria-hidden="true"> · </span><a href="https://www.madebymatt-play.uk/" rel="noopener">Made by Matt Play ↗</a></nav><div><p><strong>Made by Matt · Tools</strong></p><p><small>Learn • Build • Explore</small></p></div></div></footer>
+</body></html>

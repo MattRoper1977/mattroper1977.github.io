@@ -179,20 +179,10 @@ def refresh(output, lessons, apps, site_source):
                         '$("#pdf-studio-feature").hidden=!!(Q||CAT||AUD);\nconst spaces=DATA.spaces.map')
     app_path.write_text(text)
 
-    tools_path = site/'tools/index.html'
-    text = tools_path.read_text()
-    card = ('<article class="tcard" data-cat="util" data-s="pdf pdf generator pdf studio annotate create merge split extract rotate pages">'
-            '<span class="ci" aria-hidden="true">📄</span><h3>PDF Studio</h3><p>'+PDF_DESCRIPTION+'</p>'
-            '<a class="go" href="'+PDF+'">OPEN PDF STUDIO →</a></article>')
-    text = replace_once(text, '<div class="tgrid" data-sec="util">', '<div class="tgrid" data-sec="util">'+card)
-    for pathway in PATHWAYS:
-        card = ('<article class="tcard" data-cat="browse" data-s="asdan '+pathway.lower()+' learning resources worksheets packs collection">'
-                '<h3>'+pathway+' ASDAN learning resources</h3><p>Open the existing lesson collection and teaching resources.</p>'
-                '<a class="go" href="/Lessons/'+pathway+'_ASDAN/'+pathway+'_ASDAN_Hub.html">OPEN LEARNING COLLECTION →</a></article>')
-        text = replace_once(text, '<div class="tgrid" data-sec="browse">', '<div class="tgrid" data-sec="browse">'+card)
-    text = replace_once(text, '<a href="#drawer">Find a tool</a>', '<a href="#drawer">Find a tool</a><a href="'+PDF+'">PDF Studio</a><a href="/Matt-s-Apps-/">All apps &amp; studios</a>')
-    text = text.replace('href="../asdan/app.html"', 'href="/asdan/"')
-    tools_path.write_text(text)
+    # D4: tools/index.html is written by tools_hub.build() (see below); nothing is injected here.
+    from tools_hub import build as build_tools_hub
+    build_tools_hub(app_root/'apps.json', site_source/'data/tools-shelves.src.json',
+                    site_source/'tools/index.template.html', site, '/Matt-s-Apps-/')
 
     # UX2 B2: the homepage carries no learning-areas bar (its "Three places, one
     # site" cards and the menu's Learning group are those destinations) and no

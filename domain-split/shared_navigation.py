@@ -86,10 +86,10 @@ GROUP_WHO = 'Who are you here for?'
 GROUP_ACCOUNT = 'Your account'
 PLAY_LABEL = 'Made by Matt Play ↗'
 LEARNING = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
-            ('/Matt-s-Apps-/', 'Apps & tools'), ('/Lessons/primary/', 'Primary lessons')]
+            ('/tools/', 'Tools'), ('/Lessons/primary/', 'Primary lessons')]
 LEARNING_PUPIL = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'), ('/Lessons/primary/', 'Primary lessons')]
 HUB_LINKS = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
-             ('/Matt-s-Apps-/', 'Apps & tools'), ('/tools/', 'Teacher tools')]
+             ('/tools/', 'Tools')]
 ACCOUNT = [('/account/', 'Account and members'), ('/mailing-list/', 'Teacher updates'),
            ('/privacy/', 'Privacy and statistics')]
 ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]
@@ -290,7 +290,7 @@ def refresh(output, site_source):
               # out of their shared menu and leave the source catalogue intact.
               (output / 'education-lessons/subject.html', '/Lessons/subject.html', False),
               (output / 'education-lessons/primary/index.html', '/Lessons/primary/', False),
-              (output / 'education-apps/index.html', '/Matt-s-Apps-/', False)]
+              ]
     # Auth controls remain server-side. These mixed teaching catalogues are not
     # declared adult surfaces, so they take the privacy-only drawer, as the
     # subject pages do: undeclared = privacy-only.

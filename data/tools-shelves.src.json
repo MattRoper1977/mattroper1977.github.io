@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "note": "Source of the Tools hub registry (owner decision 26 Oct 09:29Z: one Tools hub, two shelves, one route, one count per shelf). Manifest items come from the Apps catalogue apps.json at build; this file only says which group a classroom tool sits in, lists the tools that live on the main site and are not in the catalogue, and holds the page strings of record. Strings in square brackets are masked tokens: lane 2 substitutes the label of record (yc-3) before the build.",
+  "route": "/tools/",
+  "classroomSpace": "Teacher tools",
+  "classroomGroups": [
+    {"id": "accreditation", "title": "Accreditation and evidence", "glyph": "shield"},
+    {"id": "utilities", "title": "Classroom utilities", "glyph": "timer"},
+    {"id": "planning", "title": "Planning and data", "glyph": "compass"}
+  ],
+  "classroomGroupByFile": {
+    "https://madebymatt.uk/uas/": "accreditation",
+    "https://madebymatt.uk/asdan/": "accreditation",
+    "Evidence_Binder.html": "accreditation",
+    "Data_Manager_Studio.html": "accreditation",
+    "Classroom_Toolkit.html": "utilities",
+    "Seating_Studio.html": "utilities",
+    "Rubric_Studio.html": "utilities",
+    "Exit_Ticket.html": "utilities",
+    "Whiteboard.html": "utilities",
+    "ChoreoStudio.html": "utilities",
+    "Teesside_Maker_Lab_PRO/index.html": "planning",
+    "FieldOps_Teacher_Studio.html": "planning",
+    "LundyLoop_Professional_OS.html": "planning",
+    "mbm-master-hub.html": "planning"
+  },
+  "siteTools": [
+    {"title": "ASDAN Moderation Lab", "href": "/asdan/moderation-lab/", "group": "accreditation",
+     "description": "The workbench behind the register: risk-based IV sampling, readiness checks, evidence redaction and print-ready moderation packs."},
+    {"title": "Evidence Binder · Moderator Pro", "href": "/evidence-binder/moderator-pro/", "group": "accreditation",
+     "description": "Capture, tag and bank evidence, then print a moderator-ready binder."},
+    {"title": "Arts Award Evidence Studio", "href": "/artsaward/", "group": "accreditation",
+     "description": "Discover to Gold: evidence locators, pre-flight checks and a printable working record."}
+  ],
+  "studioGlyphs": {
+    "Make & create": "spark", "Art & design": "brush", "Documents": "page",
+    "Learn & organise": "book", "Calm corner": "leaf", "Play & explore": "orbit"
+  },
+  "strings": {
+    "title": "Tools · Made by Matt",
+    "kicker": "Teacher tools",
+    "h1": "Tools",
+    "descriptor": "Find a classroom tool, track evidence or plan your next session.",
+    "metaDescription": "Free classroom tools and studios in one place: accreditation registers, evidence tools, timers and name pickers, and the creative studios. Nothing uploaded, works offline.",
+    "searchLabel": "Search tools",
+    "classroomHeading": "Classroom tools",
+    "classroomLead": "Registers, evidence and the everyday classroom kit.",
+    "studiosHeading": "Studios",
+    "studiosLead": "Creative and learning studios pupils and staff open straight in the browser.",
+    "facts": [
+      {"glyph": "lock", "title": "Secure", "text": "Nothing uploaded. Data stays on your device."},
+      {"glyph": "offline", "title": "Offline", "text": "Single-file. Runs without internet."},
+      {"glyph": "pencil", "title": "Teacher-built", "text": "Classroom ready. Purpose-built for speed."}
+    ],
+    "dockHeading": "In every lesson: the teach dock",
+    "dockLead": "Open any current lesson and tap the TEACH pill at the bottom of the screen. A floating dock brings the classroom essentials to you, with no tab-switching and no losing the room.",
+    "dock": [
+      {"title": "Quick Timer", "text": "1, 5 or 10 minutes overlaid on the corner of your slides. No jarring alarm, just a gentle pulse at zero."},
+      {"title": "Name Picker", "text": "Paste your class list once. It follows you into every lesson and won't repeat until everyone has had a turn."},
+      {"title": "Noise Meter", "text": "A live volume visualiser using this device's mic only. Nothing is ever recorded or uploaded."},
+      {"title": "Calm Reset", "text": "One tap replaces the screen with a slow breathing guide. Connection before correction, then tap to return."}
+    ],
+    "dockLink": {"href": "/Lessons/", "label": "Open a lesson and try it"},
+    "collectionsHeading": "Lesson collections that feed these registers",
+    "collections": [
+      {"href": "/Lessons/BUILD_ASDAN/BUILD_ASDAN_Hub.html", "label": "BUILD Programme Studio learning resources"},
+      {"href": "/Lessons/GROW_ASDAN/GROW_ASDAN_Hub.html", "label": "GROW Programme Studio learning resources"},
+      {"href": "/Lessons/LAUNCH_ASDAN/LAUNCH_ASDAN_Hub.html", "label": "LAUNCH Programme Studio learning resources"}
+    ],
+    "quote": "All my tools are free to use. Absolutely nothing is uploaded: your data stays on your device. Everything is offline-friendly and teacher-built, tried and tested in front of real classes.",
+    "quoteBy": "Matt · Made by Matt",
+    "lessonsLink": {"href": "/Lessons/", "label": "Looking for lessons? Go to Lessons"},
+    "resourcesLink": {"href": "/resources/", "label": "Packs and schemes are in Resources"}
+  }
+}
