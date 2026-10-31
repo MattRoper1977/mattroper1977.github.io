@@ -40,8 +40,8 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
   const overrides=[];
   const extraOwnerFixtures=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'sw2/nav-expanded-owner-fixtures.json'),'utf8'));
   const ownerFixtures=[
-    {route:'/Lessons/',file:'nav-lessons-published.html',sha256:'4069eda43caac696e7c2091c997909edbb481136619f915fc3cea3cc4dc97364'},
-    {route:'/Matt-s-Apps-/',file:'nav-apps-published.html',sha256:'a2d5dedca49c9fa867c6ac2aabec83d877f1f9e4fe59bf79f2c75b771b6806bb'},
+    {route:'/Lessons/',file:'nav-lessons-published.html',sha256:'2625a5f4993013d515c2a2d87c73f1237904e11d5c01bd24392f6a466307ef59'},
+    {route:'/Matt-s-Apps-/',file:'nav-apps-published.html',sha256:'4a85764f2ea71e402cdc9f883eae4ea0ddfc5ecff9567e69dcb64cf81a6f6afe'},
     ...extraOwnerFixtures,
   ];
   if(consumerFixtures) for(const item of ownerFixtures){

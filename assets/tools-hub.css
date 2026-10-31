@@ -4,7 +4,7 @@
 #drawer *,#drawer *::before,#drawer *::after{box-sizing:border-box}
 /* Drawer items carry the page's existing card class (.tcard) for its search and filter
    controls; the card box itself is the link inside, so the item wrapper draws nothing. */
-#drawer li.tcard{display:block;background:none;border:0;border-radius:0;padding:0;gap:0}
+#drawer li.tcard{display:block;background:none;border:0;border-radius:0;padding:0;gap:0;min-width:0}
 #drawer .th-chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
 #drawer .th-chips .tchip{min-height:var(--mbm-tap)}
 .th-wrap{width:100%;max-width:72rem;margin-inline:auto;padding-inline:16px}
@@ -15,7 +15,7 @@
 .th-search{margin-top:1.25rem;max-width:38rem}
 .th-search label{display:block;font-weight:700;margin-bottom:.35rem}
 .th-search-row{display:flex;gap:.5rem;flex-wrap:wrap}
-.th-search input{flex:1 1 14rem;min-height:var(--mbm-tap);padding:.5rem .875rem;font:inherit;font-size:1rem;color:var(--mbm-primary);background-color:var(--mbm-card);border:2px solid var(--mbm-primary);border-radius:var(--mbm-card-radius)}
+.th-search input{flex:1 1 14rem;min-width:0;min-height:var(--mbm-tap);padding:.5rem .875rem;font:inherit;font-size:1rem;color:var(--mbm-primary);background-color:var(--mbm-card);border:2px solid var(--mbm-primary);border-radius:var(--mbm-card-radius)}
 .th-status{margin:.5rem 0 0;min-height:1.4em;font-size:.9375rem}
 .th-btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;min-height:var(--mbm-tap);padding-inline:1.25rem;padding-block:.5rem;border-radius:var(--mbm-card-radius);font:inherit;font-weight:700;text-decoration:none;border:2px solid transparent;cursor:pointer;transition:transform var(--mbm-motion-duration) var(--mbm-motion-ease)}
 .th-btn-primary{background-color:var(--mbm-accent);color:var(--mbm-card);border-color:var(--mbm-accent);box-shadow:var(--mbm-card-shadow)}
@@ -36,13 +36,13 @@
 .th-lead{margin:0;max-width:40rem;font-size:1rem;line-height:1.5}
 .th-group{margin-top:1.5rem}
 .th-group h3{display:flex;align-items:center;gap:.5rem;margin:0 0 .75rem;font-size:1.125rem}
-.th-grid{list-style:none;margin:0;padding:0;display:grid;gap:.875rem;grid-template-columns:1fr}
-.th-card{display:flex;align-items:flex-start;gap:.875rem;min-height:var(--mbm-tap);padding:1rem 1.125rem;background-color:var(--mbm-card);color:var(--mbm-primary);border:1px solid currentColor;border-radius:var(--mbm-card-radius);box-shadow:var(--mbm-card-shadow);text-decoration:none;transition:transform var(--mbm-motion-duration) var(--mbm-motion-ease)}
+.th-grid{list-style:none;margin:0;padding:0;display:grid;gap:.875rem;grid-template-columns:minmax(0,1fr)}
+.th-card{display:flex;align-items:flex-start;gap:.875rem;min-width:0;min-height:var(--mbm-tap);padding:1rem 1.125rem;background-color:var(--mbm-card);color:var(--mbm-primary);border:1px solid currentColor;border-radius:var(--mbm-card-radius);box-shadow:var(--mbm-card-shadow);text-decoration:none;transition:transform var(--mbm-motion-duration) var(--mbm-motion-ease)}
 .th-card:hover{transform:translateY(-2px)}
 .th-card-icon{flex-shrink:0;width:var(--mbm-tap);height:var(--mbm-tap);border-radius:var(--mbm-card-radius);background-color:var(--mbm-bg)}
-.th-card-body{display:grid;gap:.2rem;min-width:0;flex:1 1 auto}
-.th-card-title{font-weight:700;font-size:1.0625rem;line-height:1.3;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
-.th-card-desc{font-size:.9375rem;line-height:1.45}
+.th-card-body{display:grid;gap:.2rem;min-width:0;flex:1 1 auto;overflow-wrap:anywhere}
+.th-card-title{font-weight:700;font-size:1.0625rem;line-height:1.3;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;min-width:0;overflow-wrap:anywhere}
+.th-card-desc{font-size:.9375rem;line-height:1.45;min-width:0;overflow-wrap:anywhere}
 .th-card-arrow{flex-shrink:0;align-self:center;color:var(--mbm-accent)}
 .th-badge{display:inline-flex;padding:.05rem .5rem;border-radius:var(--mbm-card-radius);background-color:var(--mbm-accent);color:var(--mbm-card);font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
 .th-collections{margin-top:2rem}

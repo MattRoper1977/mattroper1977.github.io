@@ -85,6 +85,7 @@ def build(apps_path, src_path, template_path, out_dir, apps_route='/apps/', pres
     s = src['strings']
     groups = {g['id']: g for g in src['classroomGroups']}
     by_file = src['classroomGroupByFile']
+    overrides = src.get('displayOverrides', {})
     placed = {}
     classroom = {g['id']: [] for g in src['classroomGroups']}
     studios = []
@@ -94,17 +95,20 @@ def build(apps_path, src_path, template_path, out_dir, apps_route='/apps/', pres
         for item in space['items']:
             key = item['f']
             if key in placed: raise ValueError('Catalogue item placed twice: ' + key)
+            ov = overrides.get(key, {})
+            title = ov.get('title', item['n'])
+            desc = ov.get('description', item.get('d'))
             href = href_for(key, apps_route)
             if cat == src['classroomSpace']:
                 gid = by_file.get(key)
                 if gid is None or gid not in groups: raise ValueError('Classroom item without a known group: ' + key)
-                classroom[gid].append(card(item['n'], item.get('d'), href, groups[gid]['glyph'], 'classroom', groups[gid]['title'], GROUP_CATEGORY[gid], item.get('new')))
-                registry['classroom'].append({'title': item['n'], 'href': href, 'group': gid, 'source': 'apps.json'})
+                classroom[gid].append(card(title, desc, href, groups[gid]['glyph'], 'classroom', groups[gid]['title'], GROUP_CATEGORY[gid], item.get('new')))
+                registry['classroom'].append({'title': title, 'href': href, 'group': gid, 'source': 'apps.json'})
             else:
                 glyph = src['studioGlyphs'].get(cat)
                 if glyph is None: raise ValueError('Space without a glyph: ' + cat)
-                studios.append((cat, glyph, card(item['n'], item.get('d'), href, glyph, 'studios', cat, STUDIO_CATEGORY, item.get('new'))))
-                registry['studios'].append({'title': item['n'], 'href': href, 'space': cat, 'source': 'apps.json'})
+                studios.append((cat, glyph, card(title, desc, href, glyph, 'studios', cat, STUDIO_CATEGORY, item.get('new'))))
+                registry['studios'].append({'title': title, 'href': href, 'space': cat, 'source': 'apps.json'})
             placed[key] = True
     for t in src['siteTools']:
         if t['group'] not in groups: raise ValueError('Site tool with unknown group: ' + t['title'])
