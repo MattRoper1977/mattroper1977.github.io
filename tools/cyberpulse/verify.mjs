@@ -70,12 +70,15 @@ const EXIT_BYTES = 3222;      // block plus its trailing newline
 // dragging it back to the start control, so a focus move the page did not
 // originate -- which is how a screen reader or switch access reaches the exit --
 // can settle there and Tab onward; before it, a Tab pressed on the exit returned
-// focus to the exit, two runs in three). The pin tracks the estate value; it is
-// not a target the route gets to pick. Proved by the generator itself, which
-// reports "14 applied target(s); 0 written; 0 divergent" across every route
-// carrying the block, /cyberpulse/ included, after regeneration (the four
-// clip-bearing routes are held at the earlier region by declaration).
-const SPLASH_BYTES = 20559;
+// focus to the exit, two runs in three), and 20492 after the composited fade
+// (2026-10-30: the automatic fade animates opacity only, visibility and
+// pointer-events are switched by script when it ends, and under reduced motion
+// the splash holds still until it is hidden). The pin tracks the estate value;
+// it is not a target the route gets to pick. Proved by the generator itself,
+// which reports "15 applied target(s); 0 written; 0 divergent" across every
+// route carrying the block, /cyberpulse/ included, after regeneration (the
+// three clip-bearing routes are held at the earlier region by declaration).
+const SPLASH_BYTES = 20492;
 const ENGINE_VERSION = 'v1.5';
 const RELEASE_VERSION = '6.0.2';
 // Re-pinned 2026-09-02 for build 6.0.1: the authority block gained the
