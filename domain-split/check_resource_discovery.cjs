@@ -236,7 +236,7 @@ async function responsiveChecks(browser) {
         await goto(page, route);
         const links = await visibleLinks(page, 'main a[href]');
         assert(links.some(a => routeOf(a.href) === PDF), 'Teacher tools lacks a visible PDF Studio link');
-        assert(links.some(a => /ASDAN/i.test(a.text) && (new URL(a.href).hash === '#asdan-learning' || /ASDAN/.test(new URL(a.href).pathname))), 'Teacher tools must distinguish ASDAN learning resources from the register');
+        assert(links.some(a => /Programme Studio learning resources/.test(a.text) && /\/(?:BUILD|GROW|LAUNCH)_ASDAN\//.test(new URL(a.href).pathname)), 'Teacher tools must distinguish ASDAN learning resources from the register');
         const searches = [];
         for (const query of ['PDF', 'PDF generator', 'PDF Studio']) {
           await page.locator('#tq').fill(query); await settle(page);
