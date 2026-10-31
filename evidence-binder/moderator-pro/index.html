@@ -653,6 +653,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
             <button type="button" id="diagnosticBtn" class="btn">🩺 Scan &amp; repair database</button>
             <button type="button" id="backupBtn" class="btn primary">📦 Download complete backup</button>
             <button type="button" id="restoreBtn" class="btn">📥 Restore backup</button>
+            <button type="button" id="wipeDeviceBtn" class="btn danger">Delete all data on this device</button>
+          </div>
+          <div id="wipeDeviceConfirm" class="actions wrap-actions hidden" style="margin-top:8px">
+            <span class="note" style="color:var(--danger);font-weight:700">Permanently delete every binder, learner, unit and evidence photo stored on this device?</span>
+            <button type="button" id="wipeDeviceYesBtn" class="btn danger">Confirm delete all data</button>
+            <button type="button" id="wipeDeviceNoBtn" class="btn">Cancel</button>
           </div>
           <div class="encryption-panel">
             <label class="toggle line-toggle"><input type="checkbox" id="encryptBackup"><span></span><b>Encrypt sensitive backup payload with AES-GCM</b></label>
@@ -1175,6 +1181,7 @@ Object.assign(ImagePipeline, {
 class EvidenceDB {
   constructor(name = DB_NAME, version = DB_VERSION) { this.name = name; this.version = version; this.db = null; }
   async init() {
+    if (window.name === "mbm_wiped_modpro") window.name = "";
     if (this.db) return this;
     this.db = await new Promise((resolve, reject) => {
       const req = indexedDB.open(this.name, this.version);
@@ -2871,6 +2878,22 @@ function wireEvents() {
   $("backupBtn").addEventListener("click",exportBackup);
   $("restoreBtn").addEventListener("click",()=>$("restoreInput").click());
   $("restoreInput").addEventListener("change",event=>{const file=event.target.files?.[0];if(file)restoreBackupFile(file);});
+  $("wipeDeviceBtn")?.addEventListener("click",()=>{$("wipeDeviceConfirm")?.classList.remove("hidden");$("wipeDeviceYesBtn")?.focus();});
+  $("wipeDeviceNoBtn")?.addEventListener("click",()=>{$("wipeDeviceConfirm")?.classList.add("hidden");$("wipeDeviceBtn")?.focus();});
+  $("wipeDeviceYesBtn")?.addEventListener("click",async()=>{
+    wipingDevice=true;
+    clearMediaQueue();
+    state.binders=[];state.units=[];state.pupils=[];state.evidence=[];state.activeBinderId=null;state.binder=null;
+    try{localStorage.removeItem(ACTIVE_BINDER_KEY);localStorage.removeItem(STICKY_KEY);localStorage.removeItem(IQA_POLICY_KEY);localStorage.removeItem(VoiceDictation.consentKey);localStorage.clear();}catch(_){}
+    try{sessionStorage.removeItem("mbm_splash_evidencebinder");sessionStorage.clear();}catch(_){}
+    try{if(window.caches&&typeof caches.keys==="function"){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}}catch(_){}
+    if(state.db&&state.db.db){try{state.db.db.close();}catch(_){}state.db.db=null;}
+    const dbs=new Set([DB_NAME]);
+    try{if(indexedDB.databases){for(const d of await indexedDB.databases())if(d&&d.name)dbs.add(d.name);}}catch(_){}
+    for(const n of dbs){await new Promise(r=>{try{const rq=indexedDB.deleteDatabase(n);rq.onsuccess=rq.onerror=rq.onblocked=()=>r();}catch(_){r();}});}
+    window.name="mbm_wiped_modpro";
+    location.reload();
+  });
 
   $$(".close-modal").forEach(button=>button.addEventListener("click",()=>{
     const id=button.dataset.close;
@@ -2893,11 +2916,20 @@ function wireEvents() {
   window.addEventListener("resize",debounce(()=>{if(state.capture.queue.length)renderActiveMediaPreview();},180));
 }
 
+let wipingDevice = false;
 async function init() {
   renderNoteSnippets(); VoiceDictation.init();
   $("captureDate").value = todayISO();
   $("stickyTags").checked = localStorage.getItem(STICKY_KEY) === "1";
   wireEvents();
+  if (window.name === "mbm_wiped_modpro") {
+    state.binders = []; state.units = []; state.pupils = []; state.evidence = [];
+    state.activeBinderId = null; state.binder = null;
+    renderBinderSwitcher(); renderDashboardBadges(); renderCapture(); renderReviewFilters();
+    renderEvidenceGrid(); renderCoverageControls(); renderCoverageMatrix(); renderPortfolio();
+    renderSetup(); updateStorageMeter(); renderNoteSnippets();
+    return;
+  }
   setBusy("Opening Evidence Binder…","Preparing the isolated on-device database");
   try {
     await state.db.init();
@@ -2911,7 +2943,7 @@ async function init() {
   } finally { setBusy(); }
 }
 
-window.addEventListener("beforeunload",()=>DraftBuffer.save());
+window.addEventListener("beforeunload",()=>{if(!wipingDevice&&window.name!=="mbm_wiped_modpro")DraftBuffer.save();});
 window.addEventListener("unhandledrejection",event=>console.error("Unhandled promise rejection",event.reason));
 window.addEventListener("error",event=>console.error("Application error",event.error||event.message));
 init();
@@ -2946,6 +2978,7 @@ init();
   try{
     var KEY="mbm_splash_evidencebinder", el=document.getElementById("mbm-splash");
     if(!el)return;
+    if(window.name==="mbm_wiped_modpro"){el.remove();return;}
     var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var seen=false; try{seen=sessionStorage.getItem(KEY)==="1";}catch(e){}
     if(seen){el.remove();return;}

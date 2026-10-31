@@ -2774,7 +2774,7 @@ textarea:focus-visible,
               </div>
             </div>
             <p class="muted">Deletes candidate records, evidence metadata and all locally stored attachments from this browser. Export a backup first.</p>
-            <button type="button" class="btn danger full-width" id="resetWorkspaceButton">Delete all local studio data</button>
+            <button type="button" class="btn danger full-width" id="resetWorkspaceButton">Delete all data on this device</button>
           </section>
         </div>
       </section>
@@ -3482,7 +3482,9 @@ textarea:focus-visible,
       delete state._migratedFrom;
       saveState('Upgraded to v4');
     }
-    await openDb().catch(error => console.warn('IndexedDB unavailable:', error));
+    if (window.name !== 'mbm_wiped_artsaward') {
+      await openDb().catch(error => console.warn('IndexedDB unavailable:', error));
+    }
     bindEvents();
     populateStaticSelects();
     applySettingsToDocument();
@@ -3491,7 +3493,7 @@ textarea:focus-visible,
     els.appVersionLabel.textContent = `v${APP_VERSION}`;
     updateCentreLabel();
     restoreDismissedNotices();
-    if (!state.settings.firstRunAccepted) {
+    if (!state.settings.firstRunAccepted && window.name !== 'mbm_wiped_artsaward') {
       els.firstRunOverlay.classList.remove('hidden');
       setTimeout(() => els.firstRunAcknowledge.focus(), 50);
     }
@@ -4042,6 +4044,7 @@ textarea:focus-visible,
 
   function saveState(message = 'Saved locally') {
     try {
+      if (window.name === 'mbm_wiped_artsaward') window.name = '';
       state.updatedAt = nowIso();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       els.saveStateLabel.textContent = message;
@@ -4063,6 +4066,7 @@ textarea:focus-visible,
 
   function openDb() {
     if (!('indexedDB' in window)) return Promise.reject(new Error('IndexedDB is not supported.'));
+    if (window.name === 'mbm_wiped_artsaward') window.name = '';
     if (dbPromise) return dbPromise;
     dbPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -4118,6 +4122,7 @@ textarea:focus-visible,
   }
 
   async function idbListFiles() {
+    if (window.name === 'mbm_wiped_artsaward' && !dbPromise) return [];
     try {
       const db = await openDb();
       return await new Promise((resolve, reject) => {
@@ -9159,31 +9164,59 @@ textarea:focus-visible,
   function confirmResetWorkspace() {
     openModal({
       eyebrow: 'Permanent deletion',
-      title: 'Delete all local studio data',
-      body: `<div class="notice warning"><div class="notice-icon">!</div><div>This removes every candidate, evidence record, pupil log and locally stored attachment from this browser. It cannot be undone without a backup.</div></div><label class="field"><span>Type <strong>DELETE ALL</strong> to confirm</span><input id="resetConfirmationText" type="text" autocomplete="off"></label>`,
+      title: 'Delete all data on this device',
+      body: `<div class="notice warning"><div class="notice-icon">!</div><div>This removes every candidate, evidence record, pupil log and locally stored attachment from this browser. It cannot be undone without a backup.</div></div>`,
       buttons: [
         { label: 'Cancel', style: 'ghost', onClick: closeModal },
-        { label: 'Delete all local data', style: 'danger', id: 'confirmResetButton', onClick: () => { if (document.getElementById('resetConfirmationText')?.value === 'DELETE ALL') resetWorkspace(); else toast('Type DELETE ALL exactly to confirm.', 'warning'); } }
+        { label: 'Confirm delete all data', style: 'danger', id: 'confirmResetButton', onClick: () => resetWorkspace() }
       ]
     });
   }
 
   async function resetWorkspace() {
-    await idbClearFiles();
-    const firstRunAccepted = state.settings.firstRunAccepted;
+    clearTimeout(saveTimer);
     state = emptyState();
-    state.settings.firstRunAccepted = firstRunAccepted;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     currentCandidateId = '';
     currentPupilCandidateId = '';
     currentAssessmentCandidateId = '';
     currentPupilCriterionId = '';
     selectedPackCandidates.clear();
     pendingPupilEvidenceIds = [];
-    closeModal();
-    await renderAll();
-    updateStorageEstimate();
-    toast('All local studio data was deleted.', 'success');
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      for (const k of LEGACY_STORAGE_KEYS) localStorage.removeItem(k);
+      localStorage.clear();
+    } catch (_) {}
+    try {
+      sessionStorage.removeItem('mbm_splash_artsaward');
+      sessionStorage.clear();
+    } catch (_) {}
+    try {
+      if (window.caches && typeof caches.keys === 'function') {
+        const ks = await caches.keys();
+        await Promise.all(ks.map(k => caches.delete(k)));
+      }
+    } catch (_) {}
+    if (dbPromise) {
+      try { const db = await dbPromise; db.close(); } catch (_) {}
+      dbPromise = null;
+    }
+    const dbs = new Set([DB_NAME]);
+    try {
+      if (indexedDB.databases) {
+        for (const d of await indexedDB.databases()) if (d && d.name) dbs.add(d.name);
+      }
+    } catch (_) {}
+    for (const n of dbs) {
+      await new Promise(r => {
+        try {
+          const rq = indexedDB.deleteDatabase(n);
+          rq.onsuccess = rq.onerror = rq.onblocked = () => r();
+        } catch (_) { r(); }
+      });
+    }
+    window.name = 'mbm_wiped_artsaward';
+    location.reload();
   }
 
   function setBackupStatus(text, error = false) {
@@ -11327,6 +11360,7 @@ textarea:focus-visible,
   try{
     var KEY="mbm_splash_artsaward", el=document.getElementById("mbm-splash");
     if(!el)return;
+    if(window.name==="mbm_wiped_artsaward"){el.remove();return;}
     var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var seen=false; try{seen=sessionStorage.getItem(KEY)==="1";}catch(e){}
     if(seen){el.remove();return;}
