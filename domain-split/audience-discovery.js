@@ -10,7 +10,17 @@
     target.open = true;
     target.scrollIntoView({block:'start'});
   }
+  function revealSections() {
+    document.documentElement.classList.remove('mbm-platform-ready');
+    for (const el of document.querySelectorAll('.ad-main .mbm-reveal, .ad-main > .ad-section')) {
+      el.classList.add('mbm-reveal', 'is-visible');
+    }
+  }
+  function init() {
+    revealSections();
+    revealFAQ();
+  }
   addEventListener('hashchange', revealFAQ);
-  if (document.readyState === 'loading') addEventListener('DOMContentLoaded', revealFAQ, {once:true});
-  else revealFAQ();
+  if (document.readyState === 'loading') addEventListener('DOMContentLoaded', init, {once:true});
+  else init();
 })();
