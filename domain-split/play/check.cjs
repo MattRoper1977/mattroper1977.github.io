@@ -95,24 +95,24 @@ for(const width of [320,390,768,1280,1440]){
  const ctx=await browser.newContext({viewport:{width,height:width<700?844:900},isMobile:width<700,hasTouch:width<700,reducedMotion:'reduce'}),page=await ctx.newPage();page.setDefaultTimeout(10000);currentPage=page;const requests=[];page.on('request',r=>requests.push(r.url()));page.on('pageerror',e=>report.errors.push({width,message:e.message}));
  await test(width+'-layout-navigation-and-first-load',async()=>{await page.goto(base);await ready(page);await overflow(page);
   assert.equal(await page.locator('#intro-title').innerText(),'Pick a game. Make it yours.');
-  // PLAY-D2: the approved controller is decorative, byte-bound to hero-art.json, omitted on phones, and never over a control or the copy.
-  const heroRecord=JSON.parse(fs.readFileSync('domain-split/play/hero-art.json'));const art=page.locator('.intro-art');assert.equal(await art.count(),1,'one hero artwork in the markup');
-  const artFacts=await art.evaluate(i=>({visible:!!i.offsetParent&&getComputedStyle(i).display!=='none',complete:i.complete,w:i.naturalWidth,h:i.naturalHeight,alt:i.getAttribute('alt'),src:i.getAttribute('src'),width:i.getAttribute('width'),height:i.getAttribute('height'),source:i.dataset.heroSource,sha:i.dataset.heroSha,box:i.getBoundingClientRect().toJSON()}));
-  assert.equal(artFacts.alt,'','hero artwork is decorative');assert.equal(artFacts.source,heroRecord.sourceSha256);assert.equal(artFacts.sha,heroRecord.sha256);assert.equal(artFacts.src,'/'+heroRecord.published);assert.equal(Number(artFacts.width),heroRecord.width);assert.equal(Number(artFacts.height),heroRecord.height);
-  const artResponse=await page.request.get(base+artFacts.src);assert.equal(artResponse.status(),200);const artBytes=Buffer.from(await artResponse.body());assert.equal(sha(artBytes),heroRecord.sha256,'served hero artwork is the recorded file');assert.equal(artBytes.length,heroRecord.bytes);
-  // PLAY-D2 amended by Matt, 16 September 2026. This branch used to assert the
-  // OPPOSITE below 768px - 'phones omit the hero artwork'. Matt asked for the
-  // controller on phones too, like the education hero, so the phone case now
-  // has to prove the artwork is painted rather than prove it is absent. Nothing
-  // else is relaxed: every width still proves the picture decodes, fits without
-  // overflowing the viewport in either direction, renders at a useful size and
-  // covers no heading, copy or control. A phone that silently dropped it, drew
-  // it at a few pixels, or let it slide over the search box now reds here.
-  assert(artFacts.visible&&artFacts.complete&&artFacts.w>0,'hero artwork shows and decodes at every width');
-  assert(artFacts.box.left>=-1&&artFacts.box.right<=width+1,'hero artwork fits the viewport');
-  assert(artFacts.box.width>=160,'hero artwork renders at a useful size');
+  // PLAY-P1 part B: the decorative masthead motif is an inline SVG byte-bound to hero-art.json
+  // (no request for hero-art.webp, no <img>, visible at every width including phones, overlapping nothing).
+  const heroRecord=JSON.parse(fs.readFileSync('domain-split/play/hero-art.json')),heroFileBytes=fs.readFileSync(path.join('domain-split/play',path.basename(heroRecord.file)));
+  assert.equal(sha(heroFileBytes),heroRecord.sha256,'recorded hero motif sha256 matches source file');assert.equal(heroFileBytes.length,heroRecord.bytes,'recorded hero motif byte length matches source file');
+  const art=page.locator('.intro-art');assert.equal(await art.count(),1,'one hero artwork in the markup');
+  const artFacts=await art.evaluate(i=>{const svg=i.querySelector('svg'),sr=svg?svg.getBoundingClientRect().toJSON():null;return{tag:i.tagName,visible:!!i.offsetParent&&getComputedStyle(i).display!=='none',ariaHidden:i.getAttribute('aria-hidden'),imgs:i.querySelectorAll('img').length,svgs:i.querySelectorAll('svg').length,viewBox:svg?svg.getAttribute('viewBox'):null,sha:i.dataset.heroSha,bytes:Number(i.dataset.heroBytes),box:i.getBoundingClientRect().toJSON(),svgBox:sr};});
+  assert.equal(artFacts.tag,'DIV','inline motif container');assert.equal(artFacts.ariaHidden,'true','hero motif is decorative');assert.equal(artFacts.imgs,0,'hero motif makes no <img> request');assert.equal(artFacts.svgs,1,'hero motif inlines one <svg>');assert.equal(artFacts.sha,heroRecord.sha256);assert.equal(artFacts.bytes,heroRecord.bytes);assert.equal(artFacts.viewBox,`0 0 ${heroRecord.width} ${heroRecord.height}`);
+  assert(!requests.some(u=>/hero-art/i.test(u)),'no request for retired hero-art asset');
+  const retiredHero=await page.request.get(base+'/assets/play/hero-art.webp');assert.equal(retiredHero.status(),404,'retired hero-art.webp is not served');
+  assert(artFacts.visible&&artFacts.svgBox&&artFacts.svgBox.width>0&&artFacts.svgBox.height>0,'hero motif shows and renders at every width');
+  assert(artFacts.box.left>=-1&&artFacts.box.right<=width+1,'hero motif fits the viewport');
+  assert(artFacts.box.width>=160,'hero motif renders at a useful size');
   {const overlaps=await page.evaluate(box=>[...document.querySelectorAll('#intro-title,.intro .eyebrow,.intro .lede,#discovery-form,.mood-tools,.mood-note,header,.browse-sidebar')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.height&&r.left<box.right&&r.right>box.left&&r.top<box.bottom&&r.bottom>box.top;}).map(e=>e.id||e.className||e.tagName),artFacts.box);
-   assert.deepEqual(overlaps,[],'hero artwork overlaps nothing');}
+   assert.deepEqual(overlaps,[],'hero motif overlaps nothing');}
+  if(width===1280){
+   const posters=await page.evaluate(async()=>{const cards=[...document.querySelectorAll('#game-grid .game-card')];const imgs=cards.map(c=>c.querySelector('.thumb img')).filter(Boolean);for(const img of imgs){img.loading='eager';if(!img.complete)await img.decode().catch(()=>{});}return{cards:cards.length,blocks:document.querySelectorAll('#game-grid .game-card .thumb-block').length,imgs:imgs.length,bad:imgs.filter(i=>!i.complete||i.naturalWidth!==640||i.naturalHeight!==360).map(i=>({src:i.getAttribute('src'),w:i.naturalWidth,h:i.naturalHeight}))};});
+   assert.equal(posters.blocks,0,'every card carries a poster rather than a fallback block');assert.equal(posters.imgs,expectedCards+activities.length,'every shelf card has a poster img');assert.deepEqual(posters.bad,[],'every card poster decodes at 640x360');
+  }
   assert.equal(await page.locator('.intro .lede').innerText(),'Race, explore, build or work out your next move. Find your favourite or try something unexpected—play straight in your browser.');
   const navigation=page.locator('.collection-links');
   await navigation.locator('[data-collection=favourites]').click();assert.equal(await visibleGames(page),0,'new browser favourites empty');assert.equal(await navigation.locator('[aria-current=page]').getAttribute('data-collection'),'favourites');
