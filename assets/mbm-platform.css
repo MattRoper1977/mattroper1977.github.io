@@ -381,7 +381,8 @@ body.mbm-platform .dx-chips[tabindex="0"]:focus-visible,
 body.mbm-platform .rx-chiprow[tabindex="0"]:focus-visible{outline:3px solid var(--mbm-amber);outline-offset:3px}
 
 /* Reveal only after JS has found a working observer. Content remains present. */
-.mbm-platform-ready .mbm-reveal{opacity:0;transform:translateY(16px)}
+.mbm-reveal{opacity:1;transform:none}
+.mbm-platform-ready .mbm-reveal:not(.is-visible){opacity:0;transform:translateY(16px)}
 .mbm-platform-ready .mbm-reveal.is-visible{opacity:1;transform:none;transition:opacity .45s ease,transform .45s var(--mbm-ease)}
 
 .mbm-backtop{
@@ -513,8 +514,10 @@ body.mbm-platform .rx-chiprow[tabindex="0"]:focus-visible{outline:3px solid var(
   body.mbm-platform .tcard,
   body.mbm-platform .fcard,
   body.mbm-platform .rx-cardx{transition:none!important}
+  .mbm-reveal,
   .mbm-platform-ready .mbm-reveal,
-  .mbm-platform-ready .mbm-reveal.is-visible{opacity:1;transform:none;transition:none}
+  .mbm-platform-ready .mbm-reveal:not(.is-visible),
+  .mbm-platform-ready .mbm-reveal.is-visible{opacity:1!important;transform:none!important;transition:none!important}
 }
 
 @media print{

@@ -1,0 +1,425 @@
+/* Shared hub tile component (S-1-2, design ruling 16:47Z).
+ * Scoped strictly to hub surfaces (home, the five audience pages, Lessons, Resources, Tools).
+ * Preserves education-palette surface backgrounds, 12px border-radius and elevation while
+ * enforcing 44x44px touch targets, high-visibility focus rings and WCAG AAA (>= 7:1) contrast.
+ */
+
+:root {
+  --mbm-tile-ink: #161d3d;
+  --mbm-tile-muted: #1e2942;
+  --mbm-tile-action: #0d422b;
+  --mbm-tile-action-fg: #ffffff;
+  --mbm-tile-kicker: #472300;
+  --mbm-tile-focus: #0b3d2c;
+  --mbm-tile-chip-bg: #f4efe4;
+  --mbm-tile-chip-border: #b8c2d4;
+}
+
+html[data-theme="dark"],
+body[data-theme="dark"] {
+  --mbm-tile-ink: #f3f7fa;
+  --mbm-tile-muted: #dbe4f0;
+  --mbm-tile-action: #7be0b3;
+  --mbm-tile-action-fg: #081422;
+  --mbm-tile-kicker: #ffd8a8;
+  --mbm-tile-focus: #f2b84b;
+  --mbm-tile-chip-bg: #182e49;
+  --mbm-tile-chip-border: #4a6688;
+}
+
+html[data-theme="highlumen"],
+body[data-theme="highlumen"] {
+  --mbm-tile-ink: #000000;
+  --mbm-tile-muted: #000000;
+  --mbm-tile-action: #000000;
+  --mbm-tile-action-fg: #ffffff;
+  --mbm-tile-kicker: #000000;
+  --mbm-tile-focus: #000000;
+  --mbm-tile-chip-bg: #ffffff;
+  --mbm-tile-chip-border: #000000;
+}
+
+/* 1. Base geometry & touch-target floor (44x44px) for all hub tiles */
+.mbm-tile,
+[data-mbm-tile],
+.home-door-card,
+.home-pathway-card,
+a.home-subject-tile,
+.home-tool-card,
+.ad-card,
+.ad-steps > li,
+.ad-nav > a,
+.ad-audiences > a,
+.ad-adult-links a,
+#subjects .scard,
+.tiles > .tile,
+#added-rail .acard,
+.pillars > li,
+.rx-cardx,
+.th-card,
+.th-collections a {
+  box-sizing: border-box;
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--mbm-tile-ink);
+  position: relative;
+}
+
+/* Interactive controls inside hub tiles: >= 44x44px touch targets */
+.mbm-tile a,
+.mbm-tile button,
+[data-mbm-tile] a,
+[data-mbm-tile] button,
+.home-door-card .home-card-link,
+.home-pathway-card .home-start-btn,
+.home-pathway-card .home-pack-badge a,
+.home-pathway-card .home-card-link,
+.ad-card .ad-action,
+.ad-nav > a,
+.ad-audiences > a,
+.ad-adult-links a,
+#subjects .scard .browse,
+#subjects .scard .chips .chip,
+.tiles > .tile,
+#added-rail .acard,
+.pillars > li a,
+.rx-cardx .chip,
+.rx-cardx a.go,
+.th-card,
+.th-collections a {
+  box-sizing: border-box;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+a.home-door-card,
+a.home-subject-tile,
+a.home-tool-card,
+a.th-card,
+.tiles > a.tile,
+#added-rail a.acard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-decoration: none;
+}
+
+.ad-nav > a,
+.ad-audiences > a,
+.th-collections a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* 2. Visible focus states (WCAG AAA focus indicator) */
+a.mbm-tile:focus-visible,
+button.mbm-tile:focus-visible,
+[data-mbm-tile]:focus-visible,
+.mbm-tile a:focus-visible,
+.mbm-tile button:focus-visible,
+[data-mbm-tile] a:focus-visible,
+[data-mbm-tile] button:focus-visible,
+.home-door-card:focus-visible,
+.home-pathway-card a:focus-visible,
+a.home-subject-tile:focus-visible,
+.home-tool-card:focus-visible,
+.ad-card a:focus-visible,
+.ad-nav > a:focus-visible,
+.ad-audiences > a:focus-visible,
+.ad-adult-links a:focus-visible,
+#subjects .scard a:focus-visible,
+.tiles > .tile:focus-visible,
+#added-rail .acard:focus-visible,
+.pillars > li a:focus-visible,
+.rx-cardx a:focus-visible,
+.th-card:focus-visible,
+.th-collections a:focus-visible {
+  outline: 3px solid var(--mbm-tile-focus) !important;
+  outline-offset: 2px !important;
+}
+
+article.mbm-tile:focus-within,
+li.mbm-tile:focus-within,
+.home-pathway-card:focus-within,
+.ad-card:focus-within,
+#subjects .scard:focus-within,
+.rx-cardx:focus-within {
+  border-color: var(--mbm-tile-focus);
+}
+
+/* 3. AAA contrast (>= 7:1) across all hub tile headings, copy, metadata & actions */
+.mbm-tile h2,
+.mbm-tile h3,
+.mbm-tile h4,
+.mbm-tile strong,
+.home-door-label,
+.home-unit-title,
+.home-subject-name,
+.home-tool-card h3,
+.ad-card h3,
+.ad-steps > li strong,
+#subjects .scard h3,
+.tiles > .tile strong,
+#added-rail .acard h3,
+.pillars > li strong,
+.rx-cardx h3,
+.th-title,
+.ftitle {
+  color: var(--mbm-tile-ink) !important;
+}
+
+.mbm-tile p,
+.mbm-tile small,
+.home-door-byline,
+.home-pathway-byline,
+.home-pathway-week,
+.home-unit-outcome,
+.home-subject-desc,
+.home-subject-count,
+.home-pathway-split,
+.home-tool-card p,
+.ad-card p,
+.ad-steps > li,
+.ad-nav > a,
+.ad-audiences > a,
+#subjects .scard .sub,
+#subjects .scard .meta,
+.tiles > .tile span,
+#added-rail .acard p,
+#added-rail .acard .meta,
+.pillars > li span,
+.rx-cardx p,
+.rx-cardx .sub,
+.rx-cardx .badge,
+.rx-cardx .status,
+.th-desc,
+.th-use,
+.th-collections a,
+.th-collections span,
+.fdesc,
+.fmeta span {
+  color: var(--mbm-tile-muted) !important;
+  opacity: 1 !important;
+}
+
+/* Action links and directional arrows inside tiles (>= 9.5:1 AAA) */
+.home-card-link,
+.home-door-arrow,
+.home-tile-action,
+.home-tile-action span,
+.ad-card .ad-action,
+.ad-adult-links a,
+.pillars > li a,
+.rx-cardx a.go,
+.th-cta,
+.fcta {
+  color: var(--mbm-tile-action) !important;
+  font-weight: 700;
+}
+
+/* Solid CTA buttons and solid badges inside tiles (>= 10.4:1 AAA) */
+.home-pathway-card .home-start-btn,
+#subjects .scard a.browse,
+.th-badge {
+  background-color: var(--mbm-tile-action) !important;
+  border-color: var(--mbm-tile-action) !important;
+  color: var(--mbm-tile-action-fg) !important;
+  font-weight: 700;
+  justify-content: center;
+}
+
+#subjects .scard .badge.b-packs {
+  background-color: #3d2878 !important;
+  color: #ffffff !important;
+}
+
+#subjects .scard .badge.b-pdf {
+  background-color: #0d422b !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] #subjects .scard .badge.b-packs,
+body[data-theme="dark"] #subjects .scard .badge.b-packs {
+  background-color: #cabdff !important;
+  color: #140836 !important;
+}
+
+html[data-theme="dark"] #subjects .scard .badge.b-pdf,
+body[data-theme="dark"] #subjects .scard .badge.b-pdf {
+  background-color: #7be0b3 !important;
+  color: #081422 !important;
+}
+
+/* Kickers and numbered step badges (>= 9.4:1 AAA) */
+.th-kicker,
+.fkick,
+.fcard .kind {
+  color: var(--mbm-tile-kicker) !important;
+  opacity: 1 !important;
+}
+
+.ad-steps > li::before {
+  background-color: var(--mbm-tile-ink) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .ad-steps > li::before,
+body[data-theme="dark"] .ad-steps > li::before {
+  background-color: #f2b84b !important;
+  color: #081422 !important;
+}
+
+/* Pack badges, subject chips, and resource chips (>= 8.5:1 AAA + 44px height) */
+.home-pack-badge a,
+#subjects .scard .chip,
+#subjects .scard .chips .chip,
+.rx-cardx .chip {
+  background-color: var(--mbm-tile-chip-bg) !important;
+  border-color: var(--mbm-tile-chip-border) !important;
+  color: var(--mbm-tile-ink) !important;
+  padding-inline: 0.65rem;
+  gap: 0.35rem;
+}
+
+.home-pack-badge [data-derive="label"],
+.rx-cardx .chip b {
+  color: var(--mbm-tile-ink) !important;
+}
+
+/* Pathway & format pills: WCAG AAA (>= 8.5:1) across light and dark modes */
+.home-pathway-badge[data-pathway="BUILD"],
+.home-pathway-badge.home-chip-build,
+#subjects .scard .chip.tier[data-tier="BUILD"],
+#subjects .scard .chip.tier.BUILD,
+.rx-cardx .t-BUILD,
+#added-rail .acard .t-BUILD,
+.home-format-pptx [data-derive="ext"] {
+  background-color: #f5ddbf !important;
+  color: #472300 !important;
+  border-color: #b88449 !important;
+}
+
+.home-pathway-badge[data-pathway="GROW"],
+.home-pathway-badge.home-chip-grow,
+#subjects .scard .chip.tier[data-tier="GROW"],
+#subjects .scard .chip.tier.GROW,
+.rx-cardx .t-GROW,
+#added-rail .acard .t-GROW,
+.home-format-html [data-derive="ext"] {
+  background-color: #d5eedd !important;
+  color: #0b3b24 !important;
+  border-color: #63a380 !important;
+}
+
+.home-pathway-badge[data-pathway="LAUNCH"],
+.home-pathway-badge.home-chip-launch,
+#subjects .scard .chip.tier[data-tier="LAUNCH"],
+#subjects .scard .chip.tier.LAUNCH,
+.rx-cardx .t-LAUNCH,
+#added-rail .acard .t-LAUNCH {
+  background-color: #f3e8b8 !important;
+  color: #382b00 !important;
+  border-color: #b39d49 !important;
+}
+
+.home-format-pdf [data-derive="ext"] {
+  background-color: #f9dcdc !important;
+  color: #521212 !important;
+}
+
+.home-format-docx [data-derive="ext"] {
+  background-color: #dce8fa !important;
+  color: #0d254c !important;
+}
+
+html[data-theme="dark"] #subjects .scard .chip,
+body[data-theme="dark"] #subjects .scard .chip,
+html[data-theme="dark"] body.mbm-hub #subjects .scard .chips .chip {
+  background: #182e49 !important;
+  background-color: #182e49 !important;
+  color: #f3f7fa !important;
+  border-color: #4a6688 !important;
+}
+
+html[data-theme="dark"] .home-pathway-badge[data-pathway="BUILD"],
+body[data-theme="dark"] .home-pathway-badge[data-pathway="BUILD"],
+html[data-theme="dark"] .home-pathway-badge.home-chip-build,
+body[data-theme="dark"] .home-pathway-badge.home-chip-build,
+html[data-theme="dark"] body.mbm-hub #subjects .scard .chips .chip.tier[data-tier="BUILD"],
+html[data-theme="dark"] body.mbm-hub #subjects .scard .chips .chip.tier.BUILD,
+body[data-theme="dark"] #subjects .scard .chips .chip.tier.BUILD,
+html[data-theme="dark"] .rx-cardx .t-BUILD,
+html[data-theme="dark"] #added-rail .acard .t-BUILD,
+html[data-theme="dark"] .home-format-pptx [data-derive="ext"] {
+  background: #3a2410 !important;
+  background-color: #3a2410 !important;
+  color: #ffd8a8 !important;
+  border-color: #8a5a2b !important;
+}
+
+html[data-theme="dark"] .home-pathway-badge[data-pathway="GROW"],
+body[data-theme="dark"] .home-pathway-badge[data-pathway="GROW"],
+html[data-theme="dark"] .home-pathway-badge.home-chip-grow,
+body[data-theme="dark"] .home-pathway-badge.home-chip-grow,
+html[data-theme="dark"] body.mbm-hub #subjects .scard .chips .chip.tier[data-tier="GROW"],
+html[data-theme="dark"] body.mbm-hub #subjects .scard .chips .chip.tier.GROW,
+body[data-theme="dark"] #subjects .scard .chips .chip.tier.GROW,
+html[data-theme="dark"] .rx-cardx .t-GROW,
+html[data-theme="dark"] #added-rail .acard .t-GROW,
+html[data-theme="dark"] .home-format-html [data-derive="ext"] {
+  background: #103325 !important;
+  background-color: #103325 !important;
+  color: #a3f0c2 !important;
+  border-color: #2e7d5b !important;
+}
+
+html[data-theme="dark"] .home-pathway-badge[data-pathway="LAUNCH"],
+body[data-theme="dark"] .home-pathway-badge[data-pathway="LAUNCH"],
+html[data-theme="dark"] .home-pathway-badge.home-chip-launch,
+body[data-theme="dark"] .home-pathway-badge.home-chip-launch,
+html[data-theme="dark"] body.mbm-hub #subjects .scard .chips .chip.tier[data-tier="LAUNCH"],
+html[data-theme="dark"] body.mbm-hub #subjects .scard .chips .chip.tier.LAUNCH,
+body[data-theme="dark"] #subjects .scard .chips .chip.tier.LAUNCH,
+html[data-theme="dark"] .rx-cardx .t-LAUNCH,
+html[data-theme="dark"] #added-rail .acard .t-LAUNCH {
+  background: #332b0e !important;
+  background-color: #332b0e !important;
+  color: #f9e79f !important;
+  border-color: #857128 !important;
+}
+
+html[data-theme="dark"] .home-format-pdf [data-derive="ext"],
+body[data-theme="dark"] .home-format-pdf [data-derive="ext"] {
+  background-color: #3d1414 !important;
+  color: #ffc9c9 !important;
+}
+
+html[data-theme="dark"] .home-format-docx [data-derive="ext"],
+body[data-theme="dark"] .home-format-docx [data-derive="ext"] {
+  background-color: #12284c !important;
+  color: #cfe2ff !important;
+}
+
+.home-halfterm-strip li {
+  color: var(--mbm-tile-muted) !important;
+}
+
+.home-halfterm-strip li[data-current-term="true"] {
+  background-color: var(--mbm-tile-action) !important;
+  border-color: var(--mbm-tile-action) !important;
+  color: var(--mbm-tile-action-fg) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mbm-tile,
+  [data-mbm-tile],
+  .mbm-tile *,
+  [data-mbm-tile] * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
