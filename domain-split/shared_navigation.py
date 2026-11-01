@@ -96,19 +96,6 @@ ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]
 # The surfaces whose footer never carried the canonical link group (see refresh()).
 SHARED_FOOTER = {'/for/pupils/', '/resources/', '/stats/', '/stats/on-this-device/',
                  '/Lessons/subject.html', '/Lessons/primary/'}
-# S-1-2: shared hub tile component (home, the five audience pages, Lessons, Resources, Tools).
-HUB_TILE_ROUTES = {
-    '/',
-    '/main/',
-    '/for/parents-carers/',
-    '/for/schools-semh/',
-    '/for/trusts/',
-    '/for/councils-organisations/',
-    '/for/partners/',
-    '/Lessons/',
-    '/resources/',
-    '/tools/',
-}
 SITE_PAGES = ['index.html', 'main/index.html', 'account/index.html', 'account/admin/index.html',
               'members/index.html', 'mailing-list/index.html', 'privacy/index.html',
               'stats/index.html', 'owner/stats/index.html', 'tools/index.html',
@@ -285,8 +272,15 @@ def refresh(output, site_source):
     if str(HERE) not in sys.path:
         sys.path.insert(0, str(HERE))
     from structural_html import replace_first_element, prepend_to_first_main
+    from audience_discovery import COPY as AUDIENCE_HUB_KEYS
     site = output / 'education-site'
-    audiences = json.loads((site_source / 'data/audience-homepages.json').read_text())['audiences']
+    homepages = json.loads((site_source / 'data/audience-homepages.json').read_text())
+    audiences = homepages['audiences']
+    hub_tile_routes = (
+        {'/', homepages['mainOption']['route']}
+        | {href for href, _ in HUB_LINKS}
+        | {audiences[k]['route'] for k in AUDIENCE_HUB_KEYS}
+    )
     rows = audience_rows(site_source)
     # The drawer follows the record (ruling tm): a surface gets the full "Your
     # account" list - account, mailing, privacy - only if data/adult-surfaces.json
@@ -355,7 +349,7 @@ def refresh(output, site_source):
         text = adopt_palette(text, route, adult or route in footer_links, chrome_template)
         tile_links = ('<link rel="stylesheet" href="/assets/mbm-tile.css">'
                       '<script defer src="/assets/mbm-tile.js"></script>'
-                      if route in HUB_TILE_ROUTES else '')
+                      if route in hub_tile_routes else '')
         text = text.replace('</head>', tile_links + '<link rel="stylesheet" href="/assets/shared-navigation.css">'
                             '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         path.write_text(text)

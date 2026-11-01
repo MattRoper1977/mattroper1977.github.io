@@ -5,29 +5,32 @@
 (function () {
   'use strict';
 
-  var HUB_ROUTES = {
-    '/': true,
-    '/main/': true,
-    '/for/parents-carers/': true,
-    '/for/schools-semh/': true,
-    '/for/trusts/': true,
-    '/for/councils-organisations/': true,
-    '/for/partners/': true,
-    '/Lessons/': true,
-    '/resources/': true,
-    '/tools/': true
-  };
-
   function canonicalRoute(pathname) {
-    var clean = String(pathname || '/').replace(/index\.html$/i, '');
+    var clean = String(pathname || '/').split('#')[0].split('?')[0].replace(/index\.html$/i, '');
     if (!clean.endsWith('/')) clean += '/';
     return clean;
   }
 
-  var route = canonicalRoute(window.location && window.location.pathname);
-  if (!HUB_ROUTES[route]) return;
-
-  document.documentElement.setAttribute('data-mbm-tile-hub', route);
+  function collectHubRoutes() {
+    var routes = { '/': true };
+    var brand = document.querySelector('a.mbm-brand[href], a.brand[href]');
+    if (brand) {
+      routes[canonicalRoute(brand.getAttribute('href'))] = true;
+    }
+    var hubLinks = document.querySelectorAll('[data-mbm-hub-links] a[href]');
+    for (var i = 0; i < hubLinks.length; i++) {
+      routes[canonicalRoute(hubLinks[i].getAttribute('href'))] = true;
+    }
+    if (document.querySelector('main.ad-main')) {
+      var audienceLinks = document.querySelectorAll(
+        'nav.ad-audiences a[href], .mbm-menu-group a[href^="/for/"], .mf-switch-grid a[href^="/for/"]'
+      );
+      for (var j = 0; j < audienceLinks.length; j++) {
+        routes[canonicalRoute(audienceLinks[j].getAttribute('href'))] = true;
+      }
+    }
+    return routes;
+  }
 
   var TILE_SELECTOR = [
     '.home-door-card',
@@ -82,47 +85,46 @@
     }
   }
 
-  document.addEventListener('click', function (event) {
-    if (event.defaultPrevented || event.button !== 0) return;
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    var target = event.target;
-    if (!target || typeof target.closest !== 'function') return;
-    if (target.closest('a, button, input, select, textarea, summary, label, [role="button"]')) return;
-    var selection = window.getSelection ? String(window.getSelection()) : '';
-    if (selection && selection.trim().length > 0) return;
-    var tile = target.closest('.mbm-tile[data-mbm-tile-bound="true"]');
-    if (!tile) return;
-    var primary = primaryLinkOf(tile);
-    if (primary) {
-      primary.click();
-    }
-  });
+  function start() {
+    var route = canonicalRoute(window.location && window.location.pathname);
+    var hubRoutes = collectHubRoutes();
+    if (!hubRoutes[route]) return;
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      enhanceTiles(document);
-    });
-  } else {
+    document.documentElement.setAttribute('data-mbm-tile-hub', route);
     enhanceTiles(document);
-  }
 
-  if (typeof MutationObserver === 'function' && document.body) {
-    var observer = new MutationObserver(function (mutations) {
-      for (var i = 0; i < mutations.length; i++) {
-        if (mutations[i].addedNodes && mutations[i].addedNodes.length) {
-          enhanceTiles(document);
-          break;
-        }
+    document.addEventListener('click', function (event) {
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      var target = event.target;
+      if (!target || typeof target.closest !== 'function') return;
+      if (target.closest('a, button, input, select, textarea, summary, label, [role="button"]')) return;
+      var selection = window.getSelection ? String(window.getSelection()) : '';
+      if (selection && selection.trim().length > 0) return;
+      var tile = target.closest('.mbm-tile[data-mbm-tile-bound="true"]');
+      if (!tile) return;
+      var primary = primaryLinkOf(tile);
+      if (primary) {
+        primary.click();
       }
     });
-    observer.observe(document.body, { childList: true, subtree: true });
-  } else if (typeof MutationObserver === 'function') {
-    document.addEventListener('DOMContentLoaded', function () {
-      if (!document.body) return;
-      var obs = new MutationObserver(function () {
-        enhanceTiles(document);
+
+    if (typeof MutationObserver === 'function' && document.body) {
+      var observer = new MutationObserver(function (mutations) {
+        for (var i = 0; i < mutations.length; i++) {
+          if (mutations[i].addedNodes && mutations[i].addedNodes.length) {
+            enhanceTiles(document);
+            break;
+          }
+        }
       });
-      obs.observe(document.body, { childList: true, subtree: true });
-    });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
   }
 })();
