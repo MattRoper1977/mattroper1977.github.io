@@ -413,7 +413,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     <span class="glitchbit">?</span>
   </div>
   <h1>OFF-<span class="off">BRAND</span><span class="afterHours">AFTER HOURS</span></h1>
-  <p class="strap">The probabilistic forensic whodunnit — read what you can prove, not what the game secretly knows.</p>
+  <p class="strap">A workshop mystery — follow the clues you can see and prove who is in disguise.</p>
   <div class="modes">
     <button class="mode" id="btnCrew">
       <span class="stars" id="starsCrew"></span>
@@ -437,14 +437,15 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     <button class="chip" id="chipVoice" aria-pressed="true">Curator captions: on</button>
     <button class="chip" id="chipAudio" aria-pressed="false">🔇 Sound: off</button>
     <button class="chip" id="chipCalm" aria-pressed="false">◉ Calm vision: off</button>
-    <button class="chip" id="chipPassport">⌁ Passport V4</button>
+    <button class="chip" id="seed-share" type="button" data-seed-share>🌱 Seed · Copy link</button>
+    <button class="chip" id="chipPassport">⌁ Badges</button>
     <button class="chip" id="chipKit">🎒 Kit</button>
     <button class="chip" id="chipGuide">📖 Field Guide</button>
     <button class="chip" id="chipDiff">⚙ Difficulty</button>
     <button class="chip" id="chipHow">How to play</button>
   </div>
   <p class="foot">MADE BY MATT · single-file · offline-first · nothing uploaded — nobody is ever voted out; the Glitch just gets a friendly reformat</p>
-  <p class="foot" style="margin-top:6px">v4.2.0-M2 · Bayesian evidence · raycast visibility · surface footprints · Press Cascade chain · spatial audio · Passport V4 geometric optic</p>
+  <p class="foot" style="margin-top:6px">Clue meter · room sightlines · fading footprints · workshop chain events · optional sound</p>
 </div>
 
 <!-- ============ CINEMATIC ============ -->
@@ -473,7 +474,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       <button class="bbtn hid violet" id="btnSkip"><span>⚡ Skip</span><small id="skipSub">dash</small></button>
       <button class="bbtn hid" id="btnRoll"><span>📣 Roll Call</span><small id="rollSub">2 left</small></button>
       <button class="bbtn hid" id="btnBoard"><span>🧩 Board</span><small>deduce</small></button>
-      <button class="bbtn hid" id="btnForensics"><span>⌁ Probability</span><small id="forensicSub">observed clues</small></button>
+      <button class="bbtn hid" id="btnForensics"><span>⌁ Clue Meter</span><small id="forensicSub">observed clues</small></button>
       <button class="bbtn hid violet" id="btnSab"><span>💥 Scene</span><small id="sabSub">sabotage</small></button>
     </div>
   </div>
@@ -561,21 +562,21 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 </div></div>
 
 <div class="ovl" id="ovlForensics"><div class="panel">
-  <h3>⌁ Bayesian Forensics</h3>
-  <p class="bayesIntro">Relative likelihood from clues you actually observed. Values are normalized to 100% and remain probabilistic — they are guidance, never an omniscient verdict.</p>
-  <div class="bayesTotal"><span id="bayesCount">0 observations</span><span id="bayesNorm">NORMALIZED · 100.0%</span></div>
+  <h3>⌁ Clue Meter</h3>
+  <p class="bayesIntro">How strongly the clues you have seen point to each suspect. Scores add up to 100% — use them as a helpful guide, not a guaranteed answer.</p>
+  <div class="bayesTotal"><span id="bayesCount">0 observations</span><span id="bayesNorm">TOTAL · 100.0%</span></div>
   <div id="bayesRows"></div>
   <ul class="bayesEvidence" id="bayesEvidence"></ul>
-  <button class="opticUse" id="opticUse" type="button">Geometric Optic locked</button>
+  <button class="opticUse" id="opticUse" type="button">Sightline Lens locked</button>
   <div class="prow"><button class="pbtn ghost" id="btnForensicsClose">Back to the floor</button></div>
 </div></div>
 
 <div class="ovl" id="ovlPassport"><div class="panel">
-  <h3>⌁ Arcade Passport V4</h3>
-  <p>Artifacts are earned locally across compatible Made by Matt V4 games. Nothing is uploaded.</p>
+  <h3>⌁ Workshop Badges</h3>
+  <p>Badges and tools are earned on this device across Made by Matt games. Nothing is uploaded.</p>
   <div class="passportGrid" id="passportGrid"></div>
-  <p class="opticNote">The Geometric Optic only outlines exact current sightlines. It never changes Bayesian evidence, names the Glitch, or improves win conditions.</p>
-  <div class="prow"><button class="pbtn" id="btnPassportClose">Close Passport</button></div>
+  <p class="opticNote">The Sightline Lens outlines what each character can currently see. It never changes your clues or gives away the Glitch.</p>
+  <div class="prow"><button class="pbtn" id="btnPassportClose">Close Badges</button></div>
 </div></div>
 
 <div class="ovl" id="ovlSab"><div class="panel">
@@ -822,7 +823,7 @@ var PASSPORT_ARTEFACTS={
   crown_core_shifter:{source:'relicforge',label:'Crown Core Shifter'},
   stormbreak_capacitor:{source:'trail-runner',label:'Stormbreak Capacitor'},
   beacon_prism:{source:'voxel',label:'Beacon Prism'},
-  geometric_optic:{source:'off-brand',label:'Geometric Optic'}
+  geometric_optic:{source:'off-brand',label:'Sightline Lens'}
 };
 var PASSPORT_IDS=Object.keys(PASSPORT_ARTEFACTS),PASSPORT=null;
 function passportFresh(){return {version:PASSPORT_VERSION,revision:0,updatedAt:new Date().toISOString(),artefacts:{}};}
@@ -926,7 +927,10 @@ function observeForensics(key,type,data){
   return added;
 }
 
-function makeCaseSeed(round){return 100000+(((Date.now()%800000)|0)+round*7919)%800000;}
+var URL_SEED_RAW=(typeof location!=='undefined'?(new URLSearchParams(location.search).get('seed')||''):'').trim();
+function parseUrlCaseSeed(raw){if(!raw)return 0;if(/^\d+$/.test(raw))return Math.max(1,parseInt(raw,10)&0x7fffffff);var h=2166136261;for(var i=0;i<raw.length;i++){h^=raw.charCodeAt(i);h=Math.imul(h,16777619);}return Math.max(1,(h>>>0)&0x7fffffff);}
+var ACTIVE_CASE_SEED=parseUrlCaseSeed(URL_SEED_RAW)||(100000+(((Date.now()%800000)|0)+7919)%800000);
+function makeCaseSeed(round){return ACTIVE_CASE_SEED+Math.max(0,(round|0)-1)*7919;}
 function newRound(mode,round,forcedSeed){
   ROOMS.forEach(function(r){r.station.corrupt=false;r.station.fixT=0;r.station.done=false;r.station.doneT=0;});
   timers.length=0;
@@ -2424,19 +2428,19 @@ function renderForensics(){
   if(!S||S.mode!=='crew'||!S.forensics)return;
   var d=S.forensics.distribution(),pct=normalisedTenths(d),n=S.forensics.events.length,rows=$('bayesRows');rows.innerHTML='';
   $('bayesCount').textContent=n+' unique observed clue'+(n===1?'':'s');
-  $('bayesNorm').textContent='Normalized to 100.0% across active hypotheses · '+S.forensics.categoryCount()+' evidence '+(S.forensics.categoryCount()===1?'family':'families')+(S.round>=3?' · Round 3 shows person-level relative mass, not joint pair odds.':'');
+  $('bayesNorm').textContent='Scores add up to 100.0% across active suspects · '+S.forensics.categoryCount()+' clue '+(S.forensics.categoryCount()===1?'group':'groups')+(S.round>=3?' · Round 3 shows each suspect\'s clue share.':'');
   CAST.forEach(function(c){
     var row=el('div','bayesRow'),cv2=document.createElement('canvas');cv2.width=36;cv2.height=36;drawMini(cv2.getContext('2d'),c,36);row.appendChild(cv2);
     row.appendChild(el('b','bayesName',c.name));
     var track=el('div','bayesTrack'),fill=el('span','bayesFill');fill.style.width=pct[c.id]+'%';track.appendChild(fill);row.appendChild(track);
     row.appendChild(el('strong','bayesPct',pct[c.id].toFixed(1)+'%'));
-    row.setAttribute('aria-label',c.name+', '+pct[c.id].toFixed(1)+' percent relative probability mass');rows.appendChild(row);
+    row.setAttribute('aria-label',c.name+', '+pct[c.id].toFixed(1)+' percent clue match');rows.appendChild(row);
   });
   var list=$('bayesEvidence');list.innerHTML='';
   if(!n)list.appendChild(el('li',null,'No observations yet. Watch tasks, open Focus near trails, and inspect scene records.'));
   else S.forensics.events.slice(-8).reverse().forEach(function(ev){list.appendChild(el('li',null,fmt(ev.t)+' · '+ev.label));});
   var charges=passportCharges('geometric_optic'),use=$('opticUse');
-  use.disabled=!!S.opticActive||charges<1;use.textContent=S.opticActive?'Geometric Optic active':(charges?'Consume Geometric Optic · '+charges+' charge'+(charges===1?'':'s'):'Geometric Optic locked · earn a 3★ evidence mastery');
+  use.disabled=!!S.opticActive||charges<1;use.textContent=S.opticActive?'Sightline Lens active':(charges?'Use Sightline Lens · '+charges+' charge'+(charges===1?'':'s'):'Sightline Lens locked · earn a 3★ clue mastery');
 }
 function openForensics(){if(!S||S.mode!=='crew'||S.over)return;seeIt('g_bayes');renderForensics();show('ovlForensics');}
 function renderPassport(){
@@ -2452,9 +2456,9 @@ function renderPassport(){
 function openPassport(){renderPassport();show('ovlPassport');}
 function useGeometricOptic(){
   if(!S||S.mode!=='crew'||S.opticActive)return;
-  if(!passportConsume('geometric_optic')){toast('No Geometric Optic charge available');renderForensics();return;}
-  S.opticActive=true;$('opticHud').classList.remove('hid');$('opticHud').textContent='⌁ GEOMETRIC OPTIC · exact occlusion edges · all actors shown equally';
-  audioSfx('focus',S.player.x);toast('Geometric Optic engaged — sightline geometry only');renderForensics();
+  if(!passportConsume('geometric_optic')){toast('No Sightline Lens charge available');renderForensics();return;}
+  S.opticActive=true;$('opticHud').classList.remove('hid');$('opticHud').textContent='⌁ SIGHTLINE LENS · clear room sightlines · all characters shown equally';
+  audioSfx('focus',S.player.x);toast('Sightline Lens active — room sightlines shown');renderForensics();
 }
 function glitchesLeft(){
   return S.glitchSet.filter(function(gi){return !S.chars[gi].cleared;}).length;
@@ -2638,11 +2642,11 @@ function endCard(title,stars,body){
   $('masteryLine').textContent='CASE '+S.caseSeed+' · MASTERY '+score+'% · PERSONAL BEST '+SAVE.mastery[key]+'%';
   if(S.mode==='crew'&&stars===3&&S.wrongCalls===0&&S.forensics&&S.forensics.categoryCount()>=3){
     if(passportAward('geometric_optic',S.caseSeed,'3-star evidence mastery')){
-      $('masteryLine').textContent+=' · GEOMETRIC OPTIC CHARGE EARNED';
-      $('endBody').innerHTML+='<br><br><b>⌁ Passport feat:</b> 3★ with three distinct evidence families and no wrong Verify. A Geometric Optic charge is now stored locally.';
+      $('masteryLine').textContent+=' · SIGHTLINE LENS CHARGE EARNED';
+      $('endBody').innerHTML+='<br><br><b>⌁ Badge earned:</b> 3★ with three different clue types and no wrong Verify. A Sightline Lens charge is now saved on this device.';
     }
   }
-  $('chipPassport').textContent='⌁ Passport V4 · '+Object.keys((PASSPORT||passportFresh()).artefacts).length+'/4';
+  $('chipPassport').textContent='⌁ Badges · '+Object.keys((PASSPORT||passportFresh()).artefacts).length+'/4';
   SAVE.xp=clamp(SAVE.xp+stars*8,0,100);store();
   $('btnNext').style.display=(S.round<3&&S.caught)?'':'none';
   show('ovlEnd');
@@ -2841,9 +2845,9 @@ function cineOpen(mode,round,cb){
 /* ================= how-to ================= */
 var HOWCREW='<b>🔍 Crew mode.</b> One of the six shapes is a Glitch in disguise. Tap the floor to walk.<br><br><b>Two ways to win:</b> finish the commission bar, or Verify the Glitch.<br><br>Stand at any machine and tap <b>🛠 Do the work</b> to play a quick job — five different ones. Repair anything corrupted, restore grey teammates, and clear scenes when the Glitch causes one.<br><br><b>Tells:</b> real tasks end in a ✨ spark, fakes never do; a skip stretches a trail; a ⑁ seam jump leaves a dashed line. Use <b>◐ Focus</b> to freeze time and scrub back 8 seconds.<br><br><b>📣 Roll Call</b> (twice a round, from the Hub) makes everyone account for themselves — one statement will not match the trails. Then <b>Verify</b>: a wrong call costs a shield but proves that shape is genuine. Nobody is ever voted out — the Glitch just gets a friendly reformat.<br><br><b>The scene log.</b> When a crewmate goes grey, whoever was in the room is written down — and the one who did it is always on that list. Cross two open scenes and usually one name is left. But the log lives with the body: restoring them wipes it, and too many shapes off-brand at once shuts the workshop. Evidence or calm. Pick.<br><br><b>Round 3 is the last night — and there are two of them.</b> Reformat both.';
 var HOWGLITCH='<b>👾 Glitch mode.</b> You\'re wearing one of the team\'s shapes. Blend in: <b>fake tasks</b> at machines to build cover, then <b>corrupt</b> when nobody\'s within sight.<br><br><b>⑁ Seams</b> in the corner of every room drop you somewhere else on the floor — the fastest way out of a room you should not be in. <b>⚡ Skip</b> dashes you across the floor: quick, but it stretches your trail.<br><br><b>💥 Scene</b> causes chaos — spill the ink and everyone works blind, surge the kiln and they scramble to vent it, scramble the signal and the Curator loses Focus and the logbook.<br><br>The Curator patrols, repairs, rewinds your trail and gets sharper every round. Push workshop drift to 100% before your cover slips. Getting caught is just a reformat — try again.';
-HOWCREW+='<br><br><b>M2 forensic read.</b> Walls now occlude the floor around you. Fading prints retain surface state — wet ink, ash, paper fibre, dust or violet residue. Open <b>⌁ Probability</b> to see normalized relative likelihood from evidence you actually observed; it never reads the hidden culprit. Earn 3★ with no wrong call and three evidence families to place a <b>Geometric Optic</b> charge in Passport V4. Consuming it outlines exact current sightline geometry for every visible actor equally.';
-HOWGLITCH+='<br><br><b>Press Cascade.</b> This scene travels through Print Jam → Ink Pressure → Archive Registration. Each cleared or missed stage moves the action to a named room; missed stages add drift. Workshop sounds pan toward the active fault when sound is opted in.';
-var CONTROLHELP='<br><br><b>After Hours controls.</b> Pointer play is unchanged. Keyboard: arrows or WASD move, E/Space acts, F opens Focus, C opens Probability, P opens Passport, Q uses your main role ability, B uses the second, and Escape pauses. Gamepad: left stick/D-pad moves, A acts, X opens Focus, shoulders use role abilities, and Menu pauses. <b>Calm vision</b> on the title replaces hard occlusion with a soft, motion-safe vignette. Sound is always opt-in.';
+HOWCREW+='<br><br><b>Clues and sightlines.</b> Walls block what you can see across the floor, and fading footprints show where characters walked through ink, ash, paper or dust. Open <b>⌁ Clue Meter</b> to see how your observed clues stack up — it never peeks at the hidden answer. Earn 3★ with no wrong call and three types of clues to earn a <b>Sightline Lens</b> charge, which outlines what every visible character can see.';
+HOWGLITCH+='<br><br><b>Press Cascade.</b> This scene travels through Print Jam → Ink Pressure → Archive Registration. Each cleared or missed stage moves the action to a named room; missed stages add drift. Workshop sounds pan toward the active fault when sound is turned on.';
+var CONTROLHELP='<br><br><b>After Hours controls.</b> Pointer play is unchanged. Keyboard: arrows or WASD move, E/Space acts, F opens Focus, C opens Clue Meter, P opens Badges, Q uses your main role ability, B uses the second, and Escape pauses. Gamepad: left stick/D-pad moves, A acts, X opens Focus, shoulders use role abilities, and Menu pauses. <b>Calm vision</b> on the title replaces sharp room shadows with a soft, calm view. Sound is off by default.';
 HOWCREW+=CONTROLHELP;HOWGLITCH+=CONTROLHELP;
 function showHow(mode){
   $('howBody').innerHTML=mode==='glitch'?HOWGLITCH:(mode==='crew'?HOWCREW:HOWCREW+'<br><br>'+HOWGLITCH);
@@ -2930,7 +2934,8 @@ function boot(){
   document.body.classList.toggle('calm-vision',!!SAVE.calm);
   $('chipCalm').textContent='◉ Calm vision: '+(SAVE.calm?'on':'off');
   $('chipCalm').setAttribute('aria-pressed',String(!!SAVE.calm));
-  $('chipPassport').textContent='⌁ Passport V4 · '+Object.keys(PASSPORT.artefacts).length+'/4';
+  $('chipPassport').textContent='⌁ Badges · '+Object.keys(PASSPORT.artefacts).length+'/4';
+  var seedBtn=$('seed-share');if(seedBtn){seedBtn.textContent='🌱 Seed: '+(URL_SEED_RAW||ACTIVE_CASE_SEED)+' · Copy link';seedBtn.onclick=function(){var cur=S?S.caseSeed:(URL_SEED_RAW||ACTIVE_CASE_SEED),link=location.origin+location.pathname+'?seed='+encodeURIComponent(cur);if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(link).catch(function(){});seedBtn.textContent='✓ Copied · Seed: '+cur;setTimeout(function(){seedBtn.textContent='🌱 Seed: '+cur+' · Copy link';},1800);};}
   cv=$('cv');ctx=cv.getContext('2d');
   paintStars();
   audioPaint();
