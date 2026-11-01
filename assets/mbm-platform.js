@@ -231,15 +231,45 @@
 
   function initReveals(){
     var els=doc.querySelectorAll('main>section:not(:first-child),main+.frommatt,.dx-contact');
-    if(reduce||!('IntersectionObserver' in window)){
+    if(!els.length)return;
+    var io=null,timer=0;
+    function revealAll(){
+      if(timer){clearTimeout(timer);timer=0;}
+      root.classList.remove('mbm-platform-ready');
       each(els,function(el){el.classList.add('mbm-reveal','is-visible');});
+      if(io&&typeof io.disconnect==='function'){try{io.disconnect();}catch(e){}}
+      io=null;
+    }
+    var mq=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
+    if(reduce||(mq&&mq.matches)||typeof window.IntersectionObserver!=='function'){
+      revealAll();
       return;
     }
-    root.classList.add('mbm-platform-ready');
-    var io=new IntersectionObserver(function(entries){
-      each(entries,function(entry){if(entry.isIntersecting){entry.target.classList.add('is-visible');io.unobserve(entry.target);}});
-    },{rootMargin:'0px 0px -7% 0px',threshold:.04});
-    each(els,function(el){el.classList.add('mbm-reveal');io.observe(el);});
+    if(mq){
+      var onMotion=function(e){if(e&&e.matches)revealAll();};
+      if(typeof mq.addEventListener==='function')mq.addEventListener('change',onMotion);
+      else if(typeof mq.addListener==='function')mq.addListener(onMotion);
+    }
+    try{
+      var remaining=els.length;
+      io=new IntersectionObserver(function(entries){
+        each(entries,function(entry){
+          if(entry.isIntersecting&&!entry.target.classList.contains('is-visible')){
+            entry.target.classList.add('is-visible');
+            io.unobserve(entry.target);
+            remaining-=1;
+            if(remaining<=0)revealAll();
+          }
+        });
+      },{rootMargin:'0px 0px -7% 0px',threshold:.04});
+      if(!io||typeof io.observe!=='function'){revealAll();return;}
+      each(els,function(el){el.classList.add('mbm-reveal');io.observe(el);});
+      root.classList.add('mbm-platform-ready');
+      timer=window.setTimeout(revealAll,1500);
+    }catch(e){
+      root.classList.remove('mbm-platform-ready');
+      revealAll();
+    }
   }
 
   function initBackToTop(){
