@@ -546,7 +546,7 @@ async function suite(browser, mutation) {
     assert.equal(new URL(page.url()).search, '', 'Clear filters clears the params'); assert((await page.locator('#unitGrid .unit').count()) === cards, 'Cards return');
     // ?type= is read and ignored, and the page says why
     await goto(page, '/resources/?type=Teacher'); await page.waitForFunction(() => document.querySelectorAll('#unitGrid .unit').length > 0);
-    assert.match(await page.locator('#pillars [data-kind-note]').first().innerText(), /type/, 'The kind note is on the pillars');
+    assert.deepEqual(await page.locator('#pillars [data-kind-note]').allInnerTexts(), [fixtures.appendix.derivedNotes.kindDiscarded, fixtures.appendix.derivedNotes.kindDiscarded], 'The kind note is on the pillars');
     return { cards, current, firstHT, flaggedInFirstKey: flagged, keyedRows: nonLessonKeyed.length };
   });
 

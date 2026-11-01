@@ -379,7 +379,7 @@ async function catalogueChecks(browser, expected) {
       // pill (kind scored below 18/20), so a ?type= deep link still renders the page and the two
       // kind pillars carry the note saying why.
       if (key === 'subject') assert.equal(await page.locator('#rxSubs').inputValue(), value);
-      if (key === 'type') { assert.equal(await page.locator('#rxPath, #rxSubs').count(), 2); assert.match(await page.locator('#pillars [data-kind-note]').first().innerText(), /type/i); }
+      if (key === 'type') { const kindNote = sourceJSON(__dirname, 'ux2/appendix-a-site.json').derivedNotes.kindDiscarded; assert.equal(await page.locator('#rxPath, #rxSubs').count(), 2); assert.deepEqual(await page.locator('#pillars [data-kind-note]').allInnerTexts(), [kindNote, kindNote]); }
     }
     return { filters: ['q=PDF generator', 'subject=' + subject, 'type=Teacher'] };
   });
