@@ -160,7 +160,7 @@ function ux2Cards(actual, groups, label, match) {
   }
 }
 async function readUx2Cards(page, visible = false) {
-  const p2 = (await page.locator('#shelf-strategy').count()) > 0;
+  const p2 = (await page.locator('#shelf-cosy').count()) > 0;
   return page.locator('#game-grid .game-card[data-card]' + (visible ? ':visible' : '')).evaluateAll((nodes, isP2) => nodes.map(card => ({
     id: card.dataset.card, ids: (card.dataset.games || '').split(' '),
     title: card.querySelector('.card-title')?.textContent || '',
@@ -173,7 +173,7 @@ async function readUx2Cards(page, visible = false) {
   })), p2);
 }
 async function shelfShape(page) {
-  if ((await page.locator('#shelf-strategy').count()) > 0) return 'p2';
+  if ((await page.locator('#shelf-cosy').count()) > 0) return 'p2';
   return (await page.locator('#game-grid [data-shelf]').count()) > 0 ? 'tx' : 'ux2';
 }
 // `shown` says whether the activities should be visible in the current filter state. UX2 rows
