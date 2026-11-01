@@ -167,18 +167,71 @@ def thumb(row, image, title):
         return '<span class="thumb"><img src="' + esc(image) + '" alt="" loading="lazy" width="640" height="360"></span>'
     return '<span class="thumb thumb-block" aria-hidden="true">' + tile_art(row) + '<span class="thumb-title">' + esc(title) + '</span></span>'
 
+PLAY_SHELVES = (
+    ('Strategy, Command & Systems', 'shelf-strategy'),
+    ('Cosy Markets, Rhythm & Creative', 'shelf-cosy'),
+    ('Stadium, Track & Precision Sports', 'shelf-sports'),
+    ('High-Tempo Arcade & Turf', 'shelf-arcade'),
+)
+PLAY_SHELF_IDS = {**dict(PLAY_SHELVES), 'Classroom': 'classroom'}
+
+def classify_shelf(row):
+    """PLAY_FINAL (J92 rev 1): map every catalogue game to one of the four named shelves."""
+    tag = row.get('tag', '')
+    sub = (row.get('subGenre') or row.get('sub_genre') or '').lower()
+    if tag in {'Strategy', 'Action RPG', 'Roguelike', 'Whodunnit', 'Card battle', 'Class game', 'Management Sim'}:
+        return 'Strategy, Command & Systems'
+    if tag in {'Calm', 'Rhythm', 'Puzzle', 'Hide & seek'}:
+        return 'Cosy Markets, Rhythm & Creative'
+    if tag == 'Sandbox':
+        if any(w in sub for w in ('destruction', 'demolition', 'driving')):
+            return 'High-Tempo Arcade & Turf'
+        return 'Cosy Markets, Rhythm & Creative'
+    if tag == 'Physics':
+        if any(w in sub for w in ('laser', 'reactor', 'orbital', 'deflect', 'containment', 'alchemy', 'potion', 'demolition')):
+            return 'Strategy, Command & Systems'
+        if any(w in sub for w in ('clay', 'pottery', 'sculpt', 'wheel')):
+            return 'Cosy Markets, Rhythm & Creative'
+        if any(w in sub for w in ('grapple', 'platform', 'swing', 'marble', 'turf', 'hover-car', 'territory', 'canyon', 'rescue')):
+            return 'High-Tempo Arcade & Turf'
+        return 'Stadium, Track & Precision Sports'
+    if tag == 'Classic':
+        if 'football' in sub or 'soccer' in sub or 'world cup' in (row.get('series') or '').lower():
+            return 'Strategy, Command & Systems'
+        return 'High-Tempo Arcade & Turf'
+    if tag == 'Reflex':
+        if any(w in sub for w in ('deduction', 'evidence')):
+            return 'Strategy, Command & Systems'
+        if 'tunnel' in sub:
+            return 'High-Tempo Arcade & Turf'
+        if any(w in sub for w in ('cricket', 'tennis', 'golf', 'football', 'penalty', 'ski', 'athletics', 'sprint', 'bowling', 'darts', 'snooker', 'pool', 'archery', 'rowing', 'cycling', 'race', 'racing', 'kart', 'track', 'trail', 'strength', 'lift')):
+            return 'Stadium, Track & Precision Sports'
+    return 'High-Tempo Arcade & Turf'
+
 def band_pill(row):
     """J92 R9: the session band as a pill, labelled by the manifest's own
     session_band_labels; a row whose band is unstated shows nothing."""
     return ('<span class="chip pill-session">' + esc(row['sessionBandLabel']) + '</span>') if row.get('sessionBandLabel') else ''
 
+def action_pill(row):
+    """Titles v2: two-word verb-led action pill from GAME_TITLES_DRAFT_v2."""
+    return ('<span class="chip pill-action" data-pill>' + esc(row['pill']) + '</span>') if row.get('pill') else ''
+
+def tag_pill(row):
+    return ('<span class="chip" data-tag>' + esc(row['tag']) + '</span>') if row.get('tag') else ''
+
+def verified_input_pill(row):
+    labels = {'touch': 'Touch', 'keyboard': 'Keyboard', 'mouse': 'Mouse', 'gamepad': 'Gamepad'}
+    vals = [labels.get(c, c[:1].upper() + c[1:]) for c in (row.get('controls') or [])]
+    return ('<span class="chip pill-input">' + esc(' · '.join(vals)) + '</span>') if vals else ''
+
 def badges(row, members):
-    out = ''
+    out = action_pill(row) + tag_pill(row)
     if len(members) > 1:
         out += '<span class="chip">' + str(len(members)) + ' editions</span>'
     if row.get('updated'):
         out += '<span class="chip">Updated ' + esc(date_label(row['updated']['date'])) + '</span>'
-    return out + band_pill(row) + keyboard_chip(row)
+    return out + band_pill(row) + verified_input_pill(row) + keyboard_chip(row)
 
 def card(row, members, by_id):
     """One shelf card: art, title, the one-line "what you do", badges for data
@@ -206,7 +259,7 @@ def activity_card(row):
             '<div class="card-meta"><span class="chip">' + label + '</span></div><div class="card-actions">' + play_link(row) + guide_link(row) + '</div></article>')
 
 def shelf_id(name):
-    return 'classroom' if name == 'Classroom' else 'shelf-' + re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
+    return PLAY_SHELF_IDS.get(name, 'shelf-' + re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-'))
 
 def shelf(name, cards, count_text, note=''):
     """TX (d): one horizontal, scroll-snapped shelf per category. The 44px
@@ -220,19 +273,20 @@ def shelf(name, cards, count_text, note=''):
             '<div class="shelf-track" id="' + sid + '-track">' + ''.join(cards) + '</div></section>')
 
 def spotlight(rows):
-    """TX (a): every featured row, manifest order, one shown at a time once
-    play.js runs; AK10-AB puts the manifest's one spotlight row first.
-    A visible Next control; nothing advances on its own; no video.
-    J92 R17: pagination dots and a featured playlist rail (one 44px control per
-    featured row) are derived from the same rows; both are inert markup, hidden
-    until play.js wires them, so the no-script page still shows every item.
-    J92 R3: the kicker is the sub_genre and the body the pitch."""
-    n = len(rows)
-    items = ''.join('<li class="spot-card feature-card" data-spot="' + esc(r['id']) + '">' + thumb(r, (r.get('media') or {}).get('poster') or r.get('image', ''), shown_title(r)).replace(' loading="lazy"', '')
-                    + '<div class="feature-body">' + kicker(r).replace('card-kicker', 'feature-kicker') + '<h3 class="feature-title">' + esc(shown_title(r)) + '</h3>'
-                    '<p class="card-line">' + esc(body_line(r)) + '</p><div class="card-meta"><span class="chip">' + esc(r['genre']) + '</span>' + band_pill(r) + keyboard_chip(r) + '</div>'
-                    '<div class="card-actions">' + play_link(r) + '</div></div></li>' for r in rows)
-    dots = ''.join('<li><button type="button" class="spot-dot" data-spot-select="' + str(i) + '" aria-current="false" aria-label="Spotlight ' + str(i + 1) + ' of ' + str(n) + ': ' + esc(shown_title(r)) + '"></button></li>' for i, r in enumerate(rows))
+    """TX (a) & PLAY_FINAL (J92 rev 1, C16, C17): every featured row, manifest
+    order, one shown at a time once play.js runs; AK10-AB puts the manifest's
+    one spotlight row first. A visible Next control and Featured playlist rail
+    (no pagination dots per C17); nothing advances on its own; no video."""
+    items = ''.join(
+        '<li class="spot-card feature-card" data-spot="' + esc(r['id']) + '">'
+        + thumb(r, (r.get('media') or {}).get('poster') or r.get('image', ''), shown_title(r)).replace(' loading="lazy"', '')
+        + '<div class="feature-body">' + kicker(r).replace('card-kicker', 'feature-kicker')
+        + '<h3 class="feature-title">' + esc(shown_title(r)) + '</h3>'
+        + '<p class="card-line">' + esc(body_line(r)) + '</p>'
+        + '<div class="card-meta">' + action_pill(r) + (tag_pill(r) or '<span class="chip">' + esc(r['genre']) + '</span>') + band_pill(r) + verified_input_pill(r) + keyboard_chip(r) + '</div>'
+        + '<div class="card-actions">' + play_link(r) + favourite_button(r) + guide_link(r) + '</div></div></li>'
+        for r in rows
+    )
     def playlist_thumb(r):
         image = (r.get('media') or {}).get('poster') or r.get('image', '')
         if image:
@@ -240,9 +294,8 @@ def spotlight(rows):
         return '<span class="playlist-thumb" aria-hidden="true">' + tile_art(r) + '</span>'
     playlist = ''.join('<li><button type="button" class="playlist-btn" data-spot-select="' + str(i) + '" aria-current="false">' + playlist_thumb(r) + '<span class="playlist-name">' + esc(shown_title(r)) + '</span></button></li>' for i, r in enumerate(rows))
     return ('<section class="spotlight" id="spotlight" aria-labelledby="spotlight-title"><div class="spotlight-head"><h2 id="spotlight-title">Spotlight</h2>'
-            '<p id="spot-status" class="muted" aria-live="polite" hidden></p><button type="button" class="button" id="spot-next" hidden>Next<span class="sr-only"> spotlight game</span> <span aria-hidden="true">→</span></button></div>'
-            '<div class="spotlight-stage"><div class="spotlight-main"><ol class="spot-list">' + items + '</ol>'
-            '<ol class="spot-dots" aria-label="Spotlight pages" hidden>' + dots + '</ol></div>'
+            '<p id="spot-status" class="chip" aria-live="polite" hidden></p><button type="button" class="button" id="spot-next" hidden>Next<span class="sr-only"> spotlight game</span> <span aria-hidden="true">→</span></button></div>'
+            '<div class="spotlight-stage"><div class="spotlight-main"><ol class="spot-list">' + items + '</ol></div>'
             '<aside class="featured-playlist" aria-labelledby="playlist-title" hidden><h3 id="playlist-title" class="playlist-heading">Featured playlist</h3><ol class="playlist-items">' + playlist + '</ol></aside></div></section>')
 
 def release_rail(rows):
@@ -274,7 +327,7 @@ def slim(row):
     # J92: of the landed enrichment, only what the shelf shows travels -- the kicker,
     # the body, the sheet's "What you do" lines and input pills, the band pill and
     # the facet filter. session_modes stay in the manifest (and render on launch pages).
-    for k in ('id', 'title', 'displayTitle', 'description', 'line', 'route', 'launchRoute', 'scienceGame', 'image', 'imageCaption', 'genre', 'group', 'controls', 'modes', 'instructions', 'moods', 'moodReason', 'details', 'series', 'editions', 'featured', 'spotlight', 'chapter',
+    for k in ('id', 'title', 'displayTitle', 'description', 'line', 'route', 'launchRoute', 'scienceGame', 'image', 'imageCaption', 'genre', 'tag', 'shelf', 'pill', 'searchWords', 'group', 'controls', 'modes', 'instructions', 'moods', 'moodReason', 'details', 'series', 'editions', 'featured', 'spotlight', 'chapter',
               'subGenre', 'pitch', 'whatYouDo', 'inputs', 'sessionBand', 'facets'):
         if k in row and row[k] not in (None, '', [], False):
             out[k] = row[k]
@@ -492,7 +545,7 @@ def render_launch_page(row, catalogue_games, by_id, band_labels, logo, footer_lo
     kicker_html = ('<p class="feature-kicker">' + esc(row['subGenre']) + '</p>') if row.get('subGenre') else ''
 
     return (
-        '<!doctype html>\n<html lang="en-GB">\n<head>\n'
+        '<!doctype html>\n<html lang="en-GB" data-theme="dark">\n<head>\n'
         '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">\n'
         '<title>' + esc(title) + ' · Made by Matt Play</title>\n'
         '<meta name="description" content="' + esc(desc) + '">\n'
@@ -712,6 +765,17 @@ def refresh(output, review=False, source_revisions=None):
         if row is None or row['group'] != 'games': raise ValueError('chapters.json names a route that is not a catalogue game: ' + route)
         if not isinstance(chapter, str) or not chapter.strip(): raise ValueError('chapters.json chapter must be a non-empty string: ' + route)
         row['chapter'] = chapter
+    titles_v2 = read('titles-v2.json', {'routes': {}})['routes']
+    for route, t_meta in titles_v2.items():
+        row = by_key.get(key(route))
+        if row is None or row['group'] != 'games': raise ValueError('titles-v2.json names a route that is not a catalogue game: ' + route)
+        pill = t_meta.get('pill', '')
+        s_words = t_meta.get('searchWords', [])
+        if not isinstance(pill, str) or not pill.strip(): raise ValueError('titles-v2.json pill must be a non-empty string: ' + route)
+        if not isinstance(s_words, list) or not s_words or not all(isinstance(w, str) and w.strip() for w in s_words):
+            raise ValueError('titles-v2.json searchWords must be a non-empty list of strings: ' + route)
+        row['pill'] = pill.strip()
+        row['searchWords'] = [w.strip() for w in s_words]
     launch_seen = set()
     for row in rows:
         if row['group'] == 'games':
@@ -721,6 +785,9 @@ def refresh(output, review=False, source_revisions=None):
             launch_seen.add(lr)
             row['launchRoute'] = lr
             row['scienceGame'] = is_science_game(row)
+            row['shelf'] = classify_shelf(row)
+        else:
+            row['shelf'] = 'Classroom'
     assert len(launch_seen) == counts['games']
 
     assets = target/'assets/play'
@@ -745,18 +812,17 @@ def refresh(output, review=False, source_revisions=None):
     activities = [r for r in rows if r['group'] != 'games']
     genre_counts = Counter(r['genre'] for r in games)
     genres = sorted(genre_counts, key=lambda g: (-genre_counts[g], g))
-    # TX (d): shelf order -- Classroom first (the classroom need), then the page's
-    # existing categories by size. The categories are the catalogue's own genre
-    # values; nothing is invented. Activities join the Classroom shelf.
-    shelf_names = ['Classroom'] + [g for g in genres if g != 'Classroom']
-    # TX (c): chips are those categories plus Keyboard / Touch, which filter only
-    # on DECLARED controls (a game with no verified controls matches neither).
+    tag_counts = Counter(r['tag'] for r in games)
+    tags = sorted(tag_counts, key=lambda t: (-tag_counts[t], t))
+    # PLAY_FINAL (J92 rev 1): four named catalogue shelves in order, followed by
+    # Classroom holding the classroom/staff activities.
+    shelf_names = [name for name, _ in PLAY_SHELVES] + ['Classroom']
     declared = {c for r in games for c in r['controls']}
     input_chips = [(v, label) for v, label in (('keyboard', 'Keyboard'), ('touch', 'Touch')) if v in declared]
-    chips = ('<button type="button" class="chip-button" data-chip="all" aria-pressed="true">All</button>'
-             + ''.join('<button type="button" class="chip-button" data-chip="genre" data-genre="' + esc(g) + '" aria-pressed="false">' + esc(g) + '</button>' for g in shelf_names)
-             + ''.join('<button type="button" class="chip-button" data-chip="control" data-control="' + v + '" aria-pressed="false">' + label + '</button>' for v, label in input_chips))
-    genre_options = '<option value="">All genres</option>' + ''.join('<option value="' + esc(g) + '">' + esc(g) + '</option>' for g in genres)
+    chips = ('<a class="chip-button" href="#all-games" data-chip="all" aria-pressed="true" aria-current="true">All games</a>'
+             + ''.join('<a class="chip-button" href="#' + shelf_id(s) + '" data-chip="genre" data-genre="' + esc(s) + '" aria-pressed="false">' + esc(s) + '</a>' for s in shelf_names)
+             + ''.join('<a class="chip-button" href="?control=' + v + '#all-games" data-chip="control" data-control="' + v + '" aria-pressed="false">' + label + '</a>' for v, label in input_chips))
+    genre_options = '<option value="">All genres</option>' + ''.join('<option value="' + esc(t) + '">' + esc(t) + '</option>' for t in tags)
     # J92 R9: facet chips are the manifest's declared classroom_facets values only,
     # by size then name; the label is the value, capitalised. No facets, no row.
     facet_counts = Counter(f for r in games for f in r['facets'])
@@ -778,7 +844,7 @@ def refresh(output, review=False, source_revisions=None):
         lead = next(i for i in members if by_id[i]['group'] == 'games')
         if r['id'] != lead:
             continue  # not the lead of its series: its Play anchor rides on the lead card
-        by_shelf[r['genre']].append(card(r, members, by_id))
+        by_shelf[r['shelf']].append(card(r, members, by_id))
         covered += [i for i in members if by_id[i]['group'] == 'games']
     if sorted(covered) != sorted(r['id'] for r in games) or len(covered) != len(set(covered)):
         raise ValueError('shelves do not cover every catalogue game exactly once')
@@ -786,13 +852,16 @@ def refresh(output, review=False, source_revisions=None):
     shelf_report = OrderedDict()
     shelves_html = ''
     for name, items in by_shelf.items():
-        members = [r for r in games if r['genre'] == name]
+        members = [r for r in games if r['shelf'] == name]
         extra = [activity_card(r) for r in activities] if name == 'Classroom' else []
         if not items and not extra:
             continue
-        count = str(len(members)) + (' game' if len(members) == 1 else ' games')
-        if extra:
-            count += ' · ' + str(len(extra)) + ' activities'
+        if members:
+            count = str(len(members)) + (' game' if len(members) == 1 else ' games')
+            if extra:
+                count += ' · ' + str(len(extra)) + (' activity' if len(extra) == 1 else ' activities')
+        else:
+            count = str(len(extra)) + (' activity' if len(extra) == 1 else ' activities')
         note = 'Classroom games, whole-class quizzes and a staff training activity.' if name == 'Classroom' else ''
         shelves_html += shelf(name, items + extra, count, note)
         shelf_report[name] = {'cards': len(items) + len(extra), 'games': len(members), 'activities': len(extra)}
@@ -834,7 +903,10 @@ def refresh(output, review=False, source_revisions=None):
             hero_art = ('<img class="intro-art" src="/assets/play/'+esc(source.name)+'" alt="" width="'+str(int(hero['width']))+'" height="'+str(int(hero['height']))
                         +'" decoding="async" fetchpriority="low" data-hero-source="'+esc(hero['sourceSha256'])+'" data-hero-sha="'+esc(hero['sha256'])+'">')
     lanes_html = (spotlight(featured) if featured else '') + release_rail(rows)
-    data = {'counts': counts, 'catalogue': len(games), 'genres': [{'name': g, 'count': genre_counts[g]} for g in genres],
+    data = {'counts': counts, 'catalogue': len(games),
+            'genres': [{'name': g, 'count': genre_counts[g]} for g in genres],
+            'tags': [{'name': t, 'count': tag_counts[t]} for t in tags],
+            'shelves': [{'name': s, 'id': shelf_id(s), **shelf_report[s]} for s in shelf_report],
             'facets': [{'name': f, 'count': facet_counts[f]} for f in facet_names],
             'bandLabels': {b: band_labels[b] for b in sorted({r['sessionBand'] for r in games if r.get('sessionBand')})},
             'series': series, 'games': [slim(r) for r in rows]}
