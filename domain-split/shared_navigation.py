@@ -96,6 +96,19 @@ ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]
 # The surfaces whose footer never carried the canonical link group (see refresh()).
 SHARED_FOOTER = {'/for/pupils/', '/resources/', '/stats/', '/stats/on-this-device/',
                  '/Lessons/subject.html', '/Lessons/primary/'}
+# S-1-2: shared hub tile component (home, the five audience pages, Lessons, Resources, Tools).
+HUB_TILE_ROUTES = {
+    '/',
+    '/main/',
+    '/for/parents-carers/',
+    '/for/schools-semh/',
+    '/for/trusts/',
+    '/for/councils-organisations/',
+    '/for/partners/',
+    '/Lessons/',
+    '/resources/',
+    '/tools/',
+}
 SITE_PAGES = ['index.html', 'main/index.html', 'account/index.html', 'account/admin/index.html',
               'members/index.html', 'mailing-list/index.html', 'privacy/index.html',
               'stats/index.html', 'owner/stats/index.html', 'tools/index.html',
@@ -340,12 +353,17 @@ def refresh(output, site_source):
         text = complete_chrome(text)
         from education_palette import adopt_palette
         text = adopt_palette(text, route, adult or route in footer_links, chrome_template)
-        text = text.replace('</head>', '<link rel="stylesheet" href="/assets/shared-navigation.css">'
+        tile_links = ('<link rel="stylesheet" href="/assets/mbm-tile.css">'
+                      '<script defer src="/assets/mbm-tile.js"></script>'
+                      if route in HUB_TILE_ROUTES else '')
+        text = text.replace('</head>', tile_links + '<link rel="stylesheet" href="/assets/shared-navigation.css">'
                             '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         path.write_text(text)
         changed.append(route)
     for asset in ['shared-navigation.css', 'shared-navigation.js', 'shared-footer.css', 'education-palette.css']:
         shutil.copyfile(HERE / asset, site / 'assets' / asset)
+    for asset in ['mbm-tile.css', 'mbm-tile.js']:
+        shutil.copyfile(HERE.parent / 'assets' / asset, site / 'assets' / asset)
     return {'routes': changed, 'native_disclosure': True, 'audience_rows': rows,
             'governors_from_record': any(r[0] == '/for/governors-trustees/' for r in
                                          [(a['route'], a['label']) for a in audiences.values()]),
