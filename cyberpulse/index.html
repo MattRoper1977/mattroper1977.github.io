@@ -303,7 +303,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 
   <div id="hud">
     <div class="hud-top">
-      <div class="scorebox glass"><div class="micro">Combat score</div><div id="score">0000000</div></div>
+      <div class="scorebox glass"><div class="micro">Run score</div><div id="score">0000000</div></div>
       <div class="missionbox glass">
         <div class="missionrow"><span id="sector" class="micro">SECTOR 01</span><span id="shieldText" class="micro">SHIELD 100</span></div>
         <div id="objective">Break the blockade</div><div class="shieldbar"><div id="shieldFill"></div></div>
@@ -312,7 +312,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     </div>
     <div id="comboWrap"><div id="combo">x1.0</div><div id="comboSub" class="micro">0 chain</div></div>
     <div id="bossHud"><div id="bossName">NULL WARDEN // PHASE I</div><div id="bossTrack"><div id="bossFill"></div></div><div id="breakRow"><span id="breakLabel">BREAK</span><div id="breakTrack" role="progressbar" aria-labelledby="breakLabel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="breakFill"></div></div><span id="breakState">ARMOUR LOCK</span></div></div>
-    <div id="weaponHud"><div class="micro">Weapon system</div><div id="weaponName">PULSE REPEATER // MK I</div><div id="missileState">2-FINGER SWARM // READY</div></div>
+    <div id="weaponHud"><div class="micro">Blaster mode</div><div id="weaponName">PULSE REPEATER // MK I</div><div id="missileState">2-FINGER SWARM // READY</div></div>
     <button id="dashBtn" class="ability" aria-label="Phase dash"><i id="dashRing"></i><span class="aicon">↯</span><span class="alabel">PHASE</span></button>
     <button id="overBtn" class="ability" aria-label="Activate overdrive"><i id="driveRing"></i><span class="aicon">100</span><span class="alabel">OVERDRIVE</span></button>
   </div>
@@ -320,20 +320,20 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   <div id="banner"><div id="bannerMain">SECTOR ONE</div><div id="bannerSub">BLACKOUT CORRIDOR</div></div>
 
   <section id="menuScreen" class="screen show" aria-label="Main menu">
-    <div id="hangarInspect" role="group" tabindex="0" aria-label="Interactive 3D interceptor inspection" aria-describedby="hangarHint" aria-keyshortcuts="ArrowLeft ArrowRight Home"><span id="hangarHint">Drag to inspect // arrows rotate</span></div>
+    <div id="hangarInspect" role="group" tabindex="0" aria-label="Interactive 3D ship inspection" aria-describedby="hangarHint" aria-keyshortcuts="ArrowLeft ArrowRight Home"><span id="hangarHint">Drag to inspect // arrows rotate</span></div>
     <p id="hangarStatus" class="sr-only" aria-live="polite"></p>
     <div class="menu-card">
       <div class="kicker">Made by Matt // AAA V6 <span id="rendererStatus" class="renderer-status" aria-live="polite">3D INIT</span></div>
       <h1 class="logo">CYBERPULSE: BLACKOUT</h1><div class="logo2">BLACKOUT</div>
-      <p class="tagline">Skim a rain-black megacity at terminal speed. Parry lethal fire, weaponise collapsing infrastructure, and break the Null Warden in a seamless neon assault.</p>
+      <p class="tagline">Race across a neon night city at high speed. Block incoming shots, topple glowing signs across the lane, and defeat the Null Warden.</p>
       <div class="bestline"><div><span class="micro">Best score</span><b id="menuBest">0000000</b></div><div><span class="micro">Best sector</span><b id="menuSector">01</b></div><div><span class="micro">Lifetime</span><b id="menuLifetime">0000000</b></div></div>
-      <div class="loadout-label micro">Choose interceptor loadout</div>
+      <div class="loadout-label micro">Choose ship style</div>
       <div id="loadouts">
         <button class="loadout selected" data-weapon="PULSE"><b>PULSE</b><span>Fast · balanced</span></button>
         <button class="loadout" data-weapon="SCATTER"><b>SCATTER</b><span>Wide · aggressive</span></button>
         <button class="loadout" data-weapon="RAIL"><b>RAIL</b><span>Heavy · piercing</span></button>
       </div>
-      <div id="chassisHeading" class="loadout-label micro"><span>Interceptor // reactive paint</span><div id="paintSwatches" role="group" aria-label="Interceptor paint"><button class="paint-swatch selected" data-paint="CYAN" style="--paint:#25f4ff" aria-label="Hyper cyan paint" aria-pressed="true"></button><button class="paint-swatch" data-paint="MAGENTA" style="--paint:#ff2d78" aria-label="Neon magenta paint" aria-pressed="false"></button><button class="paint-swatch" data-paint="AMBER" style="--paint:#ffbd32" aria-label="Anodized gold paint" aria-pressed="false"></button><button class="paint-swatch" data-paint="CHROME" style="--paint:#dce9f2" aria-label="Polished chrome paint" aria-pressed="false"></button></div></div>
+      <div id="chassisHeading" class="loadout-label micro"><span>Ship frame &amp; paint</span><div id="paintSwatches" role="group" aria-label="Ship paint"><button class="paint-swatch selected" data-paint="CYAN" style="--paint:#25f4ff" aria-label="Hyper cyan paint" aria-pressed="true"></button><button class="paint-swatch" data-paint="MAGENTA" style="--paint:#ff2d78" aria-label="Neon magenta paint" aria-pressed="false"></button><button class="paint-swatch" data-paint="AMBER" style="--paint:#ffbd32" aria-label="Anodized gold paint" aria-pressed="false"></button><button class="paint-swatch" data-paint="CHROME" style="--paint:#dce9f2" aria-label="Polished chrome paint" aria-pressed="false"></button></div></div>
       <div id="chassis">
         <button class="chassis selected" data-chassis="STRIKER" data-unlock="0"><b>STRIKER</b><span>Balanced frame</span></button>
         <button class="chassis" data-chassis="VIPER" data-unlock="15000"><b>VIPER</b><span>15K · twin dash</span></button>
@@ -343,28 +343,29 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       <button id="startBtn" class="primary" data-mbm-primary-start>Enter the blackout</button>
       <button id="fullBtn" class="secondary">Go fullscreen</button>
       <div class="settings">
-        <button id="soundToggle" class="toggle on">Sound: on</button>
+        <button id="soundToggle" class="toggle">Sound: off</button>
         <button id="hapticToggle" class="toggle on">Haptics: on</button>
         <button id="fxToggle" class="toggle on">Effects: full</button>
         <button id="qualityToggle" class="toggle on">Quality: auto</button>
         <button id="renderToggle" class="toggle on">Renderer: auto 3D</button>
         <button id="dailyToggle" class="toggle">Run: standard</button>
-        <button id="v6CyberCalm" class="toggle" type="button" aria-pressed="false">Calm V6: off</button>
+        <button id="v6CyberCalm" class="toggle" type="button" aria-pressed="false">Calm mode: off</button>
+        <button id="seed-share" class="toggle" type="button" data-seed-share aria-label="Copy shareable seed link">🌱 Seed: daily · Copy link</button>
       </div>
       <div class="legal">Drag to steer · second touch / Q launches swarm · tap phase at impact to parry · graze for overdrive</div>
     </div>
   </section>
 
   <section id="upgradeScreen" class="screen" aria-label="Select an upgrade">
-    <div class="upgrade-wrap"><div class="kicker">Sector secure // choose one</div><h2 class="upgrade-title">Install combat tech</h2><div class="upgrade-sub">The next breach begins when you select</div><div id="upgradeCards"></div></div>
+    <div class="upgrade-wrap"><div class="kicker">Sector secure // choose one</div><h2 class="upgrade-title">Choose an upgrade</h2><div class="upgrade-sub">The next breach begins when you select</div><div id="upgradeCards"></div></div>
   </section>
 
   <section id="resultScreen" class="screen" aria-label="Mission result">
-    <div class="result-card"><div id="resultTitle">Core breach</div><div id="resultSub">Signal lost in sector 01</div><div id="resultRank">A</div><div class="results"><div class="result"><b id="resultScore">0</b><span>Score</span></div><div class="result"><b id="resultChain">0</b><span>Best chain</span></div><div class="result"><b id="resultKills">0</b><span>Hostiles</span></div></div><div id="resultDetail">0 grazes // 0% accuracy // 0 damage</div><div id="resultBadges"></div><div id="newBest">New personal best</div><button id="retryBtn" class="primary">Re-enter blackout</button><button id="shareBtn" class="secondary">Share score card</button><button id="menuBtn" class="secondary">Return to loadout</button></div>
+    <div class="result-card"><div id="resultTitle">Core breach</div><div id="resultSub">Signal lost in sector 01</div><div id="resultRank">A</div><div class="results"><div class="result"><b id="resultScore">0</b><span>Score</span></div><div class="result"><b id="resultChain">0</b><span>Best chain</span></div><div class="result"><b id="resultKills">0</b><span>Targets</span></div></div><div id="resultDetail">0 grazes // 0% accuracy // 0 damage</div><div id="resultBadges"></div><div id="newBest">New personal best</div><button id="retryBtn" class="primary">Re-enter blackout</button><button id="shareBtn" class="secondary">Share score card</button><button id="menuBtn" class="secondary">Return to loadout</button></div>
   </section>
 
   <section id="pauseScreen" class="screen" aria-label="Paused">
-    <div class="menu-card"><div class="kicker">Simulation suspended</div><h2>PAUSED</h2><p class="tagline">Your active run remains safely paused in this browser tab.</p><button id="resumeBtn" class="primary">Resume run</button><button id="quitBtn" class="secondary">Abandon run</button></div>
+    <div class="menu-card"><div class="kicker">Game paused</div><h2>PAUSED</h2><p class="tagline">Your active run remains safely paused in this browser tab.</p><button id="resumeBtn" class="primary">Resume run</button><button id="quitBtn" class="secondary">Abandon run</button></div>
   </section>
 
 <script>
@@ -2050,11 +2051,11 @@ body.v6-cyber-calm #scan,body.v6-cyber-calm #flash,body.v6-cyber-calm #grade{dis
 @media(prefers-reduced-motion:reduce){#v6CyberIntro{background:#02030cf8}#v6CyberIntel{backdrop-filter:none}.ready,.letterbox{animation:none!important;transition:none!important}}
 </style>
 <aside id="v6CyberIntel" aria-live="polite" aria-atomic="true" aria-label="CyberPulse threat and route forecast" hidden>
-  <div id="v6CyberIntelHead">V6 combat read <b id="v6CyberRisk">clear</b></div>
+  <div id="v6CyberIntelHead">Course status <b id="v6CyberRisk">clear</b></div>
   <div class="v6-cyber-read"><span>Mission</span><strong id="v6CyberMission">Break the blockade</strong><span>Threat</span><strong id="v6CyberThreat">Shield stable</strong><span>Renderer</span><strong id="v6CyberRenderer">Initialising</strong></div>
 </aside>
 <section id="v6CyberIntro" role="dialog" aria-modal="true" aria-labelledby="v6CyberIntroTitle" aria-describedby="v6CyberIntroCopy" hidden>
-  <div class="v6-cyber-intro-card"><small>Made by Matt · AAA V6</small><h2 id="v6CyberIntroTitle">Blackout run</h2><p id="v6CyberIntroCopy">Read the shield, break the blockade, and commit through the opening. The CP120 simulation, score, renderer and rewards remain the original CyberPulse rules.</p><button id="v6CyberSkip" class="primary" type="button">Enter the grid</button></div>
+  <div class="v6-cyber-intro-card"><small>Made by Matt · AAA V6</small><h2 id="v6CyberIntroTitle">Blackout run</h2><p id="v6CyberIntroCopy">Watch your shield, clear the barrier, and dash through the opening. All scoring, movement, and rewards follow the standard CyberPulse rules.</p><button id="v6CyberSkip" class="primary" type="button">Enter the grid</button></div>
 </section>
 <div id="v6CyberLive" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 <script id="mbm-v6-cyberpulse-release">
@@ -2069,9 +2070,22 @@ function loadProfile(){var value=null;try{value=JSON.parse(localStorage.getItem(
 var profile=loadProfile(),gameProfile=profile.games[GAME_ID],calmButton=document.getElementById('v6CyberCalm');
 var reduceQuery=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):null,reduced=!!(reduceQuery&&reduceQuery.matches);
 function saveProfile(){try{localStorage.setItem(PROFILE_KEY,JSON.stringify(profile))}catch(e){}}
-function applyCalm(){var on=reduced||gameProfile.settings.calm===true;document.body.classList.toggle('v6-cyber-calm',on);calmButton.setAttribute('aria-pressed',String(gameProfile.settings.calm===true));calmButton.textContent='Calm V6: '+(gameProfile.settings.calm?'on':reduced?'system':'off')}
+function applyCalm(){var on=reduced||gameProfile.settings.calm===true;document.body.classList.toggle('v6-cyber-calm',on);calmButton.setAttribute('aria-pressed',String(gameProfile.settings.calm===true));calmButton.textContent='Calm mode: '+(gameProfile.settings.calm?'on':reduced?'system':'off')}
 calmButton.addEventListener('click',function(){gameProfile.settings.calm=!gameProfile.settings.calm;saveProfile();applyCalm()});
 if(reduceQuery){var onReduce=function(event){reduced=!!event.matches;applyCalm()};if(reduceQuery.addEventListener)reduceQuery.addEventListener('change',onReduce);else if(reduceQuery.addListener)reduceQuery.addListener(onReduce)}applyCalm();
+var sndBtn=document.getElementById('soundToggle'),muteBtn=document.getElementById('muteBtn'),seedBtn=document.getElementById('seed-share');
+var legacySavedSound=false;try{var lsObj=JSON.parse(legacyAtV6Boot['cyberpulse_blackout_v1']||'null');if(lsObj&&lsObj.sound===true)legacySavedSound=true}catch(e){}
+var classroomMuted=!legacySavedSound&&gameProfile.settings.sound!==true,trackedCtxs=[];
+var OrigAC=window.AudioContext||window.webkitAudioContext;
+if(OrigAC&&!OrigAC.__mbmWrapped){var WrappedAC=function(){var c=new OrigAC();trackedCtxs.push(c);var origRes=c.resume?c.resume.bind(c):null;if(origRes){c.resume=function(){return classroomMuted?(c.suspend?c.suspend():Promise.resolve()):origRes()}}if(classroomMuted&&c.suspend)try{c.suspend()}catch(e){}return c};WrappedAC.prototype=OrigAC.prototype;WrappedAC.__mbmWrapped=true;if(window.AudioContext)window.AudioContext=WrappedAC;if(window.webkitAudioContext)window.webkitAudioContext=WrappedAC}
+function applyClassroomMuteUI(){if(!classroomMuted)return;if(sndBtn&&(sndBtn.textContent!=='Sound: off'||sndBtn.classList.contains('on'))){sndBtn.textContent='Sound: off';sndBtn.classList.remove('on')}if(muteBtn&&muteBtn.textContent!=='×')muteBtn.textContent='×';trackedCtxs.forEach(function(c){if(c&&c.state==='running'&&c.suspend)try{c.suspend()}catch(e){}})}
+applyClassroomMuteUI();
+function handleFirstUnmute(ev){if(!classroomMuted)return;ev.stopImmediatePropagation();ev.preventDefault();classroomMuted=false;gameProfile.settings.sound=true;saveProfile();if(sndBtn){sndBtn.textContent='Sound: on';sndBtn.classList.add('on')}if(muteBtn)muteBtn.textContent='◖';trackedCtxs.forEach(function(c){if(c&&c.state==='suspended'&&c.resume)try{c.resume()}catch(e){}})}
+if(sndBtn){sndBtn.addEventListener('click',handleFirstUnmute,true);new MutationObserver(applyClassroomMuteUI).observe(sndBtn,{childList:true,characterData:true,subtree:true,attributes:true})}
+if(muteBtn){muteBtn.addEventListener('click',handleFirstUnmute,true);new MutationObserver(applyClassroomMuteUI).observe(muteBtn,{childList:true,characterData:true,subtree:true})}
+function hashDailySeed(str){var h=2166136261>>>0;for(var i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0)||1}
+var activeSeed=(function(){try{var q=new URLSearchParams(location.search).get('seed');if(q&&/^[A-Za-z0-9_-]{1,24}$/.test(q))return q}catch(e){}return String(hashDailySeed('CPB3:'+new Date().toISOString().slice(0,10).replace(/-/g,'')))})();
+if(seedBtn){seedBtn.textContent='🌱 Seed: '+activeSeed+' · Copy link';seedBtn.addEventListener('click',function(){var u=new URL(location.href);u.searchParams.set('seed',activeSeed);try{navigator.clipboard.writeText(u.toString())}catch(e){}seedBtn.textContent='🌱 Seed: '+activeSeed+' · Copied';setTimeout(function(){seedBtn.textContent='🌱 Seed: '+activeSeed+' · Copy link'},1600)})}
 var intro=document.getElementById('v6CyberIntro'),skip=document.getElementById('v6CyberSkip'),introTimer=0,introOpen=false,lastFocus=null;
 var inertTargets=[document.getElementById('scene3d'),document.getElementById('game'),document.getElementById('hud'),document.getElementById('menuScreen'),document.getElementById('upgradeScreen'),document.getElementById('pauseScreen'),document.getElementById('resultScreen')];
 function setInert(on){inertTargets.forEach(function(node){if(!node)return;if(on)node.setAttribute('inert','');else node.removeAttribute('inert')})}
