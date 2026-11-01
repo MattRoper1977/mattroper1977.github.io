@@ -1831,7 +1831,104 @@ body:has(dialog[open]) {
   }
 }
 
-.game-card:hover, .game-card:focus-within, .release-box:hover, .release-box:focus-within, .feature-card:hover, .feature-card:focus-within {
+.todays-seed {
+  margin-block: 0 1.75rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--mbm-card-raised);
+  border-radius: var(--mbm-card-radius);
+  background: var(--mbm-card);
+  display: grid;
+  gap: .9rem;
+  min-width: 0;
+}
+
+.todays-seed-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: .85rem 1.25rem;
+  min-width: 0;
+}
+
+.todays-seed-copy {
+  display: grid;
+  gap: .3rem;
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.todays-seed-copy h2 {
+  margin: 0;
+  font-size: clamp(1.18rem, 1.8vw, 1.42rem);
+  font-weight: 820;
+  line-height: 1.12;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+}
+
+.todays-seed-badge {
+  display: inline-grid;
+  gap: .18rem;
+  padding: .55rem .85rem;
+  border: 1px solid var(--mbm-accent);
+  border-radius: var(--mbm-card-radius);
+  background: var(--mbm-card-raised);
+  max-width: 100%;
+  min-width: 0;
+}
+
+.seed-label {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--mbm-muted);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.seed-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(1.15rem, 1.9vw, 1.4rem);
+  font-weight: 820;
+  letter-spacing: .08em;
+  color: var(--mbm-accent);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.todays-seed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .55rem;
+  min-width: 0;
+}
+
+.todays-seed .card-line {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.seed-play {
+  gap: .35rem;
+  white-space: normal;
+  text-align: center;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.seed-pending {
+  min-height: var(--mbm-tap);
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.game-card:hover, .game-card:focus-within, .release-box:hover, .release-box:focus-within, .feature-card:hover, .feature-card:focus-within, .todays-seed:hover, .todays-seed:focus-within {
   border-color: var(--mbm-accent);
 }
 
@@ -1845,7 +1942,7 @@ body:has(dialog[open]) {
   button, .button, .play, .chip-button, .facet-chip, .switcher-link, .icon-button, .menu summary, .collection-links a, .save-vault-summary, .playlist-btn {
     transition: background-color var(--mbm-motion-duration) var(--mbm-motion-ease), border-color var(--mbm-motion-duration) var(--mbm-motion-ease), color var(--mbm-motion-duration) var(--mbm-motion-ease), transform var(--mbm-motion-duration) var(--mbm-motion-ease);
   }
-  .game-card, .release-box, .feature-card, .launch-card {
+  .game-card, .release-box, .feature-card, .launch-card, .todays-seed {
     transition: border-color var(--mbm-motion-duration) var(--mbm-motion-ease), background-color var(--mbm-motion-duration) var(--mbm-motion-ease), transform var(--mbm-motion-duration) var(--mbm-motion-ease), box-shadow var(--mbm-motion-duration) var(--mbm-motion-ease);
   }
   .thumb img {

@@ -387,6 +387,38 @@ await test('p5c-reduce-motion-safe-transitions',async()=>{
  assert(motionOn.scroll==='smooth'&&motionOn.cardDur>0&&motionOn.playDur>0,'P5c transitions active under no-preference using --mbm-motion-duration: '+JSON.stringify(motionOn));
  return motionOn;
 });
+await test('p6a-todays-seed-card',async()=>{
+ const proofs=[];
+ for(const w of [390,1280]){
+  const ctxSeed=await browser.newContext({viewport:{width:w,height:w<700?844:900},isMobile:w<700,hasTouch:w<700,reducedMotion:'reduce'}),pS=await ctxSeed.newPage();
+  const reqs=[];pS.on('request',r=>reqs.push(r.url()));
+  await pS.goto(base);await ready(pS);await overflow(pS);firstParty(reqs);
+  assert(await pS.locator('#todays-seed').isVisible(),'#todays-seed visible at '+w);
+  await targets(pS,'#todays-seed');
+  const expectedSeed=await pS.evaluate(()=>{const d=new Date();return String(d.getFullYear())+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');});
+  const seedText=(await pS.locator('#todays-seed-value').innerText()).trim();
+  assert.match(seedText,/^\d{8}$/,'8-digit YYYYMMDD seed rendered');
+  assert.equal(seedText,expectedSeed,'seed matches today date code');
+  const seedFacts=await pS.evaluate(()=>{
+   const codeEl=document.getElementById('todays-seed-value'),sec=document.getElementById('todays-seed');
+   const links=[...sec.querySelectorAll('a[data-seed-play]')];
+   const pending=[...sec.querySelectorAll('[data-seed-pending]')].map(e=>e.getAttribute('data-seed-pending'));
+   return{numVariant:getComputedStyle(codeEl).fontVariantNumeric,cardDur:parseFloat(getComputedStyle(sec).transitionDuration)||0,linkDur:links.length?(parseFloat(getComputedStyle(links[0]).transitionDuration)||0):0,hasDataPlay:sec.querySelectorAll('[data-play]').length,hrefs:links.map(a=>a.getAttribute('href')),pending};
+  });
+  assert(seedFacts.numVariant.includes('tabular-nums'),'tabular-nums on #todays-seed-value');
+  assert.equal(seedFacts.cardDur,0,'reduce-motion respected on #todays-seed card');
+  assert.equal(seedFacts.linkDur,0,'reduce-motion respected on seed launch links');
+  assert.equal(seedFacts.hasDataPlay,0,'seed links do not duplicate data-play shelf anchors');
+  assert.deepEqual(seedFacts.hrefs,['/Lessons/Games/Grapple.html?seed='+expectedSeed,'/apexkick/?seed='+expectedSeed],'Grapple and Apex Kick open with today seed');
+  assert.deepEqual(seedFacts.pending,['reactor','potion-works'],'Reactor and Potion Works listed cleanly pending shelf landing');
+  const firstSeedLink=pS.locator('#todays-seed a[data-seed-play]').first();
+  await firstSeedLink.focus();
+  assert(await firstSeedLink.evaluate(e=>e===document.activeElement),'seed launch link is keyboard reachable');
+  proofs.push({width:w,seed:seedText,hrefs:seedFacts.hrefs,pending:seedFacts.pending});
+  await ctxSeed.close();
+ }
+ return{widths:proofs};
+});
 await test('essential-links-with-javascript-disabled',async()=>{const ctx=await browser.newContext({javaScriptEnabled:false}),page=await ctx.newPage();await page.goto(base);const hrefs=await gridHrefs(page);const covered=coverage(hrefs,routesOf(catalogue));assert.equal(await page.locator('#classroom [data-activity] a[data-play]').count(),activities.length);const azLinks=await page.locator('.az-list a[href]').evaluateAll(a=>a.map(x=>x.getAttribute('href')));assert.deepEqual([...azLinks].sort(),data.games.map(g=>g.route).sort(),'the noscript A to Z lists every game and activity once');const distinct=await page.evaluate(()=>new Set([...document.querySelectorAll('a[data-play][href]')].map(a=>a.getAttribute('href'))).size);assert.equal(distinct,data.games.length,'every Play href present without JavaScript');const anchors=await page.locator('a[data-play][href]').count();await page.locator('.menu summary').click();assert(await page.getByRole('navigation',{name:'Main menu'}).isVisible());assert.match(await page.locator('#all-games .notice').innerText(),/direct Play links work/);assert(await page.locator('#spotlight [data-spot]').first().isVisible(),'spotlight readable without JavaScript');assert.equal(await page.locator('.shelf-nav:visible').count(),0,'inert shelf controls stay hidden without JavaScript');await ctx.close();return{directHrefs:distinct,noscriptList:azLinks.length,gridCatalogueHrefsOnce:covered,classroomRows:activities.length,playAnchors:anchors,nativeMenu:true};});
 await test('unavailable-storage-missing-media-and-failure-fallback',async()=>{const ctx=await browser.newContext(),page=await ctx.newPage();await page.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new DOMException('blocked','SecurityError');}});Object.defineProperty(window,'sessionStorage',{get(){throw new DOMException('blocked','SecurityError');}});});await page.route(/\.(png|jpg|webp|svg)(\?.*)?$/,r=>r.abort());await page.goto(base);await ready(page);await page.locator('#query').fill('Emberwild');await page.locator('#game-grid [data-favourite="'+EMBER+'"]').click();assert.match(await page.locator('#storage-status').innerText(),/unavailable/);await pause(300);assert.match(await page.locator('#game-grid [data-card="'+EMBER+'"] .thumb').innerText(),new RegExp((emberwild.displayTitle||emberwild.title).slice(0,6)),'a failed card image falls back to the titled colour block');await page.goto(base+'?game='+EMBER);await ready(page);await pause(300);assert.match(await page.locator('#dialog-media').innerText(),/Image unavailable/);assert(await page.locator('#dialog-play').isVisible());await page.keyboard.press('Escape');assert(await page.locator('#game-grid .play').filter({visible:true}).first().isVisible());await ctx.close();return{browsing:true,inMemoryFavourite:true,gameLinks:true,imageFallback:true};});
 await test('all-69-rendered-start-surfaces',async()=>{for(const g of data.games){const ctx=await browser.newContext({viewport:{width:1280,height:720},reducedMotion:'reduce'}),page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));try{const response=await page.goto(base+g.route,{waitUntil:'load',timeout:20000});await pause(4000);const surface=await page.evaluate(()=>({title:document.title,canvas:[...document.querySelectorAll('canvas')].filter(e=>e.getBoundingClientRect().width>20&&e.getBoundingClientRect().height>20).length,controls:[...document.querySelectorAll('button,input,select,a[href]')].filter(e=>e.getBoundingClientRect().width>0).length,text:document.body.innerText.slice(0,1100)}));const ready=response.status()===200&&(surface.canvas>0||surface.controls>0);report.routes.push({id:g.id,route:g.route,status:response.status(),ready,surface,errors,depth:'Initial load and rendered input surface; not a completed game'});// The Lighthouse first-visit primer focuses its bottom button. Dismiss it

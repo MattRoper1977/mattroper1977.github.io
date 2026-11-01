@@ -315,6 +315,48 @@ def release_rail(rows):
             '<button type="button" class="shelf-step" data-shelf-step="1" aria-controls="new-and-updated-track" aria-label="Next updated games">›</button></div></div>'
             '<ol class="shelf-track" id="new-and-updated-track">' + boxes + '</ol></section>')
 
+SEEDED_GAMES = (
+    ('grapple', 'Grapple', '/Lessons/Games/Grapple.html'),
+    ('apex-kick', 'Apex Kick', '/apexkick/'),
+    ('reactor', 'Reactor', '/Matt-s-Apps-/enzyme-reactor-overdrive.html'),
+    ('potion-works', 'Potion Works', '/potion-works/'),
+)
+
+def todays_seed_card(by_key):
+    """JOB 6(a): display-only Today's seed card shared across seeded games so a
+    class can play the same date-based run and compare locally."""
+    controls = []
+    for slug, fallback_label, route in SEEDED_GAMES:
+        row = by_key.get(key(route))
+        if row is not None:
+            label = shown_title(row)
+            controls.append(
+                '<a class="play seed-play" data-seed-play="' + esc(row['id']) + '" data-seed-base="' + esc(row['route'])
+                + '" href="' + esc(row['route']) + '">Play ' + esc(label) + ' <span aria-hidden="true">→</span></a>'
+            )
+        else:
+            controls.append(
+                '<span class="chip seed-pending" data-seed-pending="' + esc(slug) + '">'
+                + esc(fallback_label) + ' · Coming soon</span>'
+            )
+    return (
+        '<section class="todays-seed" id="todays-seed" aria-labelledby="todays-seed-title">'
+        '<div class="todays-seed-head">'
+        '<div class="todays-seed-copy">'
+        '<p class="feature-kicker">Shared classroom run · Same seed on every device</p>'
+        '<h2 id="todays-seed-title">Today’s seed</h2>'
+        '<p class="card-line">Open any seeded game below with today’s date code so a class can play the same run and compare locally — no accounts and nothing sent anywhere.</p>'
+        '</div>'
+        '<div class="todays-seed-badge" aria-label="Today’s shared date seed">'
+        '<span class="seed-label" id="todays-seed-date">Daily date code</span>'
+        '<code class="seed-code" id="todays-seed-value">YYYYMMDD</code>'
+        '</div>'
+        '</div>'
+        '<div class="todays-seed-actions" role="group" aria-label="Open seeded games with today’s seed">'
+        + ''.join(controls) +
+        '</div></section>'
+    )
+
 def noscript_list(rows):
     """TX (b) fallback: every game and activity as a plain link, A to Z."""
     ordered = sorted(rows, key=lambda r: shown_title(r).casefold())
@@ -902,7 +944,7 @@ def refresh(output, review=False, source_revisions=None):
             shutil.copyfile(source, assets/source.name)
             hero_art = ('<img class="intro-art" src="/assets/play/'+esc(source.name)+'" alt="" width="'+str(int(hero['width']))+'" height="'+str(int(hero['height']))
                         +'" decoding="async" fetchpriority="low" data-hero-source="'+esc(hero['sourceSha256'])+'" data-hero-sha="'+esc(hero['sha256'])+'">')
-    lanes_html = (spotlight(featured) if featured else '') + release_rail(rows)
+    lanes_html = (spotlight(featured) if featured else '') + todays_seed_card(by_key) + release_rail(rows)
     data = {'counts': counts, 'catalogue': len(games),
             'genres': [{'name': g, 'count': genre_counts[g]} for g in genres],
             'tags': [{'name': t, 'count': tag_counts[t]} for t in tags],

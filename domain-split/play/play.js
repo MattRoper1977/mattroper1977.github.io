@@ -91,6 +91,20 @@
     $('spot-next').addEventListener('click', () => showSpot(spotIndex + 1));
   }
 
+  /* ---- today's seed: shared date-based classroom run, zero storage or network ---- */
+  const seedEl = $('todays-seed-value');
+  if (seedEl) {
+    const now = new Date();
+    const seed = String(now.getFullYear()) + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+    seedEl.textContent = seed;
+    const dateEl = $('todays-seed-date');
+    if (dateEl) dateEl.textContent = 'Seed for ' + now.toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'});
+    document.querySelectorAll('a[data-seed-play][data-seed-base]').forEach(a => {
+      const baseHref = a.dataset.seedBase;
+      a.href = baseHref + (baseHref.includes('?') ? '&' : '?') + 'seed=' + seed;
+    });
+  }
+
   /* ---- shelves: 44px previous/next scroll each horizontal track ---- */
   const tracks = [...document.querySelectorAll('[data-shelf], [data-rail]')].map(el => ({
     el,
