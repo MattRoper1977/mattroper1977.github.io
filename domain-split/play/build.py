@@ -304,7 +304,7 @@ def refresh(output, review=False, source_revisions=None):
             # the existing builder's documented literal host replacements.
             payload = target / unquote(path).lstrip('/')
             if path.endswith('/'): payload /= 'index.html'
-            output_path = str(payload.relative_to(target))
+            output_path = payload.relative_to(target).as_posix()
             expected_hash = source.get('published_sha256')
             if output_path in approved_revisions:
                 revision = source_revisions.get(output_path)
@@ -518,18 +518,22 @@ def refresh(output, review=False, source_revisions=None):
         # footer does not shift under it.
         footer_logo = ('<img class="footer-mark" src="/assets/play/'+esc(source.name)
                        +'" alt="" width="32" height="32" decoding="async" loading="lazy">')
-    # PLAY-D2: the approved controller artwork, decorative, placed only at its
-    # recorded bytes (hero-art.json binds the served file to Matt's source by
-    # digest). Absent record -> no artwork, never a stand-in.
+    # PLAY-P1 part B: decorative masthead motif, placed only at its recorded bytes
+    # (hero-art.json binds the asset by sha256 and byte length). An .svg record is
+    # inlined directly into .intro-art with aria-hidden="true" (no request, no <img>).
     hero = read('hero-art.json', {})
     hero_art = ''
     if hero.get('sha256'):
         source = HERE / Path(hero['file']).name
         art_bytes = source.read_bytes()
         assert hashlib.sha256(art_bytes).hexdigest() == hero['sha256'] and len(art_bytes) == hero['bytes'], 'hero artwork differs from hero-art.json'
-        shutil.copyfile(source, assets/source.name)
-        hero_art = ('<img class="intro-art" src="/assets/play/'+esc(source.name)+'" alt="" width="'+str(int(hero['width']))+'" height="'+str(int(hero['height']))
-                    +'" decoding="async" fetchpriority="low" data-hero-source="'+esc(hero['sourceSha256'])+'" data-hero-sha="'+esc(hero['sha256'])+'">')
+        if source.suffix.lower() == '.svg':
+            hero_art = ('<div class="intro-art" aria-hidden="true" data-hero-sha="'+esc(hero['sha256'])+'" data-hero-bytes="'+str(int(hero['bytes']))+'">'
+                        +art_bytes.decode('utf-8').strip()+'</div>')
+        else:
+            shutil.copyfile(source, assets/source.name)
+            hero_art = ('<img class="intro-art" src="/assets/play/'+esc(source.name)+'" alt="" width="'+str(int(hero['width']))+'" height="'+str(int(hero['height']))
+                        +'" decoding="async" fetchpriority="low" data-hero-source="'+esc(hero['sourceSha256'])+'" data-hero-sha="'+esc(hero['sha256'])+'">')
     lanes_html = (spotlight(featured) if featured else '') + release_rail(rows)
     data = {'counts': counts, 'catalogue': len(games), 'genres': [{'name': g, 'count': genre_counts[g]} for g in genres],
             'facets': [{'name': f, 'count': facet_counts[f]} for f in facet_names],
