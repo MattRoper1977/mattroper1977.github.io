@@ -1018,9 +1018,10 @@ html:not(.js) .collection-links a:not([data-collection=""]) {
 .shelf-track {
   display: grid;
   grid-auto-flow: column;
-  align-items: start;
+  align-items: stretch;
   grid-auto-columns: min(78vw, 16.5rem);
-  gap: .85rem;
+  column-gap: .85rem;
+  row-gap: 0;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
@@ -1037,9 +1038,41 @@ html:not(.js) .collection-links a:not([data-collection=""]) {
 #game-grid.is-filtering .shelf-track {
   grid-auto-flow: row;
   grid-auto-columns: auto;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr));
+  row-gap: .85rem;
   overflow-x: visible;
   scroll-snap-type: none;
+}
+
+@supports (grid-template-rows: subgrid) {
+  .shelf-track {
+    grid-template-rows: repeat(9, auto);
+  }
+  #game-grid.is-filtering .shelf-track {
+    grid-template-rows: none;
+    grid-auto-rows: auto;
+    row-gap: 0;
+  }
+  #game-grid.is-filtering .shelf-track > .game-card {
+    margin-bottom: .85rem;
+  }
+  .shelf-track > .game-card,
+  .shelf-track > .release-box {
+    display: grid;
+    grid-row: span 9;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+    align-items: start;
+  }
+  .shelf-track > :is(.game-card, .release-box) > .thumb { grid-row: 1; }
+  .shelf-track > :is(.game-card, .release-box) > .card-kicker { grid-row: 2; }
+  .shelf-track > :is(.game-card, .release-box) > :is(.card-title, .release-title) { grid-row: 3; }
+  .shelf-track > :is(.game-card, .release-box) > .card-line { grid-row: 4; }
+  .shelf-track > :is(.game-card, .release-box) > .card-match { grid-row: 5; }
+  .shelf-track > :is(.game-card, .release-box) > .card-meta { grid-row: 6; align-content: start; }
+  .shelf-track > :is(.game-card, .release-box) > .card-editions { grid-row: 7; margin: 0 0 .65rem; padding: .45rem 0; border-bottom: 1px solid var(--mbm-card-raised); }
+  .shelf-track > :is(.game-card, .release-box) > .card-actions { grid-row: 8; align-self: end; margin-top: 0; }
+  .shelf-track > :is(.game-card, .release-box) > .remove-recent { grid-row: 9; justify-self: start; }
 }
 
 #game-grid.is-filtering .shelf-nav {
@@ -1106,7 +1139,7 @@ html:not(.js) .collection-links a:not([data-collection=""]) {
 }
 
 .card-actions .guide-link {
-  flex: 1 1 auto;
+  flex: 1 1 100%;
   font-size: .85rem;
   padding: .5rem .75rem;
 }
@@ -1738,7 +1771,13 @@ body:has(dialog[open]) {
     grid-template-columns: minmax(0, 1.7fr) minmax(260px, .85fr);
   }
   .shelf-track {
-    grid-auto-columns: minmax(15.5rem, calc((100% - 2.55rem) / 4));
+    grid-auto-columns: calc((100% - 1.7rem) / 3);
+  }
+}
+
+@media (min-width: 1260px) {
+  .shelf-track {
+    grid-auto-columns: calc((100% - 2.55rem) / 4);
   }
 }
 
