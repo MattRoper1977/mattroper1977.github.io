@@ -31,7 +31,8 @@ const routesOf=rows=>new Set(rows.map(g=>g.route));
 const normalizeWord=v=>String(v).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const seriesLeads=new Set(catalogue.filter(g=>g.editions&&g.editions.find(id=>catalogue.some(c=>c.id===id))===g.id).map(g=>g.id));
 const expectedCards=catalogue.filter(g=>!g.editions||seriesLeads.has(g.id)).length;
-const genreCount=name=>catalogue.filter(g=>g.genre===name).length;
+const EXPECTED_SHELVES=[['Strategy, Command & Systems','shelf-strategy'],['Cosy Markets, Rhythm & Creative','shelf-cosy'],['Stadium, Track & Precision Sports','shelf-sports'],['High-Tempo Arcade & Turf','shelf-arcade'],['Classroom','classroom']];
+const shelfCount=name=>catalogue.filter(g=>g.shelf===name).length,tagCount=name=>catalogue.filter(g=>g.tag===name).length;
 const EMBER='game-emberwild',emberwild=catalogue.find(g=>g.id===EMBER);assert(emberwild,'Emberwild is the fixture game');
 // The grid must list every catalogue href exactly once — as a card's Play or as a
 // collapsed edition's Play inside its lead card — and nothing that is not a catalogue game.
@@ -86,34 +87,80 @@ await test('static-shelf-one-dom-vocabulary-and-one-count',async()=>{const html=
  const cardIds=[...html.matchAll(/data-card="([^"]+)"/g)].map(m=>m[1]);assert.equal(cardIds.length,new Set(cardIds).size,'duplicate data-card ids');assert.equal(cardIds.length,expectedCards,'grid cards = leads + singles');
  const featuredRows=catalogue.filter(g=>g.featured);assert(featuredRows.length,'the manifest carries a featured flag');assert.equal(catalogue.filter(g=>g.spotlight).length,1,'the manifest flags exactly one spotlight row');const featured=spotRows[0];assert.deepEqual([...html.matchAll(/data-spot="([^"]+)"/g)].map(m=>m[1]),spotRows.map(g=>g.id),'Spotlight is the spotlight row, then every featured:true row, in manifest order');assert.equal((html.match(/data-feature="/g)||[]).length,0,'the single Featured card is retired');
  const gridHtml=html.slice(html.indexOf('id="game-grid"'));for(const retired of ['data-info=','data-watch=','<video','lane-track','see-all'])assert(!gridHtml.slice(0,gridHtml.indexOf('</main>')).includes(retired),'cards carry Play only; found '+retired);
- const shelfNames=[...html.matchAll(/data-shelf="([^"]+)"/g)].map(m=>m[1]);const genres=[...new Set(catalogue.map(g=>g.genre))];assert.equal(shelfNames[0],'Classroom','Classroom shelf first');assert.deepEqual([...shelfNames].sort(),[...new Set(['Classroom',...genres])].sort(),'one shelf per existing category, none invented');
+ const shelfNames=[...html.matchAll(/data-shelf="([^"]+)"/g)].map(m=>m[1].replace(/&amp;/g,'&'));assert.deepEqual(shelfNames,EXPECTED_SHELVES.map(x=>x[0]),'four named PLAY_FINAL shelves then Classroom in order');
+ const gridPills=[...gridHtml.slice(0,gridHtml.indexOf('</main>')).matchAll(/\bdata-pill\b/g)].length;assert.equal(catalogue.filter(g=>g.pill&&g.searchWords?.length).length,61,'titles v2 overlay applied to 61 catalogue rows');assert.equal(gridPills,57,'57 lead cards carry titles v2 action pills');
  for(const g of catalogue.filter(x=>x.editions)){const n=new Set(g.editions).size;assert(html.includes('>'+n+' editions<'),'editions chip for '+g.series+' shows '+n);}
- for(const literal of ['Pick a game. <span>Make it yours.</span>','YOUR NEXT GAME STARTS HERE.','placeholder="Search games"','>Filters<','>All games<','>For your classroom<','Classroom games, whole-class quizzes and a staff training activity.','Every game, A to Z','Privacy and saved progress','Report a problem','Made by Matt Education ↗','Made by Matt Play','Optional usage statistics — off until you allow it.','Read what is counted.','>Allow<','>Keep off<','usage-client.js','>Editions<','>Your progress<','id="dialog-saves"','>Transfer saves<','>Favourite<','>Share<'])assert(html.includes(literal),'copy missing: '+literal);
+ for(const literal of ['Pick a game. <span>Make it yours.</span>','Original arcade, strategy and simulation games — instant play','Skill only, no chance or loot','Zero external requests','Works offline, nothing leaves the device','id="save-vault"','>Save Vault<','>Featured playlist<','id="new-and-updated"','>New and updated<','placeholder="Search games"','>Filters<','>All games<','>For your classroom<','Classroom games, whole-class quizzes and a staff training activity.','Every game, A to Z','Privacy and saved progress','Report a problem','Made by Matt Education ↗','Made by Matt Play','Optional usage statistics — off until you allow it.','Read what is counted.','>Allow<','>Keep off<','usage-client.js','>Editions<','>Your progress<','id="dialog-saves"','>Transfer saves<','>Favourite<','>Share<'])assert(html.includes(literal),'copy missing: '+literal);
  assert(!/<(a|button)[\s>][^>]*>(?:(?!<\/(a|button)>).)*<(a|button)[\s>]/s.test(html.replace(/<script[\s\S]*?<\/script>/g,'')),'nested interactive elements');
  return{cards:cardIds.length,featured:featured.route,spotlight:spotRows.length,shelves:shelfNames,countStatement:countStatements[0].replace(/<[^>]+>/g,''),retiredVocabulary:0};});
+await test('launch-pages-200-metadata-schema-and-layout',async()=>{
+ const unesc=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#x27;|&#39;/g,"'");
+ const smRes=await fetch(base+'/sitemap.xml');assert.equal(smRes.status,200,'sitemap.xml returns 200');
+ const smXml=await smRes.text(),locs=[...smXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]);
+ assert.equal(locs.length,76+catalogue.length,'sitemap count includes /your-shelf/ plus catalogue game count');
+ assert(locs.includes('https://www.madebymatt-play.uk/your-shelf/'),'sitemap includes /your-shelf/');
+ assert.equal(locs.length,new Set(locs).size,'no duplicate sitemap URLs');
+ let sciencePages=0;
+ for(const g of catalogue){
+  assert(g.launchRoute&&g.launchRoute.startsWith('/play/')&&g.launchRoute.endsWith('/'),'valid launchRoute for '+g.id);
+  const fullUrl='https://www.madebymatt-play.uk'+g.launchRoute;
+  assert(locs.includes(fullUrl),'sitemap includes '+fullUrl);
+  const res=await fetch(base+g.launchRoute);assert.equal(res.status,200,'launch page 200: '+g.launchRoute);
+  const html=await res.text(),shown=g.displayTitle||g.title;
+  const tMatch=html.match(/<title>([^<]+)<\/title>/);assert(tMatch&&unesc(tMatch[1]).trim()===shown+' · Made by Matt Play','title on '+g.launchRoute);
+  const dMatch=html.match(/<meta name="description" content="([^"]+)">/);assert(dMatch&&unesc(dMatch[1]).trim().length>0,'meta description on '+g.launchRoute);
+  assert(html.includes('<link rel="canonical" href="'+fullUrl+'">'),'canonical URL on '+g.launchRoute);
+  const poster=(g.media&&g.media.poster)||g.image||'';
+  if(process.env.PLAY_REQUIRE_COMPLETE_DISCOVERY==='1')assert(poster,'complete discovery requires Job 1 poster on '+g.launchRoute);
+  if(poster){
+   assert(html.includes('<meta property="og:image" content="https://www.madebymatt-play.uk'+poster+'">'),'og:image poster on '+g.launchRoute);
+   assert(html.includes('<meta property="og:image:width" content="640">')&&html.includes('<meta property="og:image:height" content="360">'),'640x360 og:image dimensions on '+g.launchRoute);
+  }
+  const ldMatch=html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);assert(ldMatch,'JSON-LD present on '+g.launchRoute);
+  const ld=JSON.parse(ldMatch[1]);
+  assert.equal(ld['@context'],'https://schema.org');assert.equal(ld['@type'],'VideoGame');assert.equal(ld.name,shown);
+  assert.equal(ld.description,unesc(dMatch[1]));assert(ld.genre,'genre in JSON-LD');assert(ld.playMode,'playMode in JSON-LD');
+  assert.equal(ld.isAccessibleForFree,true);assert.equal(ld.inLanguage,'en-GB');
+  for(const secId of ['guide-and-modes','controls','works-offline','badges'])assert(html.includes('id="'+secId+'"'),'missing #'+secId+' on '+g.launchRoute);
+  if(g.scienceGame){sciencePages++;assert(html.includes('id="evidence-export"'),'science launch page carries #evidence-export: '+g.launchRoute);}
+  else assert(!html.includes('id="evidence-export"'),'non-science launch page omits #evidence-export: '+g.launchRoute);
+ }
+ assert(sciencePages>0,'science launch pages verified');
+ const sciSample=catalogue.find(g=>g.scienceGame),stdSample=catalogue.find(g=>!g.scienceGame);
+ for(const sample of [sciSample,stdSample]){
+  for(const width of [390,1280]){
+   const ctx=await browser.newContext({viewport:{width,height:width<700?844:900},reducedMotion:'reduce'}),p=await ctx.newPage();
+   const reqs=[],errs=[];p.on('request',r=>reqs.push(r.url()));p.on('pageerror',e=>errs.push(e.message));
+   const resp=await p.goto(base+sample.launchRoute,{waitUntil:'networkidle'});assert.equal(resp.status(),200);
+   await overflow(p);await targets(p,null);firstParty(reqs);await noMedia(reqs);assert.equal(errs.length,0,'pageerrors on '+sample.launchRoute);
+   await ctx.close();
+  }
+ }
+ return{launchPages:catalogue.length,sciencePages,sitemapUrls:locs.length};
+});
 for(const width of [320,390,768,1280,1440]){
  const ctx=await browser.newContext({viewport:{width,height:width<700?844:900},isMobile:width<700,hasTouch:width<700,reducedMotion:'reduce'}),page=await ctx.newPage();page.setDefaultTimeout(10000);currentPage=page;const requests=[];page.on('request',r=>requests.push(r.url()));page.on('pageerror',e=>report.errors.push({width,message:e.message}));
  await test(width+'-layout-navigation-and-first-load',async()=>{await page.goto(base);await ready(page);await overflow(page);
   assert.equal(await page.locator('#intro-title').innerText(),'Pick a game. Make it yours.');
-  // PLAY-D2: the approved controller is decorative, byte-bound to hero-art.json, omitted on phones, and never over a control or the copy.
-  const heroRecord=JSON.parse(fs.readFileSync('domain-split/play/hero-art.json'));const art=page.locator('.intro-art');assert.equal(await art.count(),1,'one hero artwork in the markup');
-  const artFacts=await art.evaluate(i=>({visible:!!i.offsetParent&&getComputedStyle(i).display!=='none',complete:i.complete,w:i.naturalWidth,h:i.naturalHeight,alt:i.getAttribute('alt'),src:i.getAttribute('src'),width:i.getAttribute('width'),height:i.getAttribute('height'),source:i.dataset.heroSource,sha:i.dataset.heroSha,box:i.getBoundingClientRect().toJSON()}));
-  assert.equal(artFacts.alt,'','hero artwork is decorative');assert.equal(artFacts.source,heroRecord.sourceSha256);assert.equal(artFacts.sha,heroRecord.sha256);assert.equal(artFacts.src,'/'+heroRecord.published);assert.equal(Number(artFacts.width),heroRecord.width);assert.equal(Number(artFacts.height),heroRecord.height);
-  const artResponse=await page.request.get(base+artFacts.src);assert.equal(artResponse.status(),200);const artBytes=Buffer.from(await artResponse.body());assert.equal(sha(artBytes),heroRecord.sha256,'served hero artwork is the recorded file');assert.equal(artBytes.length,heroRecord.bytes);
-  // PLAY-D2 amended by Matt, 16 September 2026. This branch used to assert the
-  // OPPOSITE below 768px - 'phones omit the hero artwork'. Matt asked for the
-  // controller on phones too, like the education hero, so the phone case now
-  // has to prove the artwork is painted rather than prove it is absent. Nothing
-  // else is relaxed: every width still proves the picture decodes, fits without
-  // overflowing the viewport in either direction, renders at a useful size and
-  // covers no heading, copy or control. A phone that silently dropped it, drew
-  // it at a few pixels, or let it slide over the search box now reds here.
-  assert(artFacts.visible&&artFacts.complete&&artFacts.w>0,'hero artwork shows and decodes at every width');
-  assert(artFacts.box.left>=-1&&artFacts.box.right<=width+1,'hero artwork fits the viewport');
-  assert(artFacts.box.width>=160,'hero artwork renders at a useful size');
+  // PLAY-P1 part B: the decorative masthead motif is an inline SVG byte-bound to hero-art.json
+  // (no request for hero-art.webp, no <img>, visible at every width including phones, overlapping nothing).
+  const heroRecord=JSON.parse(fs.readFileSync('domain-split/play/hero-art.json')),heroFileBytes=fs.readFileSync(path.join('domain-split/play',path.basename(heroRecord.file)));
+  assert.equal(sha(heroFileBytes),heroRecord.sha256,'recorded hero motif sha256 matches source file');assert.equal(heroFileBytes.length,heroRecord.bytes,'recorded hero motif byte length matches source file');
+  const art=page.locator('.intro-art');assert.equal(await art.count(),1,'one hero artwork in the markup');
+  const artFacts=await art.evaluate(i=>{const svg=i.querySelector('svg'),sr=svg?svg.getBoundingClientRect().toJSON():null;return{tag:i.tagName,visible:!!i.offsetParent&&getComputedStyle(i).display!=='none',ariaHidden:i.getAttribute('aria-hidden'),imgs:i.querySelectorAll('img').length,svgs:i.querySelectorAll('svg').length,viewBox:svg?svg.getAttribute('viewBox'):null,sha:i.dataset.heroSha,bytes:Number(i.dataset.heroBytes),box:i.getBoundingClientRect().toJSON(),svgBox:sr};});
+  assert.equal(artFacts.tag,'DIV','inline motif container');assert.equal(artFacts.ariaHidden,'true','hero motif is decorative');assert.equal(artFacts.imgs,0,'hero motif makes no <img> request');assert.equal(artFacts.svgs,1,'hero motif inlines one <svg>');assert.equal(artFacts.sha,heroRecord.sha256);assert.equal(artFacts.bytes,heroRecord.bytes);assert.equal(artFacts.viewBox,`0 0 ${heroRecord.width} ${heroRecord.height}`);
+  assert(!requests.some(u=>/hero-art/i.test(u)),'no request for retired hero-art asset');
+  const retiredHero=await page.request.get(base+'/assets/play/hero-art.webp');assert.equal(retiredHero.status(),404,'retired hero-art.webp is not served');
+  assert(artFacts.visible&&artFacts.svgBox&&artFacts.svgBox.width>0&&artFacts.svgBox.height>0,'hero motif shows and renders at every width');
+  assert(artFacts.box.left>=-1&&artFacts.box.right<=width+1,'hero motif fits the viewport');
+  assert(artFacts.box.width>=160,'hero motif renders at a useful size');
   {const overlaps=await page.evaluate(box=>[...document.querySelectorAll('#intro-title,.intro .eyebrow,.intro .lede,#discovery-form,.mood-tools,.mood-note,header,.browse-sidebar')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.height&&r.left<box.right&&r.right>box.left&&r.top<box.bottom&&r.bottom>box.top;}).map(e=>e.id||e.className||e.tagName),artFacts.box);
-   assert.deepEqual(overlaps,[],'hero artwork overlaps nothing');}
-  assert.equal(await page.locator('.intro .lede').innerText(),'Race, explore, build or work out your next move. Find your favourite or try something unexpected—play straight in your browser.');
+   assert.deepEqual(overlaps,[],'hero motif overlaps nothing');}
+  if(width===1280){
+   const posters=await page.evaluate(async()=>{const cards=[...document.querySelectorAll('#game-grid .game-card')];const imgs=cards.map(c=>c.querySelector('.thumb img')).filter(Boolean);for(const img of imgs){img.loading='eager';if(!img.complete)await img.decode().catch(()=>{});}return{cards:cards.length,blocks:document.querySelectorAll('#game-grid .game-card .thumb-block').length,imgs:imgs.length,bad:imgs.filter(i=>!i.complete||i.naturalWidth!==640||i.naturalHeight!==360).map(i=>({src:i.getAttribute('src'),w:i.naturalWidth,h:i.naturalHeight}))};});
+   assert.equal(posters.blocks,0,'every card carries a poster rather than a fallback block');assert.equal(posters.imgs,expectedCards+activities.length,'every shelf card has a poster img');assert.deepEqual(posters.bad,[],'every card poster decodes at 640x360');
+  }
+  assert.equal(await page.locator('.intro .lede').innerText(),'Original arcade, strategy and simulation games — instant play · Free • No login • Works offline');
   const navigation=page.locator('.collection-links');
   await navigation.locator('[data-collection=favourites]').click();assert.equal(await visibleGames(page),0,'new browser favourites empty');assert.equal(await navigation.locator('[aria-current=page]').getAttribute('data-collection'),'favourites');
   await navigation.locator('[data-collection=recent]').click();assert.equal(await visibleGames(page),0,'new browser recent list empty');assert.equal(await navigation.locator('[aria-current=page]').getAttribute('data-collection'),'recent');
@@ -142,19 +189,31 @@ for(const width of [320,390,768,1280,1440]){
   const tokenStyle=await header.evaluate(e=>({ink:getComputedStyle(e).getPropertyValue('--text').trim(),token:getComputedStyle(e).getPropertyValue('--mbm-primary').trim()}));assert.equal(tokenStyle.ink,tokenStyle.token,'Header adopts dark token ink');
   await targets(page,'header');await page.locator('#search-jump').click();assert(await page.locator('#query').evaluate(e=>e===document.activeElement));
   assert.equal(await visible(page).count(),expectedCards);const hrefs=await gridHrefs(page);const covered=coverage(hrefs,routesOf(catalogue));const control=coverageControl(hrefs);assert.equal(await page.locator('#classroom [data-activity] a[data-play]').count(),activities.length,'every activity on the Classroom shelf');const all=await page.evaluate(()=>new Set([...document.querySelectorAll('a[data-play][href]')].map(a=>a.getAttribute('href'))).size);assert.equal(all,data.games.length,'every route reachable by href');await noMedia(requests);const total=firstParty(requests);
-  // TX (d): one shelf per category, Classroom first, card counts derived; TX (e): Updated badges derived.
-  const shelves=await page.evaluate(()=>[...document.querySelectorAll('#game-grid [data-shelf]')].map(s=>({name:s.dataset.shelf,count:s.querySelector('[data-shelf-count]').textContent,cards:s.querySelectorAll('[data-card]').length,activities:s.querySelectorAll('[data-activity]').length,snap:getComputedStyle(s.querySelector('.shelf-track')).scrollSnapType})));
-  assert.equal(shelves[0].name,'Classroom');assert.equal(shelves[0].activities,activities.length);
-  for(const sh of shelves){const n=genreCount(sh.name);assert.equal(sh.count,n+(n===1?' game':' games')+(sh.activities?' · '+sh.activities+' activities':''),'shelf count derived: '+sh.name);assert.match(sh.snap,/x mandatory/,'shelf scroll-snaps: '+sh.name);}
+  // PLAY_FINAL (J92 rev 1): four named shelves then Classroom, card counts derived; Updated badges, Featured playlist, New and updated, and Save Vault preserved.
+  const shelves=await page.evaluate(()=>[...document.querySelectorAll('#game-grid [data-shelf]')].map(s=>({id:s.id,name:s.dataset.shelf,count:s.querySelector('[data-shelf-count]').textContent,cards:s.querySelectorAll('[data-card]').length,activities:s.querySelectorAll('[data-activity]').length,snap:getComputedStyle(s.querySelector('.shelf-track')).scrollSnapType})));
+  assert.deepEqual(shelves.map(s=>[s.name,s.id]),EXPECTED_SHELVES,'four named shelves then Classroom in order');
+  assert.equal(shelves[shelves.length-1].activities,activities.length);
+  for(const sh of shelves){const n=shelfCount(sh.name),expectedCount=n?(n+(n===1?' game':' games')+(sh.activities?' · '+sh.activities+' activities':'')):(sh.activities+' activities');assert.equal(sh.count,expectedCount,'shelf count derived: '+sh.name);assert.match(sh.snap,/x mandatory/,'shelf scroll-snaps: '+sh.name);}
   assert.equal(shelves.reduce((t,sh)=>t+sh.cards,0),expectedCards,'every lead card on exactly one shelf');
-  for(const g of catalogue.filter(g=>g.updated&&(!g.editions||seriesLeads.has(g.id)))){const[y,m,d]=g.updated.date.split('-').map(Number);assert.match(await page.locator('#game-grid [data-card="'+g.id+'"] .card-meta').innerText(),new RegExp('Updated '+d+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]+' '+y),'Updated badge derived for '+g.id);}
+  assert(await page.locator('#save-vault').isVisible(),'Save Vault preserved');
+  assert.equal(await page.locator('#spotlight .featured-playlist [data-spot-select]').count(),spotRows.length,'Featured playlist preserved with every spotlight entry');
+  assert.equal(await page.locator('#new-and-updated [data-release]').count(),catalogue.filter(g=>g.updated).length,'New and updated rail preserved');
+  const todayUtcMs=(()=>{const now=new Date();return Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());})();
+  for(const g of catalogue.filter(g=>g.updated&&(!g.editions||seriesLeads.has(g.id)))){const[y,m,d]=g.updated.date.split('-').map(Number),ageDays=Math.floor((todayUtcMs-Date.UTC(y,m-1,d))/86400000),recentUpd=ageDays>=0&&ageDays<=60,updChip=page.locator('#game-grid [data-card="'+g.id+'"] .card-meta [data-updated="'+g.updated.date+'"]'),expectedLbl='Updated '+d+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]+' '+y;assert.equal(await updChip.count(),1,'Updated badge element present for '+g.id);assert.equal(await updChip.isVisible(),recentUpd,'Updated badge 60-day visibility for '+g.id+' (age '+ageDays+'d)');if(recentUpd)assert.equal((await updChip.innerText()).trim(),expectedLbl,'Updated badge derived for '+g.id);}
   assert.equal(await page.locator('.lane').count(),0,'lanes retired: no game appears twice on the shelves');
   assert.equal(await page.locator('.az-list').count(),0,'the A to Z fallback stays inside noscript when JavaScript runs');
   const lanes=shelves;
-  await page.evaluate(()=>scrollTo(0,0));await settledShelfCapture(page,width+'-home');await page.locator('#all-games-title').scrollIntoViewIfNeeded();await settledShelfCapture(page,width+'-browse');await page.locator('.menu summary').click();await page.keyboard.press('Escape');assert.equal(await page.locator('.menu').getAttribute('open'),null);assert(await page.locator('.menu summary').evaluate(e=>e===document.activeElement));return{viewport:{width,height:width<700?844:900},noOverflow:true,cards:expectedCards,catalogueHrefsCoveredOnce:covered,coverageControl:control,classroomRows:activities.length,routesReachable:all,requests:total,thirdParty:0,initialMediaRequests:0,lanes};});
+  await page.evaluate(()=>scrollTo(0,0));await settledShelfCapture(page,width+'-home');await page.locator('#all-games-title').scrollIntoViewIfNeeded();await settledShelfCapture(page,width+'-browse');
+  const railAlign=await page.evaluate(()=>{const track=document.querySelector('#shelf-strategy .shelf-track'),cards=[...track.querySelectorAll('.game-card')].slice(0,3);return cards.map(c=>({sub:getComputedStyle(c).gridTemplateRows,titleY:Math.round(c.querySelector('.card-title').getBoundingClientRect().top),actionsY:Math.round(c.querySelector('.card-actions').getBoundingClientRect().top),bottomY:Math.round(c.getBoundingClientRect().bottom)}));});
+  assert(railAlign.every(r=>r.sub&&r.sub!=='none'&&Math.abs(r.titleY-railAlign[0].titleY)<=1&&Math.abs(r.actionsY-railAlign[0].actionsY)<=1&&Math.abs(r.bottomY-railAlign[0].bottomY)<=1),'P5a rail subgrid aligns card titles, action bars and card bottoms: '+JSON.stringify(railAlign));
+  const displayTypo=await page.evaluate(()=>{const h1=getComputedStyle(document.querySelector('#intro-title')),lede=getComputedStyle(document.querySelector('.intro .lede')),cnt=getComputedStyle(document.querySelector('#result-count')),spot=getComputedStyle(document.querySelector('#spot-status'));return{h1Wrap:h1.textWrapStyle||h1.textWrap,h1Ratio:Number((parseFloat(h1.lineHeight)/parseFloat(h1.fontSize)).toFixed(3)),ledeWrap:lede.textWrapStyle||lede.textWrap,cntNum:cnt.fontVariantNumeric,spotNum:spot.fontVariantNumeric};});
+  assert(displayTypo.h1Wrap==='balance'&&displayTypo.h1Ratio<=1.1&&displayTypo.ledeWrap==='pretty'&&displayTypo.cntNum.includes('tabular-nums')&&displayTypo.spotNum.includes('tabular-nums'),'P5b display typography scale, wrap and tabular numerals: '+JSON.stringify(displayTypo));
+  const reducedSafe=await page.evaluate(()=>({scroll:getComputedStyle(document.documentElement).scrollBehavior,cardDur:parseFloat(getComputedStyle(document.querySelector('#game-grid .game-card')).transitionDuration)||0,playDur:parseFloat(getComputedStyle(document.querySelector('#game-grid .play')).transitionDuration)||0}));
+  assert(reducedSafe.scroll==='auto'&&reducedSafe.cardDur===0&&reducedSafe.playDur===0,'P5c reduced-motion zeros transitions and smooth scroll: '+JSON.stringify(reducedSafe));
+  await page.locator('.menu summary').click();await page.keyboard.press('Escape');assert.equal(await page.locator('.menu').getAttribute('open'),null);assert(await page.locator('.menu summary').evaluate(e=>e===document.activeElement));return{viewport:{width,height:width<700?844:900},noOverflow:true,cards:expectedCards,catalogueHrefsCoveredOnce:covered,coverageControl:control,classroomRows:activities.length,routesReachable:all,requests:total,thirdParty:0,initialMediaRequests:0,lanes,railAlign,displayTypo,reducedSafe};});
 
- // TX (a) and (g): the Spotlight shows one featured game at a time, moves only on Next, never
- // plays video, and on a phone stacks its picture above its words while the chips scroll sideways.
+ // TX (a) and PLAY_FINAL C1/C16/C17: the Spotlight shows one featured game at a time, moves on Next or Featured playlist, never
+ // plays video, and on a phone stacks its picture above its words while the chips wrap cleanly without horizontal overflow.
  await test(width+'-tx-spotlight-next-and-mobile-layout',async()=>{await page.goto(base);await ready(page);
   const featuredRows=spotRows,n=featuredRows.length;const shown=()=>page.locator('#spotlight [data-spot]:visible').evaluateAll(e=>e.map(x=>x.dataset.spot));
   assert.deepEqual(await shown(),[featuredRows[0].id],'one spotlight game at a time, the spotlight row first');assert.equal(await page.locator('#spot-status').innerText(),'1 of '+n);
@@ -165,7 +224,7 @@ for(const width of [320,390,768,1280,1440]){
   assert.equal(await page.locator('#spotlight video, #game-grid video').count(),0,'no video on the spotlight or the shelves');
   assert(await page.locator('#spotlight [data-spot]:visible a[data-play]').evaluate(a=>a.href.length>0),'the spotlight game has a Play link');
   const layout=await page.evaluate(()=>{const card=[...document.querySelectorAll('#spotlight [data-spot]')].find(e=>!e.hidden),t=card.querySelector('.thumb').getBoundingClientRect(),b=card.querySelector('.feature-body').getBoundingClientRect(),row=document.querySelector('.chip-row'),cs=getComputedStyle(row);return{stacked:t.bottom<=b.top+1,thumbW:t.width,cardW:card.getBoundingClientRect().width,chipsScroll:cs.overflowX,chipsWrap:cs.flexWrap,chipOverflow:row.scrollWidth>row.clientWidth};});
-  if(width<700){assert(layout.stacked,'the spotlight stacks on a phone');assert.equal(layout.chipsWrap,'nowrap','chips stay on one row on a phone');assert.match(layout.chipsScroll,/auto|scroll/,'and scroll sideways');}
+  assert.equal(layout.chipsWrap,'wrap','C1: shelf and input pills wrap cleanly');if(width<700){assert(layout.stacked,'the spotlight stacks on a phone');}
   await overflow(page);return{spotlight:n,order:true,noAutoplay:true,layout};});
  // FIN1 D+E. The footer mark and both tagline instances, measured rather than
  // assumed, at every width under reduced motion and -- at the phone widths the
@@ -233,27 +292,31 @@ for(const width of [320,390,768,1280,1440]){
  await test(width+'-search-chips-drawer-empty-reset',async()=>{await page.goto(base+'?q=Emberwild');await ready(page);assert.equal(await page.locator('#query').inputValue(),'Emberwild');assert.equal(await visible(page).count(),1);assert.match(await visible(page).innerText(),/Emberwild/);assert.equal(await page.locator('#result-count').innerText(),'1 of '+catalogue.length+' games');assert(await page.locator('#lanes').isHidden(),'lanes hide while filtering');
   await page.locator('#query').fill('qzx nonexistent');assert.equal(await visible(page).count(),0);assert(await page.locator('#empty-state').isVisible());await page.locator('#empty-reset').click();assert.equal(await visible(page).count(),expectedCards);assert.equal(await page.locator('#result-count').innerText(),catalogue.length+' games');assert(await page.locator('#lanes').isVisible());
   assert.equal(await page.locator('input[type=search]').count(),1,'one search field');assert.equal(await page.locator('main select:visible').count(),0,'no stacked selects on the page');
-  // TX (c): chips are the catalogue's own categories (shelf order) plus Keyboard/Touch on declared controls only.
+  // PLAY_FINAL (J92 rev 1, C1/C3/C11): chips are All games, the four named shelves, Classroom, plus Keyboard/Touch on declared controls only.
   const shelfOrder=await page.locator('#game-grid [data-shelf]').evaluateAll(e=>e.map(x=>x.dataset.shelf));
-  const chips=await page.locator('.chip-button').allTextContents();assert.deepEqual(chips,['All',...shelfOrder,'Keyboard','Touch'],'category and input chips');
-  for(const name of ['Strategy','Classroom']){const chip=page.locator('[data-chip="genre"][data-genre="'+name+'"]');await chip.click();assert.equal(await chip.getAttribute('aria-pressed'),'true');assert.equal(await visibleGames(page),genreCount(name),'category chip '+name);assert.equal(new URL(page.url()).searchParams.get('genre'),name);
-   assert.equal(await page.locator('#game-grid [data-shelf]:visible').evaluateAll(e=>e.map(x=>x.dataset.shelf)).then(v=>v.join()),name,'only that shelf shows');
+  const chips=await page.locator('.chip-button').allTextContents();assert.deepEqual(chips,['All games',...shelfOrder,'Keyboard','Touch'],'shelf and input chips');
+  for(const [name,hashId] of [['Strategy, Command & Systems','shelf-strategy'],['Classroom','classroom']]){const chip=page.locator('[data-chip="genre"][data-genre="'+name+'"]');await chip.click();assert.equal(await chip.getAttribute('aria-pressed'),'true');assert.equal(await chip.getAttribute('aria-current'),'true');assert.equal(await visibleGames(page),shelfCount(name),'shelf chip '+name);assert.equal(new URL(page.url()).hash,'#'+hashId);
+   assert.equal(await page.locator('#game-grid [data-shelf]:visible').evaluateAll(e=>e.map(x=>x.dataset.shelf)).then(v=>v.join('|')),name,'only that shelf shows');
    assert.equal(await page.locator('#game-grid [data-activity]:visible').count(),name==='Classroom'?activities.length:0,'activities follow the Classroom chip only');
-   await chip.click();assert.equal(await chip.getAttribute('aria-pressed'),'false','pressing again clears the chip');assert.equal(await visibleGames(page),catalogue.length);}
+   await chip.click();assert.equal(await chip.getAttribute('aria-pressed'),'false','pressing again clears the chip');assert.equal(new URL(page.url()).hash,'');assert.equal(await visibleGames(page),catalogue.length);}
   for(const [v,label] of [['keyboard','Keyboard'],['touch','Touch']]){const chip=page.locator('[data-chip="control"][data-control="'+v+'"]');assert.equal(await chip.innerText(),label);await chip.click();assert.equal(await page.locator('#result-count').innerText(),catalogue.filter(g=>g.controls.includes(v)).length+' of '+catalogue.length+' games',label+' chip counts declared controls only');await page.locator('[data-chip="all"]').click();assert.equal(await page.locator('[data-chip="all"]').getAttribute('aria-pressed'),'true');}
-  // TX (b): search covers title, category and the one-line description.
-  await page.locator('#query').fill('Creative');assert(await visibleGames(page)>=genreCount('Creative'),'search matches the category word');
-  const lined=catalogue.find(g=>g.line&&g.line!==g.genre&&(!g.editions||seriesLeads.has(g.id))),word=lined.line.split(/\s+/).filter(w=>w.length>6).find(w=>!normalizeWord(lined.title).includes(normalizeWord(w)));
+  // Search covers title, titles v2 action pill & searchWords, category/tag and description (C3).
+  await page.locator('#query').fill('snake');assert.equal(await visibleGames(page),2,'C3: snake search finds 2 games');
+  await page.locator('#query').fill('');assert.equal(await visible(page).count(),expectedCards,'C3: clearing search restores every card');
+  const kwGame=catalogue.find(g=>g.searchWords?.length&&(!g.editions||seriesLeads.has(g.id))&&g.searchWords.some(w=>w.length>4&&!normalizeWord(g.displayTitle||g.title).includes(normalizeWord(w))));
+  if(kwGame){const kw=kwGame.searchWords.find(w=>w.length>4&&!normalizeWord(kwGame.displayTitle||kwGame.title).includes(normalizeWord(w)));await page.locator('#query').fill(kw);assert(await page.locator('#game-grid [data-card="'+kwGame.id+'"]').isVisible(),'titles v2 searchWords matches '+kwGame.id);}
+  await page.locator('#query').fill('Physics');assert(await visibleGames(page)>=tagCount('Physics'),'search matches the manifest tag word');
+  const lined=catalogue.find(g=>g.line&&g.line!==g.genre&&(!g.editions||seriesLeads.has(g.id))),word=lined.line.split(/\s+/).filter(w=>w.length>6).find(w=>!normalizeWord(lined.displayTitle||lined.title).includes(normalizeWord(w)));
   if(word){await page.locator('#query').fill(word.replace(/[^\p{L}\p{N}-]/gu,''));assert(await page.locator('#game-grid [data-card="'+lined.id+'"]').isVisible(),'search matches the one-line description');}
   await page.locator('#query').fill('');
-  const genre='Sport';await page.locator('#filters-open').click();await page.locator('#genre').selectOption(genre);await page.keyboard.press('Escape');assert.equal(await visibleGames(page),genreCount(genre));assert.equal(new URL(page.url()).searchParams.get('genre'),genre);
+  const genre='Strategy';await page.locator('#filters-open').click();await page.locator('#genre').selectOption(genre);await page.keyboard.press('Escape');assert.equal(await visibleGames(page),tagCount(genre));assert.equal(await page.locator('#result-count').innerText(),tagCount(genre)+' of '+catalogue.length+' games');assert.equal(new URL(page.url()).searchParams.get('genre'),genre);
   await page.locator('#filters-open').click();await page.locator('#filters-reset').click();await page.keyboard.press('Escape');assert.equal(await visibleGames(page),catalogue.length);assert.equal(new URL(page.url()).searchParams.get('genre'),null);
   const opener=page.locator('#filters-open');await opener.click();assert(await page.locator('#filters').isVisible());assert(await page.locator('#filters-close').evaluate(e=>e===document.activeElement),'drawer opens on its close control');for(let i=0;i<8;i++){await page.keyboard.press('Tab');assert(await page.evaluate(()=>!!document.activeElement.closest('#filters')),'Focus escaped the drawer');}
   await page.locator('#control').selectOption('unknown');const unknown=catalogue.filter(g=>!g.controls.length).length;assert.equal(await visibleGames(page),unknown);await page.locator('#mode').selectOption('local');const local=catalogue.filter(g=>!g.controls.length&&g.modes.includes('local')).length;assert.equal(await visibleGames(page),local);await page.locator('#filters-reset').click();assert.equal(await visibleGames(page),catalogue.length);await page.keyboard.press('Escape');assert(!await page.locator('#filters').isVisible());assert(await opener.evaluate(e=>e===document.activeElement),'closing the drawer returns focus to Filters');
   // TX (d): a shelf whose cards overflow gets 44px previous/next controls that move its own track only.
   const step=await page.evaluate(async()=>{const s=[...document.querySelectorAll('#game-grid [data-shelf]')].find(x=>!x.querySelector('.shelf-nav').hidden);if(!s)return null;const t=s.querySelector('.shelf-track'),[prev,next]=s.querySelectorAll('[data-shelf-step]');t.scrollLeft=0;await new Promise(r=>setTimeout(r,200));const before=t.scrollLeft,wasPrev=prev.disabled;next.click();await new Promise(r=>setTimeout(r,400));const r1=next.getBoundingClientRect();return{shelf:s.dataset.shelf,before,after:t.scrollLeft,prevDisabledAtStart:wasPrev,prevEnabledAfter:!prev.disabled,w:r1.width,h:r1.height,page:document.documentElement.scrollLeft};});
   if(step){assert(step.after>step.before,'Next scrolls the shelf: '+JSON.stringify(step));assert(step.prevDisabledAtStart&&step.prevEnabledAfter,'Previous is disabled at the start and enabled after Next');assert(step.w>=43.5&&step.h>=43.5,'shelf controls are 44px');assert.equal(step.page,0,'the page itself does not scroll sideways');}
-  await page.locator('[data-collection=""]').click();return{genreChip:genre,genreCount:genreCount(genre),unknownControlCount:unknown,localUnverifiedCount:local,shelfStep:step};});
+  await page.locator('[data-collection=""]').click();return{genreChip:genre,genreCount:tagCount(genre),unknownControlCount:unknown,localUnverifiedCount:local,shelfStep:step};});
  await test(width+'-favourites-recent-persistence-save-safety',async()=>{await page.goto(base);await ready(page);await page.evaluate(()=>localStorage.setItem('apexkick.v1','PLAY-QA-SENTINEL'));await page.locator('#query').fill('Emberwild');const heart=page.locator('#game-grid [data-favourite="'+EMBER+'"]');await heart.click();assert.equal(await heart.getAttribute('aria-pressed'),'true','Favourite toggled from the card');assert(!await page.locator('#game-dialog').isVisible(),'the card heart opens nothing');assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mbm_play_favourites_v1'))),[EMBER],'Favourite storage');assert.deepEqual(await page.evaluate(()=>Object.keys(localStorage).sort()),['apexkick.v1','mbm_play_favourites_v1'],'no new storage keys');
   await page.reload();await ready(page);await page.locator('#query').fill('Emberwild');assert.equal(await heart.getAttribute('aria-pressed'),'true','favourite persists');await page.locator('.collection-links [data-collection=favourites]').click();assert.equal(await visibleGames(page),1);assert.equal(new URL(page.url()).searchParams.get('list'),'favourites');assert(await page.locator('#clear-favourites').isVisible());assert.equal(await page.locator('#game-grid [data-activity]:visible').count(),0,'activities are not part of a list');
   await heart.click();assert.equal(await visible(page).count(),0);assert(await page.locator('#empty-state').isVisible());await page.locator('#empty-reset').click();
@@ -261,8 +324,8 @@ for(const width of [320,390,768,1280,1440]){
   await page.locator('#query').fill('');await page.locator('.collection-links [data-collection=recent]').click();assert.equal(await visibleGames(page),1,'Recently played renders from the recent key');assert.match(await page.locator('#list-note').innerText(),/not saved games/);await page.locator('#clear-recent-list').click();assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('mbm_play_recently_opened_v1'))),[]);
   await page.locator('[data-collection=""]').click();await page.locator('#query').fill('Emberwild');await heart.click();await page.locator('.collection-links [data-collection=favourites]').click();await page.locator('#clear-favourites').click();assert.equal(await visible(page).count(),0);assert.equal(await page.evaluate(()=>localStorage.getItem('apexkick.v1')),'PLAY-QA-SENTINEL');assert.deepEqual(await page.evaluate(()=>Object.keys(localStorage).filter(k=>!['apexkick.v1','mbm_splash_last'].includes(k)).sort()),['mbm_play_favourites_v1','mbm_play_recently_opened_v1'],'only the shelf keys (plus the sentinel and the game-owned splash key)');await page.locator('#empty-reset').click();return{persistence:true,recentFromOpen:true,recentList:true,resetPreservedGameSave:true,keys:['mbm_play_favourites_v1','mbm_play_recently_opened_v1','mbm_play_browse_position_v1']};});
  await test(width+'-reviewed-moods-surprise-and-card-lists',async()=>{
-  await page.goto(base+'?mood=Together&genre=Sport');await ready(page);
-  const eligible=catalogue.filter(g=>(g.moods||[]).includes('Together')&&g.genre==='Sport');assert(eligible.length>1);
+  await page.goto(base+'?mood=Together&genre=Physics');await ready(page);
+  const eligible=catalogue.filter(g=>(g.moods||[]).includes('Together')&&g.tag==='Physics');assert(eligible.length>1);
   const ids=await visible(page).locator('.card-actions a[data-play]').evaluateAll(es=>es.map(e=>e.dataset.play));assert.deepEqual(new Set(ids),new Set(eligible.map(g=>g.id)));
   await page.locator('#surprise').click();const picked=new URL(page.url()).searchParams.get('game');assert(eligible.some(g=>g.id===picked),'Surprise chose outside active mood/genre');assert.equal(await page.locator('#dialog-play').getAttribute('href'),eligible.find(g=>g.id===picked).route);assert.match(await page.locator('#dialog-players').innerText(),/device|network/i);await page.keyboard.press('Escape');assert(await page.locator('#surprise').evaluate(e=>e===document.activeElement),'Surprise opener regains focus');
   await page.locator('#query').fill('nonexistent qzx');await page.locator('#surprise').click();assert(!await page.locator('#game-dialog').isVisible());assert.match(await page.locator('#surprise-status').innerText(),/No games match/);assert(await page.locator('#empty-reset').evaluate(e=>e===document.activeElement));await page.locator('#empty-reset').click();
@@ -318,6 +381,184 @@ for(const width of [320,390,768,1280,1440]){
  await test(width+'-orientation-and-text-enlargement',async()=>{await page.goto(base);await ready(page);await page.setViewportSize({width:width<700?844:900,height:width});await overflow(page);await page.setViewportSize({width,height:900});await page.addStyleTag({content:':root{font-size:200%!important}'});assert((await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize)))>=32,'Text enlargement did not apply');await overflow(page);const collectionFits=await page.locator('.browse-sidebar').evaluate(e=>e.scrollWidth<=e.clientWidth+1&&[...e.querySelectorAll('.collection-links a')].every(a=>a.scrollWidth<=a.clientWidth+1));assert(collectionFits,'Collection labels must fit at 200% text size');await page.screenshot({path:path.join(out,width+'-text-200.png')});return{landscapeNoOverflow:true,text200NoOverflow:true,collectionLabelsFit:true};});
  await ctx.close();
 }
+await test('p5c-reduce-motion-safe-transitions',async()=>{
+ const ctxMotion=await browser.newContext({viewport:{width:1280,height:900},reducedMotion:'no-preference'}),pM=await ctxMotion.newPage();
+ await pM.goto(base);await ready(pM);
+ const motionOn=await pM.evaluate(()=>({scroll:getComputedStyle(document.documentElement).scrollBehavior,cardDur:parseFloat(getComputedStyle(document.querySelector('#game-grid .game-card')).transitionDuration)||0,playDur:parseFloat(getComputedStyle(document.querySelector('#game-grid .play')).transitionDuration)||0}));
+ await ctxMotion.close();
+ assert(motionOn.scroll==='smooth'&&motionOn.cardDur>0&&motionOn.playDur>0,'P5c transitions active under no-preference using --mbm-motion-duration: '+JSON.stringify(motionOn));
+ return motionOn;
+});
+await test('p6a-todays-seed-card',async()=>{
+ const proofs=[];
+ for(const w of [390,1280]){
+  const ctxSeed=await browser.newContext({viewport:{width:w,height:w<700?844:900},isMobile:w<700,hasTouch:w<700,reducedMotion:'reduce'}),pS=await ctxSeed.newPage();
+  const reqs=[];pS.on('request',r=>reqs.push(r.url()));
+  await pS.goto(base);await ready(pS);await overflow(pS);firstParty(reqs);
+  assert(await pS.locator('#todays-seed').isVisible(),'#todays-seed visible at '+w);
+  await targets(pS,'#todays-seed');
+  const expectedSeed=await pS.evaluate(()=>{const d=new Date();return String(d.getFullYear())+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');});
+  const seedText=(await pS.locator('#todays-seed-value').innerText()).trim();
+  assert.match(seedText,/^\d{8}$/,'8-digit YYYYMMDD seed rendered');
+  assert.equal(seedText,expectedSeed,'seed matches today date code');
+  const seedFacts=await pS.evaluate(()=>{
+   const codeEl=document.getElementById('todays-seed-value'),sec=document.getElementById('todays-seed');
+   const links=[...sec.querySelectorAll('a[data-seed-play]')];
+   const pending=[...sec.querySelectorAll('[data-seed-pending]')].map(e=>e.getAttribute('data-seed-pending'));
+   return{numVariant:getComputedStyle(codeEl).fontVariantNumeric,cardDur:parseFloat(getComputedStyle(sec).transitionDuration)||0,linkDur:links.length?(parseFloat(getComputedStyle(links[0]).transitionDuration)||0):0,hasDataPlay:sec.querySelectorAll('[data-play]').length,hrefs:links.map(a=>a.getAttribute('href')),pending};
+  });
+  assert(seedFacts.numVariant.includes('tabular-nums'),'tabular-nums on #todays-seed-value');
+  assert.equal(seedFacts.cardDur,0,'reduce-motion respected on #todays-seed card');
+  assert.equal(seedFacts.linkDur,0,'reduce-motion respected on seed launch links');
+  assert.equal(seedFacts.hasDataPlay,0,'seed links do not duplicate data-play shelf anchors');
+  assert.deepEqual(seedFacts.hrefs,['/Lessons/Games/Grapple.html?seed='+expectedSeed,'/apexkick/?seed='+expectedSeed],'Grapple and Apex Kick open with today seed');
+  assert.deepEqual(seedFacts.pending,['reactor','potion-works'],'Reactor and Potion Works listed cleanly pending shelf landing');
+  const firstSeedLink=pS.locator('#todays-seed a[data-seed-play]').first();
+  await firstSeedLink.focus();
+  assert(await firstSeedLink.evaluate(e=>e===document.activeElement),'seed launch link is keyboard reachable');
+  proofs.push({width:w,seed:seedText,hrefs:seedFacts.hrefs,pending:seedFacts.pending});
+  await ctxSeed.close();
+ }
+ return{widths:proofs};
+});
+await test('p6b-your-shelf-badge-wall',async()=>{
+ const homeRes=await fetch(base+'/');assert.equal(homeRes.status,200);
+ const homeHtml=await homeRes.text();
+ assert(/id="save-vault"[\s\S]*?href="\/your-shelf\/"/.test(homeHtml),'Save Vault links to /your-shelf/');
+ assert(/<footer>[\s\S]*?href="\/your-shelf\/"/.test(homeHtml),'Footer links to /your-shelf/');
+ const shelfRes=await fetch(base+'/your-shelf/');assert.equal(shelfRes.status,200,'/your-shelf/ returns 200');
+ const emptyProofs=[],badgeProofs=[];
+ for(const w of [390,1280]){
+  const ctxEmpty=await browser.newContext({viewport:{width:w,height:w<700?844:900},isMobile:w<700,hasTouch:w<700,reducedMotion:'reduce'}),pE=await ctxEmpty.newPage();
+  const reqsE=[],errsE=[];pE.on('request',r=>reqsE.push(r.url()));pE.on('pageerror',e=>errsE.push(e.message));
+  await pE.goto(base+'/your-shelf/',{waitUntil:'networkidle'});
+  await ctxEmpty.setOffline(true);
+  await overflow(pE);await targets(pE,null);firstParty(reqsE);assert.equal(errsE.length,0,'pageerrors on empty /your-shelf/');
+  assert(await pE.locator('#badge-wall-empty').isVisible(),'empty state visible when no badges stored at '+w);
+  assert(await pE.locator('#badge-wall-grid').isHidden(),'badge grid hidden when empty at '+w);
+  assert.equal((await pE.locator('#badge-count').innerText()).trim(),'0','badge count is 0 when empty');
+  const emptyText=await pE.locator('#badge-wall-empty').innerText();
+  assert(/Potion Works/.test(emptyText)&&/Transfer saves/.test(emptyText),'empty state explains how to earn and transfer badges');
+  const emptyMotion=await pE.evaluate(()=>({num:getComputedStyle(document.getElementById('badge-count')).fontVariantNumeric,dur:parseFloat(getComputedStyle(document.querySelector('#badge-wall-empty .button')).transitionDuration)||0}));
+  assert(emptyMotion.num.includes('tabular-nums'),'tabular-nums on #badge-count');
+  assert.equal(emptyMotion.dur,0,'reduce-motion respected on /your-shelf/');
+  const firstBtn=pE.locator('#badge-wall-empty a[href]').first();await firstBtn.focus();
+  assert(await firstBtn.evaluate(e=>e===document.activeElement),'empty state action is keyboard reachable');
+  emptyProofs.push({width:w,emptyVisible:true});
+  await ctxEmpty.close();
+
+  const fixtureStorage=[
+   {name:'mbm_potion_works_v1',value:JSON.stringify({version:1,badges:[{id:'master_distiller',label:'Master Distiller',tier:'Gold',earnedAt:'2026-10-30T12:00:00Z'}]})},
+   {name:'mbm_sports_passport_v4',value:JSON.stringify({kind:'MadeByMatt.SportsPassport.V4',schema:4,profile:{name:{value:'Player One'},house:{value:'Aurora'}},sets:{badges:{adds:[['aurora-precision-crown',{id:'aurora-precision-crown',earnedAt:'2026-10-28T09:00:00Z'}]],removes:[]}},receipts:[['r1',{id:'r1',game:'aurora-links',badge:'fairway-ace',earnedAt:'2026-10-29T10:00:00Z'}]]})},
+   {name:'mbm_arcade_passport_v4',value:JSON.stringify({version:4,revision:2,artefacts:{crown_core_shifter:{id:'crown_core_shifter',label:'Crown Core Shifter',source:'relicforge',unlockedAt:'2026-10-27T15:00:00Z'},beacon_prism:{id:'beacon_prism',label:'Beacon Prism',source:'voxel',unlockedAt:'2026-10-31T16:00:00Z'}}})}
+  ];
+  const ctxPop=await browser.newContext({viewport:{width:w,height:w<700?844:900},isMobile:w<700,hasTouch:w<700,reducedMotion:'reduce',storageState:{cookies:[],origins:[{origin:base,localStorage:fixtureStorage}]}}),pP=await ctxPop.newPage();
+  const reqsP=[],errsP=[];pP.on('request',r=>reqsP.push(r.url()));pP.on('pageerror',e=>errsP.push(e.message));
+  await pP.goto(base+'/your-shelf/',{waitUntil:'networkidle'});
+  await overflow(pP);await targets(pP,null);firstParty(reqsP);assert.equal(errsP.length,0,'pageerrors on populated /your-shelf/');
+  assert(await pP.locator('#badge-wall-empty').isHidden(),'empty state hidden when badges earned at '+w);
+  assert(await pP.locator('#badge-wall-grid').isVisible(),'badge wall visible when badges earned at '+w);
+  const countVal=Number((await pP.locator('#badge-count').innerText()).trim());
+  assert.equal(countVal,5,'5 fixture badges rendered across Potion Works, Sports Passport and Arcade Passport');
+  const wallText=await pP.locator('#badge-wall-grid').innerText();
+  for(const expectedLabel of ['Master Distiller','Potion Works','Aurora Precision Crown','Fairway Ace','Crown Core Shifter','Beacon Prism'])assert(wallText.includes(expectedLabel),'badge wall displays '+expectedLabel);
+  await pP.addStyleTag({content:':root{font-size:200%!important}'});await overflow(pP);
+  badgeProofs.push({width:w,badges:countVal});
+  await ctxPop.close();
+ }
+ return{empty:emptyProofs,populated:badgeProofs};
+});
+await test('p7-hub-polish-dots-updated-and-blurbs',async()=>{
+ const expectedApexBlurb='Replaced by the World Stage edition: nine modes, including 60s Time Attack, Corner Kick Whip, Keeper Glove Mode and a 2P shootout.';
+ const versionTagRx=/\b[Vv]\d+(?:[._]\d+)*\b/;
+ const apexLaunchRes=await fetch(base+'/play/apex-kick/');
+ assert.equal(apexLaunchRes.status,200,'/play/apex-kick/ returns 200');
+ const apexLaunchHtml=await apexLaunchRes.text();
+ assert(apexLaunchHtml.includes(expectedApexBlurb),'/play/apex-kick/ carries cleaned World Stage edition blurb');
+ const apexVisibleText=apexLaunchHtml.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ');
+ assert(!versionTagRx.test(apexVisibleText),'/play/apex-kick/ visible text has 0 V\\d/v\\d version tags');
+ for(const g of data.games){
+  for(const [field,val] of [['description',g.description],['pitch',g.pitch],['updated.description',g.updated&&g.updated.description]]){
+   if(typeof val==='string')assert(!versionTagRx.test(val),'P-7-3 version tag in '+g.id+' '+field+': '+val);
+  }
+ }
+ const matrix=[];
+ for(const w of [390,1280]){
+  for(const motion of ['no-preference','reduce']){
+   const ctxP7=await browser.newContext({viewport:{width:w,height:w<700?844:900},isMobile:w<700,hasTouch:w<700,reducedMotion:motion}),p=await ctxP7.newPage();
+   const reqs=[],consoleErrs=[],pageErrs=[];
+   p.on('request',r=>reqs.push(r.url()));
+   p.on('console',m=>{if(m.type()==='error')consoleErrs.push(m.text());});
+   p.on('pageerror',e=>pageErrs.push(e.message));
+   await p.goto(base,{waitUntil:'networkidle'});await ready(p);await overflow(p);firstParty(reqs);
+   assert.equal(await p.locator('#spotlight .spot-dots').count(),1,'.spot-dots present in Spotlight markup');
+   if(w<700){
+    assert(await p.locator('#spotlight .spot-dots').isHidden(),'P-7-1 .spot-dots hidden on phone at '+w);
+    assert(await p.locator('#spot-status').isVisible(),'P-7-1 compact #spot-status visible on phone at '+w);
+    assert.equal((await p.locator('#spot-status').innerText()).trim(),'1 of '+spotRows.length);
+    await p.locator('#spot-next').click();await p.locator('#spot-next').click();
+    assert.equal((await p.locator('#spot-status').innerText()).trim(),'3 of '+spotRows.length,'P-7-1 compact phone indicator shows 3 of '+spotRows.length);
+    const headRow=await p.evaluate(()=>{const h=document.querySelector('.spotlight-head'),s=document.getElementById('spot-status'),n=document.getElementById('spot-next');return{statusTop:Math.round(s.getBoundingClientRect().top),nextTop:Math.round(n.getBoundingClientRect().top),statusH:Math.round(s.getBoundingClientRect().height),headW:Math.round(h.getBoundingClientRect().width)};});
+    assert(headRow.statusH<=44,'P-7-1 compact phone indicator stays on one row: '+JSON.stringify(headRow));
+   }else{
+    assert(await p.locator('#spotlight .spot-dots').isVisible(),'P-7-1 .spot-dots visible on desktop at '+w);
+    const dotFacts=await p.evaluate(()=>{
+     const dots=[...document.querySelectorAll('#spotlight .spot-dot')];
+     const rects=dots.map(d=>d.getBoundingClientRect());
+     const tops=rects.map(r=>Math.round(r.top));
+     const d0=dots[0];
+     return{count:dots.length,rowSpread:Math.max(...tops)-Math.min(...tops),minW:Math.min(...rects.map(r=>r.width)),minH:Math.min(...rects.map(r=>r.height)),dotDur:parseFloat(getComputedStyle(d0).transitionDuration)||0,pillDur:parseFloat(getComputedStyle(d0,'::before').transitionDuration)||0};
+    });
+    assert.equal(dotFacts.count,spotRows.length,'desktop shows all '+spotRows.length+' spotlight dots');
+    assert(dotFacts.rowSpread<=1,'desktop spotlight dots fit on one single row: spread '+dotFacts.rowSpread+'px');
+    assert(dotFacts.minW>=43.5&&dotFacts.minH>=43.5,'desktop spotlight dots meet 44px target');
+    if(motion==='reduce'){assert.equal(dotFacts.dotDur,0);assert.equal(dotFacts.pillDur,0);}
+    else{assert(dotFacts.dotDur>0||dotFacts.pillDur>0,'desktop spotlight dot transition active when reduced-motion off');}
+    await p.locator('#spotlight .spot-dot[data-spot-select="2"]').click();
+    assert.equal(await p.locator('#spotlight .spot-dot[data-spot-select="2"]').getAttribute('aria-current'),'true');
+    assert.equal((await p.locator('#spot-status').innerText()).trim(),'3 of '+spotRows.length);
+   }
+   const apexCardLine=(await p.locator('#new-and-updated [data-release="game-apex-kick"] .card-line').innerText()).trim();
+   assert.equal(apexCardLine,expectedApexBlurb,'P-7-3 Apex Kick blurb cleaned on hub');
+   const visibleBlurbs=await p.evaluate(()=>[...document.querySelectorAll('#new-and-updated .card-line, #game-grid .card-line, #spotlight .card-line')].map(e=>e.textContent.trim()));
+   assert(visibleBlurbs.every(t=>!/\b[Vv]\d+(?:[._]\d+)*\b/.test(t)),'P-7-3 0 version tags in visible hub blurbs');
+   assert.equal(consoleErrs.length,0,'0 console errors at '+w+' ('+motion+')');
+   assert.equal(pageErrs.length,0,'0 page errors at '+w+' ('+motion+')');
+   matrix.push({width:w,reducedMotion:motion,consoleErrors:consoleErrs.length,pageErrors:pageErrs.length});
+   await ctxP7.close();
+  }
+ }
+ // P-7-2 clock proof at 2026-11-15 UTC: 2026-10-26 (20d <= 60d) visible; 2026-09-03..08 (68-73d > 60d) hidden.
+ const simUtc=Date.UTC(2026,10,15,12,0,0);
+ const ctxClock=await browser.newContext({viewport:{width:1280,height:900},reducedMotion:'reduce'}),pC=await ctxClock.newPage();
+ await pC.addInitScript(fixedMs=>{
+  const OrigDate=Date;
+  function MockDate(...args){return args.length===0?new OrigDate(fixedMs):new OrigDate(...args);}
+  MockDate.prototype=OrigDate.prototype;
+  MockDate.now=()=>fixedMs;
+  MockDate.UTC=OrigDate.UTC;
+  MockDate.parse=OrigDate.parse;
+  window.Date=MockDate;
+ },simUtc);
+ await pC.goto(base,{waitUntil:'networkidle'});await ready(pC);
+ const clockFacts=await pC.evaluate(fixedMs=>{
+  const simDay=Date.UTC(new Date(fixedMs).getUTCFullYear(),new Date(fixedMs).getUTCMonth(),new Date(fixedMs).getUTCDate());
+  const nodes=[...document.querySelectorAll('[data-updated]')];
+  const states=nodes.map(el=>{
+   const [y,m,d]=el.dataset.updated.split('-').map(Number);
+   const age=Math.floor((simDay-Date.UTC(y,m-1,d))/86400000);
+   const vis=!el.hidden&&getComputedStyle(el).display!=='none';
+   return{date:el.dataset.updated,age,expected:age>=0&&age<=60,vis};
+  });
+  const relTitles=[...document.querySelectorAll('#new-and-updated .release-box')].slice(0,4).map(b=>Math.round(b.querySelector('.release-title').getBoundingClientRect().top));
+  return{total:states.length,shown:states.filter(s=>s.vis).length,hidden:states.filter(s=>!s.vis).length,mismatches:states.filter(s=>s.vis!==s.expected),relTitleSpread:Math.max(...relTitles)-Math.min(...relTitles)};
+ },simUtc);
+ await ctxClock.close();
+ assert(clockFacts.shown>0&&clockFacts.hidden>0,'P-7-2 simulated clock exercises both <=60d visible and >60d hidden labels: '+JSON.stringify(clockFacts));
+ assert.equal(clockFacts.mismatches.length,0,'P-7-2 every [data-updated] matches 60-day rule: '+JSON.stringify(clockFacts.mismatches));
+ assert(clockFacts.relTitleSpread<=1,'P-7-2 #new-and-updated subgrid title alignment preserved across shown/hidden dates: spread '+clockFacts.relTitleSpread+'px');
+ return{matrix,clockProof:clockFacts};
+});
 await test('essential-links-with-javascript-disabled',async()=>{const ctx=await browser.newContext({javaScriptEnabled:false}),page=await ctx.newPage();await page.goto(base);const hrefs=await gridHrefs(page);const covered=coverage(hrefs,routesOf(catalogue));assert.equal(await page.locator('#classroom [data-activity] a[data-play]').count(),activities.length);const azLinks=await page.locator('.az-list a[href]').evaluateAll(a=>a.map(x=>x.getAttribute('href')));assert.deepEqual([...azLinks].sort(),data.games.map(g=>g.route).sort(),'the noscript A to Z lists every game and activity once');const distinct=await page.evaluate(()=>new Set([...document.querySelectorAll('a[data-play][href]')].map(a=>a.getAttribute('href'))).size);assert.equal(distinct,data.games.length,'every Play href present without JavaScript');const anchors=await page.locator('a[data-play][href]').count();await page.locator('.menu summary').click();assert(await page.getByRole('navigation',{name:'Main menu'}).isVisible());assert.match(await page.locator('#all-games .notice').innerText(),/direct Play links work/);assert(await page.locator('#spotlight [data-spot]').first().isVisible(),'spotlight readable without JavaScript');assert.equal(await page.locator('.shelf-nav:visible').count(),0,'inert shelf controls stay hidden without JavaScript');await ctx.close();return{directHrefs:distinct,noscriptList:azLinks.length,gridCatalogueHrefsOnce:covered,classroomRows:activities.length,playAnchors:anchors,nativeMenu:true};});
 await test('unavailable-storage-missing-media-and-failure-fallback',async()=>{const ctx=await browser.newContext(),page=await ctx.newPage();await page.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new DOMException('blocked','SecurityError');}});Object.defineProperty(window,'sessionStorage',{get(){throw new DOMException('blocked','SecurityError');}});});await page.route(/\.(png|jpg|webp|svg)(\?.*)?$/,r=>r.abort());await page.goto(base);await ready(page);await page.locator('#query').fill('Emberwild');await page.locator('#game-grid [data-favourite="'+EMBER+'"]').click();assert.match(await page.locator('#storage-status').innerText(),/unavailable/);await pause(300);assert.match(await page.locator('#game-grid [data-card="'+EMBER+'"] .thumb').innerText(),new RegExp((emberwild.displayTitle||emberwild.title).slice(0,6)),'a failed card image falls back to the titled colour block');await page.goto(base+'?game='+EMBER);await ready(page);await pause(300);assert.match(await page.locator('#dialog-media').innerText(),/Image unavailable/);assert(await page.locator('#dialog-play').isVisible());await page.keyboard.press('Escape');assert(await page.locator('#game-grid .play').filter({visible:true}).first().isVisible());await ctx.close();return{browsing:true,inMemoryFavourite:true,gameLinks:true,imageFallback:true};});
 await test('all-69-rendered-start-surfaces',async()=>{for(const g of data.games){const ctx=await browser.newContext({viewport:{width:1280,height:720},reducedMotion:'reduce'}),page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));try{const response=await page.goto(base+g.route,{waitUntil:'load',timeout:20000});await pause(4000);const surface=await page.evaluate(()=>({title:document.title,canvas:[...document.querySelectorAll('canvas')].filter(e=>e.getBoundingClientRect().width>20&&e.getBoundingClientRect().height>20).length,controls:[...document.querySelectorAll('button,input,select,a[href]')].filter(e=>e.getBoundingClientRect().width>0).length,text:document.body.innerText.slice(0,1100)}));const ready=response.status()===200&&(surface.canvas>0||surface.controls>0);report.routes.push({id:g.id,route:g.route,status:response.status(),ready,surface,errors,depth:'Initial load and rendered input surface; not a completed game'});// The Lighthouse first-visit primer focuses its bottom button. Dismiss it

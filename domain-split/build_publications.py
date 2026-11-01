@@ -26,7 +26,7 @@ from play.manifest import verify as verify_play_manifest
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 PLAY_CANONICAL_ORIGIN = 'https://www.madebymatt-play.uk'
-PLAY_UTILITY_ROUTES = ['/privacy/', '/game-saves/', '/stats/', '/stats/on-this-device/']
+PLAY_UTILITY_ROUTES = ['/privacy/', '/game-saves/', '/your-shelf/', '/stats/', '/stats/on-this-device/']
 CENSUS = ROOT / "reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json"
 
 
@@ -413,7 +413,8 @@ def main():
     put(games, 'CNAME', 'madebymatt-play.uk\n')
     put(games, '.nojekyll', '')
     put(games, 'robots.txt', 'User-agent: *\nAllow: /\nSitemap: '+PLAY_CANONICAL_ORIGIN+'/sitemap.xml\n')
-    urls = [PLAY_CANONICAL_ORIGIN+r for r in ['/', '/games/'] + PLAY_UTILITY_ROUTES + [quote(unquote(r['normalizedDecodedRoute']), safe='/') for r in rows]]
+    launch_routes = [g['launchRoute'] for g in json.loads((games / 'data/play-discovery.json').read_text(encoding='utf-8'))['games'] if g.get('launchRoute')]
+    urls = [PLAY_CANONICAL_ORIGIN+r for r in ['/', '/games/'] + PLAY_UTILITY_ROUTES + [quote(unquote(r['normalizedDecodedRoute']), safe='/') for r in rows] + launch_routes]
     put(games, 'sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + ''.join('<url><loc>'+html.escape(u)+'</loc></url>' for u in urls) + '</urlset>')
     put(games, '404.html', '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Find a game · Made by Matt</title><main><h1>That game address was not found.</h1><p><a href="/">Find your game on the games homepage</a>.</p></main></html>')
     # Verify every declared initial-load reference for the 69 payloads.
