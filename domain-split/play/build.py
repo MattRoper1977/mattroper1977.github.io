@@ -14,9 +14,11 @@ play.js; nothing is typed into the template.
 from __future__ import annotations
 import argparse
 from collections import Counter, OrderedDict
+from datetime import date, datetime, timezone
 import hashlib
 import html
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -47,6 +49,19 @@ def date_label(iso):
     """2026-09-08 -> '8 Sep 2026'. Derived by code, never typed."""
     y, m, d = (int(x) for x in iso.split('-'))
     return f'{d} {MONTHS[m - 1]} {y}'
+
+UPDATED_WINDOW_DAYS = 60
+
+def reference_today():
+    override = os.environ.get('PLAY_REFERENCE_DATE', '').strip()
+    return date.fromisoformat(override) if override else datetime.now(timezone.utc).date()
+
+def is_recent_update(iso, today=None):
+    """P-7-2: show card 'Updated' dates only when changed in the last 60 days."""
+    if not iso:
+        return False
+    delta = ((today or reference_today()) - date.fromisoformat(str(iso))).days
+    return 0 <= delta <= UPDATED_WINDOW_DAYS
 
 def shown_title(row):
     return row.get('displayTitle') or row['title']
@@ -230,7 +245,8 @@ def badges(row, members):
     if len(members) > 1:
         out += '<span class="chip">' + str(len(members)) + ' editions</span>'
     if row.get('updated'):
-        out += '<span class="chip">Updated ' + esc(date_label(row['updated']['date'])) + '</span>'
+        d = row['updated']['date']
+        out += '<span class="chip" data-updated="' + esc(d) + '"' + ('' if is_recent_update(d) else ' hidden') + '>Updated ' + esc(date_label(d)) + '</span>'
     return out + band_pill(row) + verified_input_pill(row) + keyboard_chip(row)
 
 def card(row, members, by_id):
@@ -292,10 +308,12 @@ def spotlight(rows):
         if image:
             return '<span class="playlist-thumb" aria-hidden="true"><img src="' + esc(image) + '" alt="" loading="lazy" width="64" height="36"></span>'
         return '<span class="playlist-thumb" aria-hidden="true">' + tile_art(r) + '</span>'
+    n = len(rows)
+    dots = ''.join('<li><button type="button" class="spot-dot" data-spot-select="' + str(i) + '" aria-current="false" aria-label="Spotlight ' + str(i + 1) + ' of ' + str(n) + ': ' + esc(shown_title(r)) + '"></button></li>' for i, r in enumerate(rows))
     playlist = ''.join('<li><button type="button" class="playlist-btn" data-spot-select="' + str(i) + '" aria-current="false">' + playlist_thumb(r) + '<span class="playlist-name">' + esc(shown_title(r)) + '</span></button></li>' for i, r in enumerate(rows))
     return ('<section class="spotlight" id="spotlight" aria-labelledby="spotlight-title"><div class="spotlight-head"><h2 id="spotlight-title">Spotlight</h2>'
             '<p id="spot-status" class="chip" aria-live="polite" hidden></p><button type="button" class="button" id="spot-next" hidden>Next<span class="sr-only"> spotlight game</span> <span aria-hidden="true">→</span></button></div>'
-            '<div class="spotlight-stage"><div class="spotlight-main"><ol class="spot-list">' + items + '</ol></div>'
+            '<div class="spotlight-stage"><div class="spotlight-main"><ol class="spot-list">' + items + '</ol><ol class="spot-dots" aria-label="Spotlight pages" hidden>' + dots + '</ol></div>'
             '<aside class="featured-playlist" aria-labelledby="playlist-title" hidden><h3 id="playlist-title" class="playlist-heading">Featured playlist</h3><ol class="playlist-items">' + playlist + '</ol></aside></div></section>')
 
 def release_rail(rows):
@@ -306,7 +324,7 @@ def release_rail(rows):
     if not updated:
         return ''
     boxes = ''.join('<li class="release-box" data-release="' + esc(r['id']) + '">' + thumb(r, (r.get('media') or {}).get('poster') or r.get('image', ''), shown_title(r))
-                    + '<p class="card-kicker">Updated ' + esc(date_label(r['updated']['date'])) + '</p><h3 class="release-title">' + esc(shown_title(r)) + '</h3>'
+                    + '<p class="card-kicker"><span data-updated="' + esc(r['updated']['date']) + '"' + ('' if is_recent_update(r['updated']['date']) else ' hidden') + '>Updated ' + esc(date_label(r['updated']['date'])) + '</span></p><h3 class="release-title">' + esc(shown_title(r)) + '</h3>'
                     '<p class="card-line">' + esc(r['updated']['description']) + '</p><div class="card-actions">' + play_link(r) + '</div></li>' for r in updated)
     n = len(updated)
     return ('<section class="shelf release-rail" id="new-and-updated" data-rail="updated" aria-labelledby="new-and-updated-title">'
@@ -457,7 +475,8 @@ def render_launch_page(row, catalogue_games, by_id, band_labels, logo, footer_lo
     if row.get('sessionBandLabel'):
         hero_chips.append('<span class="chip pill-session">' + esc(row['sessionBandLabel']) + '</span>')
     if row.get('updated'):
-        hero_chips.append('<span class="chip">Updated ' + esc(date_label(row['updated']['date'])) + '</span>')
+        d = row['updated']['date']
+        hero_chips.append('<span class="chip" data-updated="' + esc(d) + '"' + ('' if is_recent_update(d) else ' hidden') + '>Updated ' + esc(date_label(d)) + '</span>')
 
     members = [by_id[i] for i in (row.get('editions') or []) if i in by_id and by_id[i]['group'] == 'games' and i != row['id']]
     editions_html = ''
@@ -504,7 +523,8 @@ def render_launch_page(row, catalogue_games, by_id, band_labels, logo, footer_lo
     if row.get('chapter'):
         chapter_notes += '<p class="muted">Latest chapter: ' + esc(row['chapter']) + '.</p>'
     if row.get('updated'):
-        chapter_notes += '<p class="muted">Updated ' + esc(date_label(row['updated']['date'])) + ': ' + esc(row['updated']['description']) + '</p>'
+        d = row['updated']['date']
+        chapter_notes += '<p class="muted"><span data-updated="' + esc(d) + '"' + ('' if is_recent_update(d) else ' hidden') + '>Updated ' + esc(date_label(d)) + ': </span>' + esc(row['updated']['description']) + '</p>'
 
     input_labels = []
     for raw_c in list(row.get('inputs') or []) + list(row.get('controls') or []):

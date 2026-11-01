@@ -198,7 +198,8 @@ for(const width of [320,390,768,1280,1440]){
   assert(await page.locator('#save-vault').isVisible(),'Save Vault preserved');
   assert.equal(await page.locator('#spotlight .featured-playlist [data-spot-select]').count(),spotRows.length,'Featured playlist preserved with every spotlight entry');
   assert.equal(await page.locator('#new-and-updated [data-release]').count(),catalogue.filter(g=>g.updated).length,'New and updated rail preserved');
-  for(const g of catalogue.filter(g=>g.updated&&(!g.editions||seriesLeads.has(g.id)))){const[y,m,d]=g.updated.date.split('-').map(Number);assert.match(await page.locator('#game-grid [data-card="'+g.id+'"] .card-meta').innerText(),new RegExp('Updated '+d+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]+' '+y),'Updated badge derived for '+g.id);}
+  const todayUtcMs=(()=>{const now=new Date();return Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());})();
+  for(const g of catalogue.filter(g=>g.updated&&(!g.editions||seriesLeads.has(g.id)))){const[y,m,d]=g.updated.date.split('-').map(Number),ageDays=Math.floor((todayUtcMs-Date.UTC(y,m-1,d))/86400000),recentUpd=ageDays>=0&&ageDays<=60,updChip=page.locator('#game-grid [data-card="'+g.id+'"] .card-meta [data-updated="'+g.updated.date+'"]'),expectedLbl='Updated '+d+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]+' '+y;assert.equal(await updChip.count(),1,'Updated badge element present for '+g.id);assert.equal(await updChip.isVisible(),recentUpd,'Updated badge 60-day visibility for '+g.id+' (age '+ageDays+'d)');if(recentUpd)assert.equal((await updChip.innerText()).trim(),expectedLbl,'Updated badge derived for '+g.id);}
   assert.equal(await page.locator('.lane').count(),0,'lanes retired: no game appears twice on the shelves');
   assert.equal(await page.locator('.az-list').count(),0,'the A to Z fallback stays inside noscript when JavaScript runs');
   const lanes=shelves;
@@ -466,6 +467,97 @@ await test('p6b-your-shelf-badge-wall',async()=>{
   await ctxPop.close();
  }
  return{empty:emptyProofs,populated:badgeProofs};
+});
+await test('p7-hub-polish-dots-updated-and-blurbs',async()=>{
+ const expectedApexBlurb='Replaced by the World Stage edition: nine modes, including 60s Time Attack, Corner Kick Whip, Keeper Glove Mode and a 2P shootout.';
+ const versionTagRx=/\b[Vv]\d+(?:[._]\d+)*\b/;
+ const apexLaunchRes=await fetch(base+'/play/apex-kick/');
+ assert.equal(apexLaunchRes.status,200,'/play/apex-kick/ returns 200');
+ const apexLaunchHtml=await apexLaunchRes.text();
+ assert(apexLaunchHtml.includes(expectedApexBlurb),'/play/apex-kick/ carries cleaned World Stage edition blurb');
+ const apexVisibleText=apexLaunchHtml.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ');
+ assert(!versionTagRx.test(apexVisibleText),'/play/apex-kick/ visible text has 0 V\\d/v\\d version tags');
+ for(const g of data.games){
+  for(const [field,val] of [['description',g.description],['pitch',g.pitch],['updated.description',g.updated&&g.updated.description]]){
+   if(typeof val==='string')assert(!versionTagRx.test(val),'P-7-3 version tag in '+g.id+' '+field+': '+val);
+  }
+ }
+ const matrix=[];
+ for(const w of [390,1280]){
+  for(const motion of ['no-preference','reduce']){
+   const ctxP7=await browser.newContext({viewport:{width:w,height:w<700?844:900},isMobile:w<700,hasTouch:w<700,reducedMotion:motion}),p=await ctxP7.newPage();
+   const reqs=[],consoleErrs=[],pageErrs=[];
+   p.on('request',r=>reqs.push(r.url()));
+   p.on('console',m=>{if(m.type()==='error')consoleErrs.push(m.text());});
+   p.on('pageerror',e=>pageErrs.push(e.message));
+   await p.goto(base,{waitUntil:'networkidle'});await ready(p);await overflow(p);firstParty(reqs);
+   assert.equal(await p.locator('#spotlight .spot-dots').count(),1,'.spot-dots present in Spotlight markup');
+   if(w<700){
+    assert(await p.locator('#spotlight .spot-dots').isHidden(),'P-7-1 .spot-dots hidden on phone at '+w);
+    assert(await p.locator('#spot-status').isVisible(),'P-7-1 compact #spot-status visible on phone at '+w);
+    assert.equal((await p.locator('#spot-status').innerText()).trim(),'1 of '+spotRows.length);
+    await p.locator('#spot-next').click();await p.locator('#spot-next').click();
+    assert.equal((await p.locator('#spot-status').innerText()).trim(),'3 of '+spotRows.length,'P-7-1 compact phone indicator shows 3 of '+spotRows.length);
+    const headRow=await p.evaluate(()=>{const h=document.querySelector('.spotlight-head'),s=document.getElementById('spot-status'),n=document.getElementById('spot-next');return{statusTop:Math.round(s.getBoundingClientRect().top),nextTop:Math.round(n.getBoundingClientRect().top),statusH:Math.round(s.getBoundingClientRect().height),headW:Math.round(h.getBoundingClientRect().width)};});
+    assert(headRow.statusH<=44,'P-7-1 compact phone indicator stays on one row: '+JSON.stringify(headRow));
+   }else{
+    assert(await p.locator('#spotlight .spot-dots').isVisible(),'P-7-1 .spot-dots visible on desktop at '+w);
+    const dotFacts=await p.evaluate(()=>{
+     const dots=[...document.querySelectorAll('#spotlight .spot-dot')];
+     const rects=dots.map(d=>d.getBoundingClientRect());
+     const tops=rects.map(r=>Math.round(r.top));
+     const d0=dots[0];
+     return{count:dots.length,rowSpread:Math.max(...tops)-Math.min(...tops),minW:Math.min(...rects.map(r=>r.width)),minH:Math.min(...rects.map(r=>r.height)),dotDur:parseFloat(getComputedStyle(d0).transitionDuration)||0,pillDur:parseFloat(getComputedStyle(d0,'::before').transitionDuration)||0};
+    });
+    assert.equal(dotFacts.count,spotRows.length,'desktop shows all '+spotRows.length+' spotlight dots');
+    assert(dotFacts.rowSpread<=1,'desktop spotlight dots fit on one single row: spread '+dotFacts.rowSpread+'px');
+    assert(dotFacts.minW>=43.5&&dotFacts.minH>=43.5,'desktop spotlight dots meet 44px target');
+    if(motion==='reduce'){assert.equal(dotFacts.dotDur,0);assert.equal(dotFacts.pillDur,0);}
+    else{assert(dotFacts.dotDur>0||dotFacts.pillDur>0,'desktop spotlight dot transition active when reduced-motion off');}
+    await p.locator('#spotlight .spot-dot[data-spot-select="2"]').click();
+    assert.equal(await p.locator('#spotlight .spot-dot[data-spot-select="2"]').getAttribute('aria-current'),'true');
+    assert.equal((await p.locator('#spot-status').innerText()).trim(),'3 of '+spotRows.length);
+   }
+   const apexCardLine=(await p.locator('#new-and-updated [data-release="game-apex-kick"] .card-line').innerText()).trim();
+   assert.equal(apexCardLine,expectedApexBlurb,'P-7-3 Apex Kick blurb cleaned on hub');
+   const visibleBlurbs=await p.evaluate(()=>[...document.querySelectorAll('#new-and-updated .card-line, #game-grid .card-line, #spotlight .card-line')].map(e=>e.textContent.trim()));
+   assert(visibleBlurbs.every(t=>!/\b[Vv]\d+(?:[._]\d+)*\b/.test(t)),'P-7-3 0 version tags in visible hub blurbs');
+   assert.equal(consoleErrs.length,0,'0 console errors at '+w+' ('+motion+')');
+   assert.equal(pageErrs.length,0,'0 page errors at '+w+' ('+motion+')');
+   matrix.push({width:w,reducedMotion:motion,consoleErrors:consoleErrs.length,pageErrors:pageErrs.length});
+   await ctxP7.close();
+  }
+ }
+ // P-7-2 clock proof at 2026-11-15 UTC: 2026-10-26 (20d <= 60d) visible; 2026-09-03..08 (68-73d > 60d) hidden.
+ const simUtc=Date.UTC(2026,10,15,12,0,0);
+ const ctxClock=await browser.newContext({viewport:{width:1280,height:900},reducedMotion:'reduce'}),pC=await ctxClock.newPage();
+ await pC.addInitScript(fixedMs=>{
+  const OrigDate=Date;
+  function MockDate(...args){return args.length===0?new OrigDate(fixedMs):new OrigDate(...args);}
+  MockDate.prototype=OrigDate.prototype;
+  MockDate.now=()=>fixedMs;
+  MockDate.UTC=OrigDate.UTC;
+  MockDate.parse=OrigDate.parse;
+  window.Date=MockDate;
+ },simUtc);
+ await pC.goto(base,{waitUntil:'networkidle'});await ready(pC);
+ const clockFacts=await pC.evaluate(fixedMs=>{
+  const simDay=Date.UTC(new Date(fixedMs).getUTCFullYear(),new Date(fixedMs).getUTCMonth(),new Date(fixedMs).getUTCDate());
+  const nodes=[...document.querySelectorAll('[data-updated]')];
+  const states=nodes.map(el=>{
+   const [y,m,d]=el.dataset.updated.split('-').map(Number);
+   const age=Math.floor((simDay-Date.UTC(y,m-1,d))/86400000);
+   const vis=!el.hidden&&getComputedStyle(el).display!=='none';
+   return{date:el.dataset.updated,age,expected:age>=0&&age<=60,vis};
+  });
+  const relTitles=[...document.querySelectorAll('#new-and-updated .release-box')].slice(0,4).map(b=>Math.round(b.querySelector('.release-title').getBoundingClientRect().top));
+  return{total:states.length,shown:states.filter(s=>s.vis).length,hidden:states.filter(s=>!s.vis).length,mismatches:states.filter(s=>s.vis!==s.expected),relTitleSpread:Math.max(...relTitles)-Math.min(...relTitles)};
+ },simUtc);
+ await ctxClock.close();
+ assert(clockFacts.shown>0&&clockFacts.hidden>0,'P-7-2 simulated clock exercises both <=60d visible and >60d hidden labels: '+JSON.stringify(clockFacts));
+ assert.equal(clockFacts.mismatches.length,0,'P-7-2 every [data-updated] matches 60-day rule: '+JSON.stringify(clockFacts.mismatches));
+ assert(clockFacts.relTitleSpread<=1,'P-7-2 #new-and-updated subgrid title alignment preserved across shown/hidden dates: spread '+clockFacts.relTitleSpread+'px');
+ return{matrix,clockProof:clockFacts};
 });
 await test('essential-links-with-javascript-disabled',async()=>{const ctx=await browser.newContext({javaScriptEnabled:false}),page=await ctx.newPage();await page.goto(base);const hrefs=await gridHrefs(page);const covered=coverage(hrefs,routesOf(catalogue));assert.equal(await page.locator('#classroom [data-activity] a[data-play]').count(),activities.length);const azLinks=await page.locator('.az-list a[href]').evaluateAll(a=>a.map(x=>x.getAttribute('href')));assert.deepEqual([...azLinks].sort(),data.games.map(g=>g.route).sort(),'the noscript A to Z lists every game and activity once');const distinct=await page.evaluate(()=>new Set([...document.querySelectorAll('a[data-play][href]')].map(a=>a.getAttribute('href'))).size);assert.equal(distinct,data.games.length,'every Play href present without JavaScript');const anchors=await page.locator('a[data-play][href]').count();await page.locator('.menu summary').click();assert(await page.getByRole('navigation',{name:'Main menu'}).isVisible());assert.match(await page.locator('#all-games .notice').innerText(),/direct Play links work/);assert(await page.locator('#spotlight [data-spot]').first().isVisible(),'spotlight readable without JavaScript');assert.equal(await page.locator('.shelf-nav:visible').count(),0,'inert shelf controls stay hidden without JavaScript');await ctx.close();return{directHrefs:distinct,noscriptList:azLinks.length,gridCatalogueHrefsOnce:covered,classroomRows:activities.length,playAnchors:anchors,nativeMenu:true};});
 await test('unavailable-storage-missing-media-and-failure-fallback',async()=>{const ctx=await browser.newContext(),page=await ctx.newPage();await page.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new DOMException('blocked','SecurityError');}});Object.defineProperty(window,'sessionStorage',{get(){throw new DOMException('blocked','SecurityError');}});});await page.route(/\.(png|jpg|webp|svg)(\?.*)?$/,r=>r.abort());await page.goto(base);await ready(page);await page.locator('#query').fill('Emberwild');await page.locator('#game-grid [data-favourite="'+EMBER+'"]').click();assert.match(await page.locator('#storage-status').innerText(),/unavailable/);await pause(300);assert.match(await page.locator('#game-grid [data-card="'+EMBER+'"] .thumb').innerText(),new RegExp((emberwild.displayTitle||emberwild.title).slice(0,6)),'a failed card image falls back to the titled colour block');await page.goto(base+'?game='+EMBER);await ready(page);await pause(300);assert.match(await page.locator('#dialog-media').innerText(),/Image unavailable/);assert(await page.locator('#dialog-play').isVisible());await page.keyboard.press('Escape');assert(await page.locator('#game-grid .play').filter({visible:true}).first().isVisible());await ctx.close();return{browsing:true,inMemoryFavourite:true,gameLinks:true,imageFallback:true};});

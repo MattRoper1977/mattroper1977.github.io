@@ -71,9 +71,24 @@
   const bandLabel = g => (g.sessionBand && data.bandLabels && data.bandLabels[g.sessionBand]) || '';
   const inputLabels = {touch: 'Touch', keyboard: 'Keyboard', mouse: 'Mouse', gamepad: 'Gamepad'};
   const verifiedInputLabel = g => (g.controls || []).map(c => inputLabels[c] || (c.slice(0, 1).toUpperCase() + c.slice(1))).join(' · ');
+  const UPDATED_WINDOW_DAYS = 60;
+  function isRecentUpdate(iso, nowMs = Date.now()) {
+    if (!iso) return false;
+    const parts = String(iso).split('-').map(Number);
+    if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return false;
+    const now = new Date(nowMs);
+    const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const ageDays = Math.floor((todayUtc - Date.UTC(parts[0], parts[1] - 1, parts[2])) / 86400000);
+    return ageDays >= 0 && ageDays <= UPDATED_WINDOW_DAYS;
+  }
+  function syncUpdatedLabels(root = document) {
+    root.querySelectorAll('[data-updated]').forEach(el => {
+      el.hidden = !isRecentUpdate(el.dataset.updated);
+    });
+  }
   let activeGame = null, returnFocus = null, cameFromGame = false, filtersOpener = null;
 
-  /* ---- spotlight: one featured game at a time, advanced only by Next or playlist ---- */
+  /* ---- spotlight: one featured game at a time, advanced only by Next, dots or playlist ---- */
   const spots = [...document.querySelectorAll('[data-spot]')];
   let spotIndex = 0;
   function showSpot(i) {
@@ -84,7 +99,7 @@
   }
   if (spots.length > 1) {
     $('spot-next').hidden = false; $('spot-status').hidden = false;
-    document.querySelectorAll('.featured-playlist').forEach(el => { el.hidden = false; });
+    document.querySelectorAll('.spot-dots, .featured-playlist').forEach(el => { el.hidden = false; });
     const stage = document.querySelector('.spotlight-stage');
     if (stage && stage.querySelector('.featured-playlist')) stage.classList.add('has-playlist');
     showSpot(0);
@@ -245,7 +260,7 @@
     return (g.pill ? '<span class="chip pill-action" data-pill>' + esc(g.pill) + '</span>' : '') +
       (g.tag ? '<span class="chip" data-tag>' + esc(g.tag) + '</span>' : '') +
       (count > 1 ? '<span class="chip">' + count + ' editions</span>' : '') +
-      (g.updated ? '<span class="chip">Updated ' + esc(g.updated.label) + '</span>' : '') +
+      (g.updated ? '<span class="chip" data-updated="' + esc(g.updated.date) + '"' + (isRecentUpdate(g.updated.date) ? '' : ' hidden') + '>Updated ' + esc(g.updated.label) + '</span>' : '') +
       (bandLabel(g) ? '<span class="chip pill-session">' + esc(bandLabel(g)) + '</span>' : '') +
       (vIn ? '<span class="chip pill-input">' + esc(vIn) + '</span>' : '') +
       (needsKeyboard(g) ? '<span class="chip warn" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>Needs a keyboard</span>' : '');
@@ -539,6 +554,7 @@
   window.addEventListener('storage', e => { if (e.key === keys.favourites || e.key === keys.recent) { favourites = readList('favourites'); recent = readList('recent'); render({url: false}); } });
 
   /* ---- first paint ---- */
+  syncUpdatedLabels();
   if (coarse()) document.querySelectorAll('[data-needs-keyboard]').forEach(chip => { chip.hidden = false; });
   bindImages(document);
   const previous = browseSnapshot();

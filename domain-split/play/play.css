@@ -757,6 +757,55 @@ html:not(.js) .collection-links a:not([data-collection=""]) {
   gap: 1rem;
 }
 
+.spot-dots {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: .65rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.spot-dot {
+  min-width: var(--mbm-tap);
+  min-height: var(--mbm-tap);
+  padding: 0;
+  border: 0;
+  border-radius: var(--mbm-card-radius);
+  background: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spot-dot:hover {
+  background: var(--mbm-card-raised);
+  border-color: transparent;
+}
+
+.spot-dot::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--mbm-muted);
+  border: 1px solid var(--mbm-card-raised);
+}
+
+.spot-dot[aria-current="true"]::before {
+  width: 22px;
+  background: var(--mbm-accent);
+  border-color: var(--mbm-accent);
+}
+
+@media (max-width: 759px) {
+  .spot-dots {
+    display: none;
+  }
+}
+
 .feature-card {
   border: 1px solid var(--mbm-card-raised);
   background: var(--mbm-card);
@@ -2066,8 +2115,11 @@ body:has(dialog[open]) {
   html {
     scroll-behavior: smooth;
   }
-  button, .button, .play, .chip-button, .facet-chip, .switcher-link, .icon-button, .menu summary, .collection-links a, .save-vault-summary, .playlist-btn {
+  button, .button, .play, .chip-button, .facet-chip, .switcher-link, .icon-button, .menu summary, .collection-links a, .save-vault-summary, .playlist-btn, .spot-dot {
     transition: background-color var(--mbm-motion-duration) var(--mbm-motion-ease), border-color var(--mbm-motion-duration) var(--mbm-motion-ease), color var(--mbm-motion-duration) var(--mbm-motion-ease), transform var(--mbm-motion-duration) var(--mbm-motion-ease);
+  }
+  .spot-dot::before {
+    transition: width var(--mbm-motion-duration) var(--mbm-motion-ease), background-color var(--mbm-motion-duration) var(--mbm-motion-ease), border-color var(--mbm-motion-duration) var(--mbm-motion-ease);
   }
   .game-card, .release-box, .feature-card, .launch-card, .todays-seed {
     transition: border-color var(--mbm-motion-duration) var(--mbm-motion-ease), background-color var(--mbm-motion-duration) var(--mbm-motion-ease), transform var(--mbm-motion-duration) var(--mbm-motion-ease), box-shadow var(--mbm-motion-duration) var(--mbm-motion-ease);
