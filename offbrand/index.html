@@ -414,7 +414,6 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   </div>
   <h1>OFF-<span class="off">BRAND</span><span class="afterHours">AFTER HOURS</span></h1>
   <p class="strap">The probabilistic forensic whodunnit — read what you can prove, not what the game secretly knows.</p>
-  <p class="dedic">Made with love for my sweet, adorable niece Clara ♥</p>
   <div class="modes">
     <button class="mode" id="btnCrew">
       <span class="stars" id="starsCrew"></span>
@@ -644,7 +643,7 @@ function roomOf(p){for(var i=0;i<ROOMS.length;i++){var r=ROOMS[i];if(p.x>=r.x&&p
 function route(from,to){
   /* Deterministic, straight-line routing. The old router pushed a RANDOMLY jittered
      hub waypoint on every call, so identical taps produced different wobbling walks —
-     Clara's "bouncing off walls". Now: exit door → (a fixed hub crossing point on the
+     the old "bouncing off walls". Now: exit door → (a fixed hub crossing point on the
      line between the doors, only if the leg actually crosses the floor) → entry door →
      target. Same tap, same clean path, every time. */
   var pts=[],fr=roomOf(from),tr=roomOf(to);
@@ -751,7 +750,7 @@ function loadSave(){
     if(s&&s.v===3){for(var k in d){if(typeof s[k]==='undefined')s[k]=d[k];}SAVE=s;}
     else SAVE=d;
   }catch(e){SAVE=d;}
-  SAVE.seen=SAVE.seen||{};SAVE.seen.g_clara=1;SAVE.mastery=SAVE.mastery||{};
+  SAVE.seen=SAVE.seen||{};SAVE.mastery=SAVE.mastery||{};
 }
 function store(){try{localStorage.setItem('mbm_offbrand',JSON.stringify(SAVE));}catch(e){}}
 
@@ -1536,7 +1535,6 @@ function bodiesDown(){return S.chars.filter(function(c){return c.grey;}).length;
 /* =============== v3: FIELD GUIDE =============== */
 var GUIDE=[
  {k:'cast',t:'The crew',e:[
-  {id:'g_clara',n:'For Clara ♥',d:'The game\'s first player, its sharpest tester, and the whole reason it exists. The steering update was her idea. She is the reason nobody here is ever voted out. Made with love, always. ♥'},
   {id:'g_shapes',n:'Six shapes',d:'Ring, Emm, Star, Bastion, Pip and Dash. All six clock in. One of them might not be a shape at all.'},
   {id:'g_grey',n:'Going grey',d:'A corrupted crewmate turns grey and stops working. They are never gone — walk over and Restore them.'},
   {id:'g_curator',n:'The Curator',d:'The one holding the lens. In Crew mode that is you. In Glitch mode they patrol, repair, rewind and verify.'}]},
@@ -2730,17 +2728,13 @@ function runSplash(){
 }
 
 /* =============== v2.2: MENU CAST PARADE =============== */
-/* Clara — the game's first player and dedicatee — walks the parade as guest of honour.
-   Menu-only: she is never in the gameplay cast, never a suspect, and never flickers violet. */
-var CLARA={id:'clara',name:'Clara',shape:'clara',hue:'#F2A24A'};
-var PARADE=CAST.concat([CLARA]);
+var PARADE=CAST.slice();
 var menuRaf=0,menuT=0,menuFlick={idx:-1,t:0};
 function drawMenuShape(g,c,x,y,t,violet){
   g.save();g.translate(x,y);
   var bob=RM?0:Math.abs(Math.sin(t*5.5+seedOf(c)))*-4;
   g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(0,17,12,4,0,0,7);g.fill();
   g.translate(0,bob);
-  if(c.shape==='clara'){drawClara(g,t);g.restore();return;}
   var col=violet?'#A78BFA':c.hue;
   g.lineWidth=3;g.strokeStyle=col;g.fillStyle=col;
   if(c.shape==='ring'){g.beginPath();g.arc(0,0,12,0,7);g.stroke();}
@@ -2756,41 +2750,6 @@ function drawMenuShape(g,c,x,y,t,violet){
   else{g.fillStyle='#FDFCF8';g.beginPath();g.ellipse(-gap,0,3,3.6,0,0,7);g.fill();g.beginPath();g.ellipse(gap,0,3,3.6,0,0,7);g.fill();
     g.fillStyle='#161D3D';g.beginPath();g.arc(-gap,0.6,1.5,0,7);g.fill();g.beginPath();g.arc(gap,0.6,1.5,0,7);g.fill();}
   g.restore();
-  g.restore();
-}
-function drawClara(g,t){
-  // hand-drawn guest of honour: blonde pigtails, mint dress, her own nameplate
-  g.save();
-  // nameplate
-  g.font='700 10px Poppins,system-ui,sans-serif';g.textAlign='center';
-  g.fillStyle='#F2A24A';g.fillText('Clara ♥',0,-26);
-  // pigtails behind the head
-  g.fillStyle='#F0D48A';
-  g.beginPath();g.arc(-9,-12,4.4,0,7);g.fill();
-  g.beginPath();g.arc(9,-12,4.4,0,7);g.fill();
-  // head
-  g.fillStyle='#F6D7B8';g.beginPath();g.arc(0,-11,6.5,0,7);g.fill();
-  // hair fringe
-  g.fillStyle='#F0D48A';g.beginPath();g.arc(0,-13,6.6,Math.PI,0);g.fill();
-  // eyes (blink in step with the cast)
-  var blink=!RM&&(((t*0.42)+7)%3.1<0.1);
-  if(blink){g.strokeStyle='#161D3D';g.lineWidth=1.4;
-    g.beginPath();g.moveTo(-3.6,-11);g.lineTo(-1.4,-11);g.moveTo(1.4,-11);g.lineTo(3.6,-11);g.stroke();}
-  else{g.fillStyle='#161D3D';
-    g.beginPath();g.arc(-2.4,-11,1.1,0,7);g.fill();
-    g.beginPath();g.arc(2.4,-11,1.1,0,7);g.fill();}
-  // smile
-  g.strokeStyle='#161D3D';g.lineWidth=1.2;
-  g.beginPath();g.arc(0,-9.4,2.6,0.25*Math.PI,0.75*Math.PI);g.stroke();
-  // mint dress
-  g.fillStyle='#B9E6CD';
-  g.beginPath();g.moveTo(-4,-5);g.lineTo(4,-5);g.lineTo(8,9);g.lineTo(-8,9);g.closePath();g.fill();
-  // arms
-  g.strokeStyle='#F6D7B8';g.lineWidth=2.2;
-  g.beginPath();g.moveTo(-4,-3);g.lineTo(-9,3);g.moveTo(4,-3);g.lineTo(9,3);g.stroke();
-  // legs
-  g.strokeStyle='#F6D7B8';g.lineWidth=2.4;
-  g.beginPath();g.moveTo(-3,9);g.lineTo(-3,15);g.moveTo(3,9);g.lineTo(3,15);g.stroke();
   g.restore();
 }
 function menuFrame(){
@@ -3239,7 +3198,7 @@ if(typeof window!=='undefined'){window.OB={ver:GAME_VERSION,get S(){return S;},n
  TUT:TUT,tutStart:tutStart,tutStop:tutStop,stepTut:stepTut,glitchesLeft:glitchesLeft,glitchNames:glitchNames,
  doVerify:doVerify,store:store,
  audioResume:audioEnsure,audioSuspend:audioOff,
- snapTarget:snapTarget,CLARA:CLARA,get PARADE(){return PARADE;},drawClara:drawClara,
+ snapTarget:snapTarget,get PARADE(){return PARADE;},
  recordScene:recordScene,openScenes:openScenes,wipeScene:wipeScene,sceneOverlap:sceneOverlap,
  stillStanding:stillStanding,bodiesDown:bodiesDown,renderEvidence:renderEvidence,SCENE_RADIUS:SCENE_RADIUS,
  obValidLink:obValidLink,obPin:obPin,obUnpin:obUnpin,obLink:obLink,obRecomputeMarks:obRecomputeMarks,obIsMarked:obIsMarked,obBoardOpen:obBoardOpen,obNeed:obNeed,obPinMax:obPinMax,obRelWindow:obRelWindow,openBoard:openBoard,closeBoard:closeBoard,openRollCall:openRollCall,renderBoard:renderBoard,curatorSay:curatorSay,narrClear:narrClear,stepNarr:stepNarr,get CURATOR_LINES(){return CURATOR_LINES;},get HINT_LINES(){return HINT_LINES;},
