@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en-GB">
+<html lang="en-GB" data-theme="dark">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Made by Matt Play · Pick a game. Make it yours.</title>
-<meta name="description" content="Race, explore, build or work out your next move. Find your favourite or try something unexpected—play straight in your browser.">
+<meta name="description" content="Original arcade, strategy and simulation games — instant play · Free • No login • Works offline">
 <meta name="theme-color" content="#081422"><link rel="canonical" href="https://www.madebymatt-play.uk/">
 <link rel="manifest" href="/site.webmanifest">
 <link rel="stylesheet" href="/assets/mbm-tokens.css">
@@ -15,10 +15,11 @@
 <header class="masthead" data-mbm-chrome="play" data-theme="dark"><a class="brand" href="/">@@LOGO@@<span class="brand-lockup"><span class="brand-name">Made by Matt <strong>Play</strong></span><span class="brand-tagline">Play • Explore • Escape</span></span></a>
 <nav class="estate-switcher" aria-label="Switch between Education and Play"><a class="switcher-link" href="https://madebymatt.uk/">Education <span aria-hidden="true">↗</span></a><a class="switcher-link" href="/" aria-current="page">Play</a></nav>
 <div class="head-actions"><a class="icon-button" id="search-jump" href="#query" aria-label="Search games"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></a>
-<details class="menu"><summary aria-label="Menu"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></summary><nav aria-label="Main menu"><a href="#all-games">All games</a><a href="#classroom">For your classroom</a><a href="/game-saves/">Transfer saves</a><a href="/privacy/">Privacy and saved progress</a><a href="/stats/">Statistics</a></nav></details></div></header>
-<section class="trust-strip" aria-label="Access and saved progress"><ul class="trust-list">
-<li class="trust-item"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M4 10.5 8 14.5 16 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>No login or account needed</span></li>
-<li class="trust-item"><svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M10 2.5 4 5v4.8c0 4 2.6 6.9 6 7.7 3.4-.8 6-3.7 6-7.7V5l-6-2.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>Progress stays in this browser unless you export a code</span></li>
+<details class="menu"><summary aria-label="Menu"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></summary><nav aria-label="Main menu"><a href="#all-games">All games</a><a href="#shelf-strategy">Strategy, Command &amp; Systems</a><a href="#shelf-cosy">Cosy Markets, Rhythm &amp; Creative</a><a href="#shelf-sports">Stadium, Track &amp; Precision Sports</a><a href="#shelf-arcade">High-Tempo Arcade &amp; Turf</a><a href="#classroom">For your classroom</a><a href="/game-saves/">Transfer saves</a><a href="/privacy/">Privacy and saved progress</a><a href="/stats/">Statistics</a></nav></details></div></header>
+<section class="trust-strip" aria-label="Fair play and privacy"><ul class="trust-list">
+<li class="trust-item"><span class="chip">Skill only, no chance or loot</span></li>
+<li class="trust-item"><span class="chip">Zero external requests</span></li>
+<li class="trust-item"><span class="chip">Works offline, nothing leaves the device</span></li>
 </ul></section>
 <div class="play-layout">
 <aside class="browse-sidebar" aria-label="Your game collection">
@@ -37,9 +38,9 @@
 <a class="sidebar-education" href="https://madebymatt.uk/">Made by Matt Education <span aria-hidden="true">↗</span></a>
 </aside>
 <main>
-<section class="intro" aria-labelledby="intro-title"><div class="intro-head"><div class="intro-copy"><p class="eyebrow">YOUR NEXT GAME STARTS HERE.</p><h1 id="intro-title">Pick a game. <span>Make it yours.</span></h1><p class="lede">Race, explore, build or work out your next move. Find your favourite or try something unexpected—play straight in your browser.</p></div>@@HEROART@@</div>
+<section class="intro" aria-labelledby="intro-title"><div class="intro-head"><div class="intro-copy"><h1 id="intro-title">Pick a game. <span>Make it yours.</span></h1><p class="lede">Original arcade, strategy and simulation games — instant play · Free • No login • Works offline</p></div>@@HEROART@@</div>
 <form id="discovery-form" action="/" method="get" role="search"><label for="query">Search games</label><div class="search-row"><input id="query" name="q" type="search" maxlength="160" placeholder="Search games" autocomplete="off"><button type="button" id="filters-open" aria-haspopup="dialog" aria-expanded="false">Filters</button></div></form>
-<div class="mood-tools"><div class="chip-row" role="group" aria-label="Categories">@@CHIPS@@</div><button type="button" id="surprise" aria-haspopup="dialog" hidden>Surprise me</button></div>@@FACETS@@<p class="mood-note">Categories come from the game catalogue. Keyboard and Touch list only games whose controls have been checked.</p></section>
+<div class="mood-tools"><nav class="chip-row" aria-label="Game shelves">@@CHIPS@@</nav><button type="button" id="surprise" aria-haspopup="dialog" hidden>Surprise me</button></div>@@FACETS@@<p class="mood-note">Shelf links jump to each section below; use Filters to narrow by genre, controls or players.</p></section>
 <div id="lanes">@@FEATURED@@</div>
 <section id="all-games" aria-labelledby="all-games-title"><div class="section-head"><h2 id="all-games-title" tabindex="-1">All games</h2><p id="result-count" role="status" aria-live="polite">@@COUNT@@</p><div id="active-filters" class="active-filters" role="group" aria-label="Active filters" hidden></div><button type="button" id="clear-favourites" hidden>Clear favourites</button><button type="button" id="clear-recent-list" data-clear-recent hidden>Clear recently opened</button></div>
 <p id="list-note" class="muted" hidden>These are launches from this browser on this device, not saved games or resumable progress.</p><p id="surprise-status" role="status"></p>
@@ -58,7 +59,7 @@
 <div class="sheet-actions"><button type="button" id="filters-reset">Reset</button></div></form></dialog>
 <dialog id="game-dialog" aria-labelledby="dialog-title"><div class="sheet-top"><span class="chip" id="dialog-kind"></span><button type="button" id="dialog-close" autofocus>Close <span aria-hidden="true">×</span></button></div>
 <div id="dialog-media"></div><h2 id="dialog-title"></h2><div id="dialog-support" class="card-meta"></div><p id="dialog-keyboard" class="warn-line" hidden>Needs a keyboard</p>
-<div class="sheet-actions"><a class="play big" id="dialog-play">Play</a><button type="button" class="button" id="dialog-watch" hidden>Watch gameplay</button></div><p id="media-status" role="status"></p>
+<div class="sheet-actions"><a class="play big" id="dialog-play">Play</a><a class="button" id="dialog-launch" hidden>Launch page</a><button type="button" class="button" id="dialog-watch" hidden>Watch gameplay</button></div><p id="media-status" role="status"></p>
 <p id="dialog-description"></p>
 <section id="dialog-what-you-do" class="game-facts" hidden><h3>What you do</h3><ul id="dialog-what-list"></ul><div id="dialog-inputs" class="card-meta"></div></section>
 <p id="dialog-mood" class="muted" hidden></p>
