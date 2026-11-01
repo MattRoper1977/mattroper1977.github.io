@@ -142,3 +142,33 @@ html:not(.js) .collection-links a:not([data-collection=""]){display:none}
 #dialog-what-list{margin:.35rem 0 .6rem;padding-left:1.2rem;color:var(--muted);font-size:.95rem;display:grid;gap:.3rem}#dialog-inputs:empty{display:none}
 @media(min-width:700px){.trust-strip{padding-inline:24px}}
 @media(min-width:1050px){.trust-strip{padding-inline:32px}.spotlight-stage.has-playlist{grid-template-columns:minmax(0,1.7fr) minmax(260px,.85fr)}}
+
+/* PLAY-P3 per-game launch pages: token-only (zero new colour literals), 44px controls. */
+.launch-main{max-width:1280px;margin:0 auto;padding-block:1.25rem 2rem;min-width:0}
+.launch-hero{display:grid;gap:1.25rem;padding:1rem;border:1px solid var(--line);border-radius:18px;background:var(--surface);min-width:0}
+.launch-poster,.launch-summary{min-width:0}
+.launch-poster .thumb{border-radius:12px;border:1px solid var(--line)}
+.launch-summary h1{font-size:clamp(1.75rem,4vw,2.75rem);line-height:1.1;margin:0 0 .55rem}
+.launch-summary .lede{margin-bottom:.85rem}
+.launch-actions{margin-top:.75rem}
+.launch-actions .play.big{width:auto;flex:1 1 13rem}
+.launch-editions{margin-top:1rem;padding-top:.85rem;border-top:1px solid var(--line)}
+.launch-subhead{font-size:.82rem;font-weight:750;letter-spacing:.06em;text-transform:uppercase;color:var(--mint);margin:.5rem 0 .45rem}
+.launch-edition-list{list-style:none;margin:0;padding:0;display:grid;gap:.45rem}
+.launch-edition-list li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem;padding:.4rem .55rem;border:1px solid var(--line);border-radius:12px;background:var(--raised)}
+.launch-grid{display:grid;gap:1rem;margin-block:1.4rem}
+.launch-card{padding:1.1rem;border:1px solid var(--line);border-radius:16px;background:var(--surface);min-width:0;display:flex;flex-direction:column;gap:.45rem}
+.launch-card h2{font-size:1.2rem;margin:0 0 .25rem}
+.launch-card p{margin:0 0 .45rem;color:var(--muted)}
+.launch-card .card-actions{margin-top:auto;padding-top:.35rem}
+.launch-evidence{border-color:var(--mint)}
+.launch-list{margin:0 0 .45rem;padding-left:1.2rem;color:var(--text);display:grid;gap:.35rem}
+.launch-badges{list-style:none;margin:0 0 .45rem;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,11rem),1fr));gap:.5rem}
+.launch-badge{padding:.55rem .7rem;border:1px solid var(--line);border-radius:10px;background:var(--raised);display:flex;flex-direction:column;gap:.15rem;min-width:0}
+.launch-badge-key{font-size:.72rem;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--mint)}
+.launch-badge strong{font-size:.9rem;color:var(--text);overflow-wrap:anywhere}
+.launch-related{margin-top:1.6rem}
+.launch-related h2{margin-bottom:.8rem}
+.launch-related-grid{display:grid;gap:.9rem}
+.launch-edu-bridge{justify-content:space-between;background:var(--raised)}
+@media(min-width:768px){.launch-hero{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:center;padding:1.35rem;gap:1.5rem}.launch-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.launch-evidence{grid-column:1 / -1}.launch-related-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}

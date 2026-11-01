@@ -271,6 +271,7 @@
     $('dialog-support').innerHTML = (chips.length ? chips : ['Not yet verified']).map(c => '<span class="chip">' + esc(c) + '</span>').join('');
     $('dialog-keyboard').hidden = !(needsKeyboard(g) && coarse());
     const play = $('dialog-play'); play.href = g.route; play.dataset.play = g.id; play.textContent = 'Play ' + title(g) + ' →';
+    const launch = $('dialog-launch'); if (launch) { launch.hidden = !g.launchRoute; if (g.launchRoute) launch.href = g.launchRoute; }
     $('dialog-watch').hidden = !(g.media && g.media.video);
     const editions = $('dialog-editions'), members = (g.editions || []).map(id => byId.get(id)).filter(Boolean);
     editions.hidden = members.length < 2;

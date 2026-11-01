@@ -91,6 +91,50 @@ await test('static-shelf-one-dom-vocabulary-and-one-count',async()=>{const html=
  for(const literal of ['Pick a game. <span>Make it yours.</span>','YOUR NEXT GAME STARTS HERE.','placeholder="Search games"','>Filters<','>All games<','>For your classroom<','Classroom games, whole-class quizzes and a staff training activity.','Every game, A to Z','Privacy and saved progress','Report a problem','Made by Matt Education ↗','Made by Matt Play','Optional usage statistics — off until you allow it.','Read what is counted.','>Allow<','>Keep off<','usage-client.js','>Editions<','>Your progress<','id="dialog-saves"','>Transfer saves<','>Favourite<','>Share<'])assert(html.includes(literal),'copy missing: '+literal);
  assert(!/<(a|button)[\s>][^>]*>(?:(?!<\/(a|button)>).)*<(a|button)[\s>]/s.test(html.replace(/<script[\s\S]*?<\/script>/g,'')),'nested interactive elements');
  return{cards:cardIds.length,featured:featured.route,spotlight:spotRows.length,shelves:shelfNames,countStatement:countStatements[0].replace(/<[^>]+>/g,''),retiredVocabulary:0};});
+await test('launch-pages-200-metadata-schema-and-layout',async()=>{
+ const unesc=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#x27;|&#39;/g,"'");
+ const smRes=await fetch(base+'/sitemap.xml');assert.equal(smRes.status,200,'sitemap.xml returns 200');
+ const smXml=await smRes.text(),locs=[...smXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]);
+ assert.equal(locs.length,75+catalogue.length,'sitemap count increases by catalogue game count');
+ assert.equal(locs.length,new Set(locs).size,'no duplicate sitemap URLs');
+ let sciencePages=0;
+ for(const g of catalogue){
+  assert(g.launchRoute&&g.launchRoute.startsWith('/play/')&&g.launchRoute.endsWith('/'),'valid launchRoute for '+g.id);
+  const fullUrl='https://www.madebymatt-play.uk'+g.launchRoute;
+  assert(locs.includes(fullUrl),'sitemap includes '+fullUrl);
+  const res=await fetch(base+g.launchRoute);assert.equal(res.status,200,'launch page 200: '+g.launchRoute);
+  const html=await res.text(),shown=g.displayTitle||g.title;
+  const tMatch=html.match(/<title>([^<]+)<\/title>/);assert(tMatch&&unesc(tMatch[1]).trim()===shown+' · Made by Matt Play','title on '+g.launchRoute);
+  const dMatch=html.match(/<meta name="description" content="([^"]+)">/);assert(dMatch&&unesc(dMatch[1]).trim().length>0,'meta description on '+g.launchRoute);
+  assert(html.includes('<link rel="canonical" href="'+fullUrl+'">'),'canonical URL on '+g.launchRoute);
+  const poster=(g.media&&g.media.poster)||g.image||'';
+  if(process.env.PLAY_REQUIRE_COMPLETE_DISCOVERY==='1')assert(poster,'complete discovery requires Job 1 poster on '+g.launchRoute);
+  if(poster){
+   assert(html.includes('<meta property="og:image" content="https://www.madebymatt-play.uk'+poster+'">'),'og:image poster on '+g.launchRoute);
+   assert(html.includes('<meta property="og:image:width" content="640">')&&html.includes('<meta property="og:image:height" content="360">'),'640x360 og:image dimensions on '+g.launchRoute);
+  }
+  const ldMatch=html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);assert(ldMatch,'JSON-LD present on '+g.launchRoute);
+  const ld=JSON.parse(ldMatch[1]);
+  assert.equal(ld['@context'],'https://schema.org');assert.equal(ld['@type'],'VideoGame');assert.equal(ld.name,shown);
+  assert.equal(ld.description,unesc(dMatch[1]));assert(ld.genre,'genre in JSON-LD');assert(ld.playMode,'playMode in JSON-LD');
+  assert.equal(ld.isAccessibleForFree,true);assert.equal(ld.inLanguage,'en-GB');
+  for(const secId of ['guide-and-modes','controls','works-offline','badges'])assert(html.includes('id="'+secId+'"'),'missing #'+secId+' on '+g.launchRoute);
+  if(g.scienceGame){sciencePages++;assert(html.includes('id="evidence-export"'),'science launch page carries #evidence-export: '+g.launchRoute);}
+  else assert(!html.includes('id="evidence-export"'),'non-science launch page omits #evidence-export: '+g.launchRoute);
+ }
+ assert(sciencePages>0,'science launch pages verified');
+ const sciSample=catalogue.find(g=>g.scienceGame),stdSample=catalogue.find(g=>!g.scienceGame);
+ for(const sample of [sciSample,stdSample]){
+  for(const width of [390,1280]){
+   const ctx=await browser.newContext({viewport:{width,height:width<700?844:900},reducedMotion:'reduce'}),p=await ctx.newPage();
+   const reqs=[],errs=[];p.on('request',r=>reqs.push(r.url()));p.on('pageerror',e=>errs.push(e.message));
+   const resp=await p.goto(base+sample.launchRoute,{waitUntil:'networkidle'});assert.equal(resp.status(),200);
+   await overflow(p);await targets(p,null);firstParty(reqs);await noMedia(reqs);assert.equal(errs.length,0,'pageerrors on '+sample.launchRoute);
+   await ctx.close();
+  }
+ }
+ return{launchPages:catalogue.length,sciencePages,sitemapUrls:locs.length};
+});
 for(const width of [320,390,768,1280,1440]){
  const ctx=await browser.newContext({viewport:{width,height:width<700?844:900},isMobile:width<700,hasTouch:width<700,reducedMotion:'reduce'}),page=await ctx.newPage();page.setDefaultTimeout(10000);currentPage=page;const requests=[];page.on('request',r=>requests.push(r.url()));page.on('pageerror',e=>report.errors.push({width,message:e.message}));
  await test(width+'-layout-navigation-and-first-load',async()=>{await page.goto(base);await ready(page);await overflow(page);
