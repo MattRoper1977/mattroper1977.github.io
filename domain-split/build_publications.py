@@ -26,7 +26,7 @@ from play.manifest import verify as verify_play_manifest
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 PLAY_CANONICAL_ORIGIN = 'https://www.madebymatt-play.uk'
-PLAY_UTILITY_ROUTES = ['/privacy/', '/game-saves/', '/stats/', '/stats/on-this-device/']
+PLAY_UTILITY_ROUTES = ['/privacy/', '/game-saves/', '/your-shelf/', '/stats/', '/stats/on-this-device/']
 CENSUS = ROOT / "reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json"
 
 

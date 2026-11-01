@@ -640,7 +640,85 @@ def render_launch_page(row, catalogue_games, by_id, band_labels, logo, footer_lo
         '<section class="launch-related" aria-labelledby="related-title"><h2 id="related-title">More to explore</h2>'
         '<div class="launch-related-grid">' + peer_cards + edu_card + '</div></section>\n'
         '</main>\n'
-        '<footer><nav aria-label="Footer"><a href="/">All games</a><span aria-hidden="true">·</span><a href="/game-saves/">Transfer saves</a><span aria-hidden="true">·</span><a href="/privacy/">Privacy and saved progress</a><span aria-hidden="true">·</span><a class="education-return" href="https://madebymatt.uk/">Made by Matt Education ↗</a></nav><p class="brand-line"><a class="footer-brand" href="/">' + footer_logo + '<span>Made by Matt Play</span></a></p><p class="footer-motto">Play • Explore • Escape</p></footer>\n'
+        '<footer><nav aria-label="Footer"><a href="/">All games</a><span aria-hidden="true">·</span><a href="/your-shelf/">Your shelf</a><span aria-hidden="true">·</span><a href="/game-saves/">Transfer saves</a><span aria-hidden="true">·</span><a href="/privacy/">Privacy and saved progress</a><span aria-hidden="true">·</span><a class="education-return" href="https://madebymatt.uk/">Made by Matt Education ↗</a></nav><p class="brand-line"><a class="footer-brand" href="/">' + footer_logo + '<span>Made by Matt Play</span></a></p><p class="footer-motto">Play • Explore • Escape</p></footer>\n'
+        '</body></html>\n'
+    )
+
+def render_your_shelf_page(catalogue_games, logo, footer_logo):
+    """JOB 6(b): offline read-only 'Your shelf' badge wall reading the local Save Vault."""
+    allowlist_path = HERE.parents[1] / 'data/game-storage-allowlist.json'
+    allowlist = json.loads(allowlist_path.read_text(encoding='utf-8'))
+    sources = OrderedDict()
+    for r in catalogue_games:
+        entry = {'name': shown_title(r), 'route': r['launchRoute']}
+        lr_slug = r['launchRoute'].strip('/').split('/')[-1].lower()
+        rt_stem = Path(unquote(r['route']).rstrip('/')).stem.lower()
+        sources[lr_slug] = entry
+        sources[lr_slug.replace('-', '')] = entry
+        if rt_stem and rt_stem != 'index':
+            sources[rt_stem] = entry
+            sources[re.sub(r'[^a-z0-9]+', '', rt_stem)] = entry
+    inline_meta = json.dumps(
+        {'exactKeys': allowlist.get('localStorageExactKeys', []), 'sources': sources},
+        ensure_ascii=False,
+    ).replace('<', '\\u003c')
+    page_url = ORIGIN + '/your-shelf/'
+    desc = 'Badges, medals and artefacts earned locally in Potion Works and Save Vault games on this device — works offline with no account and nothing sent anywhere.'
+    return (
+        '<!doctype html>\n<html lang="en-GB" data-theme="dark">\n<head>\n'
+        '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">\n'
+        '<title>Your shelf · Made by Matt Play</title>\n'
+        '<meta name="description" content="' + esc(desc) + '">\n'
+        '<meta name="theme-color" content="#081422"><link rel="canonical" href="' + esc(page_url) + '">\n'
+        '<link rel="manifest" href="/site.webmanifest">\n'
+        '<link rel="stylesheet" href="/assets/mbm-tokens.css">\n'
+        '<link rel="stylesheet" href="/assets/play/play.css">\n'
+        '<script defer src="/assets/play/your-shelf.js"></script>\n'
+        '</head>\n'
+        '<body data-site-kind="games" data-page="your-shelf">\n'
+        '<a class="skip" href="#your-shelf-main">Skip to badge wall</a>\n'
+        '<header class="masthead" data-mbm-chrome="play" data-theme="dark"><a class="brand" href="/">' + logo + '<span class="brand-lockup"><span class="brand-name">Made by Matt <strong>Play</strong></span><span class="brand-tagline">Play • Explore • Escape</span></span></a>\n'
+        '<nav class="estate-switcher" aria-label="Switch between Education and Play"><a class="switcher-link" href="https://madebymatt.uk/">Education <span aria-hidden="true">↗</span></a><a class="switcher-link" href="/">Play</a></nav>\n'
+        '<div class="head-actions"><a class="button" href="/">← All games</a></div></header>\n'
+        '<section class="trust-strip" aria-label="Local Save Vault privacy"><ul class="trust-list">'
+        '<li class="trust-item"><span class="chip">Read-only local Save Vault</span></li>'
+        '<li class="trust-item"><span class="chip">Works offline</span></li>'
+        '<li class="trust-item"><span class="chip">No accounts · Nothing leaves this device</span></li>'
+        '</ul></section>\n'
+        '<main id="your-shelf-main" class="launch-main your-shelf-main">\n'
+        '<section class="launch-card your-shelf-hero" aria-labelledby="your-shelf-title">'
+        '<div class="your-shelf-copy">'
+        '<p class="feature-kicker">Local Save Vault · Badge wall</p>'
+        '<h1 id="your-shelf-title">Your shelf</h1>'
+        '<p class="lede">Badges, passport medals and cross-game artefacts earned in Potion Works and the games that export Save Vault codes appear here automatically in this browser — offline, with no login and nothing sent anywhere.</p>'
+        '<div class="shelf-summary" id="shelf-summary" aria-live="polite">'
+        '<span class="shelf-stat"><strong id="badge-count">0</strong> badges on this device</span>'
+        '<span class="shelf-stat"><strong id="vault-key-count">0</strong> local game saves</span>'
+        '<span class="chip" id="shelf-house-chip" hidden></span>'
+        '</div>'
+        '<p class="warn-line" id="shelf-storage-note" hidden></p>'
+        '<div class="card-actions"><a class="play" href="/">Browse games <span aria-hidden="true">→</span></a>'
+        '<a class="button" href="/game-saves/">Open Transfer saves</a></div>'
+        '<noscript><p class="notice">Enable JavaScript to inspect badges stored in this browser’s local Save Vault. Every navigation link and the guide below work offline without scripts.</p></noscript>'
+        '</div></section>\n'
+        '<section class="launch-card badge-wall-empty" id="badge-wall-empty" aria-labelledby="empty-wall-title">'
+        '<h2 id="empty-wall-title">No badges on this device yet</h2>'
+        '<p>Play any badge-enabled game in this browser or import a save code from another device to populate your badge wall locally:</p>'
+        '<div class="badge-earn-grid">'
+        '<article class="badge-earn-step"><p class="feature-kicker">Step 1 · Brew &amp; master</p><h3>Potion Works &amp; seeded runs</h3>'
+        '<p class="muted">Complete recipe challenges and mastery milestones in Potion Works (arriving soon on the Play shelf) and daily seeded runs to record local badges in this browser.</p></article>'
+        '<article class="badge-earn-step"><p class="feature-kicker">Step 2 · Sports &amp; Arcade Passports</p><h3>Games that export codes</h3>'
+        '<p class="muted">Finish tournament stations, House events or cross-game artefact runs in Sports Passport and Arcade Passport games to unlock local medals and artefacts.</p></article>'
+        '<article class="badge-earn-step"><p class="feature-kicker">Step 3 · Bring progress across</p><h3>Use Transfer saves</h3>'
+        '<p class="muted">Already earned badges on another device? Paste your in-game sync code inside that game or import your backup file through Transfer saves.</p></article>'
+        '</div>'
+        '<div class="card-actions"><a class="play" href="/#all-games">Pick a game to earn badges <span aria-hidden="true">→</span></a>'
+        '<a class="button" href="/game-saves/">Import in Transfer saves</a></div>'
+        '</section>\n'
+        '<section aria-label="Earned badges"><div class="badge-wall-grid" id="badge-wall-grid" hidden></div></section>\n'
+        '</main>\n'
+        '<footer><nav aria-label="Footer"><a href="/">All games</a><span aria-hidden="true">·</span><a href="/your-shelf/" aria-current="page">Your shelf</a><span aria-hidden="true">·</span><a href="/game-saves/">Transfer saves</a><span aria-hidden="true">·</span><a href="/privacy/">Privacy and saved progress</a><span aria-hidden="true">·</span><a class="education-return" href="https://madebymatt.uk/">Made by Matt Education ↗</a></nav><p class="brand-line"><a class="footer-brand" href="/">' + footer_logo + '<span>Made by Matt Play</span></a></p><p class="footer-motto">Play • Explore • Escape</p></footer>\n'
+        '<script id="vault-allowlist" type="application/json">' + inline_meta + '</script>\n'
         '</body></html>\n'
     )
 
@@ -834,7 +912,7 @@ def refresh(output, review=False, source_revisions=None):
 
     assets = target/'assets/play'
     assets.mkdir(parents=True, exist_ok=True)
-    for name in ['play.css','play.js']:
+    for name in ['play.css','play.js','your-shelf.js']:
         shutil.copyfile(HERE/name, assets/name)
     for clip in [r['media'] for r in rows if r['media']]:
         for field in ['video','poster']:
@@ -966,6 +1044,9 @@ def refresh(output, review=False, source_revisions=None):
         lp.write_text(render_launch_page(r, games, by_id, band_labels, logo, footer_logo), encoding='utf-8')
         launch_routes.append(r['launchRoute'])
     assert len(launch_routes) == len(games)
+    shelf_page = target / 'your-shelf' / 'index.html'
+    shelf_page.parent.mkdir(parents=True, exist_ok=True)
+    shelf_page.write_text(render_your_shelf_page(games, logo, footer_logo), encoding='utf-8')
     assert (target/'data/domain-catalogue.json').read_bytes() == original
     report={'counts':counts,'total':len(rows),'catalogue_sha256':hashlib.sha256(original).hexdigest(),
             'brand_status':brand.get('status','original-asset-unresolved'), 'accepted_clips':len(clips_by_route),

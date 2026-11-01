@@ -97,7 +97,8 @@ await test('launch-pages-200-metadata-schema-and-layout',async()=>{
  const unesc=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#x27;|&#39;/g,"'");
  const smRes=await fetch(base+'/sitemap.xml');assert.equal(smRes.status,200,'sitemap.xml returns 200');
  const smXml=await smRes.text(),locs=[...smXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]);
- assert.equal(locs.length,75+catalogue.length,'sitemap count increases by catalogue game count');
+ assert.equal(locs.length,76+catalogue.length,'sitemap count includes /your-shelf/ plus catalogue game count');
+ assert(locs.includes('https://www.madebymatt-play.uk/your-shelf/'),'sitemap includes /your-shelf/');
  assert.equal(locs.length,new Set(locs).size,'no duplicate sitemap URLs');
  let sciencePages=0;
  for(const g of catalogue){
@@ -418,6 +419,53 @@ await test('p6a-todays-seed-card',async()=>{
   await ctxSeed.close();
  }
  return{widths:proofs};
+});
+await test('p6b-your-shelf-badge-wall',async()=>{
+ const homeRes=await fetch(base+'/');assert.equal(homeRes.status,200);
+ const homeHtml=await homeRes.text();
+ assert(/id="save-vault"[\s\S]*?href="\/your-shelf\/"/.test(homeHtml),'Save Vault links to /your-shelf/');
+ assert(/<footer>[\s\S]*?href="\/your-shelf\/"/.test(homeHtml),'Footer links to /your-shelf/');
+ const shelfRes=await fetch(base+'/your-shelf/');assert.equal(shelfRes.status,200,'/your-shelf/ returns 200');
+ const emptyProofs=[],badgeProofs=[];
+ for(const w of [390,1280]){
+  const ctxEmpty=await browser.newContext({viewport:{width:w,height:w<700?844:900},isMobile:w<700,hasTouch:w<700,reducedMotion:'reduce'}),pE=await ctxEmpty.newPage();
+  const reqsE=[],errsE=[];pE.on('request',r=>reqsE.push(r.url()));pE.on('pageerror',e=>errsE.push(e.message));
+  await pE.goto(base+'/your-shelf/',{waitUntil:'networkidle'});
+  await ctxEmpty.setOffline(true);
+  await overflow(pE);await targets(pE,null);firstParty(reqsE);assert.equal(errsE.length,0,'pageerrors on empty /your-shelf/');
+  assert(await pE.locator('#badge-wall-empty').isVisible(),'empty state visible when no badges stored at '+w);
+  assert(await pE.locator('#badge-wall-grid').isHidden(),'badge grid hidden when empty at '+w);
+  assert.equal((await pE.locator('#badge-count').innerText()).trim(),'0','badge count is 0 when empty');
+  const emptyText=await pE.locator('#badge-wall-empty').innerText();
+  assert(/Potion Works/.test(emptyText)&&/Transfer saves/.test(emptyText),'empty state explains how to earn and transfer badges');
+  const emptyMotion=await pE.evaluate(()=>({num:getComputedStyle(document.getElementById('badge-count')).fontVariantNumeric,dur:parseFloat(getComputedStyle(document.querySelector('#badge-wall-empty .button')).transitionDuration)||0}));
+  assert(emptyMotion.num.includes('tabular-nums'),'tabular-nums on #badge-count');
+  assert.equal(emptyMotion.dur,0,'reduce-motion respected on /your-shelf/');
+  const firstBtn=pE.locator('#badge-wall-empty a[href]').first();await firstBtn.focus();
+  assert(await firstBtn.evaluate(e=>e===document.activeElement),'empty state action is keyboard reachable');
+  emptyProofs.push({width:w,emptyVisible:true});
+  await ctxEmpty.close();
+
+  const fixtureStorage=[
+   {name:'mbm_potion_works_v1',value:JSON.stringify({version:1,badges:[{id:'master_distiller',label:'Master Distiller',tier:'Gold',earnedAt:'2026-10-30T12:00:00Z'}]})},
+   {name:'mbm_sports_passport_v4',value:JSON.stringify({kind:'MadeByMatt.SportsPassport.V4',schema:4,profile:{name:{value:'Player One'},house:{value:'Aurora'}},sets:{badges:{adds:[['aurora-precision-crown',{id:'aurora-precision-crown',earnedAt:'2026-10-28T09:00:00Z'}]],removes:[]}},receipts:[['r1',{id:'r1',game:'aurora-links',badge:'fairway-ace',earnedAt:'2026-10-29T10:00:00Z'}]]})},
+   {name:'mbm_arcade_passport_v4',value:JSON.stringify({version:4,revision:2,artefacts:{crown_core_shifter:{id:'crown_core_shifter',label:'Crown Core Shifter',source:'relicforge',unlockedAt:'2026-10-27T15:00:00Z'},beacon_prism:{id:'beacon_prism',label:'Beacon Prism',source:'voxel',unlockedAt:'2026-10-31T16:00:00Z'}}})}
+  ];
+  const ctxPop=await browser.newContext({viewport:{width:w,height:w<700?844:900},isMobile:w<700,hasTouch:w<700,reducedMotion:'reduce',storageState:{cookies:[],origins:[{origin:base,localStorage:fixtureStorage}]}}),pP=await ctxPop.newPage();
+  const reqsP=[],errsP=[];pP.on('request',r=>reqsP.push(r.url()));pP.on('pageerror',e=>errsP.push(e.message));
+  await pP.goto(base+'/your-shelf/',{waitUntil:'networkidle'});
+  await overflow(pP);await targets(pP,null);firstParty(reqsP);assert.equal(errsP.length,0,'pageerrors on populated /your-shelf/');
+  assert(await pP.locator('#badge-wall-empty').isHidden(),'empty state hidden when badges earned at '+w);
+  assert(await pP.locator('#badge-wall-grid').isVisible(),'badge wall visible when badges earned at '+w);
+  const countVal=Number((await pP.locator('#badge-count').innerText()).trim());
+  assert.equal(countVal,5,'5 fixture badges rendered across Potion Works, Sports Passport and Arcade Passport');
+  const wallText=await pP.locator('#badge-wall-grid').innerText();
+  for(const expectedLabel of ['Master Distiller','Potion Works','Aurora Precision Crown','Fairway Ace','Crown Core Shifter','Beacon Prism'])assert(wallText.includes(expectedLabel),'badge wall displays '+expectedLabel);
+  await pP.addStyleTag({content:':root{font-size:200%!important}'});await overflow(pP);
+  badgeProofs.push({width:w,badges:countVal});
+  await ctxPop.close();
+ }
+ return{empty:emptyProofs,populated:badgeProofs};
 });
 await test('essential-links-with-javascript-disabled',async()=>{const ctx=await browser.newContext({javaScriptEnabled:false}),page=await ctx.newPage();await page.goto(base);const hrefs=await gridHrefs(page);const covered=coverage(hrefs,routesOf(catalogue));assert.equal(await page.locator('#classroom [data-activity] a[data-play]').count(),activities.length);const azLinks=await page.locator('.az-list a[href]').evaluateAll(a=>a.map(x=>x.getAttribute('href')));assert.deepEqual([...azLinks].sort(),data.games.map(g=>g.route).sort(),'the noscript A to Z lists every game and activity once');const distinct=await page.evaluate(()=>new Set([...document.querySelectorAll('a[data-play][href]')].map(a=>a.getAttribute('href'))).size);assert.equal(distinct,data.games.length,'every Play href present without JavaScript');const anchors=await page.locator('a[data-play][href]').count();await page.locator('.menu summary').click();assert(await page.getByRole('navigation',{name:'Main menu'}).isVisible());assert.match(await page.locator('#all-games .notice').innerText(),/direct Play links work/);assert(await page.locator('#spotlight [data-spot]').first().isVisible(),'spotlight readable without JavaScript');assert.equal(await page.locator('.shelf-nav:visible').count(),0,'inert shelf controls stay hidden without JavaScript');await ctx.close();return{directHrefs:distinct,noscriptList:azLinks.length,gridCatalogueHrefsOnce:covered,classroomRows:activities.length,playAnchors:anchors,nativeMenu:true};});
 await test('unavailable-storage-missing-media-and-failure-fallback',async()=>{const ctx=await browser.newContext(),page=await ctx.newPage();await page.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new DOMException('blocked','SecurityError');}});Object.defineProperty(window,'sessionStorage',{get(){throw new DOMException('blocked','SecurityError');}});});await page.route(/\.(png|jpg|webp|svg)(\?.*)?$/,r=>r.abort());await page.goto(base);await ready(page);await page.locator('#query').fill('Emberwild');await page.locator('#game-grid [data-favourite="'+EMBER+'"]').click();assert.match(await page.locator('#storage-status').innerText(),/unavailable/);await pause(300);assert.match(await page.locator('#game-grid [data-card="'+EMBER+'"] .thumb').innerText(),new RegExp((emberwild.displayTitle||emberwild.title).slice(0,6)),'a failed card image falls back to the titled colour block');await page.goto(base+'?game='+EMBER);await ready(page);await pause(300);assert.match(await page.locator('#dialog-media').innerText(),/Image unavailable/);assert(await page.locator('#dialog-play').isVisible());await page.keyboard.press('Escape');assert(await page.locator('#game-grid .play').filter({visible:true}).first().isVisible());await ctx.close();return{browsing:true,inMemoryFavourite:true,gameLinks:true,imageFallback:true};});

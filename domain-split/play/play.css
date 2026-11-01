@@ -1928,7 +1928,134 @@ body:has(dialog[open]) {
   overflow-wrap: anywhere;
 }
 
-.game-card:hover, .game-card:focus-within, .release-box:hover, .release-box:focus-within, .feature-card:hover, .feature-card:focus-within, .todays-seed:hover, .todays-seed:focus-within {
+.your-shelf-main {
+  display: grid;
+  gap: 1.35rem;
+}
+
+.your-shelf-copy {
+  display: grid;
+  gap: .85rem;
+  min-width: 0;
+}
+
+.your-shelf-copy h1 {
+  margin: 0;
+  font-size: clamp(1.65rem, 3.2vw, 2.35rem);
+  font-weight: 820;
+  line-height: 1.08;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+}
+
+.shelf-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .6rem;
+  min-width: 0;
+}
+
+.shelf-stat {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .35rem;
+  padding: .5rem .8rem;
+  border: 1px solid var(--mbm-card-raised);
+  border-radius: var(--mbm-card-radius);
+  background: var(--mbm-card-raised);
+  font-size: .9rem;
+  font-weight: 650;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.shelf-stat strong, #badge-count, #vault-key-count {
+  font-size: 1.15rem;
+  font-weight: 820;
+  color: var(--mbm-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.badge-wall-empty {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.badge-wall-empty[hidden], .badge-wall-grid[hidden] {
+  display: none;
+}
+
+.badge-earn-grid, .badge-wall-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr));
+  gap: .95rem;
+  min-width: 0;
+}
+
+.badge-earn-step {
+  padding: .95rem 1rem;
+  border: 1px solid var(--mbm-card-raised);
+  border-radius: var(--mbm-card-radius);
+  background: var(--mbm-card-raised);
+  display: grid;
+  align-content: start;
+  gap: .35rem;
+  min-width: 0;
+}
+
+.badge-earn-step h3, .badge-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 780;
+  line-height: 1.2;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.badge-card {
+  display: grid;
+  align-content: start;
+  gap: .7rem;
+  min-width: 0;
+}
+
+.badge-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+  min-width: 0;
+}
+
+.badge-emblem {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--mbm-accent);
+  border-radius: var(--mbm-card-radius);
+  background: var(--mbm-card-raised);
+  color: var(--mbm-accent);
+}
+
+.badge-heading {
+  display: grid;
+  gap: .18rem;
+  min-width: 0;
+}
+
+.your-shelf-main .play, .your-shelf-main .button {
+  gap: .35rem;
+  white-space: normal;
+  text-align: center;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.game-card:hover, .game-card:focus-within, .release-box:hover, .release-box:focus-within, .feature-card:hover, .feature-card:focus-within, .todays-seed:hover, .todays-seed:focus-within, .badge-card:hover, .badge-card:focus-within {
   border-color: var(--mbm-accent);
 }
 

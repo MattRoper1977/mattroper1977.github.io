@@ -40,9 +40,10 @@ def main():
     play_disc = json.loads((games/'data/play-discovery.json').read_text(encoding='utf-8'))['games']
     launch_items = [g for g in play_disc if g.get('launchRoute')]
     assert len(launch_items) == len(shelf)
-    assert len(locs) == 75 + len(shelf) and len(locs) == len(set(locs)) and all(u.startswith('https://www.madebymatt-play.uk/') and ' ' not in u and '(' not in u and ')' not in u for u in locs)
-    for util_r in ('/privacy/', '/game-saves/', '/stats/', '/stats/on-this-device/'):
+    assert len(locs) == 76 + len(shelf) and len(locs) == len(set(locs)) and all(u.startswith('https://www.madebymatt-play.uk/') and ' ' not in u and '(' not in u and ')' not in u for u in locs)
+    for util_r in ('/privacy/', '/game-saves/', '/your-shelf/', '/stats/', '/stats/on-this-device/'):
         assert f'https://www.madebymatt-play.uk{util_r}' in locs
+    assert exists(games, 'your-shelf'), '/your-shelf/'
     for g in launch_items:
         assert f"https://www.madebymatt-play.uk{g['launchRoute']}" in locs
         assert exists(games, g['launchRoute'].lstrip('/')), g['launchRoute']
