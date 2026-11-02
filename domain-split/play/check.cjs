@@ -318,6 +318,42 @@ for(const width of [320,390,768,1280,1440]){
  await test(width+'-orientation-and-text-enlargement',async()=>{await page.goto(base);await ready(page);await page.setViewportSize({width:width<700?844:900,height:width});await overflow(page);await page.setViewportSize({width,height:900});await page.addStyleTag({content:':root{font-size:200%!important}'});assert((await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).fontSize)))>=32,'Text enlargement did not apply');await overflow(page);const collectionFits=await page.locator('.browse-sidebar').evaluate(e=>e.scrollWidth<=e.clientWidth+1&&[...e.querySelectorAll('.collection-links a')].every(a=>a.scrollWidth<=a.clientWidth+1));assert(collectionFits,'Collection labels must fit at 200% text size');await page.screenshot({path:path.join(out,width+'-text-200.png')});return{landscapeNoOverflow:true,text200NoOverflow:true,collectionLabelsFit:true};});
  await ctx.close();
 }
+await test('p17-2c-apexkick-tag',async()=>{
+ const expectedApexBlurb='Replaced by the World Stage edition: nine modes, including 60s Time Attack, Corner Kick Whip, Keeper Glove Mode and a 2P shootout.';
+ const versionTagRx=/\b[Vv]\d+(?:[._]\d+)*\b/;
+ const evObj=JSON.parse(fs.readFileSync('domain-split/play/evidence.json'));
+ for(const [route,info] of Object.entries(evObj.games||{})){
+  for(const [field,val] of [['description',info.description],['updated.description',info.updated&&info.updated.description]]){
+   if(typeof val==='string')assert(!versionTagRx.test(val),'P-7-3 version tag in evidence.json '+route+' '+field+': '+val);
+  }
+ }
+ const ctxP7=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'}),p=await ctxP7.newPage();
+ const reqs=[],consoleErrs=[],pageErrs=[];
+ p.on('request',r=>reqs.push(r.url()));
+ p.on('console',m=>{if(m.type()==='error')consoleErrs.push(m.text());});
+ p.on('pageerror',e=>pageErrs.push(e.message));
+ await p.goto(base,{waitUntil:'networkidle'});await ready(p);await overflow(p);firstParty(reqs);
+ const apexCardLine=(await p.locator('#new-and-updated [data-release="game-apex-kick"] .card-line').innerText()).trim();
+ assert.equal(apexCardLine,expectedApexBlurb,'P-7-3 Apex Kick blurb cleaned on hub');
+ const visibleBlurbs=await p.evaluate(()=>[...document.querySelectorAll('#new-and-updated .card-line, #game-grid .card-line, #spotlight .card-line')].map(e=>e.textContent.trim()));
+ assert(visibleBlurbs.every(t=>!versionTagRx.test(t)),'P-7-3 0 version tags in visible hub blurbs');
+ assert.equal(consoleErrs.length,0,'0 console errors on hub at 390px');
+ assert.equal(pageErrs.length,0,'0 page errors on hub at 390px');
+ await ctxP7.close();
+ const ctxAk=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'}),pAk=await ctxAk.newPage();
+ const akReqs=[],akConsoleErrs=[],akPageErrs=[];
+ pAk.on('request',r=>akReqs.push(r.url()));
+ pAk.on('console',m=>{if(m.type()==='error')akConsoleErrs.push(m.text());});
+ pAk.on('pageerror',e=>akPageErrs.push(e.message));
+ const akRes=await pAk.goto(base+'/apexkick/',{waitUntil:'load',timeout:20000});
+ await pause(1200);
+ assert.equal(akRes.status(),200,'Apex Kick /apexkick/ returns 200');
+ firstParty(akReqs);
+ assert.equal(akConsoleErrs.length,0,'0 console errors on /apexkick/ at 390px');
+ assert.equal(akPageErrs.length,0,'0 page errors on /apexkick/ at 390px');
+ await ctxAk.close();
+ return{apexBlurbClean:true,apexKick390:true};
+});
 await test('essential-links-with-javascript-disabled',async()=>{const ctx=await browser.newContext({javaScriptEnabled:false}),page=await ctx.newPage();await page.goto(base);const hrefs=await gridHrefs(page);const covered=coverage(hrefs,routesOf(catalogue));assert.equal(await page.locator('#classroom [data-activity] a[data-play]').count(),activities.length);const azLinks=await page.locator('.az-list a[href]').evaluateAll(a=>a.map(x=>x.getAttribute('href')));assert.deepEqual([...azLinks].sort(),data.games.map(g=>g.route).sort(),'the noscript A to Z lists every game and activity once');const distinct=await page.evaluate(()=>new Set([...document.querySelectorAll('a[data-play][href]')].map(a=>a.getAttribute('href'))).size);assert.equal(distinct,data.games.length,'every Play href present without JavaScript');const anchors=await page.locator('a[data-play][href]').count();await page.locator('.menu summary').click();assert(await page.getByRole('navigation',{name:'Main menu'}).isVisible());assert.match(await page.locator('#all-games .notice').innerText(),/direct Play links work/);assert(await page.locator('#spotlight [data-spot]').first().isVisible(),'spotlight readable without JavaScript');assert.equal(await page.locator('.shelf-nav:visible').count(),0,'inert shelf controls stay hidden without JavaScript');await ctx.close();return{directHrefs:distinct,noscriptList:azLinks.length,gridCatalogueHrefsOnce:covered,classroomRows:activities.length,playAnchors:anchors,nativeMenu:true};});
 await test('unavailable-storage-missing-media-and-failure-fallback',async()=>{const ctx=await browser.newContext(),page=await ctx.newPage();await page.addInitScript(()=>{Object.defineProperty(window,'localStorage',{get(){throw new DOMException('blocked','SecurityError');}});Object.defineProperty(window,'sessionStorage',{get(){throw new DOMException('blocked','SecurityError');}});});await page.route(/\.(png|jpg|webp|svg)(\?.*)?$/,r=>r.abort());await page.goto(base);await ready(page);await page.locator('#query').fill('Emberwild');await page.locator('#game-grid [data-favourite="'+EMBER+'"]').click();assert.match(await page.locator('#storage-status').innerText(),/unavailable/);await pause(300);assert.match(await page.locator('#game-grid [data-card="'+EMBER+'"] .thumb').innerText(),new RegExp((emberwild.displayTitle||emberwild.title).slice(0,6)),'a failed card image falls back to the titled colour block');await page.goto(base+'?game='+EMBER);await ready(page);await pause(300);assert.match(await page.locator('#dialog-media').innerText(),/Image unavailable/);assert(await page.locator('#dialog-play').isVisible());await page.keyboard.press('Escape');assert(await page.locator('#game-grid .play').filter({visible:true}).first().isVisible());await ctx.close();return{browsing:true,inMemoryFavourite:true,gameLinks:true,imageFallback:true};});
 await test('all-69-rendered-start-surfaces',async()=>{for(const g of data.games){const ctx=await browser.newContext({viewport:{width:1280,height:720},reducedMotion:'reduce'}),page=await ctx.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));try{const response=await page.goto(base+g.route,{waitUntil:'load',timeout:20000});await pause(4000);const surface=await page.evaluate(()=>({title:document.title,canvas:[...document.querySelectorAll('canvas')].filter(e=>e.getBoundingClientRect().width>20&&e.getBoundingClientRect().height>20).length,controls:[...document.querySelectorAll('button,input,select,a[href]')].filter(e=>e.getBoundingClientRect().width>0).length,text:document.body.innerText.slice(0,1100)}));const ready=response.status()===200&&(surface.canvas>0||surface.controls>0);report.routes.push({id:g.id,route:g.route,status:response.status(),ready,surface,errors,depth:'Initial load and rendered input surface; not a completed game'});// The Lighthouse first-visit primer focuses its bottom button. Dismiss it
