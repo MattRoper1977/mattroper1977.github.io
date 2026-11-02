@@ -216,12 +216,11 @@ def moved_page(route):
     destination = PLAY + LEGACY.get(route, route)
     return ('<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
-            '<meta name="robots" content="noindex"><title>This game has moved · Made by Matt</title>'
+            '<meta name="robots" content="noindex"><title>This page has moved to Made by Matt Play · Made by Matt</title>'
             '<link rel="canonical" href="'+escape(destination, quote=True)+'">'
             '<style>body{font:1.1rem/1.65 system-ui;max-width:42rem;margin:4rem auto;padding:0 1.25rem;color:#161d3d}a{color:#174e45}li{margin:1rem 0}a:focus-visible{outline:3px solid #e39129;outline-offset:4px}</style>'
-            '</head><body data-game-moved><main><h1>This game has moved</h1>'
-            '<p>Made by Matt games now have their own website.</p>'
-            '<p><a id="play-game" href="'+escape(destination, quote=True)+'">Open the game</a></p></main>'
+            '</head><body data-game-moved><main><h1>This page has moved to Made by Matt Play</h1>'
+            '<p><a id="play-game" href="'+escape(destination, quote=True)+'">Made by Matt Play</a></p></main>'
             '<script>const a=document.getElementById("play-game");const u=new URL(a.href);u.search=location.search;u.hash=location.hash;a.href=u.href;</script>'
             '</body></html>')
 
@@ -424,6 +423,8 @@ def build(output, lessons, apps=None, allow_sparse=False):
             except (ValueError, UnicodeError): continue
             filtered = filter_data(data, is_game, prefix)
             if filtered != data: path.write_text(json.dumps(filtered, ensure_ascii=False, indent=2)+'\n')
+    from education_wording_hygiene import refresh as refresh_wording_hygiene
+    report['wording_hygiene'] = refresh_wording_hygiene(output)
     if slots.get('lessonIndex'):
         from subject_slots import confirm_subject_page
         confirm_subject_page(output)  # the index still equals the registry as finally published

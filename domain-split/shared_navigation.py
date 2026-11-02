@@ -84,7 +84,7 @@ MENU_TITLE = 'Menu'
 GROUP_LEARNING = 'Learning'
 GROUP_WHO = 'Who are you here for?'
 GROUP_ACCOUNT = 'Your account'
-PLAY_LABEL = 'Made by Matt Play ↗'
+PLAY_LABEL = 'Made by Matt Play'
 LEARNING = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
             ('/tools/', 'Tools'), ('/Lessons/primary/', 'Primary lessons')]
 LEARNING_PUPIL = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'), ('/Lessons/primary/', 'Primary lessons')]

@@ -136,7 +136,7 @@ def professional_content(key, audience):
     for original in source['items']:
         row = dict(original)
         if row['href'] == '/games/':
-            row.update(href=PLAY+'/', title='Made by Matt Play', description='Browse the games on the separate Play site.', action='Explore Play')
+            continue
         if row['href'] == '/resources/':
             row['description'] = 'Find lessons, resources, apps and tools in one catalogue.'
         if row['href'] == '/main/':
@@ -188,7 +188,7 @@ def make_main(key, audience, all_audiences):
     else:
         content += professional_content(key, audience)
     content += preserved_previews(audience)
-    content += '<p id="audience-play-showcase" class="mbm-external-play">'+link('Made by Matt Play — separate games website', PLAY+'/')+'</p>'
+    content += '<p id="audience-play-showcase" class="mbm-external-play">'+link('Made by Matt Play', PLAY+'/')+'</p>'
     utilities = [dict(x) for x in audience.get('utilities', [])]
     for row in utilities:
         if row['href'] == '/for/pupils/':
