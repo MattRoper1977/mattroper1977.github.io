@@ -299,7 +299,7 @@ class PublishedChromeControls(unittest.TestCase):
 
     def test_footer_keeps_existing_play_once_and_home_contact_label(self):
         from education_palette import adopt_palette
-        play = '<a href="https://www.madebymatt-play.uk/" rel="noopener">Made by Matt Play ↗</a>'
+        play = '<a href="https://www.madebymatt-play.uk/" rel="noopener">Made by Matt Play</a>'
         source = '<html><head></head><body><footer>' + play + '<p>Retained prose.</p><p>Learn • Build • Explore</p></footer></body></html>'
         result = adopt_palette(source, '/', True, self.navigation.chrome_template)
         self.assertEqual(result.count(play), 1)
