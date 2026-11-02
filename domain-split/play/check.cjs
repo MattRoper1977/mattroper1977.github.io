@@ -91,28 +91,72 @@ await test('static-shelf-one-dom-vocabulary-and-one-count',async()=>{const html=
  for(const literal of ['Pick a game. <span>Make it yours.</span>','YOUR NEXT GAME STARTS HERE.','placeholder="Search games"','>Filters<','>All games<','>For your classroom<','Classroom games, whole-class quizzes and a staff training activity.','Every game, A to Z','Privacy and saved progress','Report a problem','Made by Matt Education ↗','Made by Matt Play','Optional usage statistics — off until you allow it.','Read what is counted.','>Allow<','>Keep off<','usage-client.js','>Editions<','>Your progress<','id="dialog-saves"','>Transfer saves<','>Favourite<','>Share<'])assert(html.includes(literal),'copy missing: '+literal);
  assert(!/<(a|button)[\s>][^>]*>(?:(?!<\/(a|button)>).)*<(a|button)[\s>]/s.test(html.replace(/<script[\s\S]*?<\/script>/g,'')),'nested interactive elements');
  return{cards:cardIds.length,featured:featured.route,spotlight:spotRows.length,shelves:shelfNames,countStatement:countStatements[0].replace(/<[^>]+>/g,''),retiredVocabulary:0};});
+await test('launch-pages-200-metadata-schema-and-layout',async()=>{
+ const unesc=s=>s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#x27;|&#39;/g,"'");
+ const smRes=await fetch(base+'/sitemap.xml');assert.equal(smRes.status,200,'sitemap.xml returns 200');
+ const smXml=await smRes.text(),locs=[...smXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]);
+ assert.equal(locs.length,75+catalogue.length,'sitemap count increases by catalogue game count');
+ assert.equal(locs.length,new Set(locs).size,'no duplicate sitemap URLs');
+ let sciencePages=0;
+ for(const g of catalogue){
+  assert(g.launchRoute&&g.launchRoute.startsWith('/play/')&&g.launchRoute.endsWith('/'),'valid launchRoute for '+g.id);
+  const fullUrl='https://www.madebymatt-play.uk'+g.launchRoute;
+  assert(locs.includes(fullUrl),'sitemap includes '+fullUrl);
+  const res=await fetch(base+g.launchRoute);assert.equal(res.status,200,'launch page 200: '+g.launchRoute);
+  const html=await res.text(),shown=g.displayTitle||g.title;
+  const tMatch=html.match(/<title>([^<]+)<\/title>/);assert(tMatch&&unesc(tMatch[1]).trim()===shown+' · Made by Matt Play','title on '+g.launchRoute);
+  const dMatch=html.match(/<meta name="description" content="([^"]+)">/);assert(dMatch&&unesc(dMatch[1]).trim().length>0,'meta description on '+g.launchRoute);
+  assert(html.includes('<link rel="canonical" href="'+fullUrl+'">'),'canonical URL on '+g.launchRoute);
+  const poster=(g.media&&g.media.poster)||g.image||'';
+  if(process.env.PLAY_REQUIRE_COMPLETE_DISCOVERY==='1')assert(poster,'complete discovery requires Job 1 poster on '+g.launchRoute);
+  if(poster){
+   assert(html.includes('<meta property="og:image" content="https://www.madebymatt-play.uk'+poster+'">'),'og:image poster on '+g.launchRoute);
+   assert(html.includes('<meta property="og:image:width" content="640">')&&html.includes('<meta property="og:image:height" content="360">'),'640x360 og:image dimensions on '+g.launchRoute);
+  }
+  const ldMatch=html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);assert(ldMatch,'JSON-LD present on '+g.launchRoute);
+  const ld=JSON.parse(ldMatch[1]);
+  assert.equal(ld['@context'],'https://schema.org');assert.equal(ld['@type'],'VideoGame');assert.equal(ld.name,shown);
+  assert.equal(ld.description,unesc(dMatch[1]));assert(ld.genre,'genre in JSON-LD');assert(ld.playMode,'playMode in JSON-LD');
+  assert.equal(ld.isAccessibleForFree,true);assert.equal(ld.inLanguage,'en-GB');
+  for(const secId of ['guide-and-modes','controls','works-offline','badges'])assert(html.includes('id="'+secId+'"'),'missing #'+secId+' on '+g.launchRoute);
+  if(g.scienceGame){sciencePages++;assert(html.includes('id="evidence-export"'),'science launch page carries #evidence-export: '+g.launchRoute);}
+  else assert(!html.includes('id="evidence-export"'),'non-science launch page omits #evidence-export: '+g.launchRoute);
+ }
+ assert(sciencePages>0,'science launch pages verified');
+ const sciSample=catalogue.find(g=>g.scienceGame),stdSample=catalogue.find(g=>!g.scienceGame);
+ for(const sample of [sciSample,stdSample]){
+  for(const width of [390,1280]){
+   const ctx=await browser.newContext({viewport:{width,height:width<700?844:900},reducedMotion:'reduce'}),p=await ctx.newPage();
+   const reqs=[],errs=[];p.on('request',r=>reqs.push(r.url()));p.on('pageerror',e=>errs.push(e.message));
+   const resp=await p.goto(base+sample.launchRoute,{waitUntil:'networkidle'});assert.equal(resp.status(),200);
+   await overflow(p);await targets(p,null);firstParty(reqs);await noMedia(reqs);assert.equal(errs.length,0,'pageerrors on '+sample.launchRoute);
+   await ctx.close();
+  }
+ }
+ return{launchPages:catalogue.length,sciencePages,sitemapUrls:locs.length};
+});
 for(const width of [320,390,768,1280,1440]){
  const ctx=await browser.newContext({viewport:{width,height:width<700?844:900},isMobile:width<700,hasTouch:width<700,reducedMotion:'reduce'}),page=await ctx.newPage();page.setDefaultTimeout(10000);currentPage=page;const requests=[];page.on('request',r=>requests.push(r.url()));page.on('pageerror',e=>report.errors.push({width,message:e.message}));
  await test(width+'-layout-navigation-and-first-load',async()=>{await page.goto(base);await ready(page);await overflow(page);
   assert.equal(await page.locator('#intro-title').innerText(),'Pick a game. Make it yours.');
-  // PLAY-D2: the approved controller is decorative, byte-bound to hero-art.json, omitted on phones, and never over a control or the copy.
-  const heroRecord=JSON.parse(fs.readFileSync('domain-split/play/hero-art.json'));const art=page.locator('.intro-art');assert.equal(await art.count(),1,'one hero artwork in the markup');
-  const artFacts=await art.evaluate(i=>({visible:!!i.offsetParent&&getComputedStyle(i).display!=='none',complete:i.complete,w:i.naturalWidth,h:i.naturalHeight,alt:i.getAttribute('alt'),src:i.getAttribute('src'),width:i.getAttribute('width'),height:i.getAttribute('height'),source:i.dataset.heroSource,sha:i.dataset.heroSha,box:i.getBoundingClientRect().toJSON()}));
-  assert.equal(artFacts.alt,'','hero artwork is decorative');assert.equal(artFacts.source,heroRecord.sourceSha256);assert.equal(artFacts.sha,heroRecord.sha256);assert.equal(artFacts.src,'/'+heroRecord.published);assert.equal(Number(artFacts.width),heroRecord.width);assert.equal(Number(artFacts.height),heroRecord.height);
-  const artResponse=await page.request.get(base+artFacts.src);assert.equal(artResponse.status(),200);const artBytes=Buffer.from(await artResponse.body());assert.equal(sha(artBytes),heroRecord.sha256,'served hero artwork is the recorded file');assert.equal(artBytes.length,heroRecord.bytes);
-  // PLAY-D2 amended by Matt, 16 September 2026. This branch used to assert the
-  // OPPOSITE below 768px - 'phones omit the hero artwork'. Matt asked for the
-  // controller on phones too, like the education hero, so the phone case now
-  // has to prove the artwork is painted rather than prove it is absent. Nothing
-  // else is relaxed: every width still proves the picture decodes, fits without
-  // overflowing the viewport in either direction, renders at a useful size and
-  // covers no heading, copy or control. A phone that silently dropped it, drew
-  // it at a few pixels, or let it slide over the search box now reds here.
-  assert(artFacts.visible&&artFacts.complete&&artFacts.w>0,'hero artwork shows and decodes at every width');
-  assert(artFacts.box.left>=-1&&artFacts.box.right<=width+1,'hero artwork fits the viewport');
-  assert(artFacts.box.width>=160,'hero artwork renders at a useful size');
+  // PLAY-P1 part B: the decorative masthead motif is an inline SVG byte-bound to hero-art.json
+  // (no request for hero-art.webp, no <img>, visible at every width including phones, overlapping nothing).
+  const heroRecord=JSON.parse(fs.readFileSync('domain-split/play/hero-art.json')),heroFileBytes=fs.readFileSync(path.join('domain-split/play',path.basename(heroRecord.file)));
+  assert.equal(sha(heroFileBytes),heroRecord.sha256,'recorded hero motif sha256 matches source file');assert.equal(heroFileBytes.length,heroRecord.bytes,'recorded hero motif byte length matches source file');
+  const art=page.locator('.intro-art');assert.equal(await art.count(),1,'one hero artwork in the markup');
+  const artFacts=await art.evaluate(i=>{const svg=i.querySelector('svg'),sr=svg?svg.getBoundingClientRect().toJSON():null;return{tag:i.tagName,visible:!!i.offsetParent&&getComputedStyle(i).display!=='none',ariaHidden:i.getAttribute('aria-hidden'),imgs:i.querySelectorAll('img').length,svgs:i.querySelectorAll('svg').length,viewBox:svg?svg.getAttribute('viewBox'):null,sha:i.dataset.heroSha,bytes:Number(i.dataset.heroBytes),box:i.getBoundingClientRect().toJSON(),svgBox:sr};});
+  assert.equal(artFacts.tag,'DIV','inline motif container');assert.equal(artFacts.ariaHidden,'true','hero motif is decorative');assert.equal(artFacts.imgs,0,'hero motif makes no <img> request');assert.equal(artFacts.svgs,1,'hero motif inlines one <svg>');assert.equal(artFacts.sha,heroRecord.sha256);assert.equal(artFacts.bytes,heroRecord.bytes);assert.equal(artFacts.viewBox,`0 0 ${heroRecord.width} ${heroRecord.height}`);
+  assert(!requests.some(u=>/hero-art/i.test(u)),'no request for retired hero-art asset');
+  const retiredHero=await page.request.get(base+'/assets/play/hero-art.webp');assert.equal(retiredHero.status(),404,'retired hero-art.webp is not served');
+  assert(artFacts.visible&&artFacts.svgBox&&artFacts.svgBox.width>0&&artFacts.svgBox.height>0,'hero motif shows and renders at every width');
+  assert(artFacts.box.left>=-1&&artFacts.box.right<=width+1,'hero motif fits the viewport');
+  assert(artFacts.box.width>=160,'hero motif renders at a useful size');
   {const overlaps=await page.evaluate(box=>[...document.querySelectorAll('#intro-title,.intro .eyebrow,.intro .lede,#discovery-form,.mood-tools,.mood-note,header,.browse-sidebar')].filter(e=>{const r=e.getBoundingClientRect();return r.width&&r.height&&r.left<box.right&&r.right>box.left&&r.top<box.bottom&&r.bottom>box.top;}).map(e=>e.id||e.className||e.tagName),artFacts.box);
-   assert.deepEqual(overlaps,[],'hero artwork overlaps nothing');}
+   assert.deepEqual(overlaps,[],'hero motif overlaps nothing');}
+  if(width===1280){
+   const posters=await page.evaluate(async()=>{const cards=[...document.querySelectorAll('#game-grid .game-card')];const imgs=cards.map(c=>c.querySelector('.thumb img')).filter(Boolean);for(const img of imgs){img.loading='eager';if(!img.complete)await img.decode().catch(()=>{});}return{cards:cards.length,blocks:document.querySelectorAll('#game-grid .game-card .thumb-block').length,imgs:imgs.length,bad:imgs.filter(i=>!i.complete||i.naturalWidth!==640||i.naturalHeight!==360).map(i=>({src:i.getAttribute('src'),w:i.naturalWidth,h:i.naturalHeight}))};});
+   assert.equal(posters.blocks,0,'every card carries a poster rather than a fallback block');assert.equal(posters.imgs,expectedCards+activities.length,'every shelf card has a poster img');assert.deepEqual(posters.bad,[],'every card poster decodes at 640x360');
+  }
   assert.equal(await page.locator('.intro .lede').innerText(),'Race, explore, build or work out your next move. Find your favourite or try something unexpected—play straight in your browser.');
   const navigation=page.locator('.collection-links');
   await navigation.locator('[data-collection=favourites]').click();assert.equal(await visibleGames(page),0,'new browser favourites empty');assert.equal(await navigation.locator('[aria-current=page]').getAttribute('data-collection'),'favourites');
