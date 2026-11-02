@@ -145,6 +145,10 @@ def self_test():
         control('um-4 (a): a download on a moving branch is refused', refused())
     from subject_slots import self_test as subject_slots_self_test
     control('J91: the subject-page slots pass their own self-test', subject_slots_self_test())
+    from education_wording_hygiene import self_test as wording_hygiene_self_test
+    control('SEO-1: the education wording hygiene pass passes its own self-test', wording_hygiene_self_test())
+    from education_seo_metadata import self_test as seo_metadata_self_test
+    control('SEO-2: the education head metadata and schema pass passes its own self-test', seo_metadata_self_test())
     print('self-test', 'PASS' if ok else 'FAIL')
     return ok
 
@@ -425,6 +429,8 @@ def build(output, lessons, apps=None, allow_sparse=False):
             if filtered != data: path.write_text(json.dumps(filtered, ensure_ascii=False, indent=2)+'\n')
     from education_wording_hygiene import refresh as refresh_wording_hygiene
     report['wording_hygiene'] = refresh_wording_hygiene(output)
+    from education_seo_metadata import refresh as refresh_seo_metadata
+    report['seo_metadata'] = refresh_seo_metadata(output)
     if slots.get('lessonIndex'):
         from subject_slots import confirm_subject_page
         confirm_subject_page(output)  # the index still equals the registry as finally published
