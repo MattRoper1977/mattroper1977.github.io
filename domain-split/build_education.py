@@ -155,6 +155,8 @@ def self_test():
     control('SEO-4: the education trust pages and footer pass passes its own self-test', trust_pages_self_test())
     from weekly_domain_health import self_test as weekly_health_self_test
     control('SEO-6: the weekly domain health checker passes its red-first self-test', weekly_health_self_test())
+    from submit_indexnow import self_test as indexnow_self_test
+    control('SEO-7: the IndexNow changed-URL submitter passes its red-first self-test', indexnow_self_test())
     print('self-test', 'PASS' if ok else 'FAIL')
     return ok
 
