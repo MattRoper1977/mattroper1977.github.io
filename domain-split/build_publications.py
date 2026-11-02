@@ -413,6 +413,9 @@ def main():
     put(games, 'CNAME', 'madebymatt-play.uk\n')
     put(games, '.nojekyll', '')
     put(games, 'robots.txt', 'User-agent: *\nAllow: /\nSitemap: '+PLAY_CANONICAL_ORIGIN+'/sitemap.xml\n')
+    idx_key = json.loads((ROOT / 'data/indexnow-key.json').read_text(encoding='utf-8'))['key'].strip()
+    assert re.fullmatch(r'[0-9a-f]{32}', idx_key), 'Invalid IndexNow key'
+    put(games, f'{idx_key}.txt', f'{idx_key}\n')
     urls = [PLAY_CANONICAL_ORIGIN+r for r in ['/', '/games/'] + PLAY_UTILITY_ROUTES + [quote(unquote(r['normalizedDecodedRoute']), safe='/') for r in rows]]
     put(games, 'sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + ''.join('<url><loc>'+html.escape(u)+'</loc></url>' for u in urls) + '</urlset>')
     put(games, '404.html', '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Find a game · Made by Matt</title><main><h1>That game address was not found.</h1><p><a href="/">Find your game on the games homepage</a>.</p></main></html>')
