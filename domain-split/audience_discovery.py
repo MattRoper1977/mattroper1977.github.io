@@ -21,16 +21,16 @@ NAV = [("Lessons", "/Lessons/"), ("Resources", "/resources/"),
 ASDAN = [(pathway, f"/Lessons/{pathway}_ASDAN/{pathway}_ASDAN_Hub.html")
          for pathway in ("BUILD", "GROW", "LAUNCH")]
 COPY = {
-    "parents": ("Choose something to learn together.",
-                "Start with a short activity, follow a school resource, or make something together. Choose what fits your child today."),
-    "schools": ("Find what your setting needs next.",
-                "Open teaching material, adapt an activity and find tools for classroom routines and evidence."),
-    "trusts": ("Explore teaching across your schools.",
-               "Compare subjects, pathways and practical tools with colleagues, using the materials themselves."),
-    "councils": ("Find learning resources to share.",
-                 "Explore public teaching resources, family starting points and professional guidance for schools and settings in your area."),
-    "partners": ("Explore the work. Find a useful connection.",
-                 "Try the lessons, creative apps and teaching tools, then get in touch about the work that interests you."),
+    "parents": ("Choose something to try and learn together.",
+                "Begin with a short activity, follow a resource from school, or make something side by side — whatever suits your child today."),
+    "schools": ("Find what your school or specialist setting needs next.",
+                "Open the teaching material, adapt an activity to suit your setting, and find tools that support classroom routines and evidence."),
+    "trusts": ("Explore teaching side by side across your schools.",
+               "Open the materials themselves with colleagues so you can compare subjects, pathways and practical tools across your schools."),
+    "councils": ("Find public learning resources to share across your area.",
+                 "Look through public teaching resources, starting points for families, and professional guidance you can share with schools and settings in your area."),
+    "partners": ("Look through the work and find a useful connection.",
+                 "Try out the lessons, creative apps and teaching tools for yourself, then get in touch about any part of the work that interests you."),
 }
 
 
@@ -108,9 +108,9 @@ def original_routes(audience, section_id):
 
 def learning_cards():
     return [
-        {'title': 'Primary learning', 'description': 'Find a primary activity to read, try or explore together.', 'href': '/Lessons/primary/', 'action': 'Open primary learning'},
-        {'title': 'Lesson Hub', 'description': 'Browse classroom material by subject, pathway and year.', 'href': '/Lessons/', 'action': 'Find a lesson'},
-        {'title': 'Creative apps', 'description': 'Choose browser tools for art, writing, audio, animation and documents.', 'href': '/Matt-s-Apps-/', 'action': 'Choose an app'},
+        {'title': 'Primary learning', 'description': 'Pick a primary activity you can read through, try out or explore together.', 'href': '/Lessons/primary/', 'action': 'Open primary learning'},
+        {'title': 'Lesson Hub', 'description': 'Look through classroom material grouped by subject, pathway and year.', 'href': '/Lessons/', 'action': 'Find a lesson'},
+        {'title': 'Creative apps', 'description': 'Open browser tools to make art, writing, audio, animation and documents.', 'href': '/Matt-s-Apps-/', 'action': 'Choose an app'},
     ]
 
 
@@ -150,10 +150,35 @@ def professional_content(key, audience):
     return content
 
 
+PREVIEW_CAPTIONS = {
+    '/for/schools-semh/': {
+        'Lesson Hub': 'Look through lesson packs, schemes and pathway materials you can open and adapt in your setting.',
+        'BUILD, GROW and LAUNCH': 'Search the whole catalogue for evidence-aware pathway material to review for your setting.',
+        'Made by Matt Studio Suite': 'Explore tools for classroom routines, evidence, data and creation.',
+    },
+    '/for/trusts/': {
+        'Lesson Hub': 'Review lesson packs, schemes and pathway materials directly with colleagues.',
+        'BUILD, GROW and LAUNCH': 'Search across the whole catalogue to compare evidence-aware pathway material.',
+        'Made by Matt Studio Suite': 'Look through the practical tools for classroom work, evidence, data and creation.',
+    },
+    '/for/councils-organisations/': {
+        'Lesson Hub': 'Browse public lesson packs, schemes and pathway materials to share with schools and settings.',
+        'BUILD, GROW and LAUNCH': 'Search the whole catalogue for evidence-aware pathway material you can pass on to settings in your area.',
+        'Made by Matt Studio Suite': 'See the classroom, evidence, data and creation tools available to schools and settings.',
+    },
+    '/for/partners/': {
+        'Lesson Hub': 'Take a look through the lesson packs, schemes and pathway materials.',
+        'BUILD, GROW and LAUNCH': 'Search the whole catalogue to explore the evidence-aware pathway material.',
+        'Made by Matt Studio Suite': 'Try out the classroom, evidence, data and creation tools in Made by Matt Studio Suite.',
+    },
+}
+
+
 def preserved_previews(audience):
     source = next(s for s in audience['sections'] if s['type'] == 'features')
     features = [x for x in source['features'] if x['href'] not in ('/games/', '/apexkick/')]
-    cards = ''.join(card(x['title'], x['description'], x['href'], x['action'], x['image'], x['alt']) for x in features)
+    overrides = PREVIEW_CAPTIONS.get(audience.get('route'), {})
+    cards = ''.join(card(x['title'], overrides.get(x['title'], x['description']), x['href'], x['action'], x['image'], x['alt']) for x in features)
     return section('explore-together' if audience['route'] == '/for/parents-carers/' else 'visual-map',
                    'Explore the learning areas', f'<div class="ad-grid ad-preview-grid">{cards}</div>')
 
