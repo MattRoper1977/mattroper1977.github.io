@@ -149,6 +149,8 @@ def self_test():
     control('SEO-1: the education wording hygiene pass passes its own self-test', wording_hygiene_self_test())
     from education_seo_metadata import self_test as seo_metadata_self_test
     control('SEO-2: the education head metadata and schema pass passes its own self-test', seo_metadata_self_test())
+    from education_sitemap import self_test as sitemap_self_test
+    control('SEO-3: the education sitemap and well-known pass passes its own self-test', sitemap_self_test())
     print('self-test', 'PASS' if ok else 'FAIL')
     return ok
 
@@ -431,6 +433,8 @@ def build(output, lessons, apps=None, allow_sparse=False):
     report['wording_hygiene'] = refresh_wording_hygiene(output)
     from education_seo_metadata import refresh as refresh_seo_metadata
     report['seo_metadata'] = refresh_seo_metadata(output)
+    from education_sitemap import refresh as refresh_sitemap
+    report['sitemap_wellknown'] = refresh_sitemap(output, ROOT)
     if slots.get('lessonIndex'):
         from subject_slots import confirm_subject_page
         confirm_subject_page(output)  # the index still equals the registry as finally published
