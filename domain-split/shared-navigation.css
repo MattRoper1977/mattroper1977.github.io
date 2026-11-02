@@ -52,7 +52,7 @@ body>a[href^="#"]:focus{z-index:1001}
 
 /* §26: one compact four-link row, identical on every public catalogue hub. */
 .mbm-unified-bar:has([data-mbm-hub-links]){flex-wrap:wrap}
-.mbm-unified-nav[data-mbm-hub-links]{order:5;flex:1 0 100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:calc(.25 * var(--mbm-chrome-unit));border-top:1px solid #c0c8d7;padding:calc(.4 * var(--mbm-chrome-unit)) 0 0}
+.mbm-unified-nav[data-mbm-hub-links]{order:5;flex:1 0 100%;display:grid;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:calc(.25 * var(--mbm-chrome-unit));border-top:1px solid #c0c8d7;padding:calc(.4 * var(--mbm-chrome-unit)) 0 0}
 .mbm-unified-nav[data-mbm-hub-links] a{min-width:0;min-height:44px;padding:calc(.5 * var(--mbm-chrome-unit)) calc(.3 * var(--mbm-chrome-unit));border:0;border-radius:0;background:transparent;box-shadow:none;font-size:calc(.875 * var(--mbm-chrome-unit))}
 .mbm-unified-nav[data-mbm-hub-links] a[aria-current="page"]{text-decoration:underline;text-underline-offset:.25em}
 @media(max-width:380px){.mbm-unified-nav[data-mbm-hub-links] a{font-size:calc(.8 * var(--mbm-chrome-unit))}}

@@ -19,6 +19,7 @@ exports.assertPublicRow=async(page,route)=>{
   assert.deepEqual(rows[0].current,current,'Only the current hub is highlighted: '+route);
   assert(!rows[0].scroll,'No sideways scrolling: '+route);
   assert(rows[0].boxes.every(b=>b.w>=44&&b.h>=44),'Every quick link meets 44px: '+route);
+  {const ws=rows[0].boxes.map(b=>b.w),ys=rows[0].boxes.map(b=>b.y);assert(Math.max(...ws)-Math.min(...ws)<=1&&Math.max(...ys)-Math.min(...ys)<=1,'Quick links share one row at equal widths (evenly spaced): '+route);}
   assert.equal(await page.locator('.collection-nav').count(),0,'No legacy hub grid in the DOM: '+route);
   await exports.assertPlainLinks(page,current.length);
   return rows[0];
