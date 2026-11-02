@@ -104,9 +104,9 @@ import tempfile
 
 HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / 'home' / 'home.html'
-# home.html r6, the accepted draft of record (J93 revision 1, ruling vj-1).
-# Pinned: the sha256 of home.html r6 (35,244 B), the file of record in ruling vj-1 (r5 was 32f53a11, uz-6 and vb-3).
-TEMPLATE_SHA256 = 'da25720750cf039cf9ac01fa7e84143ca5a7d6c05dfb7b837f2951a24058c04b'
+# home.html r6, the accepted draft of record (J93 revision 1, ruling vj-1; updated under Ruling S-9, Owner Decision 2026-11-02 19:52Z).
+# Pinned: the sha256 of home.html (35,236 B), the file of record after Ruling S-9 ("Real lessons, real packs, real tools" and "games" sweep; r6 was da257207 at 35,244 B, r5 was 32f53a11, uz-6 and vb-3).
+TEMPLATE_SHA256 = 'dddaf56be5d994bdff3159062299549ad0a57c5605d33c43d02826700da789b3'
 NODE_SCRIPT = HERE / 'home_hub_counts.cjs'
 RECORD = 'data/audience-homepages.json'
 HEADER = 'tools/chrome/header.html'
@@ -124,11 +124,11 @@ IMAGE = re.compile(r'\.(jpe?g|png|gif|svg|webp)$', re.I)
 # HUB_LINKS labels of the three Teacher Tools cards.
 TOOL_LABELS = {'resources': 'Resources', 'apps': 'Apps & tools', 'tools': 'Tools'}
 # The owner's words (spec section 6), confirmed by digest of the draft's markup.
-# Pinned: the sha256 of each owner-word string as home.html r6 types it (unchanged from r5), in page order (masthead 1, door
-# bylines 4, pathway bylines 3, maker's note 1): spec b3d3df9b section 6, an input of record under uz-6.
+# Pinned: the sha256 of each owner-word string as home.html types it (masthead and pupil door byline updated 2026-11-02 19:52Z under Ruling S-9; others unchanged from r5/r6), in page order (masthead 1, door
+# bylines 4, pathway bylines 3, maker's note 1): spec b3d3df9b section 6, an input of record under uz-6 and Ruling S-9.
 OWNER_WORDS = {
-    'masthead': ['945b7adcfbc710f3444046127d91a4d07553a3763a378acfea51b9ec40eb8b47'],
-    'door bylines': ['918c9a19dcd444e40528c54d693575bd51cb31bb5ff41a74436ab0e74cc3389d',
+    'masthead': ['99430eaeb5f88364df1988e01c527a5936f2fe0e9e168a95d54109dd600ba3e0'],
+    'door bylines': ['edfd3da0ed7344515ef226f1378716f2659e98c885716b315f6828e4c2039592',
                      '3af663135ec09ce91d65f807afaeb4fd0758820a654b2f2008baadab2d8f1890',
                      'efc1930059d2b78aeb1189bd84a85b0fb7471701bce6215b9f71c3698dff9f21',
                      '5246e29e2bfa47995508bb98803643cb92398d1fadf60636112776c6053dec53'],
