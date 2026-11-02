@@ -410,8 +410,8 @@ EDUCATION_PAGE_MARKERS = {
                     '<h1>What are you learning today?</h1>',
                     'data-site-kind="education" data-page="pupils"',
                     'src="/assets/domain-site.js"', 'id="pupil-search"'),
-    "/games/": ('<title>This game has moved · Made by Matt</title>',
-               'data-game-moved', '<h1>This game has moved</h1>',
+    "/games/": ('<title>This page has moved to Made by Matt Play · Made by Matt</title>',
+               'data-game-moved', '<h1>This page has moved to Made by Matt Play</h1>',
                '<a id="play-game" href="https://www.madebymatt-play.uk/">'),
 }
 # The legacy education homepage's markers, unchanged, for the transition form above only: applied

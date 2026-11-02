@@ -119,7 +119,7 @@ async function chromeFocus(control,surface,label,redProof=false) {
           const hrefs = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => new URL(a.getAttribute('href'), location.href).pathname === '/Lessons/' ? '/Lessons/' : a.getAttribute('href')));
           assert.deepEqual(hrefs.filter(h => /[?]|\.html$|#/.test(h)), [], 'No deep links in the menu: ' + route);
           const last = page.locator(panel + ' a').last();
-          assert.equal(await last.innerText(), 'Made by Matt Play ↗', 'Play is last: ' + route);
+          assert.equal(await last.innerText(), 'Made by Matt Play', 'Play is last: ' + route);
           assert.equal(await last.getAttribute('href'), 'https://www.madebymatt-play.uk/', 'Play is a link: ' + route);
           const short = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => a.getBoundingClientRect().height).filter(h => h > 0 && h < 48));
           assert.deepEqual(short, [], 'Every menu row is at least 48px: ' + route);
