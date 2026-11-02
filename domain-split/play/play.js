@@ -46,6 +46,21 @@
   const state = {q: '', mood: '', genre: '', control: '', mode: '', list: '', facet: ''};
   const facetNames = (data.facets || []).map(f => f.name);
   const bandLabel = g => (g.sessionBand && data.bandLabels && data.bandLabels[g.sessionBand]) || '';
+  const UPDATED_WINDOW_DAYS = 60;
+  function isRecentUpdate(iso, nowMs = Date.now()) {
+    if (!iso) return false;
+    const parts = String(iso).split('-').map(Number);
+    if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return false;
+    const now = new Date(nowMs);
+    const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const ageDays = Math.floor((todayUtc - Date.UTC(parts[0], parts[1] - 1, parts[2])) / 86400000);
+    return ageDays >= 0 && ageDays <= UPDATED_WINDOW_DAYS;
+  }
+  function syncUpdatedLabels(root = document) {
+    root.querySelectorAll('[data-updated]').forEach(el => {
+      el.hidden = !isRecentUpdate(el.dataset.updated);
+    });
+  }
   let activeGame = null, returnFocus = null, cameFromGame = false, filtersOpener = null;
 
   /* ---- spotlight: one featured game at a time, advanced only by Next ---- */
@@ -178,7 +193,7 @@
           thumb.className = 'thumb' + (source ? '' : ' thumb-block');
           thumb.innerHTML = source ? '<img src="' + esc(source) + '" alt="" loading="lazy" width="640" height="360">' : '<span class="thumb-title">' + esc(title(g)) + '</span>';
           if (source) thumb.removeAttribute('aria-hidden'); else thumb.setAttribute('aria-hidden', 'true');
-          card.el.querySelector('.card-meta').innerHTML = (card.ids.length > 1 ? '<span class="chip">' + card.ids.length + ' editions</span>' : '') + (g.updated ? '<span class="chip">Updated ' + esc(g.updated.label) + '</span>' : '') + (bandLabel(g) ? '<span class="chip pill-session">' + esc(bandLabel(g)) + '</span>' : '') + (needsKeyboard(g) ? '<span class="chip warn" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>Needs a keyboard</span>' : '');
+          card.el.querySelector('.card-meta').innerHTML = (card.ids.length > 1 ? '<span class="chip">' + card.ids.length + ' editions</span>' : '') + (g.updated ? '<span class="chip" data-updated="' + esc(g.updated.date) + '"' + (isRecentUpdate(g.updated.date) ? '' : ' hidden') + '>Updated ' + esc(g.updated.label) + '</span>' : '') + (bandLabel(g) ? '<span class="chip pill-session">' + esc(bandLabel(g)) + '</span>' : '') + (needsKeyboard(g) ? '<span class="chip warn" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>Needs a keyboard</span>' : '');
           bindImages(card.el);
         }
       }
@@ -408,7 +423,7 @@
   if (previous) {
     try { const from = new URL(document.referrer), path = u => decodeURIComponent(u).replace(/index\.html$/, '').replace(/\/$/, ''); cameFromGame = from.origin === location.origin && games.some(g => path(g.route) === path(from.pathname)); const explicit = fields.some(k => new URLSearchParams(location.search).has(k)); if (cameFromGame && !explicit) history.replaceState({}, '', location.pathname + previous.search + location.hash); } catch (_) {}
   }
-  applyUrl(); render({url: false}); storageNotice(); restorePosition();
+  syncUpdatedLabels(); applyUrl(); render({url: false}); storageNotice(); restorePosition();
   const deepLink = new URLSearchParams(location.search).get('game');
   if (deepLink && byId.has(deepLink)) openInfo(byId.get(deepLink), document.querySelector('#game-grid a[data-play="' + CSS.escape(deepLink) + '"]') || $('all-games-title'));
 })();
