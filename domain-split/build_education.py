@@ -151,6 +151,8 @@ def self_test():
     control('SEO-2: the education head metadata and schema pass passes its own self-test', seo_metadata_self_test())
     from education_sitemap import self_test as sitemap_self_test
     control('SEO-3: the education sitemap and well-known pass passes its own self-test', sitemap_self_test())
+    from education_trust_pages import self_test as trust_pages_self_test
+    control('SEO-4: the education trust pages and footer pass passes its own self-test', trust_pages_self_test())
     print('self-test', 'PASS' if ok else 'FAIL')
     return ok
 
@@ -413,9 +415,12 @@ def build(output, lessons, apps=None, allow_sparse=False):
         report['governors_discovery'] = {'resources': len(refresh_governors(output, lessons, apps, ROOT)['resources'])}
         report['education_expansion'] = refresh_education_expansion(output, lessons, apps, ROOT)
         report['usage'] = refresh_usage(output, lessons, apps, ROOT)
+        from education_trust_pages import generate_pages as generate_trust_pages, stamp_footer_links as stamp_trust_footers
+        report['trust_pages_generated'] = generate_trust_pages(output, ROOT)
         report['navigation'] = refresh_navigation(output, ROOT)
         from education_chrome_correction import refresh as refresh_chrome_icons
         refresh_chrome_icons(output)
+        report['trust_footers'] = stamp_trust_footers(output)
         report['support'] = refresh_support(output, lessons, ROOT)
     # Enrichment must never reintroduce excluded discovery records. Run after
     # every generator, including overlays, Apps, audiences and usage metadata.
