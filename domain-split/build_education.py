@@ -153,6 +153,8 @@ def self_test():
     control('SEO-3: the education sitemap and well-known pass passes its own self-test', sitemap_self_test())
     from education_trust_pages import self_test as trust_pages_self_test
     control('SEO-4: the education trust pages and footer pass passes its own self-test', trust_pages_self_test())
+    from weekly_domain_health import self_test as weekly_health_self_test
+    control('SEO-6: the weekly domain health checker passes its red-first self-test', weekly_health_self_test())
     print('self-test', 'PASS' if ok else 'FAIL')
     return ok
 
