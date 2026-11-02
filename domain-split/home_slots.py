@@ -279,8 +279,10 @@ def teacher_tools(site_root, hub_links):
 def pack_members(folder, lesson_name):
     if not folder.is_dir():
         return []
+    prefix = lesson_name.rsplit('.', 1)[0] + '_'
     return sorted(p.name for p in folder.iterdir()
-                  if p.is_file() and p.name != lesson_name and p.name != BRAND_ASSET and not IMAGE.search(p.name))
+                  if p.is_file() and p.name != lesson_name and p.name != BRAND_ASSET and not IMAGE.search(p.name)
+                  and p.name.startswith(prefix))
 
 
 def derive(path, code):
@@ -760,6 +762,15 @@ def self_test(lessons_root=None):
         badges = [len(re.findall(r'<li class="home-pack-badge', m.group(3))) for m in PACK_LIST.finditer(page)]
         control('badges per card = 1 lesson + the folder minus the page, approved-mark.jpg and images',
                 badges == [1 + len(samples[i][2:]) // 2 for i in range(3)] == [9, 9, 9], str(badges))
+        sibling_folder = temp / 'Fixture' / 'BUILD' / 'FIXTURE_BUILD'
+        for name in ('SCI_BUILD_A2_W06.html', 'SCI_BUILD_A2_W06_Slides.pptx'):
+            (sibling_folder / name).write_text('sibling')
+        control('pack_members scopes to code + "_" and ignores sibling lessons in a shared week folder',
+                all(m.startswith('FIXTURE_BUILD_') for m in pack_members(sibling_folder, 'FIXTURE_BUILD.html'))
+                and len(pack_members(sibling_folder, 'FIXTURE_BUILD.html')) == 8,
+                str(len(pack_members(sibling_folder, 'FIXTURE_BUILD.html'))))
+        for name in ('SCI_BUILD_A2_W06.html', 'SCI_BUILD_A2_W06_Slides.pptx'):
+            (sibling_folder / name).unlink()
         control('regenerated badge lists are the draft lists when the folder holds the draft files (slot values blanked)',
                 [neutral(m.group(3)).splitlines()[1:] for m in PACK_LIST.finditer(page)]
                 == [neutral(m.group(3)).splitlines()[1:] for m in PACK_LIST.finditer(template)])
@@ -853,14 +864,22 @@ def self_test(lessons_root=None):
             control('real: every lesson file exists and its badge links /Lessons/<file>',
                     all(c['lessonExists'] and c['lessonHref'] == '/Lessons/' + quote(c['file'], safe=URI_SAFE) for c in fl['cards']))
             real_badges = [len(c['badges']) for c in fl['cards']]
-            control('real: badges per card', real_badges == [9, 9, 9], str(real_badges))
-            control('real: the regenerated badge lists equal the draft lists (ext, label and order; slot values blanked)',
+            control('real: badges per card (9 or 13)', len(real_badges) == 3 and all(b in (9, 13) for b in real_badges), str(real_badges))
+            control('real: the regenerated badge lists match each card\'s 8- or 12-member pack (ext, label and order; slot values blanked)',
                     [neutral(m.group(3)).splitlines()[1:] for m in PACK_LIST.finditer(real_page)]
-                    == [neutral(m.group(3)).splitlines()[1:] for m in PACK_LIST.finditer(template)])
+                    == [neutral('\n'.join(pack_list(m, real).splitlines()[1:-1]) + '\n').splitlines()[1:] for m in PACK_LIST.finditer(template)]
+                    and all(c['badges'][1:] in (
+                        [('DOCX', 'Editable Pack'), ('PPTX', 'Editable Slides'), ('PDF', 'Knowledge Organiser'), ('PDF', 'Pupil Resources'),
+                         ('PDF', 'TA Brief'), ('DOCX', 'Teacher Notes'), ('PDF', 'Teacher Notes'), ('PDF', 'Word Page')],
+                        [('DOCX', 'Editable Pack'), ('PDF', 'Knowledge Organiser'), ('PDF', 'Pupil Resources'), ('PPTX', 'Slides'),
+                         ('PDF', 'Staff Answers'), ('PDF', 'TA Brief'), ('DOCX', 'Teacher and Cover Plan'), ('PDF', 'Teacher and Cover Plan'),
+                         ('PDF', 'Tier Pack Standard'), ('PDF', 'Tier Pack Stretch'), ('PDF', 'Tier Pack Supported'), ('PDF', 'Word Page')],
+                    ) for c in fl['cards']))
             real_links = re.findall(r'packMembers\.\d+\.sizeLabel" href="([^"]+)" title="([^"]+)"', real_page)
             exists = [(lessons_root / unquote(h[len('/Lessons/'):])).is_file() for h, _ in real_links]
-            control('real: the 24 pack links resolve to files in the tree, each titled with its size',
-                    len(real_links) == 24 and all(exists), f'{sum(exists)}/{len(real_links)}')
+            control('real: the pack links resolve to files in the tree, each titled with its size',
+                    len(real_links) == sum(b - 1 for b in real_badges) and len(real_links) in (24, 32, 36) and all(exists),
+                    f'{sum(exists)}/{len(real_links)}')
             real_splits = re.findall(r'data-slot="subjects\.hubs\.\d\.pathwaySplit">([^<]*)<', real_page)
             control('real: four pathway lines from the hub counts', len(real_splits) == 4 and all(real_splits), ' | '.join(real_splits[:1]))
             control('real: the output differs from the draft only where the build fills it',
@@ -869,7 +888,7 @@ def self_test(lessons_root=None):
             control('real: one SEO-1 block, named with the brand line, no contact detail',
                     len(LD_LINE.findall(real_page)) == 1 and not any('"' + k + '"' in LD_LINE.findall(real_page)[0]
                                                                   for k in CONTACT_KEYS - {'url'}))
-            before = omitted_cards(real, WHATS_NEW.sub('', template)).splitlines()
+            before = PACK_LIST.sub(lambda m: pack_list(m, real), omitted_cards(real, WHATS_NEW.sub('', template))).splitlines()
             after = LD_LINE.sub('', real_page).splitlines()
             moved = [i for i, (a, b) in enumerate(zip(before, after)) if a != b]
             control('real: every line that moved is a slot line or a PLAY_ROOT line',

@@ -155,7 +155,7 @@ exports.verify = async ({page, origin, rules, record}) => {
         // vb-3 (a): a lesson missing from the tree links the subject hub instead.
         const lessonHref=f.served?f.href:hubRoute;
         assert.equal(c.start,lessonHref,'r6 (vj-1): the Start lesson button opens the flagship lesson: '+c.key);
-        assert.equal(c.badges.length,9,'Each flagship card has 9 badges (the lesson + 8 pack members): '+c.key);
+        assert([9,13].includes(c.badges.length),'Each flagship card has 9 or 13 badges (the lesson + 8 or 12 pack members): '+c.key+' ('+c.badges.length+')');
         const [lesson,...members]=c.badges;
         assert.deepEqual([lesson.fixed,lesson.href,lesson.ext,lesson.label],['true',lessonHref,'HTML','Interactive Lesson'],'The first badge is the fixed lesson badge and links the lesson: '+c.key);
         assert(lesson.cls.split(' ').includes('home-format-html'));
@@ -237,7 +237,8 @@ exports.verify = async ({page, origin, rules, record}) => {
   try {
     const staticPage=await staticContext.newPage();await staticPage.goto(origin+'/');
     assert.deepEqual(await staticPage.locator('main article.home-pathway-card[data-pathway-card]:visible').evaluateAll(es=>es.map(e=>e.getAttribute('data-pathway-card'))),PATHWAYS,'The three flagship cards render without JavaScript');
-    assert.deepEqual(await staticPage.locator('main article.home-pathway-card').evaluateAll(es=>es.map(e=>e.querySelectorAll('ul.home-pack-badges > li').length)),[9,9,9],'Without JavaScript every card keeps its 9 badges');
+    const cardBadgeCounts=await staticPage.locator('main article.home-pathway-card').evaluateAll(es=>es.map(e=>e.querySelectorAll('ul.home-pack-badges > li').length));
+    assert(cardBadgeCounts.length===3&&cardBadgeCounts.every(n=>n===9||n===13),'Without JavaScript every card keeps its 9 or 13 badges: '+JSON.stringify(cardBadgeCounts));
     assert.equal(await staticPage.locator('main [data-pathway-switch]:visible').count(),0,'No pathway switch without the script');
     assert.equal(await staticPage.locator('main a.home-subject-tile').count(),4,'Static subject browsing remains available');
     assert.deepEqual(await staticPage.locator('main a.home-door-card').evaluateAll(es=>es.map(e=>e.getAttribute('href'))),DOOR_KEYS.map(k=>record.audiences[k].route),'Static door cards remain available');
@@ -248,6 +249,6 @@ exports.verify = async ({page, origin, rules, record}) => {
     assert(staticNav&&staticNav.ok()&&new URL(staticPage.url()).pathname===new URL(origin+first).pathname,'The flagship lesson launches without JavaScript');
     report.cases.push({width:390,route:'/',javascript:false,status:'PASS'});
   } finally {await staticContext.close();}
-  report.home={doors:4,cards:PATHWAYS.length,badges:[9,9,9],counts:Object.values(hub.counts),flagshipWeek:flagship[0].term+':'+flagship[0].week};
+  report.home={doors:4,cards:PATHWAYS.length,badges:await page.locator('main article.home-pathway-card').evaluateAll(es=>es.map(e=>e.querySelectorAll('ul.home-pack-badges > li').length)),counts:Object.values(hub.counts),flagshipWeek:flagship[0].term+':'+flagship[0].week};
   await page.setViewportSize({width:390,height:844});return report;
 };

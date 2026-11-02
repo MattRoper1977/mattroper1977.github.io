@@ -149,6 +149,8 @@ const MUTATIONS = {
   'strip-stats-everywhere': { target: 'reachability', routes: ['/privacy/', '/for/teachers/'], apply: html => html.replace(/<a href="\/stats\/">[^<]*<\/a>/g, 'Shared activity') },
   // J93 (was D-3's empty-pathway-definition): blank the GROW flagship byline; the pathways case must red on it.
   'empty-flagship-byline': { target: 'pathways', route: '/', apply: html => html.replace('<p class="home-pathway-byline">' + fixtures.appendix.homePathways[1].byline + '</p>', '<p class="home-pathway-byline"></p>') },
+  // M-AB: drop one flagship pack badge on / so the card carries 8 or 12 badges instead of 9 or 13; pathways must red on it.
+  'drop-flagship-badge': { target: 'pathways', route: '/', apply: html => html.replace(/<li class="home-pack-badge home-format-[^"]*"><a data-slot-attr="href:flagship\.0\.packMembers\.0\.path[^\n]*\n/, '') },
   // R3-1: the maker's note stays byte-equal but is hidden; the copy case must red on it (rendered, not just present).
   'hide-maker-note': { target: 'copy', route: '/', apply: html => html.replace(/<p(\b[^>]*data-slot="owner\.makerNote")/, '<p hidden$1') },
 };
@@ -367,7 +369,7 @@ async function suite(browser, mutation) {
       assert.equal(c.byline, record[i].byline, 'byline for ' + c.key + ' is byte-equal to the owner words of record');
       assert.ok(c.painted, 'flagship card ' + c.key + ' and its byline are painted');
       assert.ok(!c.overflow, 'flagship card ' + c.key + ' does not overflow');
-      assert.equal(c.badges, fixtures.appendix.homeFlagship.badgesPerCard, 'badge count of record on ' + c.key);
+      assert.ok([fixtures.appendix.homeFlagship.badgesPerCard, 13].includes(c.badges), 'badge count of record on ' + c.key + ': ' + c.badges);
       assert.ok(c.lessonFirst, 'the lesson badge comes first on ' + c.key);
       assert.equal((await page.request.get(origin + c.lesson)).status(), 200, 'the lesson badge of ' + c.key + ' answers 200');
       if (c.lesson === c.link) {
