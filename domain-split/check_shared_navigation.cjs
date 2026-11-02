@@ -20,7 +20,8 @@ const routes = ['/', '/main/', '/account/', '/members/', '/mailing-list/', '/pri
   '/for/governors-trustees/', '/Lessons/', '/Lessons/primary/', '/Matt-s-Apps-/',
   '/stats/on-this-device/', '/asdan/', '/uas/', '/commission/', '/Lessons/Science/',
   '/Lessons/Humanities/', '/Lessons/Humanities/David_Cover_Autumn1_W3-W7/',
-  '/Lessons/Science/Teaching_Packs/', '/Lessons/subject.html'];
+  '/Lessons/Science/Teaching_Packs/', '/Lessons/subject.html',
+  '/about/', '/accessibility/', '/licence/'];
 const restricted = ['/for/pupils/', '/resources/', '/Lessons/primary/', '/Lessons/subject.html'];
 const ux2Routes = ['/', '/commission/', '/for/pupils/', '/for/teachers/', '/resources/'];
 const themeRoutes = ['/Lessons/', '/Matt-s-Apps-/', '/Lessons/Science/', '/Lessons/Humanities/', '/Lessons/subject.html'];
@@ -119,7 +120,7 @@ async function chromeFocus(control,surface,label,redProof=false) {
           const hrefs = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => new URL(a.getAttribute('href'), location.href).pathname === '/Lessons/' ? '/Lessons/' : a.getAttribute('href')));
           assert.deepEqual(hrefs.filter(h => /[?]|\.html$|#/.test(h)), [], 'No deep links in the menu: ' + route);
           const last = page.locator(panel + ' a').last();
-          assert.equal(await last.innerText(), 'Made by Matt Play ↗', 'Play is last: ' + route);
+          assert.equal(await last.innerText(), 'Made by Matt Play', 'Play is last: ' + route);
           assert.equal(await last.getAttribute('href'), 'https://www.madebymatt-play.uk/', 'Play is a link: ' + route);
           const short = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => a.getBoundingClientRect().height).filter(h => h > 0 && h < 48));
           assert.deepEqual(short, [], 'Every menu row is at least 48px: ' + route);

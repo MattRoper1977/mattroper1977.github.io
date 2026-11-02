@@ -45,7 +45,7 @@ SOURCE_ONLY = {'README.md', 'HANDOVER.md', 'BACKLOG.md', 'PHONE_TEST_99.md',
                # changes. SOURCE_ONLY is the estate's existing name for exactly that, which
                # is why it already holds data/source-manifests/games.json and
                # data/hud-coverage.json.
-               'data/estate-map.json'}
+               'data/estate-map.json', 'data/indexnow-key.json'}
 
 
 def canonical(value, prefix='/'):
