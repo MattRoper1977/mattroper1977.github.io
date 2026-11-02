@@ -106,7 +106,7 @@ HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / 'home' / 'home.html'
 # home.html r6, the accepted draft of record (J93 revision 1, ruling vj-1).
 # Pinned: the sha256 of home.html r6 (35,244 B), the file of record in ruling vj-1 (r5 was 32f53a11, uz-6 and vb-3).
-TEMPLATE_SHA256 = '0329a6545f48dabc3ca606c7c5a764230431c31a465b84f17a1ad04914457c50'
+TEMPLATE_SHA256 = '1a04faba0c4d38182b44ff6c73a31500030dc89c1827541ee71d62e740593d60'
 NODE_SCRIPT = HERE / 'home_hub_counts.cjs'
 RECORD = 'data/audience-homepages.json'
 HEADER = 'tools/chrome/header.html'
