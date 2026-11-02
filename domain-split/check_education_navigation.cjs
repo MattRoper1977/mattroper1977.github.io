@@ -297,7 +297,7 @@ async function educationJourneyTests(browser) {
       assert.equal(await page.locator('h1').count(), 1, 'The J93 homepage has exactly one h1');
       assert.equal(await page.locator('main h1#home-title').count(), 1, 'The one h1 is the J93 masthead (main h1#home-title)');
       assert.equal((await page.locator('main h1#home-title').textContent()).replace(/\s+/g, ' ').trim(),
-        'Real lessons, real packs, real games \u2014 by a teacher, for every pathway \u00b7 Free \u2022 No login \u2022 Works offline',
+        'Real lessons, real packs \u2014 by a teacher, for every pathway \u00b7 Free \u2022 No login \u2022 Works offline',
         'The J93 h1 is the masthead string of record');
       // UX2 B2: the homepage is Appendix A §HOME. "Go straight to your subject" is
       // the tile row itself now, with no explanatory paragraph beneath it, and each
