@@ -358,6 +358,12 @@ def refresh(output, site_source):
         shutil.copyfile(HERE / asset, site / 'assets' / asset)
     for asset in ['mbm-tile.css', 'mbm-tile.js']:
         shutil.copyfile(HERE.parent / 'assets' / asset, site / 'assets' / asset)
+    tiles_src = HERE.parent / 'assets' / 'tiles'
+    if tiles_src.is_dir():
+        tiles_dst = site / 'assets' / 'tiles'
+        tiles_dst.mkdir(parents=True, exist_ok=True)
+        for tile_img in sorted(tiles_src.glob('*.webp')):
+            shutil.copyfile(tile_img, tiles_dst / tile_img.name)
     return {'routes': changed, 'native_disclosure': True, 'audience_rows': rows,
             'governors_from_record': any(r[0] == '/for/governors-trustees/' for r in
                                          [(a['route'], a['label']) for a in audiences.values()]),

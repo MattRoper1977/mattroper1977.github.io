@@ -1,4 +1,4 @@
-/* Shared hub tile enhancer (S-1-2, design ruling 16:47Z).
+/* Shared hub tile & AAA polish enhancer (S-1-2, S-7-3).
  * Active strictly on hub surfaces (home, the five audience pages, Lessons, Resources, Tools);
  * inert everywhere else (never inside lesson pages or packs).
  */
@@ -66,6 +66,60 @@
     return links.length === 1 ? links[0] : null;
   }
 
+  function enhanceHero() {
+    var h1 = document.querySelector('main .home-masthead h1#home-title.home-descriptor');
+    if (!h1 || h1.hasAttribute('data-mbm-hero-enhanced')) return;
+    var raw = h1.textContent || '';
+    var sep = ' \u2014 ';
+    var idx = raw.indexOf(sep);
+    if (idx > 0) {
+      var lead = raw.slice(0, idx);
+      var sub = raw.slice(idx);
+      h1.textContent = '';
+      h1.appendChild(document.createTextNode(lead));
+      var span = document.createElement('span');
+      span.className = 'mbm-hero-sub';
+      span.textContent = sub;
+      h1.appendChild(span);
+    }
+    h1.setAttribute('data-mbm-hero-enhanced', 'true');
+  }
+
+  function enhancePackBoxes(root) {
+    var scope = root && root.querySelectorAll ? root : document;
+    var boxes = scope.querySelectorAll('.home-pathway-card .home-pack-box');
+    for (var i = 0; i < boxes.length; i++) {
+      var box = boxes[i];
+      var list = box.querySelector('ul.home-pack-badges');
+      if (!list || list.hasAttribute('data-mbm-pack-enhanced')) continue;
+      list.setAttribute('data-mbm-pack-enhanced', 'true');
+      var items = list.querySelectorAll('li.home-pack-badge');
+      for (var k = 0; k < items.length; k++) {
+        if (k < 3) {
+          items[k].setAttribute('data-mbm-primary-chip', 'true');
+        }
+      }
+      if (items.length > 3) {
+        list.classList.add('mbm-pack-collapsible');
+        var total = items.length;
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'mbm-pack-more-btn';
+        btn.setAttribute('aria-expanded', 'false');
+        btn.textContent = 'All files (' + total + ')';
+        (function (targetList, toggleBtn, count) {
+          toggleBtn.addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            var expanded = targetList.classList.toggle('is-expanded');
+            toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            toggleBtn.textContent = expanded ? 'Show 3 primary files' : ('All files (' + count + ')');
+          });
+        })(list, btn, total);
+        box.appendChild(btn);
+      }
+    }
+  }
+
   function enhanceTiles(root) {
     var scope = root && root.querySelectorAll ? root : document;
     var nodes = scope.querySelectorAll(TILE_SELECTOR);
@@ -83,6 +137,8 @@
         tile.style.cursor = 'pointer';
       }
     }
+    enhanceHero();
+    enhancePackBoxes(scope);
   }
 
   function start() {
