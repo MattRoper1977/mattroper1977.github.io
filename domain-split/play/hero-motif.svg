@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 570" width="760" height="570" fill="none">
+  <defs>
+    <radialGradient id="g-accent" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#37c46f" stop-opacity="0.34"/>
+      <stop offset="52%" stop-color="#37c46f" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#081422" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g-deep" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#182f46" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#081422" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="g-card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#182f46"/>
+      <stop offset="100%" stop-color="#112237"/>
+    </linearGradient>
+    <clipPath id="c-viewport">
+      <rect width="760" height="570" rx="24"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#c-viewport)">
+    <rect width="760" height="570" fill="#081422"/>
+
+    <circle cx="240" cy="410" r="260" fill="url(#g-deep)"/>
+    <circle cx="565" cy="150" r="220" fill="url(#g-accent)"/>
+
+    <g stroke="#182f46" stroke-linecap="round">
+      <line x1="45" y1="518" x2="265" y2="391" stroke-width="2" stroke-opacity="0.6"/>
+      <line x1="95" y1="220" x2="335" y2="81" stroke-width="1.5" stroke-opacity="0.45"/>
+      <line x1="435" y1="505" x2="695" y2="355" stroke-width="2" stroke-opacity="0.55"/>
+      <line x1="470" y1="92" x2="630" y2="0" stroke-width="1.5" stroke-opacity="0.4"/>
+    </g>
+    <g stroke="#37c46f" stroke-linecap="round">
+      <line x1="385" y1="125" x2="485" y2="67" stroke-width="2" stroke-opacity="0.28"/>
+      <line x1="605" y1="275" x2="705" y2="217" stroke-width="2" stroke-opacity="0.24"/>
+    </g>
+    <line x1="205" y1="492" x2="295" y2="440" stroke="#FF2D78" stroke-width="2" stroke-linecap="round" stroke-opacity="0.35"/>
+
+    <!-- Shelf 1 (Bottom-Left): 3x3 Dot Grid -->
+    <g transform="translate(175 435) rotate(-13)">
+      <rect x="-102" y="-62" width="220" height="136" rx="22" fill="#081422" fill-opacity="0.68"/>
+      <rect x="-110" y="-68" width="220" height="136" rx="22" fill="#112237" stroke="#182f46" stroke-width="2"/>
+      <rect x="-92" y="-50" width="46" height="6" rx="3" fill="#182f46"/>
+      <g fill="#f3f7fa" fill-opacity="0.9">
+        <circle cx="-38" cy="-22" r="6"/>
+        <circle cx="-12" cy="-22" r="6"/>
+        <circle cx="14" cy="-22" r="6"/>
+        <circle cx="-38" cy="4" r="6"/>
+        <circle cx="-12" cy="4" r="6" fill="#FF2D78" fill-opacity="1"/>
+        <circle cx="14" cy="4" r="6"/>
+        <circle cx="-38" cy="30" r="6"/>
+        <circle cx="-12" cy="30" r="6"/>
+        <circle cx="14" cy="30" r="6"/>
+      </g>
+    </g>
+
+    <!-- Shelf 2 (Lower-Mid): Short Racing-Line Curve -->
+    <g transform="translate(302 342) rotate(-8)">
+      <rect x="-102" y="-62" width="220" height="136" rx="22" fill="#081422" fill-opacity="0.72"/>
+      <rect x="-110" y="-68" width="220" height="136" rx="22" fill="#182f46" stroke="#f3f7fa" stroke-opacity="0.14" stroke-width="1.5"/>
+      <rect x="-92" y="-50" width="46" height="6" rx="3" fill="#112237"/>
+      <path d="M -76 30 C -34 30 -32 -22 10 -22 C 28 -22 40 -10 52 -10" stroke="#112237" stroke-width="16" stroke-linecap="round"/>
+      <path d="M -76 30 C -34 30 -32 -22 10 -22 C 28 -22 40 -10 52 -10" stroke="#f3f7fa" stroke-width="4" stroke-linecap="round" stroke-dasharray="9 9" stroke-opacity="0.9"/>
+      <circle cx="-10" cy="-12" r="6.5" fill="#FF2D78"/>
+    </g>
+
+    <!-- Shelf 3 (Upper-Mid): Orbit Ring with Small Ball -->
+    <g transform="translate(432 248) rotate(-3)">
+      <rect x="-102" y="-62" width="220" height="136" rx="22" fill="#081422" fill-opacity="0.74"/>
+      <rect x="-110" y="-68" width="220" height="136" rx="22" fill="#112237" stroke="#182f46" stroke-width="2"/>
+      <rect x="-92" y="-50" width="46" height="6" rx="3" fill="#182f46"/>
+      <ellipse cx="-12" cy="4" rx="56" ry="23" transform="rotate(-16 -12 4)" stroke="#f3f7fa" stroke-opacity="0.3" stroke-width="2.5"/>
+      <path d="M -66 20 A 56 23 -16 0 1 42 -12" stroke="#f3f7fa" stroke-width="3.5" stroke-linecap="round" stroke-opacity="0.92"/>
+      <circle cx="-12" cy="4" r="12" fill="#182f46" stroke="#f3f7fa" stroke-width="2.5"/>
+      <circle cx="31" cy="-16" r="7" fill="#37c46f"/>
+      <circle cx="-55" cy="22" r="4.5" fill="#FF2D78"/>
+    </g>
+
+    <!-- Shelf 4 (Top-Right Focal Card): Play Triangle -->
+    <g transform="translate(565 152) rotate(2)">
+      <rect x="-106" y="-64" width="232" height="144" rx="24" fill="#081422" fill-opacity="0.8"/>
+      <rect x="-116" y="-72" width="232" height="144" rx="24" fill="url(#g-card)" stroke="#37c46f" stroke-width="2.5"/>
+      <rect x="-96" y="-52" width="52" height="6" rx="3" fill="#37c46f" fill-opacity="0.45"/>
+      <circle cx="82" cy="-49" r="4.5" fill="#FF2D78"/>
+      <circle cx="0" cy="4" r="40" fill="#37c46f" fill-opacity="0.16" stroke="#37c46f" stroke-width="2"/>
+      <circle cx="0" cy="4" r="29" fill="#37c46f"/>
+      <path d="M -8 -10 L 15 4 L -8 18 Z" fill="#f3f7fa" stroke="#f3f7fa" stroke-width="2" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>
