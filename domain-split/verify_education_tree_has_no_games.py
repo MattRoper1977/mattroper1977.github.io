@@ -118,6 +118,15 @@ def run(output: Path | None, tree: Path | None, prefix: str):
         from check_education_publication_admission import controls
         proof = controls(output)
         print('EXECUTABLE ADMISSION CONTROLS:', proof['status'], len(proof['cases']))
+    if output is not None:
+        import verify_filter_hygiene
+        hygiene = verify_filter_hygiene.audit_output_directory(output, verify_filter_hygiene.load_policy())
+        print('FILTER HYGIENE GATE:', 'CLEAR' if hygiene['ok'] else 'RED',
+              f"({hygiene['scannedHtml']} html, {hygiene['failureCount']} failure(s))")
+        if not hygiene['ok']:
+            for bad in hygiene['failures'][:20]:
+                print('  HYGIENE FAILURE:', bad)
+            red += hygiene['failureCount']
     print('LEAK GATE:', 'RED' if red else 'CLEAR')
     return 1 if red else 0
 
@@ -158,6 +167,8 @@ def self_test():
         planted_exempt.write_text(PLANTED)
         s, g, e = scan(tree, '/', exempt)
         control('a planted game at a retained route is exempted BY NAME and reported', not g and e == [exempt_route], f'{e}')
+    import verify_filter_hygiene
+    control('filter-hygiene gate red-first self-test passes', verify_filter_hygiene.self_test() == 0)
     print('self-test', 'PASS' if ok else 'FAIL')
     return 0 if ok else 1
 

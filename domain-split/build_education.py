@@ -145,6 +145,18 @@ def self_test():
         control('um-4 (a): a download on a moving branch is refused', refused())
     from subject_slots import self_test as subject_slots_self_test
     control('J91: the subject-page slots pass their own self-test', subject_slots_self_test())
+    from education_wording_hygiene import self_test as wording_hygiene_self_test
+    control('SEO-1: the education wording hygiene pass passes its own self-test', wording_hygiene_self_test())
+    from education_seo_metadata import self_test as seo_metadata_self_test
+    control('SEO-2: the education head metadata and schema pass passes its own self-test', seo_metadata_self_test())
+    from education_sitemap import self_test as sitemap_self_test
+    control('SEO-3: the education sitemap and well-known pass passes its own self-test', sitemap_self_test())
+    from education_trust_pages import self_test as trust_pages_self_test
+    control('SEO-4: the education trust pages and footer pass passes its own self-test', trust_pages_self_test())
+    from weekly_domain_health import self_test as weekly_health_self_test
+    control('SEO-6: the weekly domain health checker passes its red-first self-test', weekly_health_self_test())
+    from submit_indexnow import self_test as indexnow_self_test
+    control('SEO-7: the IndexNow changed-URL submitter passes its red-first self-test', indexnow_self_test())
     print('self-test', 'PASS' if ok else 'FAIL')
     return ok
 
@@ -216,12 +228,11 @@ def moved_page(route):
     destination = PLAY + LEGACY.get(route, route)
     return ('<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
-            '<meta name="robots" content="noindex"><title>This game has moved · Made by Matt</title>'
+            '<meta name="robots" content="noindex"><title>This page has moved to Made by Matt Play · Made by Matt</title>'
             '<link rel="canonical" href="'+escape(destination, quote=True)+'">'
             '<style>body{font:1.1rem/1.65 system-ui;max-width:42rem;margin:4rem auto;padding:0 1.25rem;color:#161d3d}a{color:#174e45}li{margin:1rem 0}a:focus-visible{outline:3px solid #e39129;outline-offset:4px}</style>'
-            '</head><body data-game-moved><main><h1>This game has moved</h1>'
-            '<p>Made by Matt games now have their own website.</p>'
-            '<p><a id="play-game" href="'+escape(destination, quote=True)+'">Open the game</a></p></main>'
+            '</head><body data-game-moved><main><h1>This page has moved to Made by Matt Play</h1>'
+            '<p><a id="play-game" href="'+escape(destination, quote=True)+'">Made by Matt Play</a></p></main>'
             '<script>const a=document.getElementById("play-game");const u=new URL(a.href);u.search=location.search;u.hash=location.hash;a.href=u.href;</script>'
             '</body></html>')
 
@@ -408,9 +419,12 @@ def build(output, lessons, apps=None, allow_sparse=False):
         report['governors_discovery'] = {'resources': len(refresh_governors(output, lessons, apps, ROOT)['resources'])}
         report['education_expansion'] = refresh_education_expansion(output, lessons, apps, ROOT)
         report['usage'] = refresh_usage(output, lessons, apps, ROOT)
+        from education_trust_pages import generate_pages as generate_trust_pages, stamp_footer_links as stamp_trust_footers
+        report['trust_pages_generated'] = generate_trust_pages(output, ROOT)
         report['navigation'] = refresh_navigation(output, ROOT)
         from education_chrome_correction import refresh as refresh_chrome_icons
         refresh_chrome_icons(output)
+        report['trust_footers'] = stamp_trust_footers(output)
         report['support'] = refresh_support(output, lessons, ROOT)
     # Enrichment must never reintroduce excluded discovery records. Run after
     # every generator, including overlays, Apps, audiences and usage metadata.
@@ -424,6 +438,12 @@ def build(output, lessons, apps=None, allow_sparse=False):
             except (ValueError, UnicodeError): continue
             filtered = filter_data(data, is_game, prefix)
             if filtered != data: path.write_text(json.dumps(filtered, ensure_ascii=False, indent=2)+'\n')
+    from education_wording_hygiene import refresh as refresh_wording_hygiene
+    report['wording_hygiene'] = refresh_wording_hygiene(output)
+    from education_seo_metadata import refresh as refresh_seo_metadata
+    report['seo_metadata'] = refresh_seo_metadata(output)
+    from education_sitemap import refresh as refresh_sitemap
+    report['sitemap_wellknown'] = refresh_sitemap(output, ROOT)
     if slots.get('lessonIndex'):
         from subject_slots import confirm_subject_page
         confirm_subject_page(output)  # the index still equals the registry as finally published
