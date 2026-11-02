@@ -125,13 +125,13 @@ async function educationOnly(page, requests, start) {
         const start = requests.length; await goto(page, home);
         assert.equal(await page.locator('.mbm-explore-nav').count(), 0, 'No explore bar on the homepage');
         const menu = page.locator('.mbm-unified-menu > summary'); await menu.click();
-        for (const [name, href] of [['Primary lessons', '/Lessons/primary/'], ['Made by Matt Play ↗', canonicalPlay + '/']]) {
+        for (const [name, href] of [['Primary lessons', '/Lessons/primary/'], ['Made by Matt Play', canonicalPlay + '/']]) {
           const link = page.locator('#mbm-navigation-panel').getByRole('link', { name, exact: true }); assert.equal(await link.getAttribute('href'), href); await target(link);
         }
         // J93: the institutional audience routes are not doors; they stay menu rows, each a clear target.
         for (const route of audienceRoutes) await target(page.locator(`#mbm-navigation-panel a[href="${route}"]`));
         await page.keyboard.press('Escape');
-        const footerPlay = page.locator('footer').getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
+        const footerPlay = page.locator('footer').getByRole('link', { name: 'Made by Matt Play', exact: true });
         assert.equal(await footerPlay.getAttribute('href'), canonicalPlay + '/'); await target(footerPlay);
         await noOverflow(page);
         const prefix = `${width}-${home === '/' ? 'home' : 'main'}`;
@@ -183,7 +183,7 @@ async function educationOnly(page, requests, start) {
           await page.locator('.mbm-unified-menu > summary').click();
           const panel = page.locator('#mbm-navigation-panel');
           await target(panel.getByRole('link', { name: 'Primary lessons', exact: true }));
-          const menuPlay = panel.getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
+          const menuPlay = panel.getByRole('link', { name: 'Made by Matt Play', exact: true });
           assert.equal(await menuPlay.getAttribute('href'), canonicalPlay + '/'); await target(menuPlay);
           await page.keyboard.press('Escape');
           // SW2 U keeps Play in the native menu; the pupil footer is the approved learning subset.
@@ -211,7 +211,7 @@ async function educationOnly(page, requests, start) {
       }, page);
       await check(`${width}-canonical-play-roundtrip`, async () => {
         await goto(page, '/');
-        const link = page.locator('footer').getByRole('link', {name:'Made by Matt Play ↗',exact:true});
+        const link = page.locator('footer').getByRole('link', {name:'Made by Matt Play',exact:true});
         await target(link);
         await Promise.all([page.waitForURL(canonicalPlay + '/'), link.click()]); await settle(page);
         assert.equal(page.url(), canonicalPlay + '/');
