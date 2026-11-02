@@ -39,7 +39,10 @@ jobs:
           # final and R Gate calibration pages changed (organisation and region off), their two opening
           # screens were recaptured at this commit and their bindings moved with them, so the pin again
           # follows the captures. Only those two Play payloads differ from b54c9006.
-          ref: 3d31e44169143e9f348e52b0d32b66905fadd268
+          # Moved 2026-11-01 (Play P1 part B) to pin Lessons e82625ea, matching Games/play-publication.json:
+          # only Games/Grapple.html changed since 3d31e441 (grapple-f5-2026-10-28), and all 63 opening
+          # screens were composited as 640x360 poster frames with Grapple recaptured at this pin.
+          ref: e82625ea4ecf47bd9637d213d4a15c25018e91fb
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/setup-python@v5
