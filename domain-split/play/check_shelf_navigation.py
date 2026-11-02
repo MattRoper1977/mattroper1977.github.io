@@ -146,18 +146,29 @@ def limbs(page: dict, out: Path, manifest: list, discovery: dict) -> dict:
     if spot != featured:
         errors.append('spotlight %s != featured flag %s' % (spot, featured))
 
-    # 4. shelves are existing categories; Classroom first and unique
+    # 4. PLAY_FINAL (J92 rev 1): four named catalogue shelves in exact order,
+    #    followed by Classroom holding only the classroom/staff activities.
+    expected_shelves = [
+        'Strategy, Command & Systems',
+        'Cosy Markets, Rhythm & Creative',
+        'Stadium, Track & Precision Sports',
+        'High-Tempo Arcade & Turf',
+        'Classroom',
+    ]
     names = [s['name'] for s in page['shelves']]
-    allowed = {g['genre'] for g in catalogue} | {'Classroom'}
+    allowed = set(expected_shelves)
     invented = [n for n in names if n not in allowed]
     if invented:
         errors.append('invented shelf categories: ' + json.dumps(invented))
     if len(names) != len(set(names)):
         errors.append('a category has two shelves')
-    if names[:1] != ['Classroom']:
-        errors.append('the Classroom shelf is not first: ' + json.dumps(names[:3]))
+    if names != expected_shelves:
+        errors.append('shelf order %s != expected %s' % (json.dumps(names), json.dumps(expected_shelves)))
     if any(not s['cards'] for s in page['shelves']):
         errors.append('an empty shelf was rendered')
+    for s in page['shelves']:
+        if s['name'] == 'Classroom' and any(c['kind'] == 'game' for c in s['cards']):
+            errors.append('a catalogue game sits on the Classroom activities shelf')
     counts = {s['name']: {'cards': len(s['cards']), 'gameHrefs': sum(len(c['hrefs']) for c in s['cards'] if c['kind'] == 'game'),
                           'activities': sum(1 for c in s['cards'] if c['kind'] == 'activity')} for s in page['shelves']}
     return {'errors': errors, 'shelves': counts, 'spotlight': len(spot), 'hrefsChecked': len(hrefs)}
@@ -178,8 +189,9 @@ def self_test(page, out, manifest, discovery):
 
     game_card = next(c for s in page['shelves'] for c in s['cards'] if c['kind'] == 'game')
     bites('broken-href', lambda p, m: next(c for s in p['shelves'] for c in s['cards'] if c['kind'] == 'game')['hrefs'].__setitem__(0, '/no-such-game/'), 'do not resolve')
-    bites('dropped-card', lambda p, m: p['shelves'][-1]['cards'].pop(), 'coverage')
-    bites('duplicate-card', lambda p, m: p['shelves'][-1]['cards'].append(copy.deepcopy(game_card)), 'twice')
+    bites('dropped-card', lambda p, m: p['shelves'][0]['cards'].pop(), 'coverage')
+    bites('dropped-activity', lambda p, m: p['shelves'][-1]['cards'].pop(), 'activities')
+    bites('duplicate-card', lambda p, m: p['shelves'][0]['cards'].append(copy.deepcopy(game_card)), 'twice')
     bites('spotlight-drift', lambda p, m: p['spot'].pop(), 'spotlight')
     bites('flag-drift', lambda p, m: m.__setitem__(0, {**m[0], 'featured': not m[0].get('featured')}), 'spotlight')
     # AK10-AB: the spotlight flag moved to another game, and a second one added.
@@ -193,7 +205,8 @@ def self_test(page, out, manifest, discovery):
         j = next(i for i, g in enumerate(m) if g.get('spotlight') is not True)
         m[j] = {**m[j], 'spotlight': True}
     bites('second-spotlight', second_spot, 'more than one spotlight')
-    bites('invented-category', lambda p, m: p['shelves'][-1].__setitem__('name', 'Top Picks'), 'invented')
+    bites('invented-category', lambda p, m: p['shelves'][0].__setitem__('name', 'Top Picks'), 'invented')
+    bites('shelf-order-drift', lambda p, m: p.__setitem__('shelves', [p['shelves'][1], p['shelves'][0], *p['shelves'][2:]]), 'shelf order')
     return plants
 
 
