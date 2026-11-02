@@ -190,7 +190,7 @@ def config(site_source, source):
             'geography_enabled':False,'default_choice':'off'}
 
 
-def preferences(compact=False):
+def preferences(compact=False, source='education'):
     # compact=True is the Play shelf's consent bar (UX2 C2): same id, same
     # storage key (mbm_usage_choice_v1 in usage-client.js), same
     # data-usage-choice events and the same /privacy/#shared-usage anchor —
@@ -198,8 +198,9 @@ def preferences(compact=False):
     # Play privacy/stats pages keep the default block, byte for byte.
     if compact:
         return '''<div class="mbm-usage usage-choice usage-compact" id="usage-statistics"><p>Optional usage statistics — off until you allow it. <a href="/privacy/#shared-usage">Read what is counted.</a></p><div class="usage-actions"><button type="button" data-usage-choice="allow" aria-pressed="false" disabled>Allow</button><button type="button" data-usage-choice="deny" aria-pressed="false">Keep off</button></div><p data-usage-choice-status role="status">Shared statistics collection is not active yet.</p></div>'''
+    what = 'lessons, downloads and games' if source == 'play' else 'lessons, downloads and packs'
     return '''<details class="mbm-usage usage-choice" id="usage-statistics"><summary>Optional usage statistics</summary>
-<p>Help Matt see which lessons, downloads and games are useful. This is optional and off until you allow it. We count activity events, not people or completed work.</p>
+<p>Help Matt see which ''' + what + ''' are useful. This is optional and off until you allow it. We count activity events, not people or completed work.</p>
 <p>When active, the shared service receives only a public resource ID, event type, site name and a one-event retry code. It receives no account information, search text, pupil work or full page URL. Location measurement is off.</p>
 <div class="usage-actions"><button type="button" data-usage-choice="allow" aria-pressed="false" disabled>Allow optional statistics</button><button type="button" data-usage-choice="deny" aria-pressed="false">Keep statistics off</button></div>
 <p data-usage-choice-status role="status">Shared statistics collection is not active yet.</p>
@@ -222,13 +223,18 @@ def consent_bar():
 
 
 def popularity(source='education'):
+    notes = (
+        'Lesson opens are recorded when a registered lesson page opens. Download requests count clicks on links to existing files, including worksheets and packs. Game launches count selected game links on the separate Play shelf. Direct game bookmarks are outside this measure. None proves a completed lesson, download or game. Repeat requests for the same item on one page are limited.'
+        if source == 'play'
+        else 'Lesson opens are recorded when a registered lesson page opens. Download requests count clicks on links to existing files, including worksheets and packs. Direct bookmarks are outside link-click measures. None proves a completed lesson or download. Repeat requests for the same item on one page are limited.'
+    )
     return '''<section class="mbm-usage" data-usage-popularity="'''+source+'''" aria-labelledby="usage-popular-title">
 <p class="usage-eyebrow">Activity across the community</p><h2 id="usage-popular-title">What people are opening</h2>
 <p>Separate Top 10 lists, built only from real shared activity. No editorial selections or old device-local counts are included.</p>
 <div class="usage-filter"><label for="usage-period">Ranking period</label><select id="usage-period" data-usage-period><option value="last30days">Last 30 UTC calendar days, including today</option><option value="alltime">All time since collection began</option></select></div>
 <p class="usage-status" data-usage-measured-since>Collection is not active. Verified shared rankings are unavailable in this release.</p>
 <div class="usage-grid">'''+''.join('<article class="usage-card"><h3>'+title+'</h3><div data-usage-list="'+kind+'"><p class="usage-empty">Collection is not active. Verified shared rankings are unavailable in this release.</p></div></article>' for kind,title in ([('games','Top 10 games')] if source=='play' else [('lessons','Top 10 lessons'),('packs','Top 10 lesson packs')]))+'''
-</div><p>Lesson opens are recorded when a registered lesson page opens. Download requests count clicks on links to existing files, including worksheets and packs. Game launches count selected game links on the separate Play shelf. Direct game bookmarks are outside this measure. None proves a completed lesson, download or game. Repeat requests for the same item on one page are limited.</p>
+</div><p>'''+notes+'''</p>
 <p>Only visitors who allow optional statistics contribute. These are event totals, not unique visitor counts. Public totals may be delayed or unavailable; resources continue to work.</p><p><a href="/privacy/#usage-statistics">Choose whether to contribute</a> · <a href="/stats/">About these statistics</a></p></section>'''
 
 
@@ -238,10 +244,15 @@ def shell(title, content, source='education', dashboard=False):
     return '<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="'+('noindex,nofollow' if dashboard else 'index,follow')+'"><meta name="referrer" content="no-referrer"><title>'+escape(title)+' · Made by Matt</title><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/assets/usage.css"><script defer src="/assets/usage-client.js"></script>'+('<script defer src="/assets/usage-dashboard.js"></script>' if dashboard else '')+'</head><body class="usage-shell"><a class="skip" href="#main">Skip to content</a><header class="usage-shell-header"><a href="'+origin+'/"><img src="/assets/brand/micro_mark.svg" alt="">Made by Matt'+(' Play' if source=='play' else '')+'</a><nav aria-label="Learning areas">'+links+'</nav></header><main id="main">'+content+'</main><footer><a href="/privacy/">Privacy</a> · <a href="'+EDUCATION+'/owner/stats/">Owner dashboard</a></footer></body></html>\n'
 
 
-def privacy_explanation():
+def privacy_explanation(source='education'):
+    event_sentence = (
+        'When active and allowed, the browser sends a registered public resource ID, one of three event types (lesson open, download request or game launch), the education or Play source, and a random retry code used for that event only. We do not send searches, full URLs, fragments, account details, pupil records, work, form contents or game saves.'
+        if source == 'play'
+        else 'When active and allowed, the browser sends a registered public resource ID, the event type (such as lesson open or download request), the education or Play source, and a random retry code used for that event only. We do not send searches, full URLs, fragments, account details, pupil records, work, form contents or local saves.'
+    )
     return '''<section class="mbm-usage" id="shared-usage"><h2>Optional shared usage statistics</h2>
 <p><b>Collection is off by default.</b> The status and controls below say whether this release has an active service and whether you have allowed it. Your choice never limits access to public resources.</p>
-<p>When active and allowed, the browser sends a registered public resource ID, one of three event types (lesson open, download request or game launch), the education or Play source, and a random retry code used for that event only. We do not send searches, full URLs, fragments, account details, pupil records, work, form contents or game saves. There is no advertising tracker, fingerprint, session replay or cross-domain visitor identifier.</p>
+<p>''' + event_sentence + ''' There is no advertising tracker, fingerprint, session replay or cross-domain visitor identifier.</p>
 <p>The application keeps aggregate totals by resource and UTC day, plus all-time totals from the actual start date. The retry code is kept briefly to avoid counting the same event twice. It is not a visitor ID. Old browser-only counters are not imported. Public rankings use recorded totals only; the owner dashboard requires existing account sign-in and separate server-side owner authorisation.</p>
 <p><b>Country and UK-region collection is off.</b> The application records no measured location. A device time zone is not treated as a measured country. No location permission is requested and no pupil location map is made.</p>
 <p>When the shared service is active, requests go to the existing Supabase provider. Normal network processing exposes the connecting IP address to that provider, and its operational logs may retain connection metadata. The usage database stores neither raw IP addresses nor browser fingerprints. Provider logging, retention and access must be reviewed before collection is activated; calling a feature “cookieless” does not remove that responsibility.</p>
@@ -355,7 +366,7 @@ def refresh_play(output, lessons, site_source):
         text=replace_once(text,'<main>','</head><body><main>');text=replace_once(text,'</html>','</body></html>')
         # Fail if an old blanket denial survives; do not silently contradict it.
         if re.search(r'adds no analytics',text,re.I):raise ValueError('Review changed Games analytics privacy anchor')
-        text=replace_once(text,'</body>',privacy_explanation()+preferences()+'</body>');path.write_text(text);inject(path)
+        text=replace_once(text,'</body>',privacy_explanation('play')+preferences(source='play')+'</body>');path.write_text(text);inject(path)
     # HC4 §7.1: the legacy device-only counters page must work on whichever
     # origin the pupil is on. Play gets its own copy of the same page with every
     # path bound to the Play origin: asset base /stats/ (so ../styles.css and
@@ -382,7 +393,7 @@ def refresh_play(output, lessons, site_source):
         play_config['features']['stats'].update({'enabled':False,'remote':False,'geo':False});play_config['features']['downloads']['enabled']=False
         play_config['features']['downloads']['catalog']=[];play_config['features']['analytics']['goatcounter']=''
         save(target/'site.json',play_config)
-    (target/'stats').mkdir(exist_ok=True);(target/'stats/index.html').write_text(shell('Shared usage statistics',popularity('play')+preferences()+'<p class="mbm-usage"><a href="/stats/on-this-device/">View legacy counts stored on this device</a></p>','play'))
+    (target/'stats').mkdir(exist_ok=True);(target/'stats/index.html').write_text(shell('Shared usage statistics',popularity('play')+preferences(source='play')+'<p class="mbm-usage"><a href="/stats/on-this-device/">View legacy counts stored on this device</a></p>','play'))
     save(output/'usage-play-build-report.json',{'schema':1,'registered_games':len(rows),'collection_enabled':config(site_source,'play')['enabled'],'game_payloads_modified':0})
     return rows
 
