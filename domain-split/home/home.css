@@ -1,6 +1,6 @@
 /* Made by Matt — J93 Education Homepage styles (home.css)
- * Consumes only custom properties defined in /assets/mbm-tokens.css.
- * Zero raw colours, zero font-family declarations, zero redefined tokens.
+ * Consumes only custom properties defined in /assets/mbm-tokens.css, plus the estate --mbm-font stack.
+ * Zero raw colours, estate font stack only, zero redefined tokens.
  */
 
 body[data-page="home"],
@@ -16,6 +16,7 @@ body[data-page="home"] [hidden] {
 
 body[data-page="home"] {
   margin: 0;
+  font-family: var(--mbm-font, Poppins, "Segoe UI", system-ui, sans-serif);
   color: var(--mbm-primary);
   line-height: 1.5;
   overflow-x: hidden;
@@ -334,6 +335,7 @@ body[data-page="home"][data-theme="dark"] {
   color: var(--mbm-primary);
   border: 2px solid currentColor;
   border-radius: var(--mbm-card-radius);
+  font-family: inherit;
   font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
