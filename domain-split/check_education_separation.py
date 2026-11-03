@@ -146,6 +146,7 @@ def pending_set_problems(pending, approved):
 
 GC1_PREFIX = '/Lessons/ICT/Teaching_Packs/GROW_Computing/'
 GC1_HUB = 'ICT/Teaching_Packs/GROW_Computing/Start_Here_Weeks_01_02.html'
+ICT_A2_PUBLIC_PREFIX = '/Lessons/ICT/Teaching_Packs/GROW_Computing_Autumn2/'
 
 
 def installed_gc1_rows(approved, installed):
@@ -172,8 +173,9 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by
     pending_by_prefix = pending_by_prefix or {}
     retiring_by_prefix = retiring_by_prefix or {}
     for prefix, approved in approved_by_prefix.items():
-        extensions = [r for r in rows if r['route'].startswith(prefix)]
-        retained = [r for r in retained if not r['route'].startswith(prefix)]
+        in_pack = lambda r, p=prefix: r['route'].startswith(p) and not r['route'].startswith(ICT_A2_PUBLIC_PREFIX)
+        extensions = [r for r in rows if in_pack(r)]
+        retained = [r for r in retained if not in_pack(r)]
         allowed = [approved if installed_by_prefix.get(prefix) else []]
         pending = pending_by_prefix.get(prefix)
         if pending and installed_by_prefix.get(prefix):
@@ -192,7 +194,7 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by
 # re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
     'da9965cec2648588615be3972125d43f00f9c0cb883a7c6607e1469fb2ce544e',   # M1 (vr, vt, vt add.1, vu): the 2001 rows of cf03cb20 with the Lessons folder paths renamed and every resource identity kept (usage-route-aliases.json); built by the Site fallback Lessons pin and Lessons main once both carry the rename
-    '7bc0642136adf3b03aae7e579ceda4a7b7c3dc85005aa6e10e8243c3c4a4dad5',   # Ruling M-S (2026-11-02, Lessons #774/#765/#777/#778/#779, ff3e87f1): built by Lessons main, 2565 rows (f2c37ada's 2348 kept plus 217 rows from today's landings)
+    '177dfeb25ce6e8e38274861507a259b1994e18df3663fa5d84c9dcba63e55197',   # Ruling M-AD (2026-11-03, Lessons #760, f154ac7a): built by Lessons main, 2937 rows (dd4ede1a's 2768 rows plus 169 Science LAUNCH Autumn 2 W2-W7 lesson-page rows; the 6 weekly LAUNCH W3-W7 overview rows drop their duplicate land- source id)
 )
 
 
@@ -644,11 +646,11 @@ def self_test():
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d',
               'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',
               '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd','60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b','1a358a41168f6d1205a3d3bd855753a6c6400855626c6660cf652e3947b89a57','5c4fc9892e60f5e50ae7712a1fe44f5c6ab355e7f0a872c8143d3e612af66c9b','dcc9096033c437337b4ee3014056d322292b600eebb4f9ea4b2cf0de717cfcd1','e8882f70613ab1301fe43a946e108a9a764128712ba8f1fdb6d3a7053406a76b')
-    passed=REGISTRY_BASELINES==('da9965cec2648588615be3972125d43f00f9c0cb883a7c6607e1469fb2ce544e','7bc0642136adf3b03aae7e579ceda4a7b7c3dc85005aa6e10e8243c3c4a4dad5') and not set(previous+('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','cf03cb20253c3b9817054e93377d9387c3a46b609aa0d326ecf246ab77ab0e16','d8066b840f2bf288555e737f78f06658d4f273b2ebd4aca401d1351bf8549b80','1dec49a1961fb51f5db28441f101501ccec7e9868f54f9c325a55cb8811357fc','f2c37ada70d6478536cba302426dfc43d25ecb3d056a1dbfa305dc3a2e3ac30a'))&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the pair da9965ce (M1: cf03cb20's rows under the folder rename) and 7bc06421 (Ruling M-S, Lessons #774/#765/#777/#778/#779: f2c37ada's 2348 rows plus 217 landing rows); f2c37ada retired at M-S; 1dec49a1 retired at M-N; d8066b84 retired at the B follow-up; 16195414 and cf03cb20 retired at M1; e8882f70 retired at the vg follow-up, dcc90960 at the us follow-up, 5c4fc989 at the up follow-up, 1a358a41 at the uj follow-up, 60e0cd4c at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
+    passed=REGISTRY_BASELINES==('da9965cec2648588615be3972125d43f00f9c0cb883a7c6607e1469fb2ce544e','177dfeb25ce6e8e38274861507a259b1994e18df3663fa5d84c9dcba63e55197') and not set(previous+('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','cf03cb20253c3b9817054e93377d9387c3a46b609aa0d326ecf246ab77ab0e16','d8066b840f2bf288555e737f78f06658d4f273b2ebd4aca401d1351bf8549b80','1dec49a1961fb51f5db28441f101501ccec7e9868f54f9c325a55cb8811357fc','f2c37ada70d6478536cba302426dfc43d25ecb3d056a1dbfa305dc3a2e3ac30a','7bc0642136adf3b03aae7e579ceda4a7b7c3dc85005aa6e10e8243c3c4a4dad5','dd4ede1a0e0b7dfbb874d1f12294d1033c6f1a4c2003228dfb4c24ded8152dab'))&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the pair da9965ce (M1: cf03cb20's rows under the folder rename) and 177dfeb2 (Ruling M-AD, Lessons #760: 2937 rows); dd4ede1a retired at M-AD; 7bc06421 retired at M-AB; f2c37ada retired at M-S; 1dec49a1 retired at M-N; d8066b84 retired at the B follow-up; 16195414 and cf03cb20 retired at M1; e8882f70 retired at the vg follow-up, dcc90960 at the us follow-up, 5c4fc989 at the up follow-up, 1a358a41 at the uj follow-up, 60e0cd4c at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
-    legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf')
+    legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf'); ict_a2=row(ICT_A2_PUBLIC_PREFIX+'GROW_ICT_A2_W01/Public/ICT_GROW_A2_W01.html')
     reviewed=[legacy,gc1]
     gc1_cases=[
         ('absent unit',False,[legacy],0),
@@ -663,6 +665,9 @@ def self_test():
         errors,retained=registry_partition(other+actual,{ict:installed_gc1_rows(reviewed,present)},{ict:True})
         passed=len(errors)==expected and retained==other; ok=ok and passed
         print(f"  [{'ok' if passed else 'FAIL'}] GC1 {label}: {len(errors)} error(s)")
+    errors,retained=registry_partition(other+[ict_a2]+reviewed,{ict:installed_gc1_rows(reviewed,True)},{ict:True})
+    passed=len(errors)==0 and retained==other+[ict_a2]; ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] ICT Autumn 2 Public rows stay in retained: {len(errors)} error(s), retained {len(retained)}")
     for markup,expected in cases:
         p=Refs(); p.feed(markup)
         named=any('madebymatt-play.uk' in v for (t,a,v) in p.automatic)

@@ -209,7 +209,7 @@ def j93_self_test(root, lessons_root, tmp):
     assert real.tools[0] == resources and with_plant.tools[0] == resources, 'the Resources card must stay one tap away'
     results['tiles'] = len(real.tiles)
     # Flagship cards (replaces the preview / Try-a-lesson binding): registry rows, lesson file and folder.
-    assert [c['key'] for c in real.cards] == list(home_slots.PATHWAYS) and [c['badges'] for c in real.cards] == [9, 9, 9], [c['badges'] for c in real.cards]
+    assert [c['key'] for c in real.cards] == list(home_slots.PATHWAYS) and all(c['badges'] in (9, 13) for c in real.cards), [c['badges'] for c in real.cards]
     files = [unquote(c['lesson'][len('/Lessons/'):]) for c in real.cards]
     by_file = {r.get('file'): r for r in rows}
     for card, f in zip(real.cards, files):
@@ -220,12 +220,14 @@ def j93_self_test(root, lessons_root, tmp):
         gone = parse_home(render_home(record_path, L))
         assert gone.cards[0]['lesson'] == hub_route and gone.cards[1]['lesson'] == real.cards[1]['lesson'], 'a missing lesson must link its subject hub'
     folder, code = files[1].rsplit('/', 1)[0], files[1].rsplit('/', 1)[1].rsplit('.', 1)[0]
-    with tempfile.TemporaryDirectory() as t:  # uz-6 (d): badges follow the lesson folder; images never become badges
-        L = overlay(t, lessons_root, {folder + '/' + code + '_Planted_member.docx': b'x', folder + '/planted.png': b'x'})
+    with tempfile.TemporaryDirectory() as t:  # uz-6 (d): badges follow the lesson folder (scoped to code + "_"); images and sibling lessons never become badges
+        L = overlay(t, lessons_root, {folder + '/' + code + '_Planted_member.docx': b'x', folder + '/planted.png': b'x',
+                                      folder + '/SIBLING_LESSON.html': b'x', folder + '/SIBLING_LESSON_Slides.pptx': b'x'})
         grown = parse_home(render_home(record_path, L))
-        assert grown.cards[1]['badges'] == 10 and ('DOCX', 'Planted member') in grown.cards[1]['members'], 'a new pack member must become a badge'
+        assert grown.cards[1]['badges'] == real.cards[1]['badges'] + 1 and ('DOCX', 'Planted member') in grown.cards[1]['members'], 'a new pack member must become a badge'
+        assert all('SIBLING' not in m[1].upper() for m in grown.cards[1]['members']), 'sibling lessons in a shared week folder must not become badges'
         assert [m[1] for m in grown.cards[1]['members']] == [m[1] for m in sorted(grown.cards[1]['members'], key=lambda m: code + '_' + m[1].replace(' ', '_') + '.' + m[0].lower())], 'badges must stay in file-name order'
-        assert grown.cards[0]['badges'] == 9 and grown.cards[2]['badges'] == 9, 'other cards must not move'
+        assert grown.cards[0]['badges'] == real.cards[0]['badges'] and grown.cards[2]['badges'] == real.cards[2]['badges'], 'other cards must not move'
     changed = [dict(r) for r in rows]
     for r in changed:
         if r.get('file') == files[0]:
