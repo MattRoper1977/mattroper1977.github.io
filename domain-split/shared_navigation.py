@@ -107,6 +107,8 @@ SEARCH_CONTROLS = {'/': 'home-resource-query', '/main/': 'home-resource-query', 
                    '/for/pupils/': 'pupils-q', '/resources/': 'rxSearch', '/Lessons/': 'search',
                    '/Matt-s-Apps-/': 'search', '/tools/': 'tq', '/teach/': 'teach-search',
                    '/education-hub/': 'hub-search', '/for/governors-trustees/': 'gv-search',
+                   '/for/parents-carers/': 'gv-search', '/for/schools-semh/': 'gv-search', '/for/trusts/': 'gv-search',
+                   '/for/councils-organisations/': 'gv-search', '/for/partners/': 'gv-search',
                    '/Lessons/primary/': 'primary-search', '/Lessons/subject.html': 'search'}
 SEARCH_FALLBACK = '/resources/#rxSearch'
 

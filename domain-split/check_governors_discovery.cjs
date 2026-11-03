@@ -53,7 +53,12 @@ async function settle(page) { await page.evaluate(() => new Promise(resolve => r
       await check(`${width}-navigation-layout-and-record-metadata`, async () => {
         assert.equal(await page.getByRole('heading', { name: 'Governors & trustees', exact: true }).count(), 1);
         assert.equal(await page.locator('[data-governance-card]').count(), 17);
-        for (const href of ['/Lessons/', '/resources/', '/Matt-s-Apps-/', '/tools/']) await target(page.locator(`nav[aria-label="Learning areas"] a[href="${href}"]`));
+        // One navigation only: the shared header carries the learning areas; no second button row, no old Apps & tools button, one footer.
+        assert.equal(await page.locator('nav[aria-label="Learning areas"], .gv-learning').count(), 0, 'Duplicate learning-area buttons');
+        for (const href of ['/Lessons/', '/resources/', '/tools/']) assert.equal(await page.locator(`header [data-mbm-hub-links] a[href="${href}"]`).count(), 1, 'Header link '+href);
+        assert.equal(await page.getByRole('link', { name: 'Apps & tools', exact: true }).count(), 0, 'Old Apps & tools button');
+        assert.equal(await page.locator('footer').count(), 1, 'One footer');
+        assert(!/ASDAN/.test(await page.locator('main').innerText()), 'Awarding-body name in visible text');
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth+1), 'Horizontal overflow');
         if (records) for (const row of records) {
           const card = page.locator(`[data-governance-card][data-id="${row.id}"]`);
@@ -62,7 +67,7 @@ async function settle(page) { await page.evaluate(() => new Promise(resolve => r
         }
         await page.evaluate(() => window.scrollTo(0, 0));
         await page.screenshot({ path: path.join(out, `${width}-governors-start.png`), animations: 'disabled' });
-        return { screenshot: `${width}-governors-start.png`, visibleLearningAreas: 4 };
+        return { screenshot: `${width}-governors-start.png`, headerLearningAreas: 3 };
       });
       await check(`${width}-real-search-filters-and-empty-state`, async () => {
         const visible = '[data-governance-card]:not([hidden])';

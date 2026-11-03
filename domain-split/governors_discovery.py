@@ -88,7 +88,6 @@ def page(rows, checked_date, audiences):
     groups = ''.join('<section class="gv-group" data-governance-group aria-labelledby="gv-'+key+'"><div class="gv-section-head">'
                      '<h2 id="gv-'+key+'">'+escape(title)+'</h2><p>'+escape(description)+'</p></div><div class="gv-grid">'+
                      ''.join(card(r) for r in rows if r['origin'] == key)+'</div></section>' for key, title, description in GROUPS)
-    learning = ''.join('<a href="'+url+'">'+escape(label)+'</a>' for url, label in [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'), ('/Matt-s-Apps-/', 'Apps & tools'), ('/tools/', 'Teacher tools')])
     return '''<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Governors &amp; trustees · Made by Matt</title><meta name="description" content="Official governance guidance, induction and training, with Made by Matt teaching resources for curriculum and inclusion conversations.">
@@ -98,7 +97,6 @@ def page(rows, checked_date, audiences):
 <a class="gv-skip" href="#main">Skip to content</a><header class="gv-header"><div class="gv-wrap gv-header-inner">
 <a class="gv-brand" href="/"><img src="/assets/brand/micro_mark.svg" width="60" height="60" alt=""><span>MADE BY MATT<small>Learn · Build · Explore</small></span></a>
 <a class="gv-home" href="/">Education homepage</a></div></header>
-<nav class="gv-learning gv-wrap" aria-label="Learning areas">'''+learning+'''</nav>
 <main id="main" class="gv-wrap"><section class="gv-hero" aria-labelledby="page-title"><p class="gv-eyebrow">Supporting your school community</p>
 <h1 id="page-title">Governors &amp; trustees</h1><p class="gv-lead">Good questions start with a clear picture. Find the guidance for your board, build your confidence in the role and explore what learning can look like.</p>
 <div class="gv-actions"><a class="gv-button" href="#governance-resources">Find guidance &amp; training</a><a class="gv-button gv-secondary" href="#gv-made-by-matt">Explore teaching resources</a></div>
@@ -116,8 +114,9 @@ def page(rows, checked_date, audiences):
 <p id="gv-result-count" role="status" aria-live="polite">'''+str(len(rows))+''' resources</p><p class="gv-small">Publisher content and booking terms can change. Links and access information checked '''+escape(checked_date)+'''. External links take you to the named publisher.</p>
 <noscript><p>All resources are listed below. Search and filters need JavaScript; the links work without it.</p></noscript></section>
 <p id="gv-empty" hidden>No matching resources. Try a broader search or clear the filters.</p>'''+groups+'''
-<section class="gv-next"><h2>More from Made by Matt</h2><div class="gv-actions"><a href="/education-hub/">Professional Education Hub</a>'''+related+'''</div></section>
-</main><footer class="gv-footer gv-wrap"><a href="/">Made by Matt Education</a><a href="/resources/">All resources</a><a href="/privacy/">Privacy</a><a href="mailto:contactmadebymatt@gmail.com">Contact Matt</a></footer></body></html>
+<section class="gv-next"><h2>More from Made by Matt</h2><div class="gv-actions"><a href="/education-hub/">Professional Education Hub</a>'''+related+'''</div>
+<p class="gv-small">Questions about the work? <a href="mailto:contactmadebymatt@gmail.com">Email Matt</a>.</p></section>
+</main></body></html>
 '''
 
 
