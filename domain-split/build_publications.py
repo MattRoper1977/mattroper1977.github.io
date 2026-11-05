@@ -204,7 +204,7 @@ def render_page(preview, kind, origin, config):
     body = body.replace('Play links open the current games. Your saved progress stays with the existing website.', 'Previously played on madebymatt.uk? Browser saves do not transfer automatically to this address. Your existing data remains in that browser at the old address.')
     if kind == "games":
         body = body.replace(config["source_origin"], origin)
-        body = body.replace('</footer>', '<div class="wrap"><a href="/privacy/">Privacy and saved progress</a> · <a href="/support/">Support the games</a></div></footer>')
+        body = body.replace('</footer>', '<div class="wrap"><a href="/privacy/">Privacy and saved progress</a> · <a href="/support/">Support the games (for grown-ups)</a></div></footer>')
         body = body.replace('<footer class="footer">', '<div class="section"><div class="wrap"><h2>Classroom activities</h2><div class="results" id="classroom-activities"></div><h2>For staff</h2><p class="game-note">Professional development activities for teachers and education staff.</p><div class="results" id="staff-activities"></div></div></div><footer class="footer">')
     elif 'href="/privacy/"' not in body:
         body = body.replace('</footer>', '<div class="wrap"><a href="/privacy/">Privacy</a></div></footer>')
