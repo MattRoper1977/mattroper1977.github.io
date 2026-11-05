@@ -277,7 +277,7 @@ def refresh(output, review=False, source_revisions=None):
     approved_revisions = registry()
     if source_revisions is None:
         site = HERE.parents[1]
-        lessons = review_lessons()
+        lessons = review_lessons(output)
         source_revisions = validate_report(json.loads((Path(output)/'build-report.json').read_text()), output, {'Site':site,'Lessons':lessons})
     media = read('media/manifest.json', {'clips':[]})
     # A route may carry more than one accepted capture when its payload has been revised: each
