@@ -259,13 +259,14 @@ def lesson_moved_page(new_relative):
 SHORT_LINKS = HERE / 'short-links.json'
 SHORT_SLUG = re.compile(r'[a-z0-9]+(?:-[a-z0-9]+)*')
 QR_LIMIT = 106
+SLUG_MAX = 48  # keeps LEARN + "/go/" + slug + "/" well inside QR_LIMIT
 
 def short_links():
     if not SHORT_LINKS.is_file():
         return {}
     links = json.loads(SHORT_LINKS.read_text(encoding='utf-8'))['links']
     for slug, target in links.items():
-        assert SHORT_SLUG.fullmatch(slug) and len(slug) <= 40, 'Bad short-link slug: '+slug
+        assert SHORT_SLUG.fullmatch(slug) and len(slug) <= SLUG_MAX, 'Bad short-link slug: '+slug
         parts = PurePosixPath(target).parts
         assert target.endswith('.html') and not target.startswith('/') and '..' not in parts and '\\' not in target, 'Bad short-link target: '+target
         assert len(short_link_url(slug).encode()) <= QR_LIMIT, 'Short link too long for a QR code: '+slug
