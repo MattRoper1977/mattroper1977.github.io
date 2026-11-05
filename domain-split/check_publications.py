@@ -43,7 +43,7 @@ def main():
     support_html = (games/'support/index.html').read_text(encoding='utf-8')
     assert '<title>Support the games · Made by Matt</title>' in support_html
     assert '<h1 id="support-title">For parents, carers and teachers</h1>' in support_html
-    assert 'dedication' not in support_html.lower()
+    assert support_html.count('<section ') == 1
     assert '<a href="/support/">Support the games (for grown-ups)</a>' in (games/'index.html').read_text(encoding='utf-8')
     support_refs = Refs(); support_refs.feed(support_html)
     for ref in support_refs.initial:
