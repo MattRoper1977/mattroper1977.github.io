@@ -6,8 +6,20 @@ const base=process.env.PLAY_REVIEW_URL||'http://127.0.0.1:4173';
 const root=path.resolve(process.env.PLAY_OUTPUT||'.play-review/output/games'),out=path.resolve(process.env.PLAY_CAPTURE||'.play-review/capture');
 fs.mkdirSync(out,{recursive:true});
 const hash=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
-const manifest={schema:1,captured_at:new Date().toISOString(),lessons_commit:cp.execFileSync('git',['-C','.sources/Lessons','rev-parse','HEAD'],{encoding:'utf8'}).trim(),source_commit:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),clips:[]};
+const manifest={schema:1,captured_at:new Date().toISOString(),lessons_commit:JSON.parse(fs.readFileSync(path.join(root,'..','build-report.json'))).source_heads.Lessons,source_commit:cp.execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),clips:[]};
 const requested=JSON.parse(fs.readFileSync(path.join(__dirname,'capture-request.json')));
+const clips=Array.isArray(requested)?requested:requested.clips||[];
+if(!Array.isArray(requested)&&requested.screens?.length){
+ const report=JSON.parse(fs.readFileSync(path.join(root,'..','build-report.json')));
+ if(report.source_heads.Lessons!==requested.lessons_commit)throw Error('Screen capture source differs from request');
+ cp.execFileSync(process.execPath,['tools/capture_play_screens.cjs','--output='+root,'--routes='+requested.screens.join(',')],{stdio:'inherit'});
+ // Re-apply the same overlay so acceptance serves the newly captured poster.
+ cp.execFileSync('python3',['-c',"import sys;from pathlib import Path;sys.path.insert(0,'domain-split');from play.build import refresh,ALIASES;from usage_discovery import inject;p=Path(sys.argv[1]);refresh(p,review=True);[inject(p/'games'/r,choice=True,compact=True) for r in ALIASES]",path.resolve(root,'..')],{stdio:'inherit'});
+ fs.copyFileSync(path.join(__dirname,'screens/manifest.json'),path.join(out,'screens-manifest.json'));
+ fs.copyFileSync(path.join(__dirname,'capture-request.json'),path.join(out,'capture-request.json'));
+ for(const route of requested.screens){const entry=JSON.parse(fs.readFileSync(path.join(__dirname,'screens/manifest.json'))).screens.find(s=>s.route===route);if(!entry)throw Error('Requested screen missing');fs.copyFileSync(path.join(__dirname,'screens',entry.file),path.join(out,entry.file));}
+}
+
 const titles=[['emberwild','Emberwild','/emberwild/'],['apexkick','Apex Kick','/apexkick/'],['voxel','Voxel Frontier','/voxel/'],['offbrand','Off-Brand: After Hours','/offbrand/'],['lumins','Lumins','/Lessons/Games/Lumins.html'],['novasiege','Vector Overdrive: Nova Siege','/novasiege/']];
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 async function press(page,key,ms=400){await page.keyboard.down(key);await wait(ms);await page.keyboard.up(key);}
@@ -96,7 +108,7 @@ async function action(page,id){
  }
 }
 (async()=>{const browser=await chromium.launch({channel:'chrome',headless:true,args:['--enable-webgl','--use-angle=swiftshader','--enable-unsafe-swiftshader']});manifest.browser=browser.version();fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(manifest,null,2));
-for(const[id,title,route]of titles.filter(t=>requested.includes(t[0]))){const viewport={width:960,height:540};const dir=path.join(out,id);fs.mkdirSync(dir,{recursive:true});const context=await browser.newContext({viewport,recordVideo:{dir,size:viewport},acceptDownloads:true});const page=await context.newPage();page.setDefaultTimeout(10000);const began=Date.now();let clipStart=0;const errors=[];page.on('pageerror',e=>errors.push(e.message));const item={id,title,route,status:'needs-visual-review',viewport,device:'Desktop Chrome in CI; fresh isolated context',captured_at:new Date().toISOString(),source_commit:manifest.source_commit,lessons_commit:manifest.lessons_commit,published_sha256:hash(path.join(root,decodeURIComponent(route.replace(/^\//,'')),route.endsWith('/')?'index.html':''))};
+for(const[id,title,route]of titles.filter(t=>clips.includes(t[0]))){const viewport={width:960,height:540};const dir=path.join(out,id);fs.mkdirSync(dir,{recursive:true});const context=await browser.newContext({viewport,recordVideo:{dir,size:viewport},acceptDownloads:true});const page=await context.newPage();page.setDefaultTimeout(10000);const began=Date.now();let clipStart=0;const errors=[];page.on('pageerror',e=>errors.push(e.message));const item={id,title,route,status:'needs-visual-review',viewport,device:'Desktop Chrome in CI; fresh isolated context',captured_at:new Date().toISOString(),source_commit:manifest.source_commit,lessons_commit:manifest.lessons_commit,published_sha256:hash(path.join(root,decodeURIComponent(route.replace(/^\//,'')),route.endsWith('/')?'index.html':''))};
 try{
  await page.goto(base+'/404.html');if(await page.evaluate(()=>localStorage.length)!==0)throw Error('Capture profile was not empty');
  await page.goto(base+route,{waitUntil:'load'});await wait(2800);await shot(page,id+'-start');await start(page,id);await shot(page,id+'-ready');clipStart=(Date.now()-began)/1000;

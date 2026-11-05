@@ -9,6 +9,16 @@ import subprocess
 HERE = Path(__file__).resolve().parent
 SITE = HERE.parents[1]
 
+def review_lessons():
+    """Locate the exact isolated capture checkout; validate_report still proves it."""
+    request=json.loads((HERE/'capture-request.json').read_text())
+    if isinstance(request,dict) and request.get('lessons_commit'):
+        commit=request['lessons_commit']
+        if not re.fullmatch('[0-9a-f]{40}',commit):raise ValueError('Invalid capture Lessons SHA')
+        checkout=SITE/'.play-review'/('capture-lessons-'+commit)
+        if checkout.is_dir():return checkout
+    return SITE/'.sources/Lessons' if (SITE/'.sources/Lessons').is_dir() else SITE.parent/'Lessons'
+
 def git(root, *args):
     return subprocess.check_output(['git', '-C', str(root), *args], text=True).strip()
 
@@ -65,5 +75,5 @@ def validate_report(report, output, roots):
 
 if __name__=='__main__':
     ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);ap.add_argument('--lessons',type=Path)
-    a=ap.parse_args();lessons=a.lessons or (SITE/'.sources/Lessons' if (SITE/'.sources/Lessons').is_dir() else SITE.parent/'Lessons')
+    a=ap.parse_args();lessons=a.lessons or review_lessons()
     print(json.dumps(validate_report(json.loads((a.output/'build-report.json').read_text()),a.output,{'Site':SITE,'Lessons':lessons})))

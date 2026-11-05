@@ -22,9 +22,9 @@ import re
 import shutil
 from urllib.parse import unquote, urlparse, quote
 if __package__:
-    from .source_revisions import registry, validate_report
+    from .source_revisions import registry, validate_report, review_lessons
 else:
-    from source_revisions import registry, validate_report
+    from source_revisions import registry, validate_report, review_lessons
 
 HERE = Path(__file__).resolve().parent
 # J92 (rulings uq, ua): the canonical shelf manifest, read here for the enrichment
@@ -275,7 +275,7 @@ def refresh(output, review=False, source_revisions=None):
     approved_revisions = registry()
     if source_revisions is None:
         site = HERE.parents[1]
-        lessons = site/'.sources/Lessons' if (site/'.sources/Lessons').is_dir() else site.parent/'Lessons'
+        lessons = review_lessons()
         source_revisions = validate_report(json.loads((Path(output)/'build-report.json').read_text()), output, {'Site':site,'Lessons':lessons})
     media = read('media/manifest.json', {'clips':[]})
     # A route may carry more than one accepted capture when its payload has been revised: each
