@@ -18,7 +18,7 @@
  * title (displayTitle after the hub's display-titles rule) are the hub's.
  *
  * Usage: node home_hub_counts.cjs <lessons-tree> <subject-query>... [--week <query>:<term>:<week>]...
- *   e.g. node home_hub_counts.cjs L science humanities-re art-studio lifeskills --week science:Aut2:6
+ *   e.g. node home_hub_counts.cjs L science humanities-re art-studio lifeskills --week science:Aut2:2
  * Prints one JSON object on stdout; any failure exits non-zero.
  *   counts:   {query: distinctLessons(card.rows)}
  *   pathways: {query: {BUILD|GROW|LAUNCH: distinctLessons of the card rows the hub tiers to that

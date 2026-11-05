@@ -66,7 +66,7 @@ exports.verify = async ({page, origin, rules, record}) => {
   assert.deepEqual(hub.flagship.map(f => f.length), [1, 1, 1], 'The flagship week resolves to exactly one registry lesson per pathway on the hub');
   const flagship = hub.flagship.map(f => f[0]);
   assert.equal(new Set(flagship.map(f => f.term + ':' + f.week)).size, 1, 'The three flagship lessons are one week of the lesson order');
-  // G1: the homepage flagship is the week of record (Science, Autumn 2 Week 6) whenever that week resolves on the hub to
+  // G1: the homepage flagship is the week of record (Science, Autumn 2 Week 2) whenever that week resolves on the hub to
   // one registry lesson per pathway under one label; only otherwise the spec fallback (Humanities & RE, Autumn 2 Week 1).
   const resolves = weeks => weeks.every(p => p.length === 1) && new Set(weeks.map(p => p[0].label)).size === 1;
   const due = resolves(hub.ofRecord[0]) ? 0 : resolves(hub.ofRecord[1]) ? 1 : -1;
