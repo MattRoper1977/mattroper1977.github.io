@@ -581,7 +581,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   const SAVE_KEY = 'mbm_apexkick_v10_save';
   const defaultSave = () => ({
     credits: 2500, goals: 0, shots: 0, keeperSaves: 0, bestScore: 0, bestTimeAttack: 0,
-    unlockedStage: 1, sound: true, assist: true,
+    unlockedStage: 1, tourCleared: 0, sound: true, assist: true,
     ownedKits: ['cyan'], equippedKit: 'cyan', ownedTrails: ['emerald'], equippedTrail: 'emerald',
     trophies: []
   });
@@ -610,6 +610,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       s.credits = Number.isFinite(s.credits) ? s.credits : 2500;
       s.bestTimeAttack = Number.isFinite(s.bestTimeAttack) ? s.bestTimeAttack : 0;
       s.unlockedStage = Math.min(STAGES.length, Math.max(1, Number(s.unlockedStage) || 1));
+      s.tourCleared = Math.min(STAGES.length, Math.max(Number(s.tourCleared) || 0, s.unlockedStage - 1));
       return s;
     } catch (e) {
       try { localStorage.setItem(SAVE_KEY + '_corrupt_backup', raw); } catch (_) {}
@@ -1912,7 +1913,9 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       for (const def of wallGroup.children) {
         const dx = Math.abs(state.ballPos.x - def.position.x), dz = Math.abs(state.ballPos.z - def.position.z);
         const dy = state.ballPos.y - def.position.y;
-        if (dx < 0.28 && dz < 0.25 && dy > 0 && dy < 1.75) {
+        // A fast ball can step right over the 0.5 m band in one substep, so also catch it crossing the wall's plane.
+        const crossed = (prevZ - def.position.z) * (state.ballPos.z - def.position.z) <= 0;
+        if (dx < 0.28 && (dz < 0.25 || crossed) && dy > 0 && dy < 1.75) {
           sfx.kick(0.5);
           state.ballVel.z = Math.abs(state.ballVel.z) * 0.45;
           state.ballVel.x *= 0.5;
@@ -2225,6 +2228,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       const cleared = state.goalsThisStage >= state.reqGoals;
       const reward = cleared ? 250 + state.goalsThisStage * 50 : 60;
       save.credits += reward;
+      if (cleared && state.mode === 'tour') save.tourCleared = Math.max(save.tourCleared || 0, state.stageIdx + 1);
       if (cleared && state.mode === 'tour' && state.stageIdx + 1 >= save.unlockedStage && save.unlockedStage < STAGES.length) {
         save.unlockedStage = state.stageIdx + 2;
       }
@@ -2485,7 +2489,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     document.getElementById('stat-acc').textContent = `${save.shots > 0 ? Math.round((save.goals / save.shots) * 100) : 0}%`;
     document.getElementById('stat-best').textContent = save.bestScore.toLocaleString();
     document.getElementById('stat-ta').textContent = save.bestTimeAttack.toLocaleString();
-    document.getElementById('stat-unlocked').textContent = `${save.unlockedStage - 1} / ${STAGES.length}`;
+    document.getElementById('stat-unlocked').textContent = `${save.tourCleared || 0} / ${STAGES.length}`;
     const grid = document.getElementById('level-grid');
     grid.innerHTML = '';
     STAGES.forEach((stg, idx) => {
