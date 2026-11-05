@@ -20,7 +20,10 @@ import json
 from pathlib import Path
 import re
 import shutil
+import sys
 from urllib.parse import unquote, urlparse, quote
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from education_support import KOFI
 if __package__:
     from .source_revisions import registry, validate_report
 else:
@@ -243,6 +246,40 @@ def noscript_list(rows):
     ordered = sorted(rows, key=lambda r: shown_title(r).casefold())
     return ('<noscript><section class="az-list" aria-labelledby="az-title"><h3 id="az-title">Every game, A to Z</h3><ul>'
             + ''.join('<li><a href="' + esc(r['route']) + '">' + esc(shown_title(r)) + '</a></li>' for r in ordered) + '</ul></section></noscript>')
+
+def support_page(logo='', footer_logo=''):
+    return ('<!doctype html>\n'
+            '<html lang="en-GB">\n'
+            '<head>\n'
+            '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">\n'
+            '<title>Support the games · Made by Matt</title>\n'
+            '<meta name="description" content="Every game on Made by Matt Play is free and stays free. If one has given you a good evening, a small tip helps pay for hosting and new games.">\n'
+            '<meta name="theme-color" content="#081422"><link rel="canonical" href="' + ORIGIN + '/support/">\n'
+            '<link rel="manifest" href="/site.webmanifest">\n'
+            '<link rel="stylesheet" href="/assets/mbm-tokens.css">\n'
+            '<link rel="stylesheet" href="/assets/play/play.css">\n'
+            '</head>\n'
+            '<body data-site-kind="games" data-page="support">\n'
+            '<a class="skip" href="#support-main">Skip to content</a>\n'
+            '<header class="masthead" data-mbm-chrome="play" data-theme="dark"><a class="brand" href="/">' + logo + '<span class="brand-lockup"><span class="brand-name">Made by Matt <strong>Play</strong></span><span class="brand-tagline">Play • Explore • Escape</span></span></a>\n'
+            '<nav class="estate-switcher" aria-label="Switch between Education and Play"><a class="switcher-link" href="https://madebymatt.uk/">Education <span aria-hidden="true">↗</span></a><a class="switcher-link" href="/">Play</a></nav>\n'
+            '<div class="head-actions"><a class="icon-button" id="search-jump" href="/#query" aria-label="Search games"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></a>\n'
+            '<details class="menu"><summary aria-label="Menu"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></summary><nav aria-label="Main menu"><a href="/#all-games">All games</a><a href="/#classroom">For your classroom</a><a href="/game-saves/">Transfer saves</a><a href="/privacy/">Privacy and saved progress</a><a href="/stats/">Statistics</a></nav></details></div></header>\n'
+            '<main id="support-main" class="support-main">\n'
+            '<section class="support-card" aria-labelledby="support-title">\n'
+            '<h1 id="support-title">Support the games</h1>\n'
+            '<p>Every game on Made by Matt Play is free and stays free—no ads, no paywalls, no logins and no pop-ups.</p>\n'
+            '<p>If one of the games has given you a good evening, a small tip helps pay for hosting and building new games.</p>\n'
+            '<p class="support-note">Nothing is collected here—this link goes to an outside tip page.</p>\n'
+            '<p class="support-actions"><a class="play support-tip-btn" href="' + esc(KOFI) + '" rel="noopener noreferrer">Leave a tip</a></p>\n'
+            '</section>\n'
+            '<section class="support-dedications" aria-labelledby="dedications-title">\n'
+            '<h2 id="dedications-title">Dedications (coming soon)</h2>\n'
+            '<p>Supporters will soon be able to have a name in a game’s credits, with details to follow.</p>\n'
+            '</section>\n'
+            '</main>\n'
+            '<footer><nav aria-label="Footer"><a href="/privacy/">Privacy and saved progress</a><span aria-hidden="true">·</span><a href="/support/" aria-current="page">Support the games</a><span aria-hidden="true">·</span><a href="mailto:contactmadebymatt@gmail.com">Report a problem</a><span aria-hidden="true">·</span><a class="education-return" href="https://madebymatt.uk/">Made by Matt Education ↗</a></nav><p class="brand-line"><a class="footer-brand" href="/">' + footer_logo + '<span>Made by Matt Play</span></a></p><p class="footer-motto">Play • Explore • Escape</p></footer>\n'
+            '</body></html>\n')
 
 def slim(row):
     """The inline dataset play.js reads: what the lanes, filters and sheet need, nothing else."""
@@ -546,6 +583,9 @@ def refresh(output, review=False, source_revisions=None):
     assert '@@' not in template
     for name in ALIASES:
         p=target/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(template)
+    support_file = target / 'support/index.html'
+    support_file.parent.mkdir(parents=True, exist_ok=True)
+    support_file.write_text(support_page(logo, footer_logo))
     assert (target/'data/domain-catalogue.json').read_bytes() == original
     report={'counts':counts,'total':len(rows),'catalogue_sha256':hashlib.sha256(original).hexdigest(),
             'brand_status':brand.get('status','original-asset-unresolved'), 'accepted_clips':len(clips_by_route),

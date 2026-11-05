@@ -18,15 +18,16 @@ from urllib.parse import quote, unquote, urljoin, urlparse
 
 import build_preview
 from education_expansion import refresh_play
+from education_support import KOFI
 from usage_discovery import refresh_play as refresh_play_usage
-from play.build import refresh as refresh_play_discovery
+from play.build import refresh as refresh_play_discovery, support_page as games_support
 from play.source_revisions import select as select_source_revision, registry as source_revision_registry
 from play.manifest import verify as verify_play_manifest
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 PLAY_CANONICAL_ORIGIN = 'https://www.madebymatt-play.uk'
-PLAY_UTILITY_ROUTES = ['/privacy/', '/game-saves/', '/stats/', '/stats/on-this-device/']
+PLAY_UTILITY_ROUTES = ['/privacy/', '/game-saves/', '/stats/', '/stats/on-this-device/', '/support/']
 CENSUS = ROOT / "reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json"
 
 
@@ -203,7 +204,7 @@ def render_page(preview, kind, origin, config):
     body = body.replace('Play links open the current games. Your saved progress stays with the existing website.', 'Previously played on madebymatt.uk? Browser saves do not transfer automatically to this address. Your existing data remains in that browser at the old address.')
     if kind == "games":
         body = body.replace(config["source_origin"], origin)
-        body = body.replace('</footer>', '<div class="wrap"><a href="/privacy/">Privacy and saved progress</a></div></footer>')
+        body = body.replace('</footer>', '<div class="wrap"><a href="/privacy/">Privacy and saved progress</a> · <a href="/support/">Support the games</a></div></footer>')
         body = body.replace('<footer class="footer">', '<div class="section"><div class="wrap"><h2>Classroom activities</h2><div class="results" id="classroom-activities"></div><h2>For staff</h2><p class="game-note">Professional development activities for teachers and education staff.</p><div class="results" id="staff-activities"></div></div></div><footer class="footer">')
     elif 'href="/privacy/"' not in body:
         body = body.replace('</footer>', '<div class="wrap"><a href="/privacy/">Privacy</a></div></footer>')
@@ -368,6 +369,7 @@ def main():
     for route in ['index.html', 'games/index.html', 'main/index.html', 'for/pupils/index.html', 'Games/index.html', 'Lessons/index.html']:
         put(games, route, game_index.replace('href="'+config['games_origin']+'/"', 'href="'+config['games_origin']+'/"', 1))
     put(games, 'privacy/index.html', games_privacy(PLAY_CANONICAL_ORIGIN))
+    put(games, 'support/index.html', games_support())
     refresh_play(output)
     revision_specs = source_revision_registry()
     revisions = {}
