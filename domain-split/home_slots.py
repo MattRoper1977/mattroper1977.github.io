@@ -18,7 +18,7 @@ Where each slot comes from (uz-6 (b)):
   published-education header fragment (tools/chrome/header.html).
 * audiences.doors.{0..3}: data/audience-homepages.json by key (pupils,
   teachers, parents, schools), as subject_slots.py reads it.
-* flagship: Science, Autumn 2 Week 6, one Lessons registry row (resources.json)
+* flagship: Science, Autumn 2 Week 2, one Lessons registry row (resources.json)
   per pathway, BUILD, GROW, LAUNCH. The card, the pathway (tierOf) and the
   display title (the display-titles rule) are the hub's own, computed BY the
   Lessons hub.js (home_hub_counts.cjs); the outcome is the row's .desc and the
@@ -105,8 +105,10 @@ import tempfile
 HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / 'home' / 'home.html'
 # home.html r6, the accepted draft of record (J93 revision 1, ruling vj-1).
-# Pinned: the sha256 of home.html r6 (35,244 B), the file of record in ruling vj-1 (r5 was 32f53a11, uz-6 and vb-3).
-TEMPLATE_SHA256 = 'da25720750cf039cf9ac01fa7e84143ca5a7d6c05dfb7b837f2951a24058c04b'
+# Pinned: the sha256 of home.html r6 (35,157 B) as the flagship week of record moved to Autumn 2 Week 2: only the
+# placeholder text of the ten flagship week, title and outcome slots moved (r6 of record in ruling vj-1 was da257207,
+# 35,244 B; r5 was 32f53a11, uz-6 and vb-3).
+TEMPLATE_SHA256 = '1b720eacca7a3a2981b2f852922c9831e24d5c33c3f19cf513e55e3fd16c5fe0'
 NODE_SCRIPT = HERE / 'home_hub_counts.cjs'
 RECORD = 'data/audience-homepages.json'
 HEADER = 'tools/chrome/header.html'
@@ -115,8 +117,9 @@ SPINE = 'data/calendar-spine.json'
 
 DOOR_KEYS = ('pupils', 'teachers', 'parents', 'schools')
 PATHWAYS = ('BUILD', 'GROW', 'LAUNCH')
-# Spec section 6: the flagship week, and the spec's fallback. (query, term, week)
-FLAGSHIP = ('science', 'Aut2', 6)
+# The flagship week of record, and the spec's fallback. (query, term, week). Spec section 6 named Autumn 2 Week 6;
+# moved to Autumn 2 Week 2, the week taught at public launch (9-13 Nov). appendix-a-site.json homeFlagship pins the same.
+FLAGSHIP = ('science', 'Aut2', 2)
 FALLBACK = ('humanities-re', 'Aut2', 1)
 # uz-6 (d), vb-3 (g): never a pack badge.
 BRAND_ASSET = 'approved-mark.jpg'
@@ -878,7 +881,7 @@ def self_test(lessons_root=None):
             real_links = re.findall(r'packMembers\.\d+\.sizeLabel" href="([^"]+)" title="([^"]+)"', real_page)
             exists = [(lessons_root / unquote(h[len('/Lessons/'):])).is_file() for h, _ in real_links]
             control('real: the pack links resolve to files in the tree, each titled with its size',
-                    len(real_links) == sum(b - 1 for b in real_badges) and len(real_links) in (24, 32, 36) and all(exists),
+                    len(real_links) == sum(b - 1 for b in real_badges) and len(real_links) in (24, 28, 32, 36) and all(exists),
                     f'{sum(exists)}/{len(real_links)}')
             real_splits = re.findall(r'data-slot="subjects\.hubs\.\d\.pathwaySplit">([^<]*)<', real_page)
             control('real: four pathway lines from the hub counts', len(real_splits) == 4 and all(real_splits), ' | '.join(real_splits[:1]))
