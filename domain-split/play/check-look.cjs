@@ -30,6 +30,7 @@ function ratio(a,b){const l=c=>{const n=c.match(/[\d.]+/g).slice(0,3).map(Number
    }
    const normal=await spotlight.locator('.play').evaluate(e=>{const s=getComputedStyle(e);return{s:s.color,b:s.backgroundColor};});assert(ratio(normal.s,normal.b)>=7,'normal CTA text contrast >=7:1');
    await page.screenshot({path:path.join(out,`${width}x${height}-home.png`)});
+   if(width===390){await page.locator('#discovery-form').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,`${width}x${height}-search.png`)});}
    await page.locator('#spotlight').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,`${width}x${height}-spotlight.png`)});
    await page.locator('#filters-open').click();
    assert.equal(await page.locator('#calm-toggle').getAttribute('aria-pressed'),'true','system reduced motion defaults to calm');
