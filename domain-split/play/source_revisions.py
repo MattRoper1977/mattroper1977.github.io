@@ -9,15 +9,30 @@ import subprocess
 HERE = Path(__file__).resolve().parent
 SITE = HERE.parents[1]
 
-def review_lessons():
-    """Locate the exact isolated capture checkout; validate_report still proves it."""
+def capture_revision_for(head, request):
+    """Only the frozen capture-workflow source may be replaced by its request.
+
+    A Games release's caller-selected current/future source must stay exact.
+    """
+    if not isinstance(request,dict) or not request.get('lessons_commit'):return head
+    for field in ('lessons_commit','review_lessons_commit'):
+        if not re.fullmatch('[0-9a-f]{40}',request.get(field,'')):
+            raise ValueError('Capture requires a full '+field+' SHA')
+    return request['lessons_commit'] if head==request['review_lessons_commit'] else head
+
+def review_lessons(output=None):
+    """Find the checkout matching the BUILT source, never a different request."""
     request=json.loads((HERE/'capture-request.json').read_text())
+    candidates=[]
     if isinstance(request,dict) and request.get('lessons_commit'):
         commit=request['lessons_commit']
         if not re.fullmatch('[0-9a-f]{40}',commit):raise ValueError('Invalid capture Lessons SHA')
-        checkout=SITE/'.play-review'/('capture-lessons-'+commit)
-        if checkout.is_dir():return checkout
-    return SITE/'.sources/Lessons' if (SITE/'.sources/Lessons').is_dir() else SITE.parent/'Lessons'
+        candidates.append(SITE/'.play-review'/('capture-lessons-'+commit))
+    candidates += [SITE/'.sources/Lessons', SITE.parent/'Lessons']
+    wanted=json.loads((Path(output)/'build-report.json').read_text())['source_heads']['Lessons'] if output else None
+    for checkout in candidates:
+        if checkout.is_dir() and (wanted is None or git(checkout,'rev-parse','HEAD')==wanted):return checkout
+    raise ValueError('No Lessons checkout matches the built source: '+str(wanted))
 
 def git(root, *args):
     return subprocess.check_output(['git', '-C', str(root), *args], text=True).strip()
@@ -75,5 +90,5 @@ def validate_report(report, output, roots):
 
 if __name__=='__main__':
     ap=argparse.ArgumentParser();ap.add_argument('--output',type=Path,required=True);ap.add_argument('--lessons',type=Path)
-    a=ap.parse_args();lessons=a.lessons or review_lessons()
+    a=ap.parse_args();lessons=a.lessons or review_lessons(a.output)
     print(json.dumps(validate_report(json.loads((a.output/'build-report.json').read_text()),a.output,{'Site':SITE,'Lessons':lessons})))
