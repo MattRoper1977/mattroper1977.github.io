@@ -43,6 +43,13 @@ function ratio(a,b){const l=c=>{const n=c.match(/[\d.]+/g).slice(0,3).map(Number
    checks.push({width,height,phonePlaceholder:true,computedCount:data.catalogue,apexKickSpotlight:true,neutralTextFreeDecoration:true,fullHeightArt:width>=700,playlistClamped:width>=1050,calmToggle:true,contrastToggle:true,normalCTARatio:ratio(normal.s,normal.b),highCTARatio:ratio(high.s,high.b)});
    await context.close();
   }
+  const forced=await browser.newContext({viewport:{width:390,height:844},forcedColors:'active'}),page=await forced.newPage();
+  await page.goto(base);await page.waitForSelector('#spot-status:not([hidden])',{state:'attached'});
+  assert.equal(await page.locator('html').getAttribute('data-contrast'),'high','forced-colours preference defaults to high contrast');
+  assert.equal(await page.locator('#contrast-toggle').getAttribute('aria-pressed'),'true');
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'forced-colours layout fits phone');
+  checks.push({width:390,height:844,forcedColors:true,systemDefaultHighContrast:true,overflow:false});
+  await forced.close();
  }finally{await browser.close();}
  fs.writeFileSync(path.join(out,'look-checks.json'),JSON.stringify({pass:true,checks},null,2)+'\n');console.log(JSON.stringify({pass:true,checks},null,2));
 })().catch(e=>{console.error(e);process.exitCode=1;});
