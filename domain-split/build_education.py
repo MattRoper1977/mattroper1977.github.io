@@ -101,6 +101,7 @@ SITE_GENERATOR_INPUTS = {
     'data/as1-pilot.json',
     'data/as1-sizing.json',
     'data/as1-storage-registry.json',
+    'data/as1-storage-census-play-renames.json.gz',
 }
 
 
