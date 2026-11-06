@@ -130,7 +130,7 @@ def retiring_set_problems(retiring, approved):
 
 
 # The exact 282 R-RAISE pending rows (json.dumps(rows, sort_keys=True), in reviewed order), so no other row under
-# those folders can stand in for one of them.
+# those folders can stand in for one of them. Pinned 6 November 2026, taken on the Lessons #807 build (owner ruling R-RAISE).
 RAISE_PENDING_ROWS_SHA256 = '7ea92cc4c00ee4d2c72e750cab5c846a56a3f2a58323e9d12ac514a3d491fccd'
 RAISE_PENDING_ROOTS = ('HUM_Autumn_2_BUILD_Reviewed', 'HUM_Autumn_2_GROW_Reviewed', 'HUM_Autumn_2_LAUNCH_Reviewed',
                        'RE_Autumn_BUILD_Reviewed', 'RE_Autumn_GROW_Reviewed', 'RE_Autumn_LAUNCH_Reviewed')
