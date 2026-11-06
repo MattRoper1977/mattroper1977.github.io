@@ -279,9 +279,9 @@ def refresh(output, review=False, source_revisions=None):
         source_revisions = validate_report(json.loads((Path(output)/'build-report.json').read_text()), output, {'Site':site,'Lessons':lessons})
     media = read('media/manifest.json', {'clips':[]})
     # A route may carry more than one accepted capture when its payload has been revised: each
-    # clip binds to the exact bytes it was recorded from (published_sha256), and the clip whose
-    # hash equals the payload actually built is the one this build may show. A build whose
-    # payload matches none of a route's clips is still refused below (recapture/review required).
+    # clip binds to the exact bytes it was recorded from (published_sha256), and only a clip
+    # whose hash equals the payload actually built may be shown. Other approved revisions
+    # omit the clip until recapture, just as they omit revision-bound stills below.
     clips_by_route = {}
     for x in media.get('clips', []):
         if x.get('status') == 'accepted': clips_by_route.setdefault(key(x['route']), []).append(x)
@@ -337,15 +337,18 @@ def refresh(output, review=False, source_revisions=None):
                            inputs=list(m.get('controls', [])), facets=list(m.get('classroom_facets', [])),
                            sessionBand=band if band in band_labels and band != 'unstated' else '')
                 row['sessionBandLabel'] = band_labels.get(row['sessionBand'], '') if row['sessionBand'] else ''
-            candidates = clips_by_route.get(key(path), [])
-            if candidates:
-                built = hashlib.sha256(payload.read_bytes()).hexdigest()
-                row['media'] = next((c for c in candidates if c['published_sha256'] == built), candidates[-1])
             actual_hash = hashlib.sha256(payload.read_bytes()).hexdigest()
             # Independent publishers intentionally use different approved game
             # revisions. Optional discovery assets may only describe their exact
             # revision; they must not prevent another approved revision building.
             reviewed_hashes = {source.get('published_sha256')} | {r['published_sha256'] for r in approved_revisions.get(output_path, {}).get('revisions', [])}
+            candidates = clips_by_route.get(key(path), [])
+            if any(c['published_sha256'] not in reviewed_hashes for c in candidates):
+                raise ValueError('Unreviewed game clip binding: ' + entry['title'])
+            if candidates:
+                row['media'] = next((c for c in candidates if c['published_sha256'] == actual_hash), {})
+                if not row['media']:
+                    omitted_discovery.append({'route':row['route'], 'kind':'clip', 'reason':'Different approved game revision'})
             reviewed = discovery_review.get(key(path))
             if reviewed:
                 if reviewed['published_sha256'] not in reviewed_hashes:
