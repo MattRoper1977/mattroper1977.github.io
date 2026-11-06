@@ -2,7 +2,7 @@
   "captured_head": "54d6efb25594dfc3e6ed89bdee0916b85900b9a1",
   "workflow_run": 34903180999,
   "artifact_sha256": "5e531164b90498570eb134241f4a117ce27c312c089d5af8058367dbf1fab558",
-  "review": "Identifiable game screens visually inspected; initial screens are not gameplay footage. Eight earlier generic splash captures replaced by four-second captures from run34907070023. The six accepted gameplay previews retain priority. Captures are shown only for their exact approved game revision. Twenty current-publisher-source opening screens inspected and copied unchanged from run34909744930. Lighthouse instructions-only capture rejected; replacement still pending. Lighthouse title capture from run34910906227 inspected and accepted after ordinary first-visit guide dismissal. All 63 stills now match the current publisher Lessons source. PLAY-Q1 batch 1 (2026-09-16): fourteen stills recaptured locally with tools/capture_play_screens.cjs from a full local Play build of the splash-stamped payloads (1280x720, ?splash=skip, three-second settle) and visually inspected as identifiable game title screens; each is bound to the published digest it was captured from. PLAY-Q1 §7.2 pilot (2026-09-16): the Apex Curl still recaptured the same way after the V4 HQ tap-size fix and inspected. PLAY-Q1 batch 2 (2026-09-16): the seven Lessons R1-R7 stills recaptured the same way after their re-stamp and inspected. PLAY-Q1 batch 3 re-stamp (2026-09-16): the same fourteen Site stills recaptured the same way from a local Play build of the routes carrying the corrected generated region (real <body> insert point, way-out arming, guard release), each rebound to the published digest the publisher measured; 8 moved and were inspected as identifiable game title screens, 6 came back byte-identical to their batch 1 capture and keep those reviewed bytes. Two Lessons opening screens (the World Cup final and the R Gate calibration game) were recaptured on 9 Oct 2026 at Lessons 3d31e441 after names-fix PR 9, as a LOCAL capture (ruling na-1): domain-split/play/check.cjs (sha256 218dceabe0eff6efeb5702db2c5f832ab30af2fcb2e3d042a3dde0e02c238922) test all-69-rendered-start-surfaces, 1280x720, reducedMotion reduce, JPEG quality 65, Playwright 1.55.0, with Playwright Chromium build 1194 standing in for the chrome channel (Google Chrome not installable in the landing container); visually inspected.",
+  "review": "Identifiable game screens visually inspected; initial screens are not gameplay footage. Eight earlier generic splash captures replaced by four-second captures from run34907070023. The six accepted gameplay previews retain priority. Captures are shown only for their exact approved game revision. Twenty current-publisher-source opening screens inspected and copied unchanged from run34909744930. Lighthouse instructions-only capture rejected; replacement still pending. Lighthouse title capture from run34910906227 inspected and accepted after ordinary first-visit guide dismissal. All 63 stills now match the current publisher Lessons source. PLAY-Q1 batch 1 (2026-09-16): fourteen stills recaptured locally with tools/capture_play_screens.cjs from a full local Play build of the splash-stamped payloads (1280x720, ?splash=skip, three-second settle) and visually inspected as identifiable game title screens; each is bound to the published digest it was captured from. PLAY-Q1 §7.2 pilot (2026-09-16): the Apex Curl still recaptured the same way after the V4 HQ tap-size fix and inspected. PLAY-Q1 batch 2 (2026-09-16): the seven Lessons R1-R7 stills recaptured the same way after their re-stamp and inspected. PLAY-Q1 batch 3 re-stamp (2026-09-16): the same fourteen Site stills recaptured the same way from a local Play build of the routes carrying the corrected generated region (real <body> insert point, way-out arming, guard release), each rebound to the published digest the publisher measured; 8 moved and were inspected as identifiable game title screens, 6 came back byte-identical to their batch 1 capture and keep those reviewed bytes. Two Lessons opening screens (the the Cup final and the R Gate calibration game) were recaptured on 9 Oct 2026 at Lessons 3d31e441 after names-fix PR 9, as a LOCAL capture (ruling na-1): domain-split/play/check.cjs (sha256 218dceabe0eff6efeb5702db2c5f832ab30af2fcb2e3d042a3dde0e02c238922) test all-69-rendered-start-surfaces, 1280x720, reducedMotion reduce, JPEG quality 65, Playwright 1.55.0, with Playwright Chromium build 1194 standing in for the chrome channel (Google Chrome not installable in the landing container); visually inspected.",
   "screens": [
     {
       "route": "/cyberpulse/",
@@ -21,12 +21,16 @@
       "status": "reviewed"
     },
     {
-      "route": "/houseolympiad/",
-      "file": "game-houseolympiad.jpg",
-      "sha256": "1b3972ae34093381b928a43fc064ad358c6fec3a1a57b322da79fc5c22e8b501",
-      "published_sha256": "cc30e24b703f5ce86e9cf057db75310b7e813e41053fb303472242284bb3ea6f",
+      "route": "/housegames/",
+      "file": "game-housegames.jpg",
+      "sha256": "41cfc61ec92116391bd4c53d31d6c811e7650b4a4ff4a54ab6157b2ea4a99e70",
+      "published_sha256": "501c925991df500e194305bd030bcbc75f4e0bce8f934998f514c263a98eeffa",
       "caption": "Captured game screen.",
-      "status": "reviewed"
+      "status": "reviewed",
+      "captured_head": "f5fd6733e6676ddc7e7174aae89e1b843080f19a",
+      "captured_at": "2026-11-06T21:40:27.183Z",
+      "lessons_commit": "0cd73a04c039c21a8f0acdc7c20e629587b7dab5",
+      "generator": "tools/capture_play_screens.cjs; 1280x720 real capture resized to 640x360"
     },
     {
       "route": "/titanforge/",
@@ -37,12 +41,16 @@
       "status": "reviewed"
     },
     {
-      "route": "/olympics/",
+      "route": "/worldstage/",
       "file": "game-global-games-championship-simulator.jpg",
-      "sha256": "463e86a5af24df32bb0e9e425cb5f0cc1022b4613f1e29a4bafc1407fead8757",
-      "published_sha256": "dfd1f2df5988c47b3bf536fbb2fbfa252d389aa62cd0c02e6593621e1fbbad72",
+      "sha256": "ef5578b0d6727c1d1211bf92a1d6f5ac6436ad29877f56e708ef9590162b860e",
+      "published_sha256": "fbd3fbde45b4c2571d55edaf954c906e417ed74f7074696435af6b5e7610285c",
       "caption": "Captured game screen.",
-      "status": "reviewed"
+      "status": "reviewed",
+      "captured_head": "18d383a56fff21edfc377e4c6e255b55094ba3f4",
+      "captured_at": "2026-11-06T21:59:33.321Z",
+      "lessons_commit": "8b66017f15ad3354f3c3e07c088e5e2834107420",
+      "generator": "tools/capture_play_screens.cjs; 1280x720 real capture resized to 640x360"
     },
     {
       "route": "/fracture/",
@@ -118,12 +126,16 @@
       "status": "reviewed"
     },
     {
-      "route": "/Lessons/Games/voxelcraft.html",
-      "file": "game-lessons-games-voxelcraft-html.jpg",
-      "sha256": "4a752858dba355813f1d9474150c189fe55a0433872e0e751102b0f3352dad2e",
-      "published_sha256": "48a5c3ee3c5ee908f703d0c29b53423c70136601661b0701c5b87ed570e3579d",
+      "route": "/Lessons/Games/Block_Builder.html",
+      "file": "game-block-builder.jpg",
+      "sha256": "277e4d2da0319c712193f714ae70ed0511ed5415a1097d931f5990c043f8873a",
+      "published_sha256": "eb715339f3de1048672742fb55254bf9249babe72a270f75b19a82cb43a50509",
       "caption": "Captured game screen.",
-      "status": "reviewed"
+      "status": "reviewed",
+      "captured_head": "18d383a56fff21edfc377e4c6e255b55094ba3f4",
+      "captured_at": "2026-11-06T21:59:49.676Z",
+      "lessons_commit": "8b66017f15ad3354f3c3e07c088e5e2834107420",
+      "generator": "tools/capture_play_screens.cjs; 1280x720 real capture resized to 640x360"
     },
     {
       "route": "/Lessons/Games/Vortex.html",
@@ -291,28 +303,40 @@
       "status": "reviewed"
     },
     {
-      "route": "/Lessons/Games/WorldCup_ThreeLions_Final.html",
-      "file": "game-lessons-games-worldcup-threelions-final-html.jpg",
-      "sha256": "dd158cabafebe2d6f3840a4871ec77b368c67b57b5b3889f34c63f2af0c614e0",
-      "published_sha256": "776e9b57631c935862f656fae8f0942fc0ffc0482bb42b90769c42a56925ed57",
+      "route": "/Lessons/Games/Cup_Final.html",
+      "file": "game-cup-final.jpg",
+      "sha256": "4fb11422741c23581c6e67b6c032c77d8654d4a133167fb06ff1346583d1b765",
+      "published_sha256": "ba96143c03cde6a4b6c0e54b7e0b478877fde1070ef03051c7965c5dc6d1aa68",
       "caption": "Captured game screen.",
-      "status": "reviewed"
+      "status": "reviewed",
+      "captured_head": "18d383a56fff21edfc377e4c6e255b55094ba3f4",
+      "captured_at": "2026-11-06T21:59:37.160Z",
+      "lessons_commit": "8b66017f15ad3354f3c3e07c088e5e2834107420",
+      "generator": "tools/capture_play_screens.cjs; 1280x720 real capture resized to 640x360"
     },
     {
-      "route": "/Lessons/Games/WorldCup_v3_MatchDirector.html",
-      "file": "game-lessons-games-worldcup-v3-matchdirector-html.jpg",
-      "sha256": "66b83a7e540f862b560b143d9abd4ebbac590a96c1e6c194decfb3dac0179080",
-      "published_sha256": "2a92bf6701f5b7573ae361c1599aa504dc1f06e9437c27a3d11c90600d0db671",
+      "route": "/Lessons/Games/Match_Director.html",
+      "file": "game-match-director.jpg",
+      "sha256": "74d1b6699f774293e6ecee4ecd1e74971d33715dd1d61bcaf4d1a1e1bb514358",
+      "published_sha256": "cf114ae9313c06c4b555fcfff4a49e2fc919dafbbde5a1c34f9474889ca28f74",
       "caption": "Captured game screen.",
-      "status": "reviewed"
+      "status": "reviewed",
+      "captured_head": "18d383a56fff21edfc377e4c6e255b55094ba3f4",
+      "captured_at": "2026-11-06T21:59:41.445Z",
+      "lessons_commit": "8b66017f15ad3354f3c3e07c088e5e2834107420",
+      "generator": "tools/capture_play_screens.cjs; 1280x720 real capture resized to 640x360"
     },
     {
-      "route": "/Lessons/Games/WorldCup_v5_Showdown.html",
-      "file": "game-lessons-games-worldcup-v5-showdown-html.jpg",
-      "sha256": "48d313279345c1d627f6cd38d13aea5f194e837de21d2dd1f361d26fee1551d0",
-      "published_sha256": "7b94d0ce7a925cb3ffa4f8f62ec4585a49cf539f9ccbed9ba75fef238d5155b0",
+      "route": "/Lessons/Games/Cup_Showdown.html",
+      "file": "game-cup-showdown.jpg",
+      "sha256": "5d24bccbb3c6d4e169c5aa7ab88445ad7b9e434c36c8afc295b2c42333901022",
+      "published_sha256": "07796c9e918a214234cee74fdddc15449097f881a7816b144f874b730570bed0",
       "caption": "Captured game screen.",
-      "status": "reviewed"
+      "status": "reviewed",
+      "captured_head": "18d383a56fff21edfc377e4c6e255b55094ba3f4",
+      "captured_at": "2026-11-06T21:59:45.743Z",
+      "lessons_commit": "8b66017f15ad3354f3c3e07c088e5e2834107420",
+      "generator": "tools/capture_play_screens.cjs; 1280x720 real capture resized to 640x360"
     },
     {
       "route": "/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html",

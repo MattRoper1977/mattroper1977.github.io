@@ -27,7 +27,7 @@ const { chromium } = require('playwright');
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
-const OUT = path.join(ROOT, 'olympics');
+const OUT = path.join(ROOT, 'worldstage');
 const MAX_BYTES = 500 * 1024;
 
 function serve() {
@@ -134,7 +134,7 @@ for (const shot of (BANNER_ONLY ? [] : SHOTS)) {
   const ctx = await browser.newContext({ viewport: { width: shot.w, height: shot.h }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   await page.addInitScript(CLOCK);
-  await page.goto(base + '/olympics/index.html', { waitUntil: 'commit' });
+  await page.goto(base + '/worldstage/index.html', { waitUntil: 'commit' });
   await page.waitForFunction(() => typeof window.__drive === 'function', null, { timeout: 20000 });
   for (let i = 0; i < 60; i++) await page.evaluate(() => window.__drive(8));
   await page.waitForFunction(() => !!window.__olympics, null, { timeout: 20000 });
@@ -212,5 +212,5 @@ srv.close();
 
 console.log('Global Games — deterministic stills\n');
 for (const w of written) console.log(`  ${w.name.padEnd(22)} ${String((w.bytes / 1024).toFixed(0)).padStart(4)} KB   ${w.why}`);
-console.log(`\n${written.length}/${SHOTS.length} written to olympics/`);
+console.log(`\n${written.length}/${SHOTS.length} written to worldstage/`);
 process.exit(written.length === (BANNER_ONLY ? 1 : SHOTS.length + 1) ? 0 : 1);

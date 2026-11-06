@@ -1,3 +1,4 @@
+from play.route_renames import project as project_game_routes
 #!/usr/bin/env python3
 """Independently inspect emitted Education files after all transformations."""
 import argparse
@@ -435,7 +436,7 @@ def registry_errors(output):
 
 
 def check(output):
-    census=json.loads((HERE.parent/'reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json').read_text())['rows']
+    census = project_game_routes(json.loads((HERE.parent/'reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json').read_text())['rows'])
     excluded={key(row['normalizedDecodedRoute']) for row in census} - {key(route) for route in RETAINED}
     excluded.update(key(route) for route in ALIASES)
     excluded.update({'/games','/Games'})
@@ -496,8 +497,12 @@ def check(output):
                     anchors=[value for tag,attr,value in parser.refs if tag=='a' and attr=='href']
                     if len(anchors)!=1: fail(route,'Stub carries '+str(len(anchors))+' links; exactly one is allowed')
                     destinations=[value for tag,attr,value in parser.refs if tag=='a' and attr=='href' and 'madebymatt-play.uk' in value]
-                    if not destinations or any(not value.startswith(PLAY+'/') for value in destinations): fail(route,'Migration must use canonical HTTPS Play')
-                    expected=PLAY+ALIASES.get(route.removesuffix('index.html'),route.removesuffix('index.html'))
+                    from play.route_renames import destination as renamed_destination, RENAMES
+                    original_route=route.removesuffix('index.html')
+                    renamed=any(original_route in (m['old_route'],m['route']) for m in RENAMES)
+                    origin='https://www.madebymatt-play.uk' if renamed else PLAY
+                    if not destinations or any(not value.startswith(origin+'/') for value in destinations): fail(route,'Migration must use canonical HTTPS Play')
+                    expected=origin+renamed_destination(ALIASES.get(original_route,original_route))
                     if parser.play_destination != expected: fail(route,'Incorrect migration destination: '+str(parser.play_destination))
                     target=output/'games'/unquote(urlparse(parser.play_destination or '').path).lstrip('/')
                     if not target.is_file() and not (target/'index.html').is_file(): fail(route,'Migration destination missing from Play output')

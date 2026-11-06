@@ -6,7 +6,7 @@
  * arcade RENDERS it: that the card exists on screen, that the Sports rail grew
  * to seven visibly distinct cards, that the marker moved, and that nothing
  * overflows on a phone. A manifest can be perfect and the page still show
- * nothing — /olympics/ was served for a while with no catalogue entry at all,
+ * nothing — /worldstage/ was served for a while with no catalogue entry at all,
  * which is precisely the failure mode a data-only gate cannot see.
  *
  * Every count is DERIVED from the manifest at run time, never pinned: this gate
@@ -47,7 +47,7 @@ if (!GAMES || !fsSync.existsSync(path.join(GAMES, 'games.json'))) {
  * not honour the contract it declares. */
 const { chromium } = require('playwright');
 
-const HREF = '/olympics/';
+const HREF = '/worldstage/';
 
 let red = 0;
 const t = (name, ok, detail) => {

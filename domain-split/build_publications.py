@@ -4,6 +4,7 @@
 No source-repository or DNS mutations. Outputs are deliberately separate.
 """
 from __future__ import annotations
+from play.route_renames import project as project_game_routes
 
 import argparse
 import hashlib
@@ -295,7 +296,7 @@ def main():
     config = json.loads((HERE / 'config.json').read_text())
     if config['education_origin'] != 'https://madebymatt.uk' or config['games_origin'] != 'https://madebymatt-play.uk':
         raise ValueError('Purchased-domain allocation has changed; update the deployment plan first')
-    rows = json.loads(CENSUS.read_text())['rows']
+    rows = project_game_routes(json.loads(CENSUS.read_text())['rows'])
     assert len(rows) == len({normal(r['normalizedDecodedRoute']) for r in rows}) == 69
     entries = json.loads((ROOT / 'data/mbm-search-index.json').read_text())['entries']
     search_by_route = {normal(e['route']): e for e in entries if e['category'] == 'game'}
@@ -326,6 +327,16 @@ def main():
         payloads.append({'route': row['normalizedDecodedRoute'], 'path': destination,
                          'source_repository': row['source']['repository'], 'source_path': row['source']['path'],
                          'source_sha256': sha(source), 'class': row['populationClass']})
+    # Legacy URLs remain script-free handoffs on the Play publication too.
+    from play.route_renames import RENAMES
+    for move in RENAMES:
+        root = roots[move['repository']]
+        prefix = 'Lessons/' if move['repository'] == 'Lessons' else ''
+        copy_file(root / move['old'], games, prefix + move['old'])
+        if move['repository'] == 'Site':
+            for legacy_asset in (root / move['old']).parent.iterdir():
+                if legacy_asset.is_file() and legacy_asset.suffix in {'.png','.jpg','.svg'}:
+                    copy_file(legacy_asset, games, legacy_asset.relative_to(root))
     for directory in ['assets', 'images']:
         shutil.copytree(ROOT / directory, games / directory, dirs_exist_ok=True)
     # Root assets are not game routes. Keep their exact destination URLs in

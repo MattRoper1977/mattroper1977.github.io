@@ -54,7 +54,7 @@ mkdir -p "$WORK/root/Games" "$WORK/served" "$WORK/run" "$WORK/data"
 cp -r "$SITE/games" "$WORK/root/"
 cp "$GAMES_JSON" "$WORK/root/Games/games.json"
 cp "$GAMES_JSON" "$WORK/served/games.json"
-cp "$SITE/olympics/index.html" "$WORK/served/olympics.html"
+cp "$SITE/worldstage/index.html" "$WORK/served/worldstage.html"
 cp "$HERE/verify_olympics_live.mjs" "$WORK/run/"
 
 # THE VERIFIER'S DECLARED INPUTS TRAVEL WITH IT.
@@ -92,7 +92,7 @@ BASE_URL="$(serve "$WORK/root")/games/"
 run() {  # run <served-games> <served-olympics> <arcade-url>
   ( cd "$WORK/run" && node verify_olympics_live.mjs \
       --served-games "$1" --repo-games "$GAMES_JSON" \
-      --served-olympics "$2" --repo-olympics "$SITE/olympics/index.html" \
+      --served-olympics "$2" --repo-olympics "$SITE/worldstage/index.html" \
       --arcade-url "$3" 2>&1 )
 }
 
@@ -108,7 +108,7 @@ expect_red() {  # expect_red <label> <limb> <output>
 }
 
 echo "== baseline must be green =="
-out="$(run "$WORK/served/games.json" "$WORK/served/olympics.html" "$BASE_URL")"
+out="$(run "$WORK/served/games.json" "$WORK/served/worldstage.html" "$BASE_URL")"
 if grep -q "limbs pass" <<<"$out" && ! grep -q "FAILING LIMBS" <<<"$out"; then
   echo "  ok    baseline green"
 else
@@ -125,15 +125,15 @@ import json,sys
 d=json.load(open(sys.argv[1])); d['strap']=str(d.get('strap',''))+' '
 json.dump(d,open(sys.argv[2],'w'))
 PY
-expect_red "byte drift in served shelf" "games.json-bytes" "$(run "$WORK/nc1.json" "$WORK/served/olympics.html" "")"
+expect_red "byte drift in served shelf" "games.json-bytes" "$(run "$WORK/nc1.json" "$WORK/served/worldstage.html" "")"
 
 # 2 shelf-non-empty
 python3 -c "import json,sys;d=json.load(open(sys.argv[1]));d['games']=[];json.dump(d,open(sys.argv[2],'w'))" "$WORK/served/games.json" "$WORK/nc2.json"
-expect_red "empty shelf served" "shelf-non-empty" "$(run "$WORK/nc2.json" "$WORK/served/olympics.html" "")"
+expect_red "empty shelf served" "shelf-non-empty" "$(run "$WORK/nc2.json" "$WORK/served/worldstage.html" "")"
 
 # 3 shelf-count
 python3 -c "import json,sys;d=json.load(open(sys.argv[1]));d['games']=d['games'][:-1];json.dump(d,open(sys.argv[2],'w'))" "$WORK/served/games.json" "$WORK/nc3.json"
-expect_red "one entry short" "shelf-count" "$(run "$WORK/nc3.json" "$WORK/served/olympics.html" "")"
+expect_red "one entry short" "shelf-count" "$(run "$WORK/nc3.json" "$WORK/served/worldstage.html" "")"
 
 # 4 marker-sole-holder
 python3 - "$WORK/served/games.json" "$WORK/nc4.json" <<'PY'
@@ -144,7 +144,7 @@ for e in d['games']:
         e['title']='NEW · '+e['title']; break
 json.dump(d,open(sys.argv[2],'w'))
 PY
-expect_red "two games wear NEW·" "marker-sole-holder" "$(run "$WORK/nc4.json" "$WORK/served/olympics.html" "")"
+expect_red "two games wear NEW·" "marker-sole-holder" "$(run "$WORK/nc4.json" "$WORK/served/worldstage.html" "")"
 
 # 5 marker-matches-record
 # This control was written against marker-is-olympics and was never retargeted
@@ -168,11 +168,11 @@ for e in d['games']:
     if e['href']!=held: e['title']='NEW · '+e['title']; break
 json.dump(d,open(sys.argv[2],'w'))
 PY
-expect_red "marker on a game the record does not declare" "marker-matches-record" "$(run "$WORK/nc5.json" "$WORK/served/olympics.html" "")"
+expect_red "marker on a game the record does not declare" "marker-matches-record" "$(run "$WORK/nc5.json" "$WORK/served/worldstage.html" "")"
 
 # 6 olympics-bytes
-cp "$WORK/served/olympics.html" "$WORK/nc6.html"; printf '<!-- drift -->' >> "$WORK/nc6.html"
-expect_red "served /olympics/ drifted" "olympics-bytes" "$(run "$WORK/served/games.json" "$WORK/nc6.html" "")"
+cp "$WORK/served/worldstage.html" "$WORK/nc6.html"; printf '<!-- drift -->' >> "$WORK/nc6.html"
+expect_red "served /worldstage/ drifted" "olympics-bytes" "$(run "$WORK/served/games.json" "$WORK/nc6.html" "")"
 
 # 7 arcade-renders-shelf — THE node-count control.
 # All 46 cards are appended; CSS gives them no box. Node counting says 46.
@@ -192,7 +192,7 @@ s=s.replace('</head>','<style>#allGrid a.gcard,#genreSections a.gcard{display:no
 open(p,'w',encoding='utf-8').write(s)
 PY
 HIDDEN_URL="$(serve "$WORK/hidden")/games/"
-out="$(run "$WORK/served/games.json" "$WORK/served/olympics.html" "$HIDDEN_URL")"
+out="$(run "$WORK/served/games.json" "$WORK/served/worldstage.html" "$HIDDEN_URL")"
 expect_red "46 cards appended, none rendered" "arcade-renders-shelf" "$out"
 if grep -qE 'arcade-renders-shelf +0 cards' <<<"$out"; then
   echo "        (measured 0 rendered against a DOM holding 46 — node counting would have passed)"
@@ -209,7 +209,7 @@ s=s.replace('</head>','<script>setTimeout(function(){throw new Error("negative c
 open(p,'w',encoding='utf-8').write(s)
 PY
 THROW_URL="$(serve "$WORK/throw")/games/"
-expect_red "arcade throws" "arcade-no-script-error" "$(run "$WORK/served/games.json" "$WORK/served/olympics.html" "$THROW_URL")"
+expect_red "arcade throws" "arcade-no-script-error" "$(run "$WORK/served/games.json" "$WORK/served/worldstage.html" "$THROW_URL")"
 
 # 9 holder-record-readable — the harness's own declared input, controlled.
 # The limb that caught this harness has to keep being able to catch it. Take the
@@ -218,7 +218,7 @@ expect_red "arcade throws" "arcade-no-script-error" "$(run "$WORK/served/games.j
 # rejection. If a later change ever "fixed" the resolution by defaulting a
 # missing record to something plausible, this control is what refuses it.
 mv "$WORK/data/new-release-occupants.json" "$WORK/record.parked"
-expect_red "declared record absent" "holder-record-readable" "$(run "$WORK/served/games.json" "$WORK/served/olympics.html" "")"
+expect_red "declared record absent" "holder-record-readable" "$(run "$WORK/served/games.json" "$WORK/served/worldstage.html" "")"
 mv "$WORK/record.parked" "$WORK/data/new-release-occupants.json"
 
 # ---- 10-12 J92 (R5): the play-shelf derivation, controlled --------------------
@@ -273,11 +273,11 @@ PLAY_URL="$(serve "$WORK/play")"
 run_cat() {  # run_cat <served-games> <served-olympics> <arcade-url> <catalogue-url>
   ( cd "$WORK/run" && node verify_olympics_live.mjs \
       --served-games "$1" --repo-games "$GAMES_JSON" \
-      --served-olympics "$2" --repo-olympics "$SITE/olympics/index.html" \
+      --served-olympics "$2" --repo-olympics "$SITE/worldstage/index.html" \
       --arcade-url "$3" --catalogue-url "$4" 2>&1 )
 }
 
-out="$(run_cat "$WORK/served/games.json" "$WORK/served/olympics.html" "$PLAY_URL/games/" "$PLAY_URL/data/domain-catalogue.json")"
+out="$(run_cat "$WORK/served/games.json" "$WORK/served/worldstage.html" "$PLAY_URL/games/" "$PLAY_URL/data/domain-catalogue.json")"
 if grep -q "limbs pass" <<<"$out" && ! grep -q "FAILING LIMBS" <<<"$out" && grep -q "PASS  shelf-dataset-readable" <<<"$out"; then
   echo "  ok    play-shelf baseline green"
   grep -E 'arcade-renders-shelf|arcade-countline' <<<"$out" | sed 's/^/       /'
@@ -303,7 +303,7 @@ open(p,'w',encoding='utf-8').write(s)
 PY
 EDITION_URL="$(serve "$WORK/play-edition")"
 expect_red "a third edition planted in the dataset, no card removed" "arcade-renders-shelf" \
-  "$(run_cat "$WORK/served/games.json" "$WORK/served/olympics.html" "$EDITION_URL/games/" "$EDITION_URL/data/domain-catalogue.json")"
+  "$(run_cat "$WORK/served/games.json" "$WORK/served/worldstage.html" "$EDITION_URL/games/" "$EDITION_URL/data/domain-catalogue.json")"
 
 # 11 arcade-countline - the count line names the ROUTE total instead of the games-group count.
 cp -r "$WORK/play" "$WORK/play-countline"
@@ -318,7 +318,7 @@ open(p,'w',encoding='utf-8').write(s2)
 PY
 COUNTLINE_URL="$(serve "$WORK/play-countline")"
 expect_red "count line names the route total" "arcade-countline" \
-  "$(run_cat "$WORK/served/games.json" "$WORK/served/olympics.html" "$COUNTLINE_URL/games/" "$COUNTLINE_URL/data/domain-catalogue.json")"
+  "$(run_cat "$WORK/served/games.json" "$WORK/served/worldstage.html" "$COUNTLINE_URL/games/" "$COUNTLINE_URL/data/domain-catalogue.json")"
 
 # 12 shelf-dataset-readable - the page carries no #play-data, so nothing can be derived.
 cp -r "$WORK/play" "$WORK/play-nodata"
@@ -331,7 +331,7 @@ open(p,'w',encoding='utf-8').write(s2)
 PY
 NODATA_URL="$(serve "$WORK/play-nodata")"
 expect_red "no #play-data on the shelf" "shelf-dataset-readable" \
-  "$(run_cat "$WORK/served/games.json" "$WORK/served/olympics.html" "$NODATA_URL/games/" "$NODATA_URL/data/domain-catalogue.json")"
+  "$(run_cat "$WORK/served/games.json" "$WORK/served/worldstage.html" "$NODATA_URL/games/" "$NODATA_URL/data/domain-catalogue.json")"
 
 echo
 if [ "$fails" -eq 0 ]; then
