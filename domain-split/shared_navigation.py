@@ -350,6 +350,9 @@ def refresh(output, site_source):
         tile_links = ('<link rel="stylesheet" href="/assets/mbm-tile.css">'
                       '<script defer src="/assets/mbm-tile.js"></script>'
                       if route in hub_tile_routes else '')
+        from hub_tiles import annotate
+        text = annotate(text, route)
+        tile_links = tile_links if '/assets/mbm-tile.css' not in text else ''
         text = text.replace('</head>', tile_links + '<link rel="stylesheet" href="/assets/shared-navigation.css">'
                             '<script defer src="/assets/shared-navigation.js"></script></head>', 1)
         path.write_text(text)

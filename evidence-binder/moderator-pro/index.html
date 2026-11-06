@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f172a">
 <meta name="color-scheme" content="light">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Evidence Binder — Moderator Pro · Made by Matt</title>
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjMTUyMDNhIi8+PHBhdGggZD0iTTI2IDc2VjMwTDUwIDU1IDc0IDMwVjc2IiBmaWxsPSJub25lIiBzdHJva2U9IiNiNDg5MmMiIHN0cm9rZS13aWR0aD0iMTMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjwvc3ZnPg==">
 <style>
@@ -386,7 +386,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
 @media print{.mbm-splash,.mbm-footer{display:none!important}}
 @media (prefers-reduced-motion:reduce){.mbm-splash-inner{animation:none}}
 </style>
-</head>
+<link rel="stylesheet" href="/assets/mbm-tile.css"><script defer src="/assets/mbm-tile.js"></script><link rel="stylesheet" href="/assets/mbm-tokens.css"></head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
 <header id="topbar">
@@ -421,7 +421,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
   <section id="tab-capture" class="tab-panel active" aria-labelledby="captureTitle">
     <div class="wrap two-col capture-layout">
       <div class="stack">
-        <article class="card hero-card" id="captureInputPanel">
+        <article class="card hero-card" id="captureInputPanel" data-mbm-tile="">
           <div class="card-heading">
             <div><span class="eyebrow">Fast classroom capture</span><h1 id="captureTitle">Add evidence</h1></div>
             <label class="toggle"><input type="checkbox" id="stickyTags"><span></span><b>Keep unit, outcomes &amp; date pinned</b></label>
@@ -476,7 +476,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
           <div id="noPhotoNote" class="info-strip hidden">This evidence method can be saved without a photograph. Add a photo only when it strengthens the record.</div>
         </article>
 
-        <article class="card" id="structuredCard">
+        <article class="card" id="structuredCard" data-mbm-tile="">
           <div class="section-title"><span class="step">1</span><h2>Assessment context</h2></div>
           <div class="form-grid two">
             <label>Unit<select id="captureUnitSelect"></select></label>
@@ -515,17 +515,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
       </div>
 
       <div class="stack sticky-column">
-        <article class="card">
+        <article class="card" data-mbm-tile="">
           <div class="section-title"><span class="step">2</span><h2>Outcomes shown</h2></div>
           <div id="captureOutcomeChips" class="chips"></div>
           <p id="outcomeEmpty" class="empty-inline hidden">Add a unit and outcomes in Setup first.</p>
         </article>
-        <article class="card">
+        <article class="card" data-mbm-tile="">
           <div class="section-title split"><div><span class="step">3</span><h2>Learners</h2></div><div class="micro-actions"><button type="button" id="pupilAllBtn">All</button><button type="button" id="pupilClearBtn">Clear</button><button type="button" id="pupilInvertBtn">Invert</button></div></div>
           <div id="capturePupilChips" class="chips pupils"></div>
           <p id="pupilEmpty" class="empty-inline hidden">Add learners in Setup first.</p>
         </article>
-        <article class="card save-card">
+        <article class="card save-card" data-mbm-tile="">
           <div class="save-summary" id="captureSummary">Choose at least one outcome and learner.</div>
           <button type="button" id="saveEvidenceBtn" class="btn primary huge">Save evidence <span id="nextEvBadge">EV-001</span></button>
           <button type="button" id="startCarouselBtn" class="btn subtle full-width">⚡ Start practical carousel</button>
@@ -537,7 +537,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
 
   <section id="tab-browse" class="tab-panel" aria-labelledby="browseTitle">
     <div class="wrap">
-      <article class="card">
+      <article class="card" data-mbm-tile="">
         <div class="card-heading"><div><span class="eyebrow">Moderation review</span><h1 id="browseTitle">Review evidence</h1></div><span id="reviewCount" class="count-badge">0</span></div>
         <div class="filter-grid">
           <label>Unit<select id="filterUnit"></select></label>
@@ -566,7 +566,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
 
   <section id="tab-coverage" class="tab-panel" aria-labelledby="coverageTitle">
     <div class="wrap wide">
-      <article class="card">
+      <article class="card" data-mbm-tile="">
         <div class="card-heading"><div><span class="eyebrow">Active gap triage</span><h1 id="coverageTitle">Outcome coverage</h1></div><div class="actions" style="margin:0"><button type="button" id="printCatchupBtn" class="btn">📋 Print catch-up slips</button><button type="button" id="exportCsvBtn" class="btn">📊 Export CSV tracker</button><button type="button" id="printMatrixBtn" class="btn">🖨 Export A4 tracking sheet</button></div></div>
         <div class="coverage-toolbar">
           <label>Unit<select id="coverageUnit"></select></label>
@@ -581,14 +581,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
         </div>
         <div class="legend"><span><i class="lg achieved"></i>Achieved</span><span><i class="lg pending"></i>Tagged, not signed off</span><span><i class="lg action"></i>Further evidence needed</span><span><i class="lg gap"></i>No evidence</span></div>
       </article>
-      <article class="card matrix-card"><div id="coverageMatrix" class="matrix-wrap"></div></article>
+      <article class="card matrix-card" data-mbm-tile=""><div id="coverageMatrix" class="matrix-wrap"></div></article>
       <div id="coverageEmpty" class="empty-state hidden"><strong>No learners match this triage view</strong><span>Change the filter or choose another unit.</span></div>
     </div>
   </section>
 
   <section id="tab-portfolios" class="tab-panel" aria-labelledby="portfolioTitle">
     <div class="wrap two-col">
-      <article class="card">
+      <article class="card" data-mbm-tile="">
         <span class="eyebrow">Audit-ready export</span><h1 id="portfolioTitle">Candidate portfolios</h1>
         <div class="form-grid one">
           <label>Unit<select id="portfolioUnit"></select></label>
@@ -601,7 +601,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
         <button type="button" id="buildPortfolioBtn" class="btn primary huge full-width">📄 Build print-ready portfolios</button>
         <p class="note">A cover sheet cross-references every criterion to its permanent EV number. Each evidence record is kept on one A4 page. Use Print → Save as PDF for a digital submission.</p>
       </article>
-      <aside class="card readiness-card">
+      <aside class="card readiness-card" data-mbm-tile="">
         <h2>Portfolio readiness</h2>
         <div id="portfolioReadiness" class="readiness-list"></div>
       </aside>
@@ -611,7 +611,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
   <section id="tab-setup" class="tab-panel" aria-labelledby="setupTitle">
     <div class="wrap two-col setup-layout">
       <div class="stack">
-        <article class="card">
+        <article class="card" data-mbm-tile="">
           <div class="card-heading"><div><span class="eyebrow">Cohort workspace</span><h1 id="setupTitle">Binder details</h1></div><button type="button" id="deleteBinderBtn" class="btn danger small">Delete binder</button></div>
           <div class="form-grid two">
             <label>Binder / cohort name<input type="text" id="binderName" maxlength="120"></label>
@@ -625,7 +625,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
           <div class="actions"><button type="button" id="saveBinderBtn" class="btn primary">Save binder details</button><button type="button" id="newBinderSetupBtn" class="btn">＋ New binder</button><button type="button" id="loadDemoBtn" class="btn subtle">Load safe demo data</button></div>
         </article>
 
-        <article class="card">
+        <article class="card" data-mbm-tile="">
           <div class="card-heading"><div><span class="eyebrow">Specification structure</span><h2>Units &amp; outcomes</h2></div><button type="button" id="newUnitBtn" class="btn small">＋ New unit</button></div>
           <label>Unit<select id="setupUnitSelect"></select></label>
           <div class="form-grid two compact-top">
@@ -638,13 +638,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter","Hel
       </div>
 
       <div class="stack">
-        <article class="card">
+        <article class="card" data-mbm-tile="">
           <span class="eyebrow">Candidate register</span><h2>Learners</h2>
           <label>One learner per line<textarea id="pupilList" rows="12" placeholder="Alex Smith | 4012&#10;Jordan Lee | 4013"></textarea><small>Candidate number is optional: <b>Name | Candidate number</b>.</small></label>
           <div class="actions"><button type="button" id="savePupilsBtn" class="btn primary">Save learner list</button></div>
           <p class="note">Removing a learner hides them from new capture but keeps their existing audit trail.</p>
         </article>
-        <article class="card storage-card" id="backupCard">
+        <article class="card storage-card" id="backupCard" data-mbm-tile="">
           <div class="card-heading"><div><span class="eyebrow">Device resilience</span><h2>Storage &amp; backup</h2></div><span id="storagePercent" class="count-badge">—</span></div>
           <div class="storage-meter"><div id="storageBar"></div></div>
           <div id="storageText" class="storage-copy">Checking browser storage…</div>

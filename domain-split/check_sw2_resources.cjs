@@ -148,3 +148,18 @@ exports.verify = async ({page, origin, rules, archive}) => {
   assert.deepEqual(failed,[],'Every sheet file resolves on the publication');report.resolvedFiles=paths.filter(p=>!isArchived(p)).length;report.archivedFiles=paths.filter(isArchived).length;
   return report;
 };
+
+// Hub tile census extends the same composed-surface instrument used above.
+// Original resource thresholds and acceptance checks remain unchanged.
+let tileSource = contrastSource.slice(contrastStart, contrastEnd);
+for (const needle of ['const failures = [];', 'if (!visible(el)) continue;',
+                      'const need = large ? 3 : 4.5;', 'return { nodes, failures, unmeasured, deferred };']) {
+  assert(tileSource.includes(needle), 'Tile extension requires the current instrument: ' + needle);
+}
+tileSource = tileSource
+  .replace('const failures = [];', 'const failures = []; const measurements = [];')
+  .replace('if (!visible(el)) continue;', 'if (!visible(el) || !el.closest("[data-mbm-tile]")) continue;')
+  .replace('const need = large ? 3 : 4.5;', 'const need = 7;')
+  .replace('if (r + 0.005 < need) {', 'measurements.push({selector:sel(el),fg:cs.color,bg:bg.colour,ratio:r,size}); if (r + 0.005 < need) {')
+  .replace('return { nodes, failures, unmeasured, deferred };', 'return { nodes, failures, unmeasured, deferred, measurements };');
+exports.measureTiles = Function(tileSource + ';return MEASURE')();

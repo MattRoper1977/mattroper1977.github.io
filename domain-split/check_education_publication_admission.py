@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Real publication controls; mutations occur only in temporary copies."""
+import os
 import argparse
 import json
 import shutil
@@ -18,6 +19,10 @@ def controls(output):
     cases = []
     with tempfile.TemporaryDirectory(prefix='education-admission-controls-') as temp:
         scratch = Path(temp)
+        if os.name == 'nt':
+            # Preserve the real, case-distinct publication routes in the fixture.
+            subprocess.run(['fsutil', 'file', 'setCaseSensitiveInfo', str(scratch), 'enable'],
+                           check=True, stdout=subprocess.DEVNULL)
         for name in TREES:
             shutil.copytree(output/name, scratch/name)
         def mutation(name, tree_name, relative, replacement=None, missing=False, symlink=False):
@@ -29,7 +34,11 @@ def controls(output):
             if missing:
                 target.unlink()
             elif symlink:
-                target.symlink_to(REGISTRY)
+                if os.name == 'nt':
+                    subprocess.run(['cmd', '/c', 'mklink', '/J', str(target).replace('/', '\\'), str(REGISTRY.parent).replace('/', '\\')],
+                                   check=True, stdout=subprocess.DEVNULL)
+                else:
+                    target.symlink_to(REGISTRY)
             else:
                 target.write_bytes(replacement)
             try:
@@ -43,7 +52,8 @@ def controls(output):
                 if existed:
                     target.write_bytes(old)
                 else:
-                    target.unlink()
+                    if getattr(target, 'is_junction', lambda: False)(): target.rmdir()
+                    else: target.unlink()
             verify_tree(scratch/tree_name, tree_name, registry)
             cases[-1]['restored'] = 'PASS'
         for name in TREES:

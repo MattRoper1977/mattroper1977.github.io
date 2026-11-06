@@ -22,7 +22,7 @@ are kept unchanged.
              counts are computed by that checkout's hub.js); the default is the
              CI checkout .sources/Lessons beside this repository.
 """
-import argparse, json, os, sys, tempfile
+import argparse, json, os, sys, tempfile, subprocess
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote
@@ -123,22 +123,35 @@ def parse_home(page):
     return p
 
 
+def overlay_link(source, target):
+    # Same read-only overlay on hosts where creating a symlink needs a privilege.
+    if os.name == 'nt':
+        if source.is_dir():
+            subprocess.run(['cmd', '/c', 'mklink', '/J', str(target).replace('/', '\\'), str(source).replace('/', '\\')],
+                           check=True, stdout=subprocess.DEVNULL)
+        else:
+            os.link(source, target)
+    else:
+        os.symlink(source, target)
+
+
 def overlay(tmp, real, changes):
     """A Lessons tree at tmp/L: symlinks to the real checkout, with `changes` {relative path: bytes or None} applied.
     Only the directories on a changed path are materialised; the real checkout is never written."""
     root = Path(tmp) / 'L'
     root.mkdir()
     for entry in Path(real).iterdir():
-        os.symlink(entry, root / entry.name)
+        overlay_link(entry, root / entry.name)
     for rel, data in changes.items():
         parts, cur, src = Path(rel).parts, root, Path(real)
         for part in parts[:-1]:
             cur, src = cur / part, src / part
-            if cur.is_symlink():
-                cur.unlink()
+            if cur.is_symlink() or getattr(cur, 'is_junction', lambda: False)():
+                if cur.is_symlink(): cur.unlink()
+                else: cur.rmdir()
                 cur.mkdir()
                 for entry in src.iterdir():
-                    os.symlink(entry, cur / entry.name)
+                    overlay_link(entry, cur / entry.name)
             elif not cur.exists():
                 cur.mkdir()
         target = cur / parts[-1]
@@ -209,7 +222,11 @@ def j93_self_test(root, lessons_root, tmp):
     assert real.tools[0] == resources and with_plant.tools[0] == resources, 'the Resources card must stay one tap away'
     results['tiles'] = len(real.tiles)
     # Flagship cards (replaces the preview / Try-a-lesson binding): registry rows, lesson file and folder.
-    assert [c['key'] for c in real.cards] == list(home_slots.PATHWAYS) and all(c['badges'] in (9, 13) for c in real.cards), [c['badges'] for c in real.cards]
+    assert [c['key'] for c in real.cards] == list(home_slots.PATHWAYS)
+    expected_badges = [1 + len(home_slots.pack_members(
+        (Path(lessons_root) / unquote(c['lesson'][len('/Lessons/'):])).parent,
+        Path(unquote(c['lesson'])).name)) for c in real.cards]
+    assert [c['badges'] for c in real.cards] == expected_badges, 'Every badge equals a real member of the current source folder'
     files = [unquote(c['lesson'][len('/Lessons/'):]) for c in real.cards]
     by_file = {r.get('file'): r for r in rows}
     for card, f in zip(real.cards, files):

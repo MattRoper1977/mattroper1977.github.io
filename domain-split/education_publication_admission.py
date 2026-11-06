@@ -5,6 +5,9 @@ import argparse
 import hashlib
 import json
 import re
+import os
+import stat
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path, PurePosixPath
 
 HERE = Path(__file__).resolve().parent
@@ -34,15 +37,27 @@ def valid_path(value):
         raise ValueError('Invalid admission path: '+repr(value))
 
 
+def publication_paths(directory):
+    # Fresh directory metadata on every pass, before any content is read.
+    # Directory entries carry this metadata directly on the local file system.
+    with os.scandir(directory) as scan:
+        entries = sorted(scan, key=lambda entry: entry.name)
+    for entry in entries:
+        info = entry.stat(follow_symlinks=False)
+        if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & getattr(stat, 'FILE_ATTRIBUTE_REPARSE_POINT', 0x400):
+            raise ValueError('Symlink in publication: '+entry.path)
+        file = Path(entry.path)
+        if stat.S_ISDIR(info.st_mode):
+            yield from publication_paths(file)
+        elif stat.S_ISREG(info.st_mode):
+            yield file
+
+
 def census(tree):
-    if not tree.is_dir() or tree.is_symlink():
+    if not tree.is_dir() or tree.is_symlink() or getattr(tree, 'is_junction', lambda: False)():
         raise ValueError('Missing or linked publication tree: '+str(tree))
-    result = {}
-    for file in sorted(tree.rglob('*')):
-        if file.is_symlink():
-            raise ValueError('Symlink in publication: '+str(file))
-        if not file.is_file():
-            continue
+    files = []
+    for file in publication_paths(tree):
         relative = file.relative_to(tree).as_posix()
         valid_path(relative)
         suffix = file.suffix.lower()
@@ -50,7 +65,14 @@ def census(tree):
             raise ValueError('Unclassified publication file: '+str(file))
         # A suffix is not a safety boundary: scripts or data can be disguised
         # as media/native files. Every emitted path and byte needs approval.
-        result[relative] = hashlib.sha256(file.read_bytes()).hexdigest()
+        files.append((relative, file))
+    # Every file is still read and SHA-256 hashed on every verification.
+    # Parallel reads avoid serial per-file overhead on large local fixtures.
+    def digest(item):
+        relative, file = item
+        return relative, hashlib.sha256(file.read_bytes()).hexdigest()
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        result = dict(pool.map(digest, files))
     if not any(Path(p).suffix.lower() in {'.html', '.htm'} for p in result):
         raise ValueError('No HTML routes in publication: '+str(tree))
     return result

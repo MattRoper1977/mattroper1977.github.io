@@ -1,0 +1,3 @@
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+module.exports=file=>{const root=path.resolve(process.env.MBM_DISCOVERY_LESSONS||path.join(__dirname,'../.sources/Lessons'));const relative=decodeURIComponent(file).replace(/^\/Lessons\//,'');const lesson=path.resolve(root,relative);assert(lesson.startsWith(root+path.sep),'Member census stays in its source tree');const prefix=path.basename(lesson).replace(/\.[^.]+$/,'')+'_';return 1+fs.readdirSync(path.dirname(lesson),{withFileTypes:true}).filter(e=>e.isFile()&&e.name.startsWith(prefix)&&e.name!=='approved-mark.jpg'&&!/\.(jpe?g|png|gif|svg|webp)$/i.test(e.name)).length;};

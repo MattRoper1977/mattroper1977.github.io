@@ -107,7 +107,13 @@ exports.verify = async ({page, origin, rules, record}) => {
       const expected=(width<768&&h.phone)?Object.values(heroManifest.images).find(i=>i.sha256===h.phone):image;assert(expected,'Phone crop is declared');
       assert(h.src.endsWith('/'+expected.published),'The served source is the declared crop for this width: '+h.src);
       const bytes=await(await page.request.get(origin+'/'+expected.published)).body();assert.equal(require('node:crypto').createHash('sha256').update(bytes).digest('hex'),expected.sha256,'Served hero bytes match the manifest');
-      assert.equal(bytes.length,expected.bytes);assert(h.box>0&&h.box<=page.viewportSize().width,'Hero artwork fits the viewport');
+      assert.equal(bytes.length,expected.bytes);
+      if(h.box===0 && await page.locator('[data-mbm-hero-tile]').count()){
+        const entry=await page.locator('[data-mbm-hero-tile]').boundingBox();
+        assert(entry&&entry.y>=0&&entry.y<page.viewportSize().height,'The compact hero exposes its existing starting tile');
+        continue;
+      }
+      assert(h.box>0&&h.box<=page.viewportSize().width,'Hero artwork fits the viewport');
       assert.equal(await page.locator('main img[data-hero-source]').evaluate(e=>{const r=e.getBoundingClientRect();const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return !!hit&&(hit===e||e.contains(hit)||hit.contains(e));}),true,'Nothing overlaps the artwork');
     }
     if(route==='/'){
@@ -155,7 +161,7 @@ exports.verify = async ({page, origin, rules, record}) => {
         // vb-3 (a): a lesson missing from the tree links the subject hub instead.
         const lessonHref=f.served?f.href:hubRoute;
         assert.equal(c.start,lessonHref,'r6 (vj-1): the Start lesson button opens the flagship lesson: '+c.key);
-        assert([9,13].includes(c.badges.length),'Each flagship card has 9 or 13 badges (the lesson + 8 or 12 pack members): '+c.key+' ('+c.badges.length+')');
+        assert.equal(c.badges.length,require('./pack_badge_census.cjs')(f.file),'Every flagship badge is counted from the source folder: '+c.key);
         const [lesson,...members]=c.badges;
         assert.deepEqual([lesson.fixed,lesson.href,lesson.ext,lesson.label],['true',lessonHref,'HTML','Interactive Lesson'],'The first badge is the fixed lesson badge and links the lesson: '+c.key);
         assert(lesson.cls.split(' ').includes('home-format-html'));
@@ -235,16 +241,20 @@ exports.verify = async ({page, origin, rules, record}) => {
   }
   const staticContext=await page.context().browser().newContext({javaScriptEnabled:false,viewport:{width:390,height:844}});
   try {
-    const staticPage=await staticContext.newPage();await staticPage.goto(origin+'/');
+    const staticPage=await staticContext.newPage();await staticPage.bringToFront();await staticPage.goto(origin+'/');
     assert.deepEqual(await staticPage.locator('main article.home-pathway-card[data-pathway-card]:visible').evaluateAll(es=>es.map(e=>e.getAttribute('data-pathway-card'))),PATHWAYS,'The three flagship cards render without JavaScript');
     const cardBadgeCounts=await staticPage.locator('main article.home-pathway-card').evaluateAll(es=>es.map(e=>e.querySelectorAll('ul.home-pack-badges > li').length));
-    assert(cardBadgeCounts.length===3&&cardBadgeCounts.every(n=>n===9||n===13),'Without JavaScript every card keeps its 9 or 13 badges: '+JSON.stringify(cardBadgeCounts));
+    assert.deepEqual(cardBadgeCounts,flagship.map(f=>require('./pack_badge_census.cjs')(f.file)),'Without scripting every source member is retained');
     assert.equal(await staticPage.locator('main [data-pathway-switch]:visible').count(),0,'No pathway switch without the script');
     assert.equal(await staticPage.locator('main a.home-subject-tile').count(),4,'Static subject browsing remains available');
     assert.deepEqual(await staticPage.locator('main a.home-door-card').evaluateAll(es=>es.map(e=>e.getAttribute('href'))),DOOR_KEYS.map(k=>record.audiences[k].route),'Static door cards remain available');
     assert.equal(await staticPage.locator('main img[data-hero-source]').count(),0,'No hero artwork on the J93 homepage');
     assert.equal(await staticPage.locator('main img.home-emblem').count(),1,'The emblem renders without the script');
-    const [staticNav]=await Promise.all([staticPage.waitForNavigation(),staticPage.locator('main article.home-pathway-card[data-pathway-card="BUILD"] li[data-fixed] a').click()]);
+    const [staticNav]=await Promise.all([
+      staticPage.waitForResponse(response=>response.request().isNavigationRequest()&&response.request().frame()===staticPage.mainFrame()),
+      staticPage.locator('main article.home-pathway-card[data-pathway-card="BUILD"] li[data-fixed] a').click()
+    ]);
+    await staticPage.waitForLoadState('load');
     const first=flagship[0].served?flagship[0].href:hubRoute;
     assert(staticNav&&staticNav.ok()&&new URL(staticPage.url()).pathname===new URL(origin+first).pathname,'The flagship lesson launches without JavaScript');
     report.cases.push({width:390,route:'/',javascript:false,status:'PASS'});
