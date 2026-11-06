@@ -80,15 +80,23 @@ TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
 # RE Spring 1 window W1 (ruling sr, sr-3 step 1; 17 October 2026): the 216 download rows of the three reviewed RE Spring 1
 # pack roots join the Humanities prefix (876 -> 1092 rows, in the built order); all 876 reviewed rows are kept unchanged
 # and in order, and no other prefix moves. d56d0844 -> 88870c0d.
-TEACHING_PACK_ADDITIONS_SHA256 = '9c808891100aa33c41527a1fab6befc7978551ceeaf6ba4c1a76729ac2f179ee'  # M1: the same rows with the folder paths renamed (every difference is the rename map)
+# R-RAISE Humanities/RE window W1 (owner ruling R-RAISE, 6 November 2026; Lessons #807): the 282 download rows the 42 rebuilt
+# Autumn 2 Humanities and RE lessons add under the six Autumn 2 pack roots join the Humanities prefix (1092 -> 1374 rows, in the
+# built order); all 1092 reviewed rows are kept unchanged and in order (their titles too), and no other prefix moves.
+# 9c808891 (M1) -> b220966b.
+TEACHING_PACK_ADDITIONS_SHA256 = 'b220966b8338231586217ac82082da4df7dbab016ae1cc1e55762c8a8a00bd0a'
 # RE Spring 1 window W1 (ruling ss, ss-2: option A, the io-3 shape of #471; 17 October 2026): the transition form of the
 # reviewed list. While the RE Spring 1 landing is in flight the Site still builds its pinned Lessons (876 Humanities rows) and
 # the Lessons publication builds the landing (1092), so a prefix with a declared pending set passes with EITHER its reviewed
 # rows OR those rows minus exactly the pending set, and in no other state (while the pack index is installed). The pending
 # set is the 216 download rows of the three reviewed RE Spring 1 pack roots (72 under each), pinned by digest below; a later
-# collapse window removes it.
+# collapse window removes it. R-RAISE Humanities/RE window W1 (owner ruling R-RAISE, 6 November 2026): the Site's pinned
+# Lessons 9b2d03bb now carries the RE Spring 1 rows and lacks the 9 retired Humanities collections (it builds the reviewed rows
+# minus the um retiring set, 1083 rows), so the RE Spring 1 pending rows collapse out. The pending set becomes the 282 rows the
+# #807 landing adds plus those 9 retiring rows (291): the pin builds the reviewed rows minus the pending set, the landing builds
+# them minus the retiring set, and no other state passes.
 TEACHING_PACK_PENDING = HERE/'teaching-packs-download-usage-pending.json'
-TEACHING_PACK_PENDING_SHA256 = 'b1defb46c628c7a2ba9f6494d2160af5658f70f7a86b5050c0ee5bb1dd40b2fa'  # M1: the same rows with the folder paths renamed (every difference is the rename map)
+TEACHING_PACK_PENDING_SHA256 = 'bcfdc3bf935382a43c281ff6e5f9858374df19af8cd869a4e92ada6701cd9649'  # R-RAISE Humanities/RE window W1: the 282 Autumn 2 rebuild rows plus the 9 um retiring rows
 
 
 # um window W1 (rulings um, um add.1 (ii) and answer B, um-4 (a); 24 October 2026): the io-3 transition form again, as a
@@ -121,21 +129,32 @@ def retiring_set_problems(retiring, approved):
     return problems
 
 
+# The exact 282 R-RAISE pending rows (json.dumps(rows, sort_keys=True), in reviewed order), so no other row under
+# those folders can stand in for one of them.
+RAISE_PENDING_ROWS_SHA256 = '7ea92cc4c00ee4d2c72e750cab5c846a56a3f2a58323e9d12ac514a3d491fccd'
+RAISE_PENDING_ROOTS = ('HUM_Autumn_2_BUILD_Reviewed', 'HUM_Autumn_2_GROW_Reviewed', 'HUM_Autumn_2_LAUNCH_Reviewed',
+                       'RE_Autumn_BUILD_Reviewed', 'RE_Autumn_GROW_Reviewed', 'RE_Autumn_LAUNCH_Reviewed')
 RE_S1_PENDING_ROOTS = ('RE_Spring_1_BUILD_Reviewed', 'RE_Spring_1_GROW_Reviewed', 'RE_Spring_1_LAUNCH_Reviewed')
 
-def pending_set_problems(pending, approved):
-    """Self-test helper (ruling ss, ss-2; the io-3 helper of #471): the declared pending set must be one prefix of exactly
-    216 distinct rows, 72 under each RE Spring 1 pack root, each of them present exactly once among the reviewed rows, so
-    that none is present in the reviewed rows minus the pending set. Returns the problems found (empty = sound)."""
+def pending_set_problems(pending, approved, retiring=None):
+    """Self-test helper (ruling ss, ss-2; the io-3 helper of #471; owner ruling R-RAISE Humanities/RE window W1): the declared
+    pending set must be one prefix of exactly 291 distinct rows: 282 under the six Autumn 2 rebuild pack roots' Autumn_2 week
+    folders, plus exactly that prefix's 9 um retiring rows, each of them present exactly once among the reviewed rows, so that
+    none is present in the reviewed rows minus the pending set. Returns the problems found (empty = sound)."""
     problems = []
+    retiring = json.loads(TEACHING_PACK_RETIRING.read_text()) if retiring is None else retiring
     if len(pending) != 1: problems.append('pending set is not one prefix')
     for prefix, rows in pending.items():
         keys = [json.dumps(r, sort_keys=True) for r in rows]
-        if len(rows) != 216: problems.append('pending set holds %d rows, not 216' % len(rows))
+        if len(rows) != 291: problems.append('pending set holds %d rows, not 291' % len(rows))
         if len(set(keys)) != len(keys): problems.append('pending rows are not distinct')
-        for root in RE_S1_PENDING_ROOTS:
-            n = sum(1 for r in rows if '/' + root + '/' in r['route'])
-            if n != 72: problems.append('%d pending rows under %s, not 72' % (n, root))
+        raise_rows = [r for r in rows if any('/' + root + '/' in r['route'] for root in RAISE_PENDING_ROOTS)
+                      and re.search(r'/Autumn_2/W0[1-7]/', r['route'])]
+        if len(raise_rows) != 282: problems.append('%d R-RAISE pending rows, not 282 under Autumn_2' % len(raise_rows))
+        if sha256(json.dumps(raise_rows, sort_keys=True).encode()).hexdigest() != RAISE_PENDING_ROWS_SHA256:
+            problems.append('R-RAISE pending rows are not the reviewed 282')
+        rest = [r for r in rows if r not in raise_rows]
+        if rest != retiring.get(prefix, []) or len(rest) != 9: problems.append('pending rows outside R-RAISE are not exactly the 9 retiring rows')
         reviewed = [json.dumps(r, sort_keys=True) for r in approved.get(prefix, [])]
         for k in set(keys):
             if reviewed.count(k) != 1: problems.append('a pending row is present %d times among the reviewed rows' % reviewed.count(k))
@@ -540,7 +559,7 @@ def self_test():
     # io-3 collapse (ruling rf-4): the pending transition form is gone. The reviewed rows minus a subset are red, on
     # planted rows and on the real list (the 876 Humanities rows minus the 36 io-3 rows). The 876 below pins the approved
     # list's length: it moves only by ruling, with the list (sc-3; 861 -> 876 with the Spring 1 window W1; ruling sr, sr-3:
-    # 876 -> 1092 with the RE Spring 1 window W1).
+    # 876 -> 1092 with the RE Spring 1 window W1; owner ruling R-RAISE: 1092 -> 1374 with the Humanities/RE window W1).
     pp='/Lessons/Careers/Teaching_Packs/'; a,b,c,d=(row(pp+'BUILD/downloads/'+x+'.zip') for x in 'abcd')
     for label,rs,expected in [('the reviewed rows',[a,b,c,d],0),('the reviewed rows minus two (the retired form)',[a,b],1),
                               ('the reviewed rows reordered',[a,b,d,c],1),('a changed row',[a,{**b,'kind':'planted'},c,d],1)]:
@@ -551,7 +570,7 @@ def self_test():
     hp=next(p for p in real_add if p.startswith('/Lessons/Humanities'))
     io3=[r for r in real_add[hp] if any('/'+s+'_' in r['route'] for s in ('HUM_BUILD_A2_W01','HUM_GROW_A2_W01','HUM_LAUNCH_A2_W01'))]
     errors,_=registry_partition([r for r in real_add[hp] if r not in io3],{hp:real_add[hp]},{hp:True})
-    passed=len(io3)==36 and len(real_add[hp])==1092 and len(errors)==1; ok=ok and passed
+    passed=len(io3)==36 and len(real_add[hp])==1374 and len(errors)==1; ok=ok and passed
     print(f"  [{'ok' if passed else 'FAIL'}] the real Humanities rows minus the 36 io-3 rows are red ({len(real_add[hp])} reviewed, {len(io3)} io-3)")
     # RE Spring 1 W1 (ruling ss, ss-2: option A): the pending transition form, proved on planted rows, as io-3's was. With
     # reviewed rows a, b, c, d and pending c, d, exactly two states pass: all four, and the reviewed rows minus the pending set.
@@ -577,9 +596,9 @@ def self_test():
     probs=pending_set_problems(real_pending, real_add)
     passed=sha256(TEACHING_PACK_PENDING.read_bytes()).hexdigest()==TEACHING_PACK_PENDING_SHA256 and not probs
     ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the pending set is one prefix, 216 distinct rows, 72 under each RE Spring 1 root, each once among the reviewed rows, at its pinned digest")
+    print(f"  [{'ok' if passed else 'FAIL'}] the pending set is one prefix, 291 distinct rows (282 R-RAISE Autumn 2 plus the 9 um retiring rows), each once among the reviewed rows, at its pinned digest")
     errors,_=registry_partition([r for r in real_add[hp] if r not in real_pending[hp]],{hp:real_add[hp]},{hp:True},real_pending)
-    passed=not errors and len(real_add[hp])-len(real_pending[hp])==876; ok=ok and passed
+    passed=not errors and len(real_add[hp])-len(real_pending[hp])==1083; ok=ok and passed  # R-RAISE: the Site pin's 1083 (was 876)
     print(f"  [{'ok' if passed else 'FAIL'}] the real reviewed rows minus the pending set pass with the form ({len(real_add[hp])-len(real_pending[hp])} rows, the Site pin's)")
     earlier=[r for r in real_add[hp] if r not in real_pending[hp]]
     planted={hp:real_pending[hp][:-1]+[earlier[0]]}
