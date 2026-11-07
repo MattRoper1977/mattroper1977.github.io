@@ -1,7 +1,10 @@
-"""Refresh the five existing audience entry pages during Education assembly.
+"""Build the five adult audience pages during Education assembly.
 
-Only discovery HTML and its CSS/JS are written. Lesson, App and game payloads
-remain owned by their source repositories. Call after education_discovery.refresh.
+Each page follows the Governors & trustees layout: a plain hero, four
+conversation prompts, a searchable set of publisher-labelled resources and the
+Made by Matt routes. Content lives in audience-pages.json. Every destination the
+repository's source page linked to is kept on the rebuilt page (checked here
+and again by check_audience_discovery.cjs). Call after education_discovery.refresh.
 """
 from __future__ import annotations
 
@@ -12,71 +15,16 @@ import re
 import shutil
 import sys
 from html.parser import HTMLParser
+from urllib.parse import urlparse
 
 HERE = Path(__file__).resolve().parent
 PLAY = "https://www.madebymatt-play.uk"
 EEF = "https://educationendowmentfoundation.org.uk/education-evidence/guidance-reports/supporting-parents"
-NAV = [("Lessons", "/Lessons/"), ("Resources", "/resources/"),
-       ("Apps & tools", "/Matt-s-Apps-/"), ("Teacher tools", "/tools/")]
-ASDAN = [(pathway, f"/Lessons/{pathway}_ASDAN/{pathway}_ASDAN_Hub.html")
-         for pathway in ("BUILD", "GROW", "LAUNCH")]
-COPY = {
-    "parents": ("Choose something to learn together.",
-                "Start with a short activity, follow a school resource, or make something together. Choose what fits your child today."),
-    "schools": ("Find what your setting needs next.",
-                "Open teaching material, adapt an activity and find tools for classroom routines and evidence."),
-    "trusts": ("Explore teaching across your schools.",
-               "Compare subjects, pathways and practical tools with colleagues, using the materials themselves."),
-    "councils": ("Find learning resources to share.",
-                 "Explore public teaching resources, family starting points and professional guidance for schools and settings in your area."),
-    "partners": ("Explore the work. Find a useful connection.",
-                 "Try the lessons, creative apps and teaching tools, then get in touch about the work that interests you."),
-}
-
-
-def esc(value):
-    return html.escape(str(value), quote=True)
-
-
-def link(label, href, cls=""):
-    return f'<a class="{esc(cls)}" href="{esc(href)}">{esc(label)}</a>'
-
-
-def card(title, description, href, action="Open", image=None, alt=""):
-    from education_chrome_correction import icon_name, line_icon
-    picture = (f'<img src="{esc(image)}" alt="{esc(alt)}" width="640" height="360" loading="lazy" decoding="async">'
-               if image else "")
-    return (f'<article class="ad-card">{picture}<div>{line_icon(icon_name(title))}<h3>{esc(title)}</h3>'
-            f'<p>{esc(description)}</p>{link(action, href, "ad-action")}</div></article>')
-
-
-def section(id_, title, content, intro="", cls=""):
-    return (f'<section class="ad-section {esc(cls)}" id="{esc(id_)}" aria-labelledby="{esc(id_)}-title">'
-            f'<h2 id="{esc(id_)}-title">{esc(title)}</h2>'
-            + (f'<p class="ad-intro">{esc(intro)}</p>' if intro else "") + content + '</section>')
-
-
-def routes_section(id_, title, items, intro=""):
-    cards = ''.join(card(x['title'], x['description'], x['href'], x.get('action', 'Open')) for x in items)
-    return section(id_, title, f'<div class="ad-grid">{cards}</div>', intro)
-
-
-def family_guidance():
-    steps = [
-        ("Read and talk", "Share a few pages, listen to someone read, or talk about a picture. Ask what might happen next; a spoken answer or pointing is fine."),
-        ("Notice numbers", "Use familiar objects to sort, count or compare. Choose one small task and show an example before taking turns."),
-        ("Make one thing", "Draw, write, record or build one idea. Let your child choose how to show it and talk about a part they enjoyed."),
-        ("Plan the next step", "For a more independent learner, agree a manageable goal and a stopping point. Help with the routine, then let them try the task."),
-    ]
-    content = '<ol class="ad-steps">' + ''.join(
-        f'<li><h3>{esc(title)}</h3><p>{esc(text)}</p></li>' for title, text in steps) + '</ol>'
-    content += ('<p>Shorten an activity, do it together or return to it another day. If school has shared a task, ask which part matters most and tell them what helped.</p>'
-                '<p class="ad-source">These suggestions draw on the EEF’s guidance on practical home learning, routines and positive dialogue with school. '
-                f'{link("Working with Parents to Support Children’s Learning", EEF)} '
-                '(published 7 December 2018; source checked 6 September 2026).</p>')
-    return section('parent-tips', 'A small activity is a useful start', content)
-
-
+KEYS = ("parents", "schools", "trusts", "councils", "partners")
+GOVERNORS = ("/for/governors-trustees/", "Governors & trustees")
+ORIGINS = ("official", "sector", "made-by-matt")
+FIELDS = ("id", "title", "url", "source", "origin", "topic", "type", "jurisdiction", "summary", "access", "checked")
+ADULT_LINKS = [("Account", "/account/"), ("Members", "/members/"), ("Teacher updates", "/mailing-list/"), ("Privacy", "/privacy/")]
 FAQ_ANSWERS = [
     "Public Made by Matt lessons, resources and apps are free to open. The optional Ko-fi link helps support the work; using it is not required.",
     "No account is needed to open public lessons, resources or apps. Optional adult account features are separate; the Account page explains what is available.",
@@ -87,6 +35,58 @@ FAQ_ANSWERS = [
     "No. Use your school’s guidance for your child and the labelled official sources for specialist advice. Made by Matt provides learning content and tools.",
 ]
 FAQ_IDS = ['cost', 'account', 'players', 'device', 'pupil-home', 'mailing', 'advice']
+# Kept for any caller that imports the copy table; the page text itself now
+# comes from audience-pages.json.
+COPY = {key: None for key in KEYS}
+
+
+def esc(value):
+    return html.escape(str(value), quote=True)
+
+
+def link(label, href, cls=""):
+    attr = f' class="{esc(cls)}"' if cls else ''
+    return f'<a{attr} href="{esc(href)}">{esc(label)}</a>'
+
+
+def load_pages():
+    pages = json.loads((HERE/'audience-pages.json').read_text())['pages']
+    if tuple(pages) != KEYS:
+        raise ValueError('audience-pages.json must hold exactly the five audience pages')
+    for key, page in pages.items():
+        ids = [row['id'] for row in page['resources']]
+        if len(set(ids)) != len(ids):
+            raise ValueError(f'Duplicate resource on the {key} page')
+        for row in page['resources']:
+            for field in FIELDS:
+                if not row.get(field):
+                    raise ValueError(f'Missing {field} on {key}/{row.get("id")}')
+            if row['origin'] not in ORIGINS:
+                raise ValueError(f'Unknown publisher group on {key}/{row["id"]}')
+            url = urlparse(row['url'])
+            if row['origin'] == 'made-by-matt':
+                if not row['url'].startswith('/') or row['url'].startswith('//'):
+                    raise ValueError(f'Made by Matt resource must use a site route: {row["id"]}')
+            elif url.scheme != 'https' or not url.netloc:
+                raise ValueError(f'External resource must use a direct HTTPS link: {row["id"]}')
+        if [g[0] for g in page['groups']] != list(ORIGINS):
+            raise ValueError(f'The {key} page must list the three publisher groups in order')
+        if len(page['prompts']) != 4:
+            raise ValueError(f'The {key} page needs four conversation prompts')
+    return pages
+
+
+def card(row):
+    search = ' '.join(str(row.get(k, '')) for k in ('title', 'source', 'summary', 'topic', 'type', 'jurisdiction', 'access'))
+    metadata = [('Publisher', row['source']), ('Covers', row['jurisdiction']), ('Access', row['access']), ('Checked', row['checked'])]
+    dates = f'<p class="gv-effective">Effective from {esc(row["effectiveFrom"])}.</p>' if row.get('effectiveFrom') else ''
+    action = 'Open on Made by Matt' if row['origin'] == 'made-by-matt' else 'Open publisher resource'
+    return (f'<article class="gv-card" data-governance-card data-id="{esc(row["id"])}" '
+            f'data-origin="{esc(row["origin"])}" data-topic="{esc(row["topic"])}" data-search="{esc(search.lower())}">'
+            f'<p class="gv-tag">{esc(row["type"])}</p><h3>{esc(row["title"])}</h3><p>{esc(row["summary"])}</p>{dates}'
+            '<dl>' + ''.join(f'<div><dt>{esc(k)}</dt><dd>{esc(v)}</dd></div>' for k, v in metadata) + '</dl>'
+            f'<a class="gv-open" href="{esc(row["url"])}">{action}<span class="gv-sr">: {esc(row["title"])}</span>'
+            '<span aria-hidden="true"> →</span></a></article>')
 
 
 def family_faq(audience):
@@ -97,111 +97,76 @@ def family_faq(audience):
     questions[1]['question'] = 'Does a child need an account to use public learning resources?'
     questions[2]['question'] = 'How can we use the activities together?'
     rows = ''.join(
-        f'<details class="ad-faq" id="faq-{id_}"><summary>{esc(row["question"])}</summary><div><p>{esc(answer)}</p></div></details>'
+        f'<details class="gv-faq" id="faq-{id_}"><summary>{esc(row["question"])}</summary><p>{esc(answer)}</p></details>'
         for row, answer, id_ in zip(questions, FAQ_ANSWERS, FAQ_IDS))
-    return section('faq', 'Parent and carer questions', rows)
+    return ('<section id="faq" class="gv-group gv-faqs" aria-labelledby="faq-title"><div class="gv-section-head">'
+            '<h2 id="faq-title">Parent and carer questions</h2></div>' + rows + '</section>')
 
 
-def original_routes(audience, section_id):
-    return next(s for s in audience['sections'] if s['id'] == section_id)
+def audience_link(key, all_audiences):
+    if key == 'governors':
+        return GOVERNORS
+    return all_audiences[key]['route'], all_audiences[key]['label']
 
 
-def learning_cards():
-    return [
-        {'title': 'Primary learning', 'description': 'Find a primary activity to read, try or explore together.', 'href': '/Lessons/primary/', 'action': 'Open primary learning'},
-        {'title': 'Lesson Hub', 'description': 'Browse classroom material by subject, pathway and year.', 'href': '/Lessons/', 'action': 'Find a lesson'},
-        {'title': 'Creative apps', 'description': 'Choose browser tools for art, writing, audio, animation and documents.', 'href': '/Matt-s-Apps-/', 'action': 'Choose an app'},
-    ]
-
-
-def pathway_section():
-    cards = ''.join(card(f'{name} ASDAN', 'Open the learning collection and its activities.', route, f'Open {name}') for name, route in ASDAN)
-    return section('asdan-learning', 'ASDAN learning collections',
-        f'<div class="ad-grid">{cards}</div><p>{link("Find ASDAN resources from every year", "/Lessons/?subject=ASDAN%20%26%20life%20skills&year=all")} · '
-        f'{link("Search the ASDAN catalogue", "/resources/?q=asdan")}</p>',
-        'Choose a collection for learning activities. The ASDAN Register in Teacher tools is a separate evidence tool.')
-
-
-def professional_content(key, audience):
-    purpose = {
-        'schools': ('For your next planning session', 'Choose material for the pupils and routines you know. Review the instructions, reading demand and response options, then adapt the next step.'),
-        'trusts': ('Compare a small, useful sample', 'Ask colleagues to open the same lesson, pathway or tool. Compare the task, accessibility and fit across your settings before deciding how to use it.'),
-        'councils': ('Point people to the resource itself', 'Share a direct lesson, collection or family page so the receiving school or setting can review it in context.'),
-        'partners': ('Try a complete example', 'Open a lesson or app in the area you know best. Use the contact link below if you want to discuss an idea or ask about the work.'),
-    }
-    title, description = purpose[key]
-    content = section('priorities', title, f'<p>{esc(description)}</p>')
-    source = original_routes(audience, 'platform-map')
-    items = []
-    for original in source['items']:
-        row = dict(original)
-        if row['href'] == '/games/':
-            row.update(href=PLAY+'/', title='Made by Matt Play', description='Browse the games on the separate Play site.', action='Explore Play')
-        if row['href'] == '/resources/':
-            row['description'] = 'Find lessons, resources, apps and tools in one catalogue.'
-        if row['href'] == '/main/':
-            row['description'] = 'Explore the Education homepage and its learning areas.'
-        items.append(row)
-    content += routes_section('platform-map', 'Choose a starting point', items)
-    content += pathway_section()
-    source = original_routes(audience, 'official-guidance')
-    content += routes_section('official-guidance', 'Professional guidance', source['items'],
-                             'External resources are labelled by publisher in the Education Hub.')
-    return content
-
-
-def preserved_previews(audience):
-    source = next(s for s in audience['sections'] if s['type'] == 'features')
-    features = [x for x in source['features'] if x['href'] not in ('/games/', '/apexkick/')]
-    cards = ''.join(card(x['title'], x['description'], x['href'], x['action'], x['image'], x['alt']) for x in features)
-    return section('explore-together' if audience['route'] == '/for/parents-carers/' else 'visual-map',
-                   'Explore the learning areas', f'<div class="ad-grid ad-preview-grid">{cards}</div>')
-
-
-def make_main(key, audience, all_audiences):
-    title, lead = COPY[key]
-    nav = '<nav class="ad-nav" aria-label="Learning areas">' + ''.join(link(t, h) for t, h in NAV) + '</nav>'
-    if key == 'parents':
-        primary = ('<div class="ad-buttons">' + link('Primary learning', '/Lessons/primary/', 'ad-button')
-                   + link('Find a school resource', '/resources/', 'ad-button ad-button-secondary') + '</div>')
+def make_page(key, page, audience, all_audiences):
+    route = audience['route']
+    rows = page['resources']
+    topics = sorted({r['topic'] for r in rows})
+    buttons = ''.join(link(label, href, 'gv-button' + ('' if i == 0 else ' gv-secondary'))
+                      for i, (label, href) in enumerate(page['buttons']))
+    prompts = ''.join(f'<article><h3>{esc(t)}</h3><p>{esc(d)}</p></article>' for t, d in page['prompts'])
+    if page.get('promptsSource'):
+        lead, label, href, tail = page['promptsSource']
+        small = f'<p class="gv-small gv-source">{esc(lead)} {link(label, href)} {esc(tail)}</p>'
     else:
-        # UX2 B1: the source page's hero buttons come from the record's own
-        # primaryCtas (label, href, style). The old menu carried /education-hub/
-        # on every adult page and masked that this rebuilt main had dropped the
-        # "Open the Education Hub" button; the Appendix A menu does not, so the
-        # record's buttons render here and the destination survives on the page.
-        ctas = [c for c in audience.get('primaryCtas', []) if c.get('href') and c.get('label')]
-        primary = ('<div class="ad-buttons">' + ''.join(
-            link(c['label'], c['href'], 'ad-button' if c.get('style') == 'primary' else 'ad-button ad-button-secondary')
-            for c in ctas) + '</div>') if ctas else ''
-    search = ('<form class="ad-search" action="/resources/" role="search">'
-              '<label for="audience-search">Find a lesson, resource or app</label>'
-              '<div><input id="audience-search" name="q" type="search" placeholder="Try a subject, activity or tool">'
-              '<button type="submit">Search</button></div></form>')
-    content = f'<main id="main" class="ad-main">{nav}<header class="ad-heading"><p class="ad-eyebrow">{esc(audience["label"])}</p><h1 id="page-title">{esc(title)}</h1><p>{esc(lead)}</p>{primary}{search}</header>'
-    if key == 'parents':
-        content += routes_section('learning-starts', 'Choose what fits today', learning_cards())
-        content += family_guidance()
-        trusted = original_routes(audience, 'trusted-resources')
-        content += routes_section('trusted-resources', trusted['title'], trusted['items'], trusted['lead'])
-        content += family_faq(audience)
-    else:
-        content += professional_content(key, audience)
-    content += preserved_previews(audience)
-    content += '<p id="audience-play-showcase" class="mbm-external-play">'+link('Made by Matt Play — separate games website', PLAY+'/')+'</p>'
-    utilities = [dict(x) for x in audience.get('utilities', [])]
-    for row in utilities:
-        if row['href'] == '/for/pupils/':
-            row['description'] = 'Open the pupil learning homepage.'
-        elif row['href'] == '/resources/':
-            row['description'] = 'Search lessons, resources, apps and tools.'
-        elif row['href'] == 'mailto:contactmadebymatt@gmail.com':
-            row['description'] = 'Ask a question or discuss the work with Matt.'
-    content += routes_section('useful-routes', 'Useful links', utilities)
-    choices = ''.join(link(a['label'], a['route']) for a in all_audiences.values())
-    content += section('choose-homepage', 'Other starting points', '<nav class="ad-audiences" aria-label="Audience homepages">'+choices+'</nav>')
-    content += '<div class="ad-adult-links">' + ' · '.join(link(label, href) for label, href in [('Account','/account/'), ('Members','/members/'), ('Teacher updates','/mailing-list/'), ('Privacy','/privacy/')]) + '</div></main>'
-    return content
+        small = f'<p class="gv-small">{esc(page["promptsNote"])}</p>'
+    groups = ''.join(
+        f'<section class="gv-group" data-governance-group aria-labelledby="gv-{g}"><div class="gv-section-head">'
+        f'<h2 id="gv-{g}">{esc(title)}</h2><p>{esc(description)}</p></div><div class="gv-grid">'
+        + ''.join(card(r) for r in rows if r['origin'] == g) + '</div></section>'
+        for g, title, description in page['groups'])
+    hub_links = '<p class="gv-hub-links" id="trusted-resources">' + ' · '.join(link(l, h) for l, h in page['hubLinks']) + '</p>'
+    related = ''.join(link(label, href) for href, label in (audience_link(k, all_audiences) for k in page['related']))
+    # education_expansion appends the governors row to this menu.
+    others = ''.join(link(a['label'], a['route']) for a in all_audiences.values())
+    utilities = ''.join(link(u['title'], u['href']) for u in audience.get('utilities', []))
+    faq = family_faq(audience) if key == 'parents' else ''
+    contact = ('' if key == 'parents' else
+               '<p>Questions about the work? '+link('Email Matt', 'mailto:contactmadebymatt@gmail.com')+'.</p>')
+    canonical = 'https://madebymatt.uk' + route
+    description = page['lead']
+    return f'''<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{esc(audience["label"])} · Made by Matt</title><meta name="description" content="{esc(description)}">
+<meta name="theme-color" content="#161d3d"><link rel="canonical" href="{esc(canonical)}">
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/assets/governors-discovery.css">
+<script defer src="/assets/governors-discovery.js"></script></head><body class="gv-page" data-mbm-audience-page="{esc(key)}">
+<a class="gv-skip" href="#main">Skip to content</a><header class="gv-header"><div class="gv-wrap gv-header-inner">
+<a class="gv-brand" href="/"><img src="/assets/brand/micro_mark.svg" width="60" height="60" alt=""><span>MADE BY MATT<small>Learn · Build · Explore</small></span></a>
+<a class="gv-home" href="/">Education homepage</a></div></header>
+<main id="main" class="gv-wrap ad-main"><section class="gv-hero" aria-labelledby="page-title"><p class="gv-eyebrow">{esc(page["eyebrow"])}</p>
+<h1 id="page-title">{esc(page["title"])}</h1><p class="gv-lead">{esc(page["lead"])}</p>
+<div class="gv-actions">{buttons}</div>
+<p class="gv-intro-note">{esc(page["note"])}</p></section>
+<section id="{esc(page["promptsId"])}" class="gv-prompts" aria-labelledby="gv-prompts-title"><h2 id="gv-prompts-title">{esc(page["promptsTitle"])}</h2><div class="gv-prompt-grid">
+{prompts}
+</div>{small}</section>
+<section id="audience-resources" class="gv-finder" aria-labelledby="gv-finder-title"><h2 id="gv-finder-title">Find the support you need</h2>
+<form id="gv-search-form" role="search"><div class="gv-search-field"><label for="gv-search">{esc(page["finderLabel"])}</label><input id="gv-search" type="search" placeholder="{esc(page["finderPlaceholder"])}" autocomplete="off"></div>
+<div><label for="gv-origin">Publisher group</label><select id="gv-origin"><option value="">All resources</option>{''.join(f'<option value="{g}">{esc(t)}</option>' for g, t, _ in page["groups"])}</select></div>
+<div><label for="gv-topic">Topic</label><select id="gv-topic"><option value="">All topics</option>{''.join('<option>'+esc(t)+'</option>' for t in topics)}</select></div><button type="reset">Clear filters</button></form>
+<p id="gv-result-count" role="status" aria-live="polite">{len(rows)} resources</p><p class="gv-small">Publisher content, prices and booking terms can change. Each card shows the date its link and access details were checked. External links take you to the named publisher.</p>
+<noscript><p>All resources are listed below. Search and filters need JavaScript; the links work without it.</p></noscript>
+{hub_links}</section>
+<p id="gv-empty" hidden>No matching resources. Try a broader search or clear the filters.</p>{groups}
+{faq}<section class="gv-next" id="useful-routes"><h2>More from Made by Matt</h2><p>{esc(page["closing"])}</p>{contact}<div class="gv-actions">{link("Professional Education Hub", "/education-hub/")}{related}</div>
+<h3>Useful links</h3><div class="gv-actions">{utilities}{link("Resources", "/resources/")}{link("Tools", "/tools/")}</div>
+<h3 id="choose-homepage">Other starting points</h3><nav class="gv-actions" aria-label="Audience homepages">{others}</nav>
+<p id="audience-play-showcase" class="mbm-external-play">{link("Made by Matt Play — separate games website", PLAY + "/")}</p>
+<p class="gv-small gv-adult-links">{" · ".join(link(l, h) for l, h in ADULT_LINKS)}</p></section>
+</main></body></html>
+'''
 
 
 class Links(HTMLParser):
@@ -215,42 +180,44 @@ class Links(HTMLParser):
                 self.hrefs.add(html.unescape(href))
 
 
+def body_links(document):
+    match = re.search(r'<main\b.*?</main>', document, re.S)
+    if not match:
+        raise ValueError('Audience source page has no main region')
+    found = Links(); found.feed(match.group(0))
+    return found.hrefs
+
+
 def refresh(output, lessons, apps, site_source):
-    """Write five entry pages into an already assembled Education root."""
+    """Write the five audience pages into an already assembled Education root."""
     if str(HERE) not in sys.path:
         sys.path.insert(0, str(HERE))
-    from structural_html import replace_first_element
     output, source = Path(output)/"education-site", Path(site_source)
     # Inputs are checked, never modified. They make accidental invocation against
     # a missing source checkout fail before any page is replaced.
     if not (Path(lessons)/'resources.json').is_file() or not (Path(apps)/'apps.json').is_file():
         raise FileNotFoundError('Audience refresh needs the real Lessons and Apps source manifests')
     data = json.loads((source/'data/audience-homepages.json').read_text())['audiences']
-    report = {'pages': [], 'parentFAQQuestions': 7, 'sourceDate': '2026-09-06'}
-    for key in COPY:
+    pages = load_pages()
+    report = {'pages': [], 'parentFAQQuestions': 7, 'contentSource': 'domain-split/audience-pages.json'}
+    remapped = {'/games/': PLAY+'/', '/apexkick/': PLAY+'/'}
+    for key in KEYS:
         audience = data[key]
-        page = output/audience['route'].strip('/')/'index.html'
+        target = output/audience['route'].strip('/')/'index.html'
         original = (source/audience['route'].strip('/')/'index.html').read_text()
-        source_links = Links(); source_links.feed(original)
-        document = page.read_text()
-        main = make_main(key, audience, data)
-        document, replaced = replace_first_element(document, 'main', main)
-        if replaced != 1:
-            raise ValueError(f'Expected one main element in {page}')
-        document = re.sub(r'<title>.*?</title>', '<title>'+esc(audience['label'])+' · Made by Matt</title>', document, count=1, flags=re.S)
-        document = re.sub(r'<meta\s+name="description"\s+content="[^"]*"\s*/?>', '<meta name="description" content="'+esc(COPY[key][1])+'">', document, count=1)
-        if '/assets/audience-discovery.css' not in document:
-            document = document.replace('</head>', '<link rel="stylesheet" href="/assets/audience-discovery.css"></head>', 1)
-        if '/assets/audience-discovery.js' not in document:
-            document = document.replace('</body>', '<script defer src="/assets/audience-discovery.js"></script></body>', 1)
-        result_links = Links(); result_links.feed(document)
-        # Game links change origin; all original non-game destinations survive.
-        remapped = {'/games/': PLAY+'/', '/apexkick/': PLAY+'/'}
-        missing = {remapped.get(h, h) for h in source_links.hrefs} - result_links.hrefs
+        document = make_page(key, pages[key], audience, data)
+        result = Links(); result.feed(document)
+        # Game links change origin; every other destination the source page's
+        # body offered must survive on the rebuilt page.
+        missing = {remapped.get(h, h) for h in body_links(original)} - result.hrefs
         if missing:
-            raise ValueError(f'Original audience routes would be lost in {page}: {sorted(missing)}')
-        page.write_text(document)
-        report['pages'].append({'route': audience['route'], 'originalDestinations': len(source_links.hrefs), 'preserved': True, 'playRemaps': {k:v for k,v in remapped.items() if k in source_links.hrefs}})
+            raise ValueError(f'Original audience routes would be lost in {target}: {sorted(missing)}')
+        if 'ASDAN' in re.sub(r'<[^>]+>', ' ', document):
+            raise ValueError(f'Awarding-body name in visible text of {target}')
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(document)
+        report['pages'].append({'route': audience['route'], 'resources': len(pages[key]['resources']),
+                                'originalDestinations': len(body_links(original)), 'preserved': True})
     (output/'assets').mkdir(exist_ok=True)
     for name in ('audience-discovery.css', 'audience-discovery.js'):
         shutil.copyfile(HERE/name, output/'assets'/name)
