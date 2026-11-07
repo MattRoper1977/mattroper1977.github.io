@@ -1,8 +1,26 @@
 'use strict';
 const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
-const {measureTiles}=require('./check_sw2_resources.cjs');
+const contrastSource=fs.readFileSync(path.join(__dirname,'../tools/sw2/check_contrast_census.cjs'),'utf8');
+const contrastStart=contrastSource.indexOf('const MEASURE =');
+const contrastEnd=contrastSource.indexOf('\n(async () => {');
+assert(contrastStart>=0 && contrastEnd>contrastStart,'Existing contrast instrument is available');
+// Hub tile census extends the same composed-surface instrument used above.
+// Original resource thresholds and acceptance checks remain unchanged.
+let tileSource = contrastSource.slice(contrastStart, contrastEnd);
+for (const needle of ['const failures = [];', 'if (!visible(el)) continue;',
+                      'const need = large ? 3 : 4.5;', 'return { nodes, failures, unmeasured, deferred };']) {
+  assert(tileSource.includes(needle), 'Tile extension requires the current instrument: ' + needle);
+}
+tileSource = tileSource
+  .replace('const failures = [];', 'const failures = []; const measurements = [];')
+  .replace('if (!visible(el)) continue;', 'if (!visible(el) || !el.closest("[data-mbm-tile]")) continue;')
+  .replace('const need = large ? 3 : 4.5;', 'const need = 7;')
+  .replace('if (r + 0.005 < need) {', 'measurements.push({selector:sel(el),fg:cs.color,bg:bg.colour,ratio:r,size}); if (r + 0.005 < need) {')
+  .replace('return { nodes, failures, unmeasured, deferred };', 'return { nodes, failures, unmeasured, deferred, measurements };');
+const measureTiles = Function(tileSource + ';return MEASURE')();
+
 const origin=process.env.MBM_EDUCATION_ORIGIN||'http://127.0.0.1:4173';
-const routes=['/','/main/',...Object.values(require('../data/audience-homepages.json').audiences).map(a=>a.route),'/education-hub/','/teach/','/stats/','/members/','/uas/','/evidence-binder/moderator-pro/','/privacy/','/mailing-list/','/thanks/'];
+const routes=['/','/main/',...Object.values(require('../data/audience-homepages.json').audiences).map(a=>a.route),'/education-hub/','/teach/','/stats/','/stats/on-this-device/','/members/','/uas/','/evidence-binder/moderator-pro/','/privacy/','/mailing-list/','/thanks/'];
 (async()=>{const browser=await chromium.launch(),rows=[];let planted=false;
 try{for(const route of routes)for(const theme of ['cream','light','dark','highlumen'])for(const width of [360,1280]){
  const page=await browser.newPage({viewport:{width,height:640},reducedMotion:'reduce'});

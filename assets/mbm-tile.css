@@ -6,8 +6,9 @@
   background:var(--mbm-card)!important;color:var(--mbm-primary)!important;
   box-shadow:var(--mbm-card-shadow);font-size:1.125rem!important;line-height:1.5;
   overflow-wrap:anywhere;transition:transform 160ms var(--mbm-motion-ease),box-shadow 160ms var(--mbm-motion-ease);
-  animation:mbm-tile-reveal 180ms var(--mbm-motion-ease);
+  animation:none;
 }
+@media screen and (prefers-reduced-motion:no-preference){.mbm-tiles-ready [data-mbm-tile]{animation:mbm-tile-reveal 180ms var(--mbm-motion-ease)}}
 a[data-mbm-tile]{display:flex;flex-direction:column;align-items:stretch;gap:.5rem;text-decoration:none}
 [data-mbm-tile] :is(p,small,span,strong,b,h2,h3,h4,li,label){color:var(--mbm-primary)!important;opacity:1!important}
 [data-mbm-tile] :is(p,small,span,li,label){font-size:1.125rem!important;line-height:1.5}
@@ -28,7 +29,7 @@ a[data-mbm-tile]:hover,[data-mbm-tile]:has(>a):hover{transform:translateY(-2px)!
 [data-mbm-tile][hidden]{display:none!important}
 /* A primary action remains a native link. No click delegation or extra tab stop. */
 a[data-mbm-tile]::after{content:'→';align-self:flex-end;font-size:1.25rem;color:var(--mbm-primary)}
-[data-mbm-tile] :is(.mf-arrow,.home-door-arrow){display:none}
+[data-mbm-tile] :is(.mf-arrow,.home-door-arrow),a[data-mbm-tile]>span[aria-hidden="true"]:last-child:not(.mbm-tile-icon){display:none}
 :is(.mf-choice-grid,.mf-route-grid,.mf-feature-grid,.mf-pupil-grid,.mf-pupil-rail,.mf-task-grid,.mbm-start-grid,.mbm-task-grid,.mbm-audience-grid,.home-doors-grid,.home-subjects-grid,.home-tools-grid){display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:1rem!important}
 @media(min-width:48rem){:is(.mf-choice-grid,.mf-route-grid,.mf-feature-grid,.mf-pupil-grid,.mf-pupil-rail,.mf-task-grid,.mbm-start-grid,.mbm-task-grid,.mbm-audience-grid,.home-doors-grid,.home-subjects-grid,.home-tools-grid){grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(min-width:68rem){:is(.mf-choice-grid,.mf-route-grid,.mf-feature-grid,.mf-pupil-grid,.mf-pupil-rail,.mf-task-grid,.mbm-start-grid,.mbm-task-grid,.mbm-audience-grid,.home-doors-grid,.home-subjects-grid,.home-tools-grid){grid-template-columns:repeat(3,minmax(0,1fr))!important}}
@@ -58,8 +59,9 @@ body:has([data-mbm-tile]) .mbm-reveal,
 :is(.fd-shortcuts,.fd-subjects,.usage-grid){display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:1rem!important}
 @media(min-width:48rem){:is(.fd-shortcuts,.fd-subjects,.usage-grid){grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(min-width:68rem){:is(.fd-shortcuts,.fd-subjects,.usage-grid){grid-template-columns:repeat(3,minmax(0,1fr))!important}}
-body:has([data-mbm-tile]) .fd-hero{padding-block:1rem!important;min-height:0!important;grid-template-columns:1fr!important}
-body:has([data-mbm-tile]) .fd-hero-art{display:none!important}
+body:has([data-mbm-tile]) .fd-hero{position:relative;padding-block:1rem!important;min-height:0!important;grid-template-columns:1fr!important}
+body:has([data-mbm-tile]) .fd-hero-art{display:block;position:absolute;top:1rem;right:0;width:4rem;margin:0}
+body:has([data-mbm-tile]) .fd-hero:has(.fd-hero-art)>div:first-child>:is(.fd-eyebrow,h1){padding-right:5rem}
 body:has([data-mbm-tile]) .fd-hero h1{font-size:1.75rem!important}
 body:has([data-mbm-tile]) .fd-section{padding-block:1rem!important}
 body:has([data-mbm-tile]) .home-masthead-actions{display:flex;flex-wrap:wrap;gap:.5rem}

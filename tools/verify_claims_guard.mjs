@@ -14,9 +14,8 @@
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const RECORD = path.join(ROOT, 'data', 'banned-claims.json');
 const FOR = path.join(ROOT, 'for');
 

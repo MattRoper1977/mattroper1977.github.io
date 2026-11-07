@@ -1,2 +1,3 @@
-/* Native links and controls are the complete tile interaction, including with
- * scripting disabled. Reveals live in CSS and never hide protected content. */
+/* Native links work without scripting. Only enable reveal motion when the
+ * document can advance it; the content itself always remains visible. */
+document.documentElement.classList.add('mbm-tiles-ready');

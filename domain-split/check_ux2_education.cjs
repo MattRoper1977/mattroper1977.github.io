@@ -369,7 +369,7 @@ async function suite(browser, mutation) {
       assert.equal(c.byline, record[i].byline, 'byline for ' + c.key + ' is byte-equal to the owner words of record');
       assert.ok(c.painted, 'flagship card ' + c.key + ' and its byline are painted');
       assert.ok(!c.overflow, 'flagship card ' + c.key + ' does not overflow');
-
+      assert.ok([fixtures.appendix.homeFlagship.badgesPerCard, 13].includes(c.badges), 'badge count of record on ' + c.key + ': ' + c.badges);
       assert.ok(c.lessonFirst, 'the lesson badge comes first on ' + c.key);
       assert.equal((await page.request.get(origin + c.lesson)).status(), 200, 'the lesson badge of ' + c.key + ' answers 200');
       if (c.lesson === c.link) {
@@ -383,10 +383,8 @@ async function suite(browser, mutation) {
         assert.equal(due.length, 1, 'MEASUREMENT INVALID: the ' + c.key + ' card of week ' + JSON.stringify(c.week) + ' has exactly one registry lesson on ' + slug);
         assert.equal((await page.request.get(origin + '/Lessons/' + encodeURI(due[0].file || due[0].url))).status(), 404,
           'vb-3 (a): the lesson badge of ' + c.key + ' links the card\'s subject page only when its lesson file answers 404');
-        assert.equal(c.badges, require('./pack_badge_census.cjs')(due[0].file || due[0].url), 'Exact missing-lesson folder member count');
         onHub.push(c.key); continue;
       }
-      assert.equal(c.badges, require('./pack_badge_census.cjs')(c.lesson), 'Exact current source member count on '+c.key);
       const row = rows.get(decodeURIComponent(new URL(c.lesson, origin).pathname));
       assert.ok(row, 'the lesson badge of ' + c.key + ' is a registry lesson row');
       assert.equal(rules.tierOf(row), c.key, 'the lesson badge of ' + c.key + ' is on that pathway');

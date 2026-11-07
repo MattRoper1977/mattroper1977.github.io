@@ -355,10 +355,9 @@
     /* On a phone the workspace sits ~3300px down. Filtering without bringing it
        into view is indistinguishable, to the person holding the phone, from
        nothing having happened at all. */
-    function revealWorkspace(instant){
+    function revealWorkspace(){
       var calm=matchMedia('(prefers-reduced-motion: reduce)').matches;
-      root.classList.add('is-visible');
-      root.scrollIntoView({behavior:instant?'instant':calm||doc.hidden?'auto':'smooth',block:'start'});
+      root.scrollIntoView({behavior:calm?'auto':'smooth',block:'start'});
       if(!root.hasAttribute('tabindex'))root.setAttribute('tabindex','-1');
       try{root.focus({preventScroll:true});}catch(_){}
     }
@@ -435,8 +434,7 @@
       stateFromUrl(root);
       bind();refresh(false);
       root.setAttribute('data-mbm-search-ready','true');
-      // Initial deep links must settle even in a background tab where frames pause.
-      if(shouldRevealTask())revealWorkspace(true);
+      if(shouldRevealTask())requestAnimationFrame(function(){requestAnimationFrame(revealWorkspace);});
     }).catch(function(error){
       if(count)count.textContent='Search could not be loaded. The key links on this page still work.';
       root.setAttribute('data-mbm-search-error',String(error&&error.message||error));

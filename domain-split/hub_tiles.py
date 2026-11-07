@@ -3,7 +3,9 @@
 Never rewrites text, destinations, forms, hidden state or reading order. Keeping
 the original classes also preserves consumers of the existing card contracts.
 """
+import json
 import re
+from pathlib import Path
 
 ROUTES = {'/', '/main/', '/teach/', '/education-hub/', '/stats/', '/members/',
           '/uas/', '/evidence-binder/moderator-pro/', '/privacy/', '/mailing-list/', '/thanks/'}
@@ -14,10 +16,13 @@ CARDS = set('mf-choice mf-route-card mf-feature mf-task-card mf-surprise-card '
             'ad-card sx-card usage-card fd-shortcut fd-subject ma-panel card pv-note pv-lead'.split())
 LINKS = ('<link rel="stylesheet" href="/assets/mbm-tile.css">'
          '<script defer src="/assets/mbm-tile.js"></script>')
+AUDIENCE_ROUTES = frozenset(audience['route'] for audience in json.loads(
+    (Path(__file__).resolve().parent.parent / 'data/audience-homepages.json').read_text(encoding='utf-8')
+)['audiences'].values())
 
 
 def annotate(text, route):
-    if route not in ROUTES and route not in {'/for/teachers/', '/for/pupils/', '/for/parents-carers/', '/for/schools-semh/', '/for/trusts/', '/for/partners/', '/for/councils-organisations/'}:
+    if route not in ROUTES and route not in AUDIENCE_ROUTES:
         return text
     # Reuse a glyph already authored on this page; no external sprite or asset.
     glyph = re.search(r'<svg\b[^>]*>.*?</svg>', text, re.S)
@@ -32,6 +37,16 @@ def annotate(text, route):
                 tag += slot
         return tag
     def region(markup):
+        # The release stack has its own publication contract and pinned markup.
+        # Preserve that whole region, including links that share hub classes.
+        if route == '/main/':
+            pieces = re.split(r'(<section\b[^>]*\bid="newrelease"[^>]*>.*?</section>)', markup, flags=re.S)
+            if len(pieces) > 1:
+                return ''.join(piece.replace(' data-mbm-tile=""', '') if i % 2 else unprotected(piece)
+                               for i, piece in enumerate(pieces))
+        return unprotected(markup)
+
+    def unprotected(markup):
         return ''.join(part if re.match(r'<(?:script|style)\b', part, re.I) else
                        re.sub(r'<(?:a|article|section|div|aside)\b[^>]*>', mark, part)
                        for part in re.split(r'(<(?:script|style)\b[^>]*>.*?</(?:script|style)>)', markup, flags=re.S | re.I))
