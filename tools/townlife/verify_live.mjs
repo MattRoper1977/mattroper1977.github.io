@@ -152,11 +152,21 @@ function proveRouteMarkerControl(localRelative, marker) {
   console.log(`LIVE MARKER NEGATIVE CONTROL RED — removed ${JSON.stringify(marker)} from ${localRelative}`);
 }
 
+function proveServedMarkerControl(served, marker) {
+  assertRouteMarker(served, marker);
+  const withoutMarker = Buffer.from(served.bytes.toString('utf8').replace(marker, 'data-live-marker-control-removed="true"'));
+  assert.throws(
+    () => assertRouteMarker({ route: `${served.route} CONTROL`, bytes: withoutMarker }, marker),
+    /is missing marker/,
+  );
+  console.log(`LIVE SERVED MARKER NEGATIVE CONTROL RED — removed ${JSON.stringify(marker)} from ${served.route}`);
+}
+
 function assertExactRoute(served, localRelative, marker) {
   const local = fs.readFileSync(path.join(ROOT, localRelative));
   assert.equal(served.status, 200, `${served.route} returned ${served.status}`);
   assertRouteMarker(served, marker);
-  assert.deepEqual(served.bytes, local, `${served.route} differs from committed ${localRelative}`);
+  assert(served.bytes.equals(local), `${served.route} differs from committed ${localRelative}`);
   return { localRelative, bytes: local.length, sha256: sha256(local), match: true };
 }
 
@@ -245,7 +255,7 @@ async function observeBrowser() {
 
 const deployment = await waitForDeployment();
 const canonical = await waitForCanonicalTown();
-proveRouteMarkerControl('games/index.html', 'id="genreSections"');
+proveRouteMarkerControl('domain-split/play/index.html', 'id="game-grid"');
 proveMovedRouteControl();
 const [gamesRoute, pupilsRoute, manifestRoute, mirrorRoute, townRoute] = await Promise.all([
   fetchRoute('/games/'),
@@ -254,22 +264,19 @@ const [gamesRoute, pupilsRoute, manifestRoute, mirrorRoute, townRoute] = await P
   fetchRoute('/data/source-manifests/games.json'),
   fetchRoute('/townlife/'),
 ]);
+proveServedMarkerControl(gamesRoute, 'id="game-grid"');
 
 const provenance = {
   townlife: assertExactRoute(townRoute, 'townlife/index.html', STATUS),
-  // LEFT AS IT IS, and annotated rather than repaired -- SW2-F W2, DECISIONS
-  // 2026-09-09. The origin fix above sends /games/ to Play, which is correct,
-  // and that is as far as this pass goes. The comparison target is still wrong,
-  // and measurably so: the Play /games/ page is GENERATED from
-  // domain-split/preview-template.html (build_publications.py:325), not copied
-  // from games/index.html. Built locally from main they are 76,105 and 53,680
-  // bytes, and the generated page does not contain id="genreSections" at all.
-  // Repairing it means deriving the expectation from the built Play tree, which
-  // is a different change from choosing an origin, and inventing an assertion
-  // for a shelf whose served shape is itself red today (#group is absent from
-  // the builder's own output) is exactly how BACKLOG 5a says the original drift
-  // got in. So it stays red and named, rather than weakened to reach green.
-  games: assertExactRoute(gamesRoute, 'games/index.html', 'id="genreSections"'),
+  // LEFT AS IT IS on byte comparison, marker re-pinned id="genreSections" -> id="game-grid":
+  // SW2-F W2 (DECISIONS 2026-09-09) / AK10-AE add.1-2 (#506). The origin fix above
+  // sends /games/ to Play, where domain-split/play/build.py renders
+  // domain-split/play/index.html with id="game-grid" rather than games/index.html's
+  // retired id="genreSections". assertRouteMarker now checks id="game-grid" (and
+  // proveServedMarkerControl proves red when id="game-grid" is removed from the
+  // served page), while assertExactRoute's byte comparison stays unweakened until
+  // the generated-tree expectation replaces pre-split games/index.html.
+  games: assertExactRoute(gamesRoute, 'games/index.html', 'id="game-grid"'),
   pupils: assertExactRoute(pupilsRoute, 'for/pupils/index.html', STATUS),
   siteMirror: assertExactRoute(mirrorRoute, 'data/source-manifests/games.json', STATUS),
 };
