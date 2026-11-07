@@ -915,7 +915,11 @@ def outputs(data: dict[str, Any]) -> dict[Path, str]:
         result[ROOT / audience["route"].strip("/") / "index.html"] = audience_page(data, aid, audience)
     result[MAIN_PAGE] = spliced_main_page(data)
     result[HUD_JS] = spliced_hud_js(data)
-    return result
+    sys.path.insert(0, str(ROOT / "domain-split"))
+    from hub_tiles import annotate
+    return {path: annotate(content, "/" + path.relative_to(ROOT).as_posix().removesuffix("index.html"))
+            if path.suffix == ".html" and path.name == "index.html" and path.parent.name != "start"
+            else content for path, content in result.items()}
 
 
 SECTION_REQUIRED = {

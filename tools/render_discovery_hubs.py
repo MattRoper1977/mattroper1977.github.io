@@ -826,7 +826,9 @@ def render_page(*, title: str, description: str, path: str, body: str) -> str:
     lines += head_lines(title=title, description=description, path=path)
     lines += header_lines()
     lines.append(body)
-    return "\n".join(lines) + "\n"
+    sys.path.insert(0, str(ROOT / "domain-split"))
+    from hub_tiles import annotate
+    return annotate("\n".join(lines) + "\n", path)
 
 
 def build() -> dict[Path, str]:
