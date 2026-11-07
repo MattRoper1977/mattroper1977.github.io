@@ -1,4 +1,8 @@
 """Exact reviewed source/blob evidence; no acceptance based on measured output alone."""
+try:
+    from .route_renames import preserved as project_preserved
+except ImportError:
+    from route_renames import preserved as project_preserved
 import argparse
 import hashlib
 import json
@@ -54,9 +58,9 @@ def registry():
                 if not re.fullmatch('[0-9a-f]{'+str(length)+'}',r[field]):raise ValueError('Invalid revision '+field)
         current=[r for r in revisions if r['id']==spec['current']]
         if len(current)!=1:raise ValueError('Missing current revision: '+path)
-        current=current[0];original=evidence[spec.get('evidence_key',spec['route'])]['source'];baseline=preservation[path]
+        current=current[0];original=evidence[spec.get('evidence_key',spec['route'])]['source'];baseline=preservation[spec.get('original_path',path)]
         if (original['repository'],original['path'],original['sha256'],original['published_sha256']) != (spec['repository'],spec['source_path'],current['source_sha256'],current['published_sha256']):raise ValueError('Current source evidence drift: '+path)
-        if (baseline['source_repository'],baseline['source_path'],baseline['source_sha256'],baseline['published_sha256']) != (spec['repository'],spec['source_path'],current['source_sha256'],current['published_sha256']):raise ValueError('Current preservation evidence drift: '+path)
+        if (baseline['source_repository'],baseline['source_path'],baseline['source_sha256'],baseline['published_sha256']) != (spec['repository'],spec.get('original_source_path',spec['source_path']),current['source_sha256'],current['published_sha256']):raise ValueError('Current preservation evidence drift: '+path)
     return data['payloads']
 
 def select(item, roots, specs=None):
@@ -74,7 +78,7 @@ def select(item, roots, specs=None):
     return {'id':revision['id'],'reviewed_commit':revision['reviewed_commit'],'release_head':head,'git_blob':blob,'source_sha256':sha(raw),'published_sha256':revision['published_sha256']}
 
 def validate_report(report, output, roots):
-    specs=registry();baseline={p['path']:p for p in json.loads((SITE/'reports/play-upgrade/preservation.json').read_text())['payloads']}
+    specs=registry();baseline={p['path']:p for p in project_preserved(json.loads((SITE/'reports/play-upgrade/preservation.json').read_text())['payloads'])}
     if {p['path'] for p in report['payloads']} != set(baseline) or len(report['payloads']) != len(baseline):raise ValueError('Publication payload census changed')
     for name,root in roots.items():
         if report['source_heads'][name]!=git(root,'rev-parse','HEAD'):raise ValueError('Report source HEAD differs from checkout: '+name)

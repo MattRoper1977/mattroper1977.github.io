@@ -17,7 +17,7 @@
  * the SAME gate is re-run against it.
  *
  *   node tools/verify_olympics.mjs
- *   BASE=http://127.0.0.1:4173/olympics/index.html node tools/verify_olympics.mjs
+ *   BASE=http://127.0.0.1:4173/worldstage/index.html node tools/verify_olympics.mjs
  */
 import { createRequire } from 'node:module';
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
@@ -28,8 +28,8 @@ const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const FILE = join(HERE, '..', 'olympics', 'index.html');
-const BASE = process.env.BASE || 'http://127.0.0.1:4173/olympics/index.html';
+const FILE = join(HERE, '..', 'worldstage', 'index.html');
+const BASE = process.env.BASE || 'http://127.0.0.1:4173/worldstage/index.html';
 
 /* Both viewports. The phone size is the one the safe-area insets and the touch
    bar exist for, so a desktop-only pass would miss exactly the layout this

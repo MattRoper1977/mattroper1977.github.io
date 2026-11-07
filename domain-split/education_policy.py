@@ -1,3 +1,4 @@
+from play.route_renames import project as project_game_routes
 """Education publication boundary. Source and Play files are never removed.
 
 Classification follows the actual activity, not a marketing category. The
@@ -69,15 +70,18 @@ def excluded_asset(value, prefix='/'):
 
 
 def classifier(site, lessons):
-    census = json.loads((site/'reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json').read_text())['rows']
+    from play.route_renames import RENAMES
+    census = project_game_routes(json.loads((site/'reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json').read_text())['rows'])
     entries = json.loads((site/'data/mbm-search-index.json').read_text())['entries']
     known = {route_key(row['normalizedDecodedRoute']) for row in census}
+    known.update(route_key(m[k]) for m in RENAMES for k in ('old_route','route'))
     known.update(route_key(row['route']) for row in entries if row.get('category') == 'game')
     known.update(route_key('/Lessons/'+row['file']) for row in json.loads((lessons/'resources.json').read_text()) if row.get('type') == 'game')
     known.update(route_key(route) for route in MIGRATIONS)
     known.update({'/games', '/Games'})
     retained = {route_key(route) for route in EDUCATIONAL_ACTIVITIES}
     directories = {row['source']['path'].split('/')[0] for row in census if row['source']['repository'] == 'Site'}
+    directories.update(m['old'].split('/')[0] for m in RENAMES if m['repository']=='Site')
     directories.update(urlparse(row['route']).path.strip('/').split('/')[0] for row in entries if row.get('category') == 'game' and not row['route'].startswith(('/Lessons/', '/Games/')))
 
     def is_game(value, prefix='/'):

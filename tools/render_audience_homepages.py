@@ -776,7 +776,7 @@ HUD_END = "  /* MBM-HOMEPAGE-CHOICES:END */"
 # The second generated region in hud.js, from a different source: the canonical
 # game inventory. hud.js decided what kind of page it was on from four path
 # patterns, and the site's own root-level games - /echovault/, /relicforge/,
-# /fracture/, /olympics/ and the rest - matched none of them. A script tag
+# /fracture/, /worldstage/ and the rest - matched none of them. A script tag
 # alone gave them nothing, because BACK resolved null and mount() had nothing
 # to append. That is the whole reason they were stranded.
 #

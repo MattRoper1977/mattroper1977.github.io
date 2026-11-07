@@ -69,16 +69,16 @@ const GAMES = Object.freeze([
     saveKeys: ['mbm_aurora_links_aaa_v4', 'mbm_aurora_links_round_v1']
   },
   {
-    id: 'houseolympiad', name: 'House Olympiad', route: '/houseolympiad/',
-    file: 'houseolympiad/index.html', canonical: 'https://madebymatt.uk/houseolympiad/',
+    id: 'housegames', name: 'House Games', route: '/housegames/',
+    file: 'housegames/index.html', canonical: 'https://www.madebymatt-play.uk/housegames/',
     input: 'House_Olympiad_V4.html', inputBytes: 80076,
     inputSha256: '7de6b4c736a1df6e92f316b33d032b22d7d824dc2125378c3e55efdd485abe03',
     identity: /Made by Matt Sports V4|V4 local championship/i,
     saveKeys: ['mbm_sports_passport_v4', 'mbm_sports_passport_v3']
   },
   {
-    id: 'olympics', name: 'Global Games: World Stage', route: '/olympics/',
-    file: 'olympics/index.html', canonical: 'https://madebymatt.uk/olympics/',
+    id: 'olympics', name: 'Global Games: World Stage', route: '/worldstage/',
+    file: 'worldstage/index.html', canonical: 'https://www.madebymatt-play.uk/worldstage/',
     input: 'Global_Games_AAA_v4.html', inputBytes: 388585,
     inputSha256: '88c35645f833c3a82541fc2e590ef3a7f7bda551cfb5d5418e22e8400b6f74d6',
     identity: /World Stage V4|Version 4\.0\.0/i,
@@ -199,8 +199,8 @@ function verifyPayloads() {
   const voxel = text('voxel/index.html');
   assert(!voxel.includes('../shared/mbm-v4-runtime.js'), 'voxel: missing shared runtime reference returned');
   assert(!/if\(legacy&&Number\.isFinite\(legacy\.seed\)\)[\s\S]{0,500}lsDel\(SAVE_BASE\)/.test(voxel), 'voxel: legacy save is deleted');
-  const house = text('houseolympiad/index.html');
-  for (const route of ['/auroralinks/', '/apexpool/', '/apexkick/', '/olympics/']) assert(house.includes(`href="${route}"`), `house: broken discipline link ${route}`);
+  const house = text('housegames/index.html');
+  for (const route of ['/auroralinks/', '/apexpool/', '/apexkick/', '/worldstage/']) assert(house.includes(`href="${route}"`), `house: broken discipline link ${route}`);
 }
 
 function resolveGamesManifest() {
@@ -611,7 +611,7 @@ async function smokeAurora(page) {
 async function smokeHouse(page) {
   await page.waitForFunction(() => !!window.MadeByMattOlympiadV4QA && !!window.MadeByMattV4Runtime);
   const result = await page.evaluate(() => MadeByMattOlympiadV4QA.selfTest());
-  assert(result.ok && result.rollback.ok && result.physics.ok, 'House Olympiad V4 self-test failed');
+  assert(result.ok && result.rollback.ok && result.physics.ok, 'House Games V4 self-test failed');
   const points = await page.evaluate(() => {
     const runtime = MadeByMattV4Runtime;
     let state = MadeByMattOlympiadV4QA.snapshot();
@@ -835,7 +835,7 @@ async function smokeVoxel(page, mobile) {
   await page.waitForFunction(() => getComputedStyle(document.querySelector('#overlay')).display === 'none');
 }
 
-const SMOKES = { offbrand: smokeOffbrand, trailrunner: smokeTrail, auroralinks: smokeAurora, houseolympiad: smokeHouse, olympics: smokeGlobal, relicforge: smokeRelic, voxel: smokeVoxel };
+const SMOKES = { offbrand: smokeOffbrand, trailrunner: smokeTrail, auroralinks: smokeAurora, housegames: smokeHouse, olympics: smokeGlobal, relicforge: smokeRelic, voxel: smokeVoxel };
 
 async function verifyWayOut(page, origin) {
   const exit = page.locator('#mbmexit-back,#mbmhud-back').first();
