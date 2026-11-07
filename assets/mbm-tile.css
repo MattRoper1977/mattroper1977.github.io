@@ -1,11 +1,11 @@
 /* Shared hub tiles. All colour roles come from the estate token sheet. */
 [data-mbm-tile]{
-  box-sizing:border-box;position:relative;min-width:0;min-height:44px;
+  box-sizing:border-box;position:relative;min-width:0;max-width:100%;min-height:44px;
   padding:1.125rem!important;border:1px solid var(--mbm-primary)!important;
   border-radius:var(--mbm-card-radius)!important;
   background:var(--mbm-card)!important;color:var(--mbm-primary)!important;
   box-shadow:var(--mbm-card-shadow);font-size:1.125rem!important;line-height:1.5;
-  overflow-wrap:anywhere;transition:transform 160ms var(--mbm-motion-ease),box-shadow 160ms var(--mbm-motion-ease);
+  overflow-wrap:anywhere;white-space:normal;transition:transform 160ms var(--mbm-motion-ease),box-shadow 160ms var(--mbm-motion-ease);
   animation:none;
 }
 @media screen and (prefers-reduced-motion:no-preference){.mbm-tiles-ready [data-mbm-tile]{animation:mbm-tile-reveal 180ms var(--mbm-motion-ease)}}

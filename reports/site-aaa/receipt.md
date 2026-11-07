@@ -1,3 +1,5 @@
+360 px follow-up: `.dx-updacts > a.dx-chip.dx-main[data-mbm-tile]` exceeded its row because its label could not wrap. Tiles now use `max-width:100%` and `white-space:normal`, keeping their border and padding inside the container. The unchanged publication browser check passes 49/49; the unchanged surface check passes 5/5, including 360, 768 and 1200 px. A full element walk at 360x640 passes with scripting on and off across the default and four alternate fallback fonts.
+
 The tile update preserves the protected release region and restores every existing check and the search file exactly to current main. The added tile census is standalone. No merge is requested.
 
 The tile script enables only reveal motion. With scripting off, tiles stay still and native links work. Hover remains 160ms with a 2px lift; reveal is 180ms when enabled, with both removed for reduced motion. The approved hero artwork stays visible in its compact header. Decorative arrows occur once per tile.
@@ -159,7 +161,7 @@ Only these 21 changed publication paths move. For ordinary rows the admitted pai
 
 | Path | Main built | Branch built | Retired entry | Why it left |
 |---|---|---|---|---|
-| `assets/mbm-tile.css` | `cf09c5987c9de5c393d4f179d1e46b13315ea3292b17250ce6fbabb547355a11` | `e19ab132849c7c1c309d22b623db631e7191c1f524eb16d74456bfe73b877cb8` | `cf09c5987c9de5c393d4f179d1e46b13315ea3292b17250ce6fbabb547355a11` | ARRIVING retained; the previous asset version is not built once this lands. |
+| `assets/mbm-tile.css` | `cf09c5987c9de5c393d4f179d1e46b13315ea3292b17250ce6fbabb547355a11` | `1323fed35d597b4799b910ac282d0f4ab60ec56bdf6c70d0c502c6eefa578d64` | `cf09c5987c9de5c393d4f179d1e46b13315ea3292b17250ce6fbabb547355a11` | ARRIVING retained; the previous asset version is not built once this lands. |
 | `assets/mbm-tile.js` | `ceb2a4ea36e6a43348e29404111e1b02cfb8e656f002fcf0ed9e36759e4f8859` | `821dad6914471686abf930d243f35df26b3f437c512998524e92052e56231694` | `ceb2a4ea36e6a43348e29404111e1b02cfb8e656f002fcf0ed9e36759e4f8859` | ARRIVING retained; the previous asset version is not built once this lands. |
 | `assets/shared-navigation.css` | `e6e79a120f762ed65369f839a6d3786d6fdfdb8a60a5788dcbe7b783b224b0cf` | `ae5d8c6ac4290c86043797db0a4a1307cfe10057da9e3e9883c3e127535a9fd7` | `fc325e5ae38315f21a571a5db0538013a093abf21b59ced8d9d1ce4824d4fd98` | Current pinned main build retained; superseded entry is not built by that publication or once this lands. |
 | `education-hub/index.html` | `fed134ffc158699768fad0c3efe0e58be3409a5ccbf5c547a667f48fab317444` | `1bb012aa71c54f8092f4dacdfada90cb6deb9e6f67a53ecfa0edf4d23084ccf8` | `4266dd62ec40c88ef1364090ad931152819cc47ae501c6e9e2d9de58ad4e43d5` | Current pinned main build retained; superseded entry is not built by that publication or once this lands. |
