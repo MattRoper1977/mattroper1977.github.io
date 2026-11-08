@@ -2632,7 +2632,7 @@ class GlobalGamesApp{
   ctx.save();ctx.translate(w*.5,250);for(let i=0;i<3;i++){const spin=drift?at*(.12+i*.035):i*.6;ctx.strokeStyle=['rgba(71,231,255,.22)','rgba(255,215,94,.2)','rgba(187,140,255,.17)'][i];ctx.lineWidth=6-i;ctx.beginPath();ctx.arc(0,0,112+i*43,spin,Math.PI*1.55+spin);ctx.stroke()}ctx.restore();
   this.particles.render(ctx);
  }
- showScreen(state,html,focusSelector='button'){ 
+ showScreen(state,html,focusSelector='button'){
   this.state=state;this.paused=false;this.pauseLayer.classList.add('hidden');this.hud.classList.add('hidden');this.clearTouch();this.input.clearAll();
   clearTimeout(this.toastTimer);const toastEl=$('#toast');toastEl.className='';toastEl.classList.remove('show');
   this.screen.innerHTML=html;this.screen.classList.remove('hidden');this.updateSoundUI();

@@ -2,7 +2,14 @@
 try:
     from .route_renames import preserved as project_preserved
 except ImportError:
-    from route_renames import preserved as project_preserved
+    try:
+        from route_renames import preserved as project_preserved
+    except ImportError:
+        # Loaded by file path (tools/as1/source-revision-controls.py): read the sibling module the same way.
+        import importlib.util as _ilu, pathlib as _pl
+        _spec = _ilu.spec_from_file_location('route_renames', _pl.Path(__file__).with_name('route_renames.py'))
+        _mod = _ilu.module_from_spec(_spec); _spec.loader.exec_module(_mod)
+        project_preserved = _mod.preserved
 import argparse
 import hashlib
 import json
