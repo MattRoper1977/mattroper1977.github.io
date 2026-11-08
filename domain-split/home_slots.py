@@ -304,8 +304,12 @@ def flagship(view, lessons_root, hubs):
         rows = [r for r in view['weeks'].get(f'{query}:{term}:{week}', []) if r.get('registry')]
         chosen = []
         for pathway in PATHWAYS:
+            # A2-LIST (Lessons #828, 2026-11-08): a taught week holds the week's first lesson and
+            # its second and third lessons (L2/L3, P2) as registry rows. The flagship card is the
+            # first lesson of the pathway in the hub's own order; a pathway with no registry row
+            # still fails the week.
             found = [r for r in rows if r.get('pathway') == pathway]
-            if len(found) != 1 or not all(found[0].get(k) for k in ('file', 'title', 'desc', 'weekLabel')):
+            if not found or not all(found[0].get(k) for k in ('file', 'title', 'desc', 'weekLabel')):
                 break
             chosen.append(found[0])
         else:
@@ -909,9 +913,11 @@ def self_test(lessons_root=None):
                         and bind(template, bare).count('href="' + bare['flagship']['route'] + '"') >= 6)
                 keep = [r for r in rows if r.get('file') not in {c['file'] for c in fl['cards']}]
                 (plant / 'resources.json').write_text(json.dumps(keep), encoding='utf-8')
-                why = refusal(gather, origin, site_root, plant, bp.SUBJECT_CARDS, shared_navigation.HUB_LINKS, play)
-                control('real plant: the three flagship registry rows removed -> the fallback does not resolve today -> refusal',
-                        'Neither the flagship week' in why, why[:60])
+                # A2-LIST (Lessons #828, 2026-11-08): the fallback week (Humanities/RE Autumn 2 Week 1)
+                # resolves today, so removing the flagship rows binds the fallback rather than refusing.
+                fell = gather(origin, site_root, plant, bp.SUBJECT_CARDS, shared_navigation.HUB_LINKS, play)['flagship']
+                control('real plant: the three flagship registry rows removed -> the spec fallback week is bound',
+                        fell['fallback'] is True and fell['query'] == FALLBACK[0], f"{fell['query']} {fell['weekLabel']}")
         else:
             print('  [skip] real-source limbs: no --lessons given')
     finally:
