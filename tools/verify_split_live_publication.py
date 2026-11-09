@@ -152,6 +152,24 @@ def education_routes(_args):
         print(surface["route"])
 
 
+def project_renames(site: Path, rows):
+    """Apply the subject Site's own route renames to the frozen census.
+
+    The builder reads the census through domain-split/play/route_renames.py, so
+    the published payloads carry the renamed routes. Reading the same module
+    from the pinned Site keeps both sides of every comparison identical; a Site
+    pin from before the renames has no module and keeps the census as written.
+    """
+    module = site / "domain-split/play/route_renames.py"
+    if not module.is_file():
+        return rows
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("subject_route_renames", module)
+    loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded)
+    return loaded.project(rows)
+
+
 def matrix(args):
     config = read(args.shelf / "play-publication.json")
     roots = {"Site": args.site.resolve(), "Lessons": args.lessons.resolve()}
@@ -162,7 +180,7 @@ def matrix(args):
     public = output / "games"
     report = read(output / "build-report.json")
     require(report["source_heads"] == {key: git_head(root) for key, root in roots.items()}, "Build source heads differ")
-    rows = read(args.site / CENSUS)["rows"]
+    rows = project_renames(args.site, read(args.site / CENSUS)["rows"])
     require(report["source_census_sha256"] == sha((args.site / CENSUS).read_bytes()), "Build census SHA differs")
     require(len(rows) == config["canonical_games"] + config["additional_activities"], "Declared game count differs")
     require(len(rows) > 0, "Empty game population")
