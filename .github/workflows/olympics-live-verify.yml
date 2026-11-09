@@ -11,9 +11,9 @@ name: Olympics live leg (Stage L1)
 #   served games.json byte-equal to main's blob  -> games.json-bytes
 #   46 entries served                            -> shelf-count (DERIVED from
 #                                                   main's blob, never pinned)
-#   sole NEW· marker, held by /olympics/         -> marker-sole-holder,
+#   sole NEW· marker, held by /worldstage/         -> marker-sole-holder,
 #                                                   marker-is-olympics
-#   /olympics/ index byte-equal                  -> olympics-bytes
+#   /worldstage/ index byte-equal                  -> olympics-bytes
 #   arcade renders 46                            -> arcade-renders-shelf
 #
 # The negative-control job runs FIRST and the live job will not start unless
@@ -38,7 +38,7 @@ name: Olympics live leg (Stage L1)
 #     data/new-release-occupants.json         the declared NEW· holder, read by the
 #                                             instrument and now copied into the
 #                                             self-test's scratch tree with it
-#     olympics/index.html                     hashed against the served copy
+#     worldstage/index.html                     hashed against the served copy
 #     games/index.html                        the self-test serves this tree and the
 #                                             arcade limbs render it
 #   NOT FILTERABLE FROM HERE, and stated rather than left implied
@@ -58,6 +58,7 @@ on:
       - main
     paths:
       - 'olympics/index.html'
+      - 'worldstage/index.html'
       - 'games/index.html'
       - 'tools/verify_olympics_live.mjs'
       - 'tools/verify_olympics_live_selftest.sh'
@@ -158,7 +159,7 @@ jobs:
           for u in \
             "$PLAY/" \
             "$PLAY/games/" \
-            "$PLAY/olympics/" \
+            "$PLAY/worldstage/" \
             "$PLAY/Games/games.json" ; do
             code=$(curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 -o /dev/null -w '%{http_code}' --max-time 30 "$u" || echo "000")
             printf '%-46s %s\n' "$u" "$code"
@@ -200,10 +201,10 @@ jobs:
           # splashes as unbranded.
           # HC3 §1.1: expected play bytes = committed bytes with the education host
           # literal rewritten (derived by tools/route_origins.py from _main).
-          (cd _main && python3 "$GITHUB_WORKSPACE/tools/route_origins.py" --expected /olympics/ --out /tmp/expected-olympics.html)
+          (cd _main && python3 "$GITHUB_WORKSPACE/tools/route_origins.py" --expected /worldstage/ --out /tmp/expected-olympics.html)
           for i in $(seq 1 10); do
             curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 60 "$PLAY/Games/games.json" -o /tmp/served-games.json
-            curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 60 "$PLAY/olympics/"        -o /tmp/served-olympics.html
+            curl -sSL --proto '=https' --proto-redir '=https' --max-redirs 3 --max-time 60 "$PLAY/worldstage/"        -o /tmp/served-olympics.html
             a=$(sha256sum /tmp/served-games.json    | cut -d' ' -f1)
             b=$(sha256sum _shelf/games.json         | cut -d' ' -f1)
             c=$(sha256sum /tmp/served-olympics.html | cut -d' ' -f1)
@@ -224,4 +225,4 @@ jobs:
             --arcade-url      "$PLAY/games/" \
             --catalogue-url   "$PLAY/data/domain-catalogue.json"
           echo "-- and the old address on the education origin is a stub --"
-          python3 "$GITHUB_WORKSPACE/tools/verify_education_stubs.py" --origin "$EDU" --routes /olympics/
+          python3 "$GITHUB_WORKSPACE/tools/verify_education_stubs.py" --origin "$EDU" --routes /worldstage/

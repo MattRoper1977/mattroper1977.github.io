@@ -151,7 +151,7 @@ async function measure(browser, base, scene, rm) {
   });
   const page = await ctx.newPage();
   await page.addInitScript(CLOCK);
-  await page.goto(base + '/olympics/index.html', { waitUntil: 'commit' });
+  await page.goto(base + '/worldstage/index.html', { waitUntil: 'commit' });
   await page.waitForFunction(() => typeof window.__drive === 'function', null, { timeout: 20000 });
   for (let i = 0; i < 60; i++) await page.evaluate(() => window.__drive(8));
   await page.waitForFunction(() => !!window.__olympics, null, { timeout: 20000 });
@@ -217,7 +217,7 @@ const browser = await chromium.launch();
 const probe = await browser.newContext();
 const pp = await probe.newPage();
 await pp.addInitScript(CLOCK);
-await pp.goto(base + '/olympics/index.html', { waitUntil: 'commit' });
+await pp.goto(base + '/worldstage/index.html', { waitUntil: 'commit' });
 await pp.waitForFunction(() => typeof window.__drive === 'function', null, { timeout: 20000 });
 for (let i = 0; i < 60; i++) await pp.evaluate(() => window.__drive(8));
 await pp.waitForFunction(() => !!window.__olympics, null, { timeout: 20000 });
@@ -285,7 +285,7 @@ for (const scene of list) {
    strobe painted over every frame at a known rate and a large amplitude, and
    the SAME measurement must flag it. If it does not, nothing above counts. */
 if (!ONLY) {
-  const src = fs.readFileSync(path.join(ROOT, 'olympics', 'index.html'), 'utf8');
+  const src = fs.readFileSync(path.join(ROOT, 'worldstage', 'index.html'), 'utf8');
   const anchor = '  if(this.state===\'PLAYING\'&&this.activeEvent)this.updateHUD();';
   let flagged = null, applied = false, note = '';
   if (src.indexOf(anchor) >= 0) {
@@ -297,7 +297,7 @@ if (!ONLY) {
     if (applied) {
       const dir = fs.mkdtempSync(path.join(ROOT, 'olympics', '__strobe-'));
       fs.writeFileSync(path.join(dir, 'index.html'), strobed);
-      const rel = '/olympics/' + path.basename(dir) + '/index.html';
+      const rel = '/worldstage/' + path.basename(dir) + '/index.html';
       const ctx = await browser.newContext({ viewport: { width: 960, height: 600 } });
       const page = await ctx.newPage();
       await page.addInitScript(CLOCK);

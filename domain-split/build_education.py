@@ -101,6 +101,7 @@ SITE_GENERATOR_INPUTS = {
     'data/as1-pilot.json',
     'data/as1-sizing.json',
     'data/as1-storage-registry.json',
+    'data/as1-storage-census-play-renames.json.gz',
 }
 
 
@@ -213,7 +214,13 @@ def moved_page(route):
     # and back links are gone: the stub's only job is the handoff to Play, and the
     # bulk /game-saves/ pages stay reachable from the pupil hub, not from here.
     from html import escape
-    destination = PLAY + LEGACY.get(route, route)
+    from play.route_renames import destination as renamed_destination, RENAMES
+    destination = PLAY + renamed_destination(LEGACY.get(route, route))
+    if any(route in (m['old_route'], m['route'], m['old_route'].removesuffix('/'), m['route'].removesuffix('/')) for m in RENAMES):
+        destination = destination.replace('https://madebymatt-play.uk/', 'https://www.madebymatt-play.uk/')
+        return ('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="robots" content="noindex">'
+                '<meta http-equiv="refresh" content="0; url='+escape(destination, quote=True)+'"><title>Game moved</title>'
+                '<body data-game-moved><p>Made by Matt</p><p><a id="play-game" href="'+escape(destination, quote=True)+'">Open the game</a></p></body></html>')
     return ('<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
             '<meta name="robots" content="noindex"><title>This game has moved · Made by Matt</title>'

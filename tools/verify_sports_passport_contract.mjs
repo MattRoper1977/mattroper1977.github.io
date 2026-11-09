@@ -17,7 +17,7 @@ const KEY = 'mbm_sports_passport_v4';
 const BACKUP = 'mbm_sports_passport_v4_corrupt_backup';
 const BANNED_NODE = 'mbm-default00000000';
 const CORRUPT_RAW = '{V6PGF-not-json:\u2603';
-const SEED_GAME = path.join(ROOT, 'houseolympiad', 'index.html');
+const SEED_GAME = path.join(ROOT, 'housegames', 'index.html');
 const CHROME = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined;
 const PORT = Number(process.env.PASSPORT_GATE_PORT || 4460);
 const WAIT_MS = Number(process.env.PASSPORT_GATE_WAIT_MS || 6500);
@@ -32,7 +32,7 @@ const OWN_SAVE = {
   'medevac': 'mbm_medevac_v4',
   'apex-kick': 'apexkick.aaa.v4',
   'aurora-links': 'mbm_aurora_links_aaa_v4',
-  'house-olympiad': 'mbm_house_olympiad_v4_settings',
+  'house-olympiad': 'mbm_house_games_v4_settings',
   'olympics': 'mbm_global_games_world_stage_v4',
 };
 
@@ -43,8 +43,8 @@ function guessId(file) {
   }
   const dir = path.basename(path.dirname(file));
   return ({
-    apexkick: 'apex-kick', auroralinks: 'aurora-links', houseolympiad: 'house-olympiad',
-    olympics: 'olympics', apexcurl: 'apex-curl', apexvelodrome: 'apex-velodrome',
+    apexkick: 'apex-kick', auroralinks: 'aurora-links', housegames: 'house-olympiad',
+    worldstage: 'olympics', apexcurl: 'apex-curl', apexvelodrome: 'apex-velodrome',
     neonturf: 'neon-turf', medevac: 'medevac', grapple: 'grapple', marble: 'marble',
     wreckingcrew: 'wrecking-crew',
   })[dir] || null;
@@ -388,7 +388,7 @@ async function selftest(fixture) {
       'C5 banned node',
     ));
     const drop = await preservationArm(fixture, dropKey, false);
-    const lawfulMerge = await preservationArm(fixture, path.join(ROOT, 'olympics', 'index.html'), false);
+    const lawfulMerge = await preservationArm(fixture, path.join(ROOT, 'worldstage', 'index.html'), false);
     const removed = await corruptArm(fixture, noBackup);
     const curlClean = await corruptArm(fixture, curlPath);
     const freshCleanA = await freshArm(fixture, freshPath, 'control-clean-1');

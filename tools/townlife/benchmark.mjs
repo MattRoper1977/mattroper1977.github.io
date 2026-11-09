@@ -191,7 +191,7 @@ function fileUnder(root, href) {
 // Site-repository routes only. deriveHeavyWebgl reads this and nothing else:
 // the two heavy-WebGL comparators are derived from the routes this repository
 // ships, and letting the Lessons mirror into that derivation would silently
-// re-pick the comparator set (voxelcraft.html is larger than either current
+// re-pick the comparator set (Block_Builder.html is larger than either current
 // pick) and break comparability with every recorded green run.
 function siteFileForHref(href) {
   if (!href.startsWith('/') || href.startsWith(LESSONS_PREFIX)) return null;
@@ -362,7 +362,7 @@ async function measureRoute(browser, origin, game, round, options = {}) {
     await clock.guard('settle', page.waitForTimeout(500));
     const startMatch = await clock.guard('dismiss-and-start', dismissAndStart(page));
     const startControl = startMatch?.text ?? null;
-    const navigationSafe = game.href === '/houseolympiad/';
+    const navigationSafe = game.href === '/housegames/';
     if (navigationSafe) await clock.guard('house-olympiad-refresh', page.locator('#refreshBtn').click());
     if (game.href === '/voxel/') {
       /* Voxel initialises its mode record before this probe and changes the

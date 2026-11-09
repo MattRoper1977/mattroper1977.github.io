@@ -707,7 +707,7 @@ if (!chromium) {
      encoding and a length check would call that identical. */
   const AUTHORED = [
     ['/emberwild/', 'Madebymatt meets creature collecting - shh, you know the one.'],
-    ['/olympics/', "The weather's too hot and you're not a pro - enjoy athletics at home."],
+    ['/worldstage/', "The weather's too hot and you're not a pro - enjoy athletics at home."],
     ['/apexpool/', 'Good at pool - be great with Apex Pool'],
     ['/relicforge/', 'Be a warrior and solve the quest.'],
     ['/auroralinks/', "Can't afford your own clubs - the realism means you don't need any."]

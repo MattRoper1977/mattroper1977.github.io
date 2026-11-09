@@ -10,8 +10,15 @@ const APPROVED_REGISTRY_BLOB='7872d57fdaadd81e517183059c68672e2d4a8436';
 const MOVES_PATH='domain-split/lesson-moves.json';
 function loadMoves(){const p=path.join(ROOT,MOVES_PATH);return fs.existsSync(p)?JSON.parse(fs.readFileSync(p,'utf8')).routes:{};}
 let MOVES=null;
-function mapOwner(owner,moves){moves=moves||MOVES||(MOVES=loadMoves());
-  if(owner.startsWith('Lessons:')){const to=moves[owner.slice(8)];if(typeof to==='string')return 'Lessons:'+to;}return owner;}
+// Play route renames (Site #607 with Lessons #810): the same 1:1 owner mapping, read from the
+// committed rename table, so a renamed game keeps the baseline row its old route held.
+const RENAMES_PATH='domain-split/play/route-renames.json';
+function loadRenames(){const p=path.join(ROOT,RENAMES_PATH);if(!fs.existsSync(p))return {};const out={};
+  for(const r of JSON.parse(fs.readFileSync(p,'utf8')).renames)out[r.repository+':'+r.old]=r.repository+':'+r.new;return out;}
+let RENAMES=null;
+function mapOwner(owner,moves){moves=moves||MOVES||(MOVES=loadMoves());const renames=RENAMES||(RENAMES=loadRenames());
+  if(owner.startsWith('Lessons:')){const to=moves[owner.slice(8)];if(typeof to==='string')owner='Lessons:'+to;}
+  return typeof renames[owner]==='string'?renames[owner]:owner;}
 function mapOwners(id,owners,moves){const out=new Set();for(const o of owners){const m=mapOwner(o,moves);
   assert(!out.has(m),'Owner does not map 1:1: '+id+' / '+m);out.add(m);}return out;}
 function collectClaims(registry){
