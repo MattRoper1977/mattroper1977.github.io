@@ -369,3 +369,6 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # The education-lessons artifact is about 1.26 GB; the Pages sync has taken longer than the action's 10-minute default.
+          timeout: 1800000
