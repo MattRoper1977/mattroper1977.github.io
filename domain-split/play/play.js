@@ -66,7 +66,7 @@
     $('spot-next').addEventListener('click', () => showSpot(spotIndex + 1));
   }
   /* ---- shelves: 44px previous/next scroll each horizontal track ---- */
-  const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced = () => document.documentElement.dataset.calm === 'true' || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
   // J92 R6: the "New and updated" rail ([data-rail]) shares the track controls but is not a shelf.
   const tracks = [...document.querySelectorAll('[data-shelf], [data-rail]')].map(el => ({el, track: el.querySelector('.shelf-track'), nav: el.querySelector('.shelf-nav'), count: el.querySelector('[data-shelf-count]'), base: el.querySelector('[data-shelf-count]').textContent}));
   const shelves = tracks.filter(s => 'shelf' in s.el.dataset);
@@ -342,7 +342,19 @@
   $('filters-reset').addEventListener('click', () => { reset(); $('filters-close').focus(); });
   $('filters-form').addEventListener('submit', () => { /* method=dialog closes the drawer */ });
 
+  /* Display preferences affect the hub only and never write game-save storage. */
+  const root = document.documentElement;
+  const prefers = query => typeof matchMedia === 'function' && matchMedia(query).matches;
+  const setCalm = on => { root.dataset.calm = String(on); $('calm-toggle').setAttribute('aria-pressed', String(on)); };
+  const setContrast = on => { root.dataset.contrast = on ? 'high' : 'normal'; $('contrast-toggle').setAttribute('aria-pressed', String(on)); };
+  setCalm(prefers('(prefers-reduced-motion: reduce)'));
+  setContrast(prefers('(prefers-contrast: more)') || prefers('(forced-colors: active)'));
+  $('calm-toggle').addEventListener('click', () => setCalm(root.dataset.calm !== 'true'));
+  $('contrast-toggle').addEventListener('click', () => setContrast(root.dataset.contrast !== 'high'));
+
   /* ---- wiring ---- */
+  const syncPlaceholder = () => { query.placeholder = (typeof matchMedia === 'function' && matchMedia('(max-width: 760px)').matches) ? ('Search ' + data.catalogue + ' games') : 'Search games'; };
+  syncPlaceholder(); window.addEventListener('resize', syncPlaceholder);
   $('discovery-form').addEventListener('submit', e => { e.preventDefault(); state.q = query.value.slice(0, 160); render(); });
   query.addEventListener('input', () => { state.q = query.value.slice(0, 160); render(); });
   $('search-jump').addEventListener('click', e => { e.preventDefault(); query.scrollIntoView({block: 'center'}); query.focus({preventScroll: true}); });

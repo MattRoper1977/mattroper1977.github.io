@@ -142,3 +142,45 @@ html:not(.js) .collection-links a:not([data-collection=""]){display:none}
 #dialog-what-list{margin:.35rem 0 .6rem;padding-left:1.2rem;color:var(--muted);font-size:.95rem;display:grid;gap:.3rem}#dialog-inputs:empty{display:none}
 @media(min-width:700px){.trust-strip{padding-inline:24px}}
 @media(min-width:1050px){.trust-strip{padding-inline:32px}.spotlight-stage.has-playlist{grid-template-columns:minmax(0,1.7fr) minmax(260px,.85fr)}}
+
+/* P-21-3 AAA Play look: unified tile system across hero spotlight, shelves, cards and launch sheet; WCAG AAA >=7:1 contrast tokens; tabular-nums discovery pills; <=160ms motion budget with reduced-motion override. */
+:root{--bg:#070b14;--surface:#0d1424;--raised:#131d33;--line:#263759;--text:#f8fafc;--muted:#cbd5e1;--mint:#5eead4;--green:#38bdf8;--green-ink:#04101e;--ink:#04101e;--amber:#fbbf24;--purple:#c4b5fd;--ease-out:cubic-bezier(.22,1,.36,1)}
+body{background:radial-gradient(ellipse at 80% 0,#17255466,transparent 38rem),var(--bg);-webkit-font-smoothing:antialiased}
+.search-row input{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding-inline:1rem;font-size:.9375rem}
+.chip-button,.facet-chip{border:1.5px solid var(--line);background:var(--surface);color:var(--text);font-weight:650;font-variant-numeric:tabular-nums;transition:border-color 160ms var(--ease-out),background-color 160ms var(--ease-out),transform 160ms var(--ease-out)}
+.chip-button:hover,.facet-chip:hover{background:var(--raised);border-color:var(--mint)}
+.chip-button[aria-pressed=true],.facet-chip[aria-pressed=true]{background:var(--mint);color:var(--ink);border-color:var(--mint);font-weight:750}
+.feature-card,.release-box,.game-card,dialog#game-dialog,dialog#filters{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 28px #02061773}
+.feature-card{background:linear-gradient(155deg,#0f1a2e 0%,#0b1220 100%);border-color:#2e436e}
+.game-card,.release-box{padding:.75rem;transition:transform 160ms var(--ease-out),border-color 160ms var(--ease-out)}
+.game-card:hover,.release-box:hover{transform:translateY(-2px);border-color:var(--mint)}
+.thumb,.thumb.failed,.thumb-empty{background:#080e1a;border-radius:10px;border:1px solid #26375980}
+.game-card .card-title,.release-title{font-size:1.0625rem;font-weight:800;letter-spacing:-.015em;line-height:1.25;color:var(--text)}
+.card-line{color:var(--muted);font-size:.875rem;line-height:1.48}
+.card-kicker,.feature-kicker,.eyebrow{color:var(--purple);font-size:.75rem;font-weight:800;letter-spacing:.08em}
+.chip,.shelf-count,#result-count,#spot-status{font-variant-numeric:tabular-nums}
+.game-card .chip{color:var(--muted);background:var(--raised);border-color:var(--line);border-radius:8px;padding:.2rem .55rem;font-weight:600}
+.play{background:var(--green);color:var(--green-ink);border-color:var(--green);border-radius:10px;font-weight:800;transition:background-color 160ms var(--ease-out),transform 160ms var(--ease-out)}
+.play:hover{background:#7dd3fc;transform:translateY(-1px)}
+.play:active,.button:active{transform:scale(.99)}
+.thumb-block:not(.failed)>.thumb-title{display:none}
+.thumb-block:not(.failed)>.tile-art{width:min(72px,14vw);height:min(72px,14vw)}
+@media(min-width:700px){.feature-card,.spot-card{align-items:stretch}.spot-card>.thumb{aspect-ratio:auto;height:100%;min-height:220px;max-height:none}.spot-card>.thumb img{width:100%;height:100%;object-fit:cover}}
+@media(min-width:1050px){.spotlight-stage.has-playlist{align-items:stretch}.spotlight-main{display:flex;flex-direction:column}.spot-list{flex:1;display:flex;flex-direction:column}.spot-card:not([hidden]){flex:1}.featured-playlist{max-height:360px;display:flex;flex-direction:column}.playlist-items{flex:1;max-height:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+[data-calm="true"] *,[data-calm="true"] *::before,[data-calm="true"] *::after,[data-motion="calm"] *,[data-motion="calm"] *::before,[data-motion="calm"] *::after,.calm-mode *,.calm-mode *::before,.calm-mode *::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
+@media(prefers-contrast:more),(forced-colors:active){:root,[data-theme="dark"],.masthead[data-mbm-chrome="play"]{--bg:#000000;--surface:#070b14;--raised:#0d1424;--line:#94a3b8;--text:#ffffff;--muted:#e2e8f0;--mint:#7dd3fc;--green:#7dd3fc;--green-ink:#000000;--ink:#000000;--amber:#fde047;--purple:#e9d5ff}}
+:root[data-contrast="high"],body[data-contrast="high"],.high-contrast{--bg:#000000!important;--surface:#070b14!important;--raised:#0d1424!important;--line:#94a3b8!important;--text:#ffffff!important;--muted:#e2e8f0!important;--mint:#7dd3fc!important;--green:#7dd3fc!important;--green-ink:#000000!important;--ink:#000000!important;--amber:#fde047!important;--purple:#e9d5ff!important}
+
+/* Finish the reviewed playlist and display controls without changing game data. */
+.playlist-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;line-height:1.35;max-height:2.7em}
+.display-options{margin:1rem 0;padding:.75rem;border:1px solid var(--line);border-radius:12px;display:flex;flex-wrap:wrap;gap:.6rem}
+.display-options legend{padding-inline:.35rem;color:var(--muted);font-weight:700}
+.display-options button{min-width:var(--tap);min-height:var(--tap)}
+.display-options button[aria-pressed=true]{background:var(--mint);color:var(--ink);border-color:var(--mint)}
+:root[data-contrast=high] .masthead[data-mbm-chrome=play]{--text:#ffffff;--surface:#070b14}
+@media(min-width:700px){.spot-card>.thumb{align-self:stretch;min-width:0}.spot-card>.thumb img{display:block;min-height:100%}}
+
+/* Motion preferences stop motion, not static SVG placement or the skip link. */
+@media(prefers-reduced-motion:reduce){.game-card:hover,.release-box:hover,.play:hover,.play:active,.button:active{transform:none!important}}
+:root[data-calm=true] .game-card:hover,:root[data-calm=true] .release-box:hover,:root[data-calm=true] .play:hover,:root[data-calm=true] .play:active,:root[data-calm=true] .button:active{transform:none!important}
