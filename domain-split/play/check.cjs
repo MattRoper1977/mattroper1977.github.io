@@ -76,6 +76,13 @@ await test('reviewed-discovery-and-real-screen-bindings',async()=>{
   if(screen.published_sha256!==payload.published_sha256){assert.equal(g.image||'','');expectedOmissions.push({route:g.route,kind:'screen',reason:'Different approved game revision'});continue;}
   assert.equal(g.image,'/assets/play/screens/'+screen.file);const response=await fetch(base+g.image);assert.equal(response.status,200);assert.equal(sha(Buffer.from(await response.arrayBuffer())),screen.sha256);realScreens++;
  }
+ // A gameplay clip is byte-bound like a screen: when the built payload is another approved revision the
+ // builder shows no clip and reports the omission, so the report is expected to carry it and the card to hold no clip.
+ const clipRoutes=new Map();for(const clip of JSON.parse(fs.readFileSync('domain-split/play/media/manifest.json')).clips.filter(c=>c.status==='accepted')){const k=key(clip.route);clipRoutes.set(k,(clipRoutes.get(k)||[]).concat(clip));}
+ for(const [k,candidates] of clipRoutes){const g=data.games.find(g=>key(g.route)===k),payload=build.payloads.find(p=>key(p.route)===k);assert(g);
+  if(candidates.some(c=>c.published_sha256===payload.published_sha256))continue;
+  assert(!g.media?.video);assert(!g.media?.poster);expectedOmissions.push({route:g.route,kind:'clip',reason:'Different approved game revision'});
+ }
  const order=rows=>rows.map(x=>JSON.stringify(x)).sort();assert.deepEqual(order(omitted),order(expectedOmissions),'Every omitted optional asset must be reported');
  if(process.env.PLAY_REQUIRE_COMPLETE_DISCOVERY==='1')assert.equal(omitted.length,0,'Release-source review requires complete image and selection coverage');
  assert(!data.games.some(g=>g.image&&g.image.endsWith('.svg')),'illustrated covers cannot stand in for game captures');
