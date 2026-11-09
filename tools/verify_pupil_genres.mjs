@@ -248,7 +248,7 @@ check(unresolved.length === 0, 'and every route it can land on resolves to a liv
 
 /* --- no hand-list --- */
 const RETIRED = ['/apexkick/', '/voxel/', '/rallyvector3d/', '/neonmeridian/', '/novasiege/',
-  '/ouroboros/', '/fracture/', '/apextennis/', '/apexpool/', '/olympics/'];
+  '/ouroboros/', '/fracture/', '/apextennis/', '/apexpool/', '/worldstage/'];
 const audSrc = fs.readFileSync(AUDIENCES, 'utf8');
 const aud = JSON.parse(audSrc);
 const pupilSections = aud.audiences.pupils.sections;

@@ -40,7 +40,7 @@ const SECONDS = Number((args.find(a => a.startsWith('--seconds')) || '').split('
 const SURFACES = [
   { route: '/neonmeridian/', by: 'measure_driving_flash.mjs', note: 'old tool posed 7 driving scenes via window.__NM' },
   { route: '/rallyvector3d/', by: 'measure_driving_flash.mjs', note: 'old tool posed driving scenes' },
-  { route: '/olympics/', by: 'measure_olympics_flash.mjs', note: '' },
+  { route: '/worldstage/', by: 'measure_olympics_flash.mjs', note: '' },
   { route: '/luminahaven/', by: 'measure_hearth_flicker.mjs', note: 'hearth scene is posed by the old tool' },
   { route: '/novasiege/', by: 'verify_novasiege.mjs', note: '' },
   { route: '/relicforge/', by: 'verify_relicforge.js', note: '' },

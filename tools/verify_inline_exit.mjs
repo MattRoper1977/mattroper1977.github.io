@@ -364,7 +364,7 @@ async function main() {
           await page.reload({ waitUntil: 'domcontentloaded', timeout: NAV_MS });
           await page.waitForTimeout(SETTLE_MS);
           /* Drain product autofocus before resetting focus for the real Tab
-             walk.  Olympics showScreen() queues its initial focus in rAF; on
+             walk.  House Games showScreen() queues its initial focus in rAF; on
              a slow renderer that callback can otherwise land mid-walk and
              make the identity-based cycle detector stop before the exits.
              Two actual frames are a readiness condition, not extra settling

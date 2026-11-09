@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-/* Olympics live leg — Stage L1.
+/* House Games live leg — Stage L1.
  *
- * Closes the live half of the Olympics publish: the bytes the world is served
+ * Closes the live half of the House Games publish: the bytes the world is served
  * must be the bytes on main, the shelf must carry the entries main says it
- * carries, the NEW· marker must be held by /olympics/ and by nothing else,
+ * carries, the NEW· marker must be held by /worldstage/ and by nothing else,
  * and the arcade must RENDER the whole shelf.
  *
  * Two rules this file exists to obey:
@@ -97,7 +97,7 @@ const hrefs = holders.map((e) => e.href);
 check('marker-sole-holder', holders.length === 1,
   `${holders.length} entr${holders.length === 1 ? 'y' : 'ies'} carry NEW· ${JSON.stringify(hrefs)}`);
 
-// RETARGETED 2026-08-13, commission 2. This asserted `=== '/olympics/'`, an
+// RETARGETED 2026-08-13, commission 2. This asserted `=== '/worldstage/'`, an
 // inline frozen holder. True when written, false from the moment the marker
 // moved — Relicforge, then Nova Siege, then Rally Vector 3D by site commits
 // 69c1d57 and 3e6deb0, landing on the canonical shelf in Games commit aa3e3bf,

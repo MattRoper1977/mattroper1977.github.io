@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - 'olympics/**'
+      - 'worldstage/**'
       - 'games/index.html'
       - 'data/source-manifests/games.json'
       - 'tools/verify_olympics.mjs'
@@ -65,7 +66,7 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 30); do
-            curl -fsS http://127.0.0.1:4173/olympics/index.html >/dev/null && break
+            curl -fsS http://127.0.0.1:4173/worldstage/index.html >/dev/null && break
             sleep 1
           done
           node tools/verify_olympics.mjs | tee artifacts/global-games/game.log

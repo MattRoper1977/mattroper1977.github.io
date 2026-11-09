@@ -27,8 +27,8 @@ const SUBJECTS = [
   { id: 'offbrand', candidate: '/offbrand/', baselineRoot: 'lessons', baseline: '/Games/Off_Brand.html' },
   { id: 'trailrunner', candidate: '/trailrunner/', baselineRoot: 'lessons', baseline: '/Games/Trail_Runner.html' },
   { id: 'auroralinks', candidate: '/auroralinks/', baselineRoot: 'site', baseline: '/auroralinks/' },
-  { id: 'houseolympiad', candidate: '/houseolympiad/', baselineRoot: null, baseline: null },
-  { id: 'olympics', candidate: '/olympics/', baselineRoot: 'site', baseline: '/olympics/' },
+  { id: 'housegames', candidate: '/housegames/', baselineRoot: null, baseline: null },
+  { id: 'olympics', candidate: '/worldstage/', baselineRoot: 'site', baseline: '/worldstage/' },
   { id: 'relicforge', candidate: '/relicforge/', baselineRoot: 'site', baseline: '/relicforge/' },
   { id: 'voxel', candidate: '/voxel/', baselineRoot: 'site', baseline: '/voxel/' }
 ];
@@ -68,7 +68,7 @@ async function startSubject(page, id) {
     await page.waitForFunction(() => !['MENU', 'PAUSED'].includes(String(window.__TR.gameState))); return;
   }
   if (id === 'auroralinks') { await page.waitForFunction(() => !!document.querySelector('#quickBtn,#enterBtn,#startBtn')); await clickVisible(page, ['#quickBtn', '#enterBtn', '#startBtn']); return; }
-  if (id === 'houseolympiad') {
+  if (id === 'housegames') {
     await page.waitForFunction(() => !!window.MadeByMattOlympiadV4QA);
     await page.evaluate(() => { const result = MadeByMattOlympiadV4QA.selfTest(); if (!result.ok) throw new Error('House self-test failed'); }); return;
   }

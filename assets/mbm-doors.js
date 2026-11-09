@@ -162,7 +162,7 @@
   function generatedArt(door, doc) {
     /* Accent and motif are drawn from two independent hashes rather than two
        slices of one, and the seed is reversed for the second so the two are
-       not correlated. Titles that share a monogram — "Vortex" and "Voxelcraft"
+       not correlated. Titles that share a monogram — "Vortex" and "Block Builder"
        both give VO — then still differ by colour and shape. With one hash and
        5x6 combinations that pair came out as literally the same card; the
        Arcade's generated cards hit the same wall (0866d61) and the fix there
