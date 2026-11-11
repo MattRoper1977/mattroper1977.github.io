@@ -145,7 +145,7 @@ def make_page(key, page, audience, all_audiences):
 <a class="gv-skip" href="#main">Skip to content</a><header class="gv-header"><div class="gv-wrap gv-header-inner">
 <a class="gv-brand" href="/"><img src="/assets/brand/micro_mark.svg" width="60" height="60" alt=""><span>MADE BY MATT<small>Learn · Build · Explore</small></span></a>
 <a class="gv-home" href="/">Education homepage</a></div></header>
-<main id="main" class="gv-wrap ad-main"><section class="gv-hero" aria-labelledby="page-title"><p class="gv-eyebrow">{esc(page["eyebrow"])}</p>
+<main id="main" class="gv-wrap aud-main"><section class="gv-hero" aria-labelledby="page-title"><p class="gv-eyebrow">{esc(page["eyebrow"])}</p>
 <h1 id="page-title">{esc(page["title"])}</h1><p class="gv-lead">{esc(page["lead"])}</p>
 <div class="gv-actions">{buttons}</div>
 <p class="gv-intro-note">{esc(page["note"])}</p></section>
