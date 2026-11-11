@@ -24,7 +24,7 @@ const cases=[
   ['/resources/','resources','.rx-cardx'],['/tools/','tools','.th-card'],
   ['/teach/','teacher workspace','.mbm-task-card'],['/education-hub/','education guidance','.mbm-start-card'],
   ['/for/teachers/','teachers','.fd-subject'],['/for/pupils/','pupils','.fd-subject'],
-  ...['parents-carers','schools-semh','trusts','councils-organisations','partners'].map(s=>['/for/'+s+'/','audience '+s,'.ad-card']),
+  ...['parents-carers','schools-semh','trusts','councils-organisations','partners'].map(s=>['/for/'+s+'/','audience '+s,'.gv-card']),
   ['/for/governors-trustees/','governors','.gv-card'],['/Lessons/','lessons','.scard'],
   ['/Lessons/primary/','primary','.primary-unit'],['/Matt-s-Apps-/','apps','.card'],
   ['/stats/on-this-device/','device statistics','.sx-card'],['/asdan/','ASDAN','.card'],['/uas/','UAS','.card'],
