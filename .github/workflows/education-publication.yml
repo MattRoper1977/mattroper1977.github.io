@@ -19,7 +19,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     outputs:
       ready: ${{ steps.pages.outputs.ready }}
     steps:
@@ -200,7 +200,7 @@ jobs:
           # Moved again 2026-10-27 (ruling wf-3, L31) WITH its Apps companion below: the Lessons pin 12ad298a -> 9b2d03bb685bdf750d649add949e6d02097dca38, the squash
           # merge of Lessons #721 (wf-2: the catalogue checker rejects an underivable companion-pack catalogue instead of crashing; no published
           # path moves). Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '9b2d03bb685bdf750d649add949e6d02097dca38' }}
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '357d841fbb3e7da9fb6bde1eab2e18e0650637b4' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -369,3 +369,6 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # The education-lessons artifact is about 1.26 GB; the Pages sync has taken longer than the action's 10-minute default.
+          timeout: 1800000

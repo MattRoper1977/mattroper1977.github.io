@@ -32,7 +32,7 @@ def discovery_controls(output, selected):
                 if omitted:
                     route,kind=omitted
                     row=next(g for g in json.loads((scratch/'games/data/play-discovery.json').read_text())['games'] if build.key(g['route'])==route)
-                    assert not row.get('image' if kind=='screen' else 'moods')
+                    assert not row.get({'screen':'image', 'selection':'moods', 'clip':'media'}[kind])
                     assert kind!='selection' or not row.get('details')
                     assert any(build.key(x['route'])==route and x['kind']==kind for x in report['omitted_discovery'])
             except ValueError:
@@ -53,6 +53,16 @@ def discovery_controls(output, selected):
             exercise('Other approved revision omits '+kind,mutation('published_sha256',alternate),omitted=(route,kind))
             exercise('Unreviewed binding rejected for '+kind,mutation('published_sha256','0'*64),rejected=True)
             if kind=='screen':exercise('Altered screenshot hash rejected',mutation('sha256','0'*64),rejected=True)
+        media=original_read('media/manifest.json',{})
+        route,clip=next((build.key(c['route']),c) for c in media['clips'] if c.get('status')=='accepted' and payloads[build.key(c['route'])]['path'] in specs and c['published_sha256']!=payloads[build.key(c['route'])]['published_sha256'])
+        def other_clip(file,data):
+            if file=='media/manifest.json':
+                data['clips']=[c for c in data['clips'] if build.key(c['route'])!=route]+[copy.deepcopy(clip)]
+        exercise('Other approved revision omits clip',other_clip,omitted=(route,'clip'))
+        def unreviewed_clip(file,data):
+            if file=='media/manifest.json':
+                next(c for c in data['clips'] if c.get('status')=='accepted' and build.key(c['route'])==route)['published_sha256']='0'*64
+        exercise('Unreviewed binding rejected for clip',unreviewed_clip,rejected=True)
         exercise('Restored discovery evidence accepted',lambda *_:None)
     return results
 

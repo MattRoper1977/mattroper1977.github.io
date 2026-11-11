@@ -4,7 +4,7 @@
 Run after build_publications.py. Each output belongs to its existing repository:
 Site remains /, Lessons remains /Lessons/, Apps remains /Matt-s-Apps-/.
 """
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from html.parser import HTMLParser
 from urllib.parse import unquote, urlparse, urljoin
 import argparse, sys
@@ -101,6 +101,7 @@ SITE_GENERATOR_INPUTS = {
     'data/as1-pilot.json',
     'data/as1-sizing.json',
     'data/as1-storage-registry.json',
+    'data/as1-storage-census-play-renames.json.gz',
 }
 
 
@@ -213,7 +214,13 @@ def moved_page(route):
     # and back links are gone: the stub's only job is the handoff to Play, and the
     # bulk /game-saves/ pages stay reachable from the pupil hub, not from here.
     from html import escape
-    destination = PLAY + LEGACY.get(route, route)
+    from play.route_renames import destination as renamed_destination, RENAMES
+    destination = PLAY + renamed_destination(LEGACY.get(route, route))
+    if any(route in (m['old_route'], m['route'], m['old_route'].removesuffix('/'), m['route'].removesuffix('/')) for m in RENAMES):
+        destination = destination.replace('https://madebymatt-play.uk/', 'https://www.madebymatt-play.uk/')
+        return ('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="robots" content="noindex">'
+                '<meta http-equiv="refresh" content="0; url='+escape(destination, quote=True)+'"><title>Game moved</title>'
+                '<body data-game-moved><p>Made by Matt</p><p><a id="play-game" href="'+escape(destination, quote=True)+'">Open the game</a></p></body></html>')
     return ('<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
             '<meta name="robots" content="noindex"><title>This game has moved · Made by Matt</title>'
@@ -249,6 +256,46 @@ def lesson_moved_page(new_relative):
             '<style>body{font:1.1rem/1.65 system-ui;max-width:42rem;margin:4rem auto;padding:0 1.25rem;color:#161d3d}a{color:#174e45}a:focus-visible{outline:3px solid #e39129;outline-offset:4px}</style>'
             '</head><body data-lesson-moved><main><h1>This lesson has moved.</h1>'
             '<p><a id="lesson-moved" href="' + destination + '">Open the lesson</a></p></main>'
+            '</body></html>')
+
+# QR-1 (5 Nov 2026): staff short links for printed QR codes. /go/<slug>/ forwards to one
+# published lesson. The printed code holds only the short address (the house encoder stops at
+# 106 bytes), so a lesson can be renamed or moved without reprinting: change the table, never
+# the code. Each page is noindex, under 2 KB, no script, one link, and only ever points into
+# /Lessons/ (never the evidence app). Targets are checked against Lessons main before they are added.
+SHORT_LINKS = HERE / 'short-links.json'
+SHORT_SLUG = re.compile(r'[a-z0-9]+(?:-[a-z0-9]+)*')
+QR_LIMIT = 106
+SLUG_MAX = 48  # keeps LEARN + "/go/" + slug + "/" well inside QR_LIMIT
+
+def short_links():
+    if not SHORT_LINKS.is_file():
+        return {}
+    links = json.loads(SHORT_LINKS.read_text(encoding='utf-8'))['links']
+    for slug, target in links.items():
+        assert SHORT_SLUG.fullmatch(slug) and len(slug) <= SLUG_MAX, 'Bad short-link slug: '+slug
+        parts = PurePosixPath(target).parts
+        assert target.endswith('.html') and not target.startswith('/') and '..' not in parts and '\\' not in target, 'Bad short-link target: '+target
+        assert len(short_link_url(slug).encode()) <= QR_LIMIT, 'Short link too long for a QR code: '+slug
+    return links
+
+def short_link_url(slug):
+    return LEARN + '/go/' + slug + '/'
+
+def short_link_page(target):
+    from html import escape
+    from urllib.parse import quote
+    brand = re.search(r' · (Made by [^<]+)</title>', moved_page('/')).group(1)
+    destination = escape(LEARN + '/Lessons/' + quote(target), quote=True)
+    return ('<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
+            '<meta name="viewport" content="width=device-width,initial-scale=1">'
+            '<meta name="robots" content="noindex">'
+            '<meta http-equiv="refresh" content="0;url=' + destination + '">'
+            '<title>Opening the lesson · ' + escape(brand) + '</title>'
+            '<link rel="canonical" href="' + destination + '">'
+            '<style>body{font:1.1rem/1.65 system-ui;max-width:42rem;margin:4rem auto;padding:0 1.25rem;color:#161d3d}a{color:#174e45}a:focus-visible{outline:3px solid #e39129;outline-offset:4px}</style>'
+            '</head><body data-short-link><main><h1>Opening the lesson</h1>'
+            '<p><a id="short-link" href="' + destination + '">Open the lesson</a></p></main>'
             '</body></html>')
 
 def make_classifier(lessons):
@@ -347,6 +394,7 @@ def build(output, lessons, apps=None, allow_sparse=False):
                 if updated != text:
                     write(dest,relative,updated);changed.append(relative)
         moved_lessons=[]
+        short_pages=[]
         if name=='lessons':
             present=set(tracked(root))
             for old, new in lesson_moves().items():
@@ -366,6 +414,15 @@ def build(output, lessons, apps=None, allow_sparse=False):
                     to=dest/p.relative_to(overlay);to.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,to)
             for route in ['games/index.html','Games/index.html']:
                 write(dest,route,moved_page('/'))
+            lesson_files=set(tracked(lessons))
+            for slug, target in short_links().items():
+                # The Lessons project site publishes from Lessons main, which can be ahead of the
+                # Lessons pin this Site build reads, so a target missing here is reported, not dropped.
+                if target not in lesson_files:
+                    report.setdefault('short_links_ahead_of_pin', []).append(slug)
+                relative='go/'+slug+'/index.html'
+                assert not (ROOT/relative).exists(), 'Short link collides with a Site file: '+relative
+                write(dest, relative, short_link_page(target)); short_pages.append(relative)
             # Search results and recently used resources read this filtered index.
             index=json.loads((dest/'data/mbm-search-index.json').read_text())
             if 'counts' in index:
@@ -386,10 +443,13 @@ def build(output, lessons, apps=None, allow_sparse=False):
         write(dest,'.nojekyll','')
         for relative in migrated:
             assert 'data-game-moved' in (dest/relative).read_text()
+        for relative in short_pages:
+            text=(dest/relative).read_text()
+            assert 'data-short-link' in text and len(text.encode()) < 2048 and '<script' not in text and '/Lessons/' in text, relative
         for relative in moved_lessons:
             text=(dest/relative).read_text()
             assert 'data-lesson-moved' in text and len(text.encode()) < 2048 and '<script' not in text, relative
-        report['publications'][name]={'root':str(dest),'source_files':len(copied),'archived_not_published':len(archived),'moved_game_pages':migrated,'moved_lesson_pages':len(moved_lessons),'transformed_discovery_files':changed,'output_files':sum(p.is_file() for p in dest.rglob('*'))}
+        report['publications'][name]={'root':str(dest),'source_files':len(copied),'archived_not_published':len(archived),'moved_game_pages':migrated,'moved_lesson_pages':len(moved_lessons),'short_link_pages':len(short_pages),'transformed_discovery_files':changed,'output_files':sum(p.is_file() for p in dest.rglob('*'))}
     if report['missing_source_files']:
         report['status']='PARTIAL_SPARSE_REVIEW_ONLY'
         if not allow_sparse:raise ValueError('Full source checkout required; missing '+str(len(report['missing_source_files']))+' files')

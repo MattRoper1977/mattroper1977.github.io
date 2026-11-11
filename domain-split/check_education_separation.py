@@ -1,3 +1,4 @@
+from play.route_renames import project as project_game_routes
 #!/usr/bin/env python3
 """Independently inspect emitted Education files after all transformations."""
 import argparse
@@ -80,15 +81,27 @@ TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
 # RE Spring 1 window W1 (ruling sr, sr-3 step 1; 17 October 2026): the 216 download rows of the three reviewed RE Spring 1
 # pack roots join the Humanities prefix (876 -> 1092 rows, in the built order); all 876 reviewed rows are kept unchanged
 # and in order, and no other prefix moves. d56d0844 -> 88870c0d.
-TEACHING_PACK_ADDITIONS_SHA256 = '9c808891100aa33c41527a1fab6befc7978551ceeaf6ba4c1a76729ac2f179ee'  # M1: the same rows with the folder paths renamed (every difference is the rename map)
+# R-RAISE Humanities/RE window W1 (owner ruling R-RAISE, 6 November 2026; Lessons #807): the 282 download rows the 42 rebuilt
+# Autumn 2 Humanities and RE lessons add under the six Autumn 2 pack roots join the Humanities prefix (1092 -> 1374 rows, in the
+# built order); all 1092 reviewed rows are kept unchanged and in order (their titles too), and no other prefix moves.
+# 9c808891 (M1) -> b220966b.
+# ENG1 window W1 (Lessons #811 and #814, 7 November 2026): the 8 Slides download rows the ENG1 editions add beside the RE
+# Autumn 2 pack pages (one per RE LAUNCH week plus RE BUILD W01) join the Humanities prefix (1374 -> 1382 rows, in the built
+# order); all 1374 reviewed rows are kept unchanged and in order (their titles too: Lessons #814 restores the reviewed titles the
+# ENG1 relabelling had moved), and no other prefix moves. b220966b -> 4defbcee.
+TEACHING_PACK_ADDITIONS_SHA256 = '4defbceeac059a8f117214d50edec94c2c3c459ca78fc721adce34ca63b32aa9'
 # RE Spring 1 window W1 (ruling ss, ss-2: option A, the io-3 shape of #471; 17 October 2026): the transition form of the
 # reviewed list. While the RE Spring 1 landing is in flight the Site still builds its pinned Lessons (876 Humanities rows) and
 # the Lessons publication builds the landing (1092), so a prefix with a declared pending set passes with EITHER its reviewed
 # rows OR those rows minus exactly the pending set, and in no other state (while the pack index is installed). The pending
 # set is the 216 download rows of the three reviewed RE Spring 1 pack roots (72 under each), pinned by digest below; a later
-# collapse window removes it.
+# collapse window removes it. R-RAISE Humanities/RE window W1 (owner ruling R-RAISE, 6 November 2026): the Site's pinned
+# Lessons 9b2d03bb now carries the RE Spring 1 rows and lacks the 9 retired Humanities collections (it builds the reviewed rows
+# minus the um retiring set, 1083 rows), so the RE Spring 1 pending rows collapse out. The pending set becomes the 282 rows the
+# #807 landing adds plus those 9 retiring rows (291): the pin builds the reviewed rows minus the pending set, the landing builds
+# them minus the retiring set, and no other state passes.
 TEACHING_PACK_PENDING = HERE/'teaching-packs-download-usage-pending.json'
-TEACHING_PACK_PENDING_SHA256 = 'b1defb46c628c7a2ba9f6494d2160af5658f70f7a86b5050c0ee5bb1dd40b2fa'  # M1: the same rows with the folder paths renamed (every difference is the rename map)
+TEACHING_PACK_PENDING_SHA256 = '5db95bfa0419ee85f59e4e45c4c1ba26da2b8229a21024d7cb191ceb954476f7'  # ENG1 window W1: the 282 Autumn 2 rebuild rows, the 8 ENG1 Slides rows and the 9 um retiring rows (299); the Site pin still builds 1083
 
 
 # um window W1 (rulings um, um add.1 (ii) and answer B, um-4 (a); 24 October 2026): the io-3 transition form again, as a
@@ -121,21 +134,33 @@ def retiring_set_problems(retiring, approved):
     return problems
 
 
+# The exact 290 pending rows under the six Autumn 2 pack roots (json.dumps(rows, sort_keys=True), in reviewed order), so no
+# other row under those folders can stand in for one of them. Pinned 6 November 2026 on the Lessons #807 build (owner ruling
+# R-RAISE, 282 rows); re-pinned 7 November 2026 on the Lessons #814 build with the 8 ENG1 Slides rows (290).
+RAISE_PENDING_ROWS_SHA256 = '4b3ffb26edd803392034607f9a774e8ca1870b74d53b8ca4d215ad064f9fd678'
+RAISE_PENDING_ROOTS = ('HUM_Autumn_2_BUILD_Reviewed', 'HUM_Autumn_2_GROW_Reviewed', 'HUM_Autumn_2_LAUNCH_Reviewed',
+                       'RE_Autumn_BUILD_Reviewed', 'RE_Autumn_GROW_Reviewed', 'RE_Autumn_LAUNCH_Reviewed')
 RE_S1_PENDING_ROOTS = ('RE_Spring_1_BUILD_Reviewed', 'RE_Spring_1_GROW_Reviewed', 'RE_Spring_1_LAUNCH_Reviewed')
 
-def pending_set_problems(pending, approved):
-    """Self-test helper (ruling ss, ss-2; the io-3 helper of #471): the declared pending set must be one prefix of exactly
-    216 distinct rows, 72 under each RE Spring 1 pack root, each of them present exactly once among the reviewed rows, so
-    that none is present in the reviewed rows minus the pending set. Returns the problems found (empty = sound)."""
+def pending_set_problems(pending, approved, retiring=None):
+    """Self-test helper (ruling ss, ss-2; the io-3 helper of #471; owner ruling R-RAISE Humanities/RE window W1): the declared
+    pending set must be one prefix of exactly 299 distinct rows: 290 under the six Autumn 2 rebuild pack roots' Autumn_2 week
+    folders, plus exactly that prefix's 9 um retiring rows, each of them present exactly once among the reviewed rows, so that
+    none is present in the reviewed rows minus the pending set. Returns the problems found (empty = sound)."""
     problems = []
+    retiring = json.loads(TEACHING_PACK_RETIRING.read_text()) if retiring is None else retiring
     if len(pending) != 1: problems.append('pending set is not one prefix')
     for prefix, rows in pending.items():
         keys = [json.dumps(r, sort_keys=True) for r in rows]
-        if len(rows) != 216: problems.append('pending set holds %d rows, not 216' % len(rows))
+        if len(rows) != 299: problems.append('pending set holds %d rows, not 299' % len(rows))
         if len(set(keys)) != len(keys): problems.append('pending rows are not distinct')
-        for root in RE_S1_PENDING_ROOTS:
-            n = sum(1 for r in rows if '/' + root + '/' in r['route'])
-            if n != 72: problems.append('%d pending rows under %s, not 72' % (n, root))
+        raise_rows = [r for r in rows if any('/' + root + '/' in r['route'] for root in RAISE_PENDING_ROOTS)
+                      and re.search(r'/Autumn_2/W0[1-7]/', r['route'])]
+        if len(raise_rows) != 290: problems.append('%d R-RAISE pending rows, not 290 under Autumn_2' % len(raise_rows))
+        if sha256(json.dumps(raise_rows, sort_keys=True).encode()).hexdigest() != RAISE_PENDING_ROWS_SHA256:
+            problems.append('R-RAISE pending rows are not the reviewed 290')
+        rest = [r for r in rows if r not in raise_rows]
+        if rest != retiring.get(prefix, []) or len(rest) != 9: problems.append('pending rows outside R-RAISE are not exactly the 9 retiring rows')
         reviewed = [json.dumps(r, sort_keys=True) for r in approved.get(prefix, [])]
         for k in set(keys):
             if reviewed.count(k) != 1: problems.append('a pending row is present %d times among the reviewed rows' % reviewed.count(k))
@@ -194,7 +219,14 @@ def registry_partition(rows, approved_by_prefix, installed_by_prefix, pending_by
 # re-freeze record, with its proof, is the comment block in registry_errors().
 REGISTRY_BASELINES = (
     'da9965cec2648588615be3972125d43f00f9c0cb883a7c6607e1469fb2ce544e',   # M1 (vr, vt, vt add.1, vu): the 2001 rows of cf03cb20 with the Lessons folder paths renamed and every resource identity kept (usage-route-aliases.json); built by the Site fallback Lessons pin and Lessons main once both carry the rename
-    '177dfeb25ce6e8e38274861507a259b1994e18df3663fa5d84c9dcba63e55197',   # Ruling M-AD (2026-11-03, Lessons #760, f154ac7a): built by Lessons main, 2937 rows (dd4ede1a's 2768 rows plus 169 Science LAUNCH Autumn 2 W2-W7 lesson-page rows; the 6 weekly LAUNCH W3-W7 overview rows drop their duplicate land- source id)
+    '57d486394ba41bb3edad4ef7457a2e86a90d0d18d6c91324616acb3868e5ac29',   # ENG1 (2026-11-07, Lessons #811 and #814): the ENG1 editions and the new Autumn 2 subject pages, 3247 rows: d33d431c's 3201 rows with 32 Art W07 download titles following the ENG1 relabelling (no route, id or event moved), plus 46 rows for the new Careers, DT, PSHE, RSE, RSHE, Vocational and Art pages and packs. d33d431c (Lessons main a7664bed) retires because once #811 landed nothing builds it.
+    'e5ad9a992c255ca8b224b6fb4617e81a6c1d6f0e942752449a682d164d50be0c',   # A2-LIST in flight (2026-11-07, Lessons #821): 3263 rows, the 3247 of 57d48639 kept in order and unchanged plus 16 lesson_open rows, one for each lesson the Autumn 2 list adds (source_ids a2list-*); measured from built bytes of this Site with the #821 branch. After #821 merges Lessons main builds e5ad9a99 and 57d48639 is retired by a follow-up.
+    '2a3fd81a0994b00c7be47beefefc5ffdb764e729262f32ac2d25170c2aadece7',   # A1-AAA in flight (2026-11-08, Lessons #822): 3340 rows, the 3263 of e5ad9a99 kept in order and unchanged plus 77 lesson_open rows, one for each Science (35) and Art (42) Autumn 1 lesson the list adds (source_ids a1aaa-*); measured from built bytes of this Site with the #822 branch. After #822 merges Lessons main builds 2a3fd81a and e5ad9a99 is retired by a follow-up.
+    '83c05fa90c49908eff0914fce206485f2444a5bef2d275c586d466375f467641',   # A1-LIST in flight (2026-11-08, Lessons #823): 3325 rows, the 3340 of 2a3fd81a kept in order and unchanged minus the 15 lesson_open rows of the SUMMIT Autumn 1 W3-W7 pages (source_ids a1aaa-sci-launch-*), which leave the lesson list until they are rebuilt on the Week 8 model; measured from built bytes of this Site with the #823 branch. After #823 merges Lessons main builds 83c05fa9 and 2a3fd81a is retired by a follow-up.
+    'bfd867722e4fd8097f8c13871ac4c5f4c0b10ac6519ddcdac623ff0636b5efab',   # A1-PACKS in flight (2026-11-08, Lessons #828): 4069 rows, the 3325 of 83c05fa9 kept in order and unchanged plus 744 download rows, twelve companion files for each of the 62 Art and Science Autumn 1 pages that already link them; measured from built bytes of this Site with the #828 branch. After #828 merges Lessons main builds bfd86772 and 83c05fa9 is retired by a follow-up.
+    '6d12b63f64507c11fae6294dc3675ef3b8e4a30729825323052cb71ad6577114',   # AAA-LANDING in flight (2026-11-08, Lessons #825, #829 and #830): 4113 rows, measured from built bytes of this Site (d7704757) with the #830 branch (Lessons main 7c4f9474 plus the two labelled RE scheme-of-work pages, which move no retained row): the rows of the 81858b3c build kept in order and unchanged plus 64 (36 lesson_open rows for the AAA small-subject pages: 10 Vocational, 8 Art, 7 Community Projects, 2 each Careers, DT, PSHE, RSE, RSHE, 1 ICT; 28 download rows for the rebuilt Art W02 lessons' files under their lesson-numbered titles) minus 29 (those 28 Art W02 files under their earlier titles and one ICT download the rebuilt ICT W02 page no longer links). The 81858b3c build (4078 rows) itself holds nine rows over bfd86772 that the #828 landing's final merge with main brought; the Site's pinned Lessons 9b2d03bb still builds da9965ce. After #830 merges Lessons main builds 6d12b63f and bfd86772 is retired by a follow-up.
+    '20e3b7a5f79a64b5e11504d88b67c3d3b6d3190b175ad03f9edc22d696d3930a',   # TT-A2 in flight (2026-11-08, Lessons #824, #833 and #834): 4134 rows, the 4113 of 6d12b63f kept in order and unchanged plus 21 lesson_open rows, one for each Tutor Time Autumn 2 page #833 adds (source_ids tt-a2-*); the pathway relabel (#824, 515 published pages re-labelled) and the plain catalogue labels (#834) move no retained row. Measured from built bytes of this Site with the #834 branch tree (Lessons main after those three merges). The Site's pinned Lessons 9b2d03bb still builds the earlier digests; after the next pin move the earlier in-flight digests are retired by a follow-up.
+    '0aa06c277516403d934ed3421e8de4a11ca04c66d07ddac7d176ca3edf1d1a6e',   # PLAY-RENAMES (2026-11-09, Site #607 with Lessons #810): 4134 rows, the rows of 20e3b7a5 with the six renamed Play games carrying their new titles, routes, resource ids and search-index source ids (re-sorted by resource id); every other row unchanged
 )
 
 
@@ -416,7 +448,7 @@ def registry_errors(output):
 
 
 def check(output):
-    census=json.loads((HERE.parent/'reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json').read_text())['rows']
+    census = project_game_routes(json.loads((HERE.parent/'reports/v6fin/V6FIN_W7_69_ROUTE_CENSUS_2026-09-03.json').read_text())['rows'])
     excluded={key(row['normalizedDecodedRoute']) for row in census} - {key(route) for route in RETAINED}
     excluded.update(key(route) for route in ALIASES)
     excluded.update({'/games','/Games'})
@@ -477,8 +509,12 @@ def check(output):
                     anchors=[value for tag,attr,value in parser.refs if tag=='a' and attr=='href']
                     if len(anchors)!=1: fail(route,'Stub carries '+str(len(anchors))+' links; exactly one is allowed')
                     destinations=[value for tag,attr,value in parser.refs if tag=='a' and attr=='href' and 'madebymatt-play.uk' in value]
-                    if not destinations or any(not value.startswith(PLAY+'/') for value in destinations): fail(route,'Migration must use canonical HTTPS Play')
-                    expected=PLAY+ALIASES.get(route.removesuffix('index.html'),route.removesuffix('index.html'))
+                    from play.route_renames import destination as renamed_destination, RENAMES
+                    original_route=route.removesuffix('index.html')
+                    renamed=any(original_route in (m['old_route'],m['route']) for m in RENAMES)
+                    origin='https://www.madebymatt-play.uk' if renamed else PLAY
+                    if not destinations or any(not value.startswith(origin+'/') for value in destinations): fail(route,'Migration must use canonical HTTPS Play')
+                    expected=origin+renamed_destination(ALIASES.get(original_route,original_route))
                     if parser.play_destination != expected: fail(route,'Incorrect migration destination: '+str(parser.play_destination))
                     target=output/'games'/unquote(urlparse(parser.play_destination or '').path).lstrip('/')
                     if not target.is_file() and not (target/'index.html').is_file(): fail(route,'Migration destination missing from Play output')
@@ -540,7 +576,8 @@ def self_test():
     # io-3 collapse (ruling rf-4): the pending transition form is gone. The reviewed rows minus a subset are red, on
     # planted rows and on the real list (the 876 Humanities rows minus the 36 io-3 rows). The 876 below pins the approved
     # list's length: it moves only by ruling, with the list (sc-3; 861 -> 876 with the Spring 1 window W1; ruling sr, sr-3:
-    # 876 -> 1092 with the RE Spring 1 window W1).
+    # 876 -> 1092 with the RE Spring 1 window W1; owner ruling R-RAISE: 1092 -> 1374 with the Humanities/RE window W1; ENG1
+    # window W1: 1374 -> 1382 with the 8 ENG1 Slides rows).
     pp='/Lessons/Careers/Teaching_Packs/'; a,b,c,d=(row(pp+'BUILD/downloads/'+x+'.zip') for x in 'abcd')
     for label,rs,expected in [('the reviewed rows',[a,b,c,d],0),('the reviewed rows minus two (the retired form)',[a,b],1),
                               ('the reviewed rows reordered',[a,b,d,c],1),('a changed row',[a,{**b,'kind':'planted'},c,d],1)]:
@@ -551,7 +588,7 @@ def self_test():
     hp=next(p for p in real_add if p.startswith('/Lessons/Humanities'))
     io3=[r for r in real_add[hp] if any('/'+s+'_' in r['route'] for s in ('HUM_BUILD_A2_W01','HUM_GROW_A2_W01','HUM_LAUNCH_A2_W01'))]
     errors,_=registry_partition([r for r in real_add[hp] if r not in io3],{hp:real_add[hp]},{hp:True})
-    passed=len(io3)==36 and len(real_add[hp])==1092 and len(errors)==1; ok=ok and passed
+    passed=len(io3)==36 and len(real_add[hp])==1382 and len(errors)==1; ok=ok and passed
     print(f"  [{'ok' if passed else 'FAIL'}] the real Humanities rows minus the 36 io-3 rows are red ({len(real_add[hp])} reviewed, {len(io3)} io-3)")
     # RE Spring 1 W1 (ruling ss, ss-2: option A): the pending transition form, proved on planted rows, as io-3's was. With
     # reviewed rows a, b, c, d and pending c, d, exactly two states pass: all four, and the reviewed rows minus the pending set.
@@ -577,9 +614,9 @@ def self_test():
     probs=pending_set_problems(real_pending, real_add)
     passed=sha256(TEACHING_PACK_PENDING.read_bytes()).hexdigest()==TEACHING_PACK_PENDING_SHA256 and not probs
     ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the pending set is one prefix, 216 distinct rows, 72 under each RE Spring 1 root, each once among the reviewed rows, at its pinned digest")
+    print(f"  [{'ok' if passed else 'FAIL'}] the pending set is one prefix, 299 distinct rows (290 Autumn 2 rows: 282 R-RAISE plus 8 ENG1 Slides, plus the 9 um retiring rows), each once among the reviewed rows, at its pinned digest")
     errors,_=registry_partition([r for r in real_add[hp] if r not in real_pending[hp]],{hp:real_add[hp]},{hp:True},real_pending)
-    passed=not errors and len(real_add[hp])-len(real_pending[hp])==876; ok=ok and passed
+    passed=not errors and len(real_add[hp])-len(real_pending[hp])==1083; ok=ok and passed  # R-RAISE: the Site pin's 1083 (was 876)
     print(f"  [{'ok' if passed else 'FAIL'}] the real reviewed rows minus the pending set pass with the form ({len(real_add[hp])-len(real_pending[hp])} rows, the Site pin's)")
     earlier=[r for r in real_add[hp] if r not in real_pending[hp]]
     planted={hp:real_pending[hp][:-1]+[earlier[0]]}
@@ -646,8 +683,8 @@ def self_test():
               '632100c64f6e596c833eb3e77b41f973a7ffbdeead3169d069c1afa82ff61476','513399bca2eee843a86f1702ba8577476fb6ac3eed3af3c29f0eee1ba09c530d',
               'd283cc5eeb6f679129e7283c1ca177653c84037e55859a96157bbfa102fe3c86','824f12b3fcb03edf036cb19d03f6ded2546e104201bf53d79b6ba976dd88c2cb',
               '59a81265a79d64068dd9c9c8c7eae4a1f807c093ed485e9f73c060a235339757','08c427b8ae323e8ffd06793b3a30924076e7d940cf8fc910a79d079b40a767fd','60e0cd4cdf10d08f64d6a5b15d78928963f5163da10bdc20afe3137b590e459b','1a358a41168f6d1205a3d3bd855753a6c6400855626c6660cf652e3947b89a57','5c4fc9892e60f5e50ae7712a1fe44f5c6ab355e7f0a872c8143d3e612af66c9b','dcc9096033c437337b4ee3014056d322292b600eebb4f9ea4b2cf0de717cfcd1','e8882f70613ab1301fe43a946e108a9a764128712ba8f1fdb6d3a7053406a76b')
-    passed=REGISTRY_BASELINES==('da9965cec2648588615be3972125d43f00f9c0cb883a7c6607e1469fb2ce544e','177dfeb25ce6e8e38274861507a259b1994e18df3663fa5d84c9dcba63e55197') and not set(previous+('161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','cf03cb20253c3b9817054e93377d9387c3a46b609aa0d326ecf246ab77ab0e16','d8066b840f2bf288555e737f78f06658d4f273b2ebd4aca401d1351bf8549b80','1dec49a1961fb51f5db28441f101501ccec7e9868f54f9c325a55cb8811357fc','f2c37ada70d6478536cba302426dfc43d25ecb3d056a1dbfa305dc3a2e3ac30a','7bc0642136adf3b03aae7e579ceda4a7b7c3dc85005aa6e10e8243c3c4a4dad5','dd4ede1a0e0b7dfbb874d1f12294d1033c6f1a4c2003228dfb4c24ded8152dab'))&set(REGISTRY_BASELINES); ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly the pair da9965ce (M1: cf03cb20's rows under the folder rename) and 177dfeb2 (Ruling M-AD, Lessons #760: 2937 rows); dd4ede1a retired at M-AD; 7bc06421 retired at M-AB; f2c37ada retired at M-S; 1dec49a1 retired at M-N; d8066b84 retired at the B follow-up; 16195414 and cf03cb20 retired at M1; e8882f70 retired at the vg follow-up, dcc90960 at the us follow-up, 5c4fc989 at the up follow-up, 1a358a41 at the uj follow-up, 60e0cd4c at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
+    passed=REGISTRY_BASELINES==('da9965cec2648588615be3972125d43f00f9c0cb883a7c6607e1469fb2ce544e','57d486394ba41bb3edad4ef7457a2e86a90d0d18d6c91324616acb3868e5ac29','e5ad9a992c255ca8b224b6fb4617e81a6c1d6f0e942752449a682d164d50be0c','2a3fd81a0994b00c7be47beefefc5ffdb764e729262f32ac2d25170c2aadece7','83c05fa90c49908eff0914fce206485f2444a5bef2d275c586d466375f467641','bfd867722e4fd8097f8c13871ac4c5f4c0b10ac6519ddcdac623ff0636b5efab','6d12b63f64507c11fae6294dc3675ef3b8e4a30729825323052cb71ad6577114','20e3b7a5f79a64b5e11504d88b67c3d3b6d3190b175ad03f9edc22d696d3930a','0aa06c277516403d934ed3421e8de4a11ca04c66d07ddac7d176ca3edf1d1a6e') and not set(previous+('d33d431c756daebbc4ebe1ba9354e7bdb9130a78f96d0d1703317dbd51f243b1','177dfeb25ce6e8e38274861507a259b1994e18df3663fa5d84c9dcba63e55197','161954144aee75594dfc94e37acfa726f6184a82d17f16358972e958062332f3','cf03cb20253c3b9817054e93377d9387c3a46b609aa0d326ecf246ab77ab0e16','d8066b840f2bf288555e737f78f06658d4f273b2ebd4aca401d1351bf8549b80','1dec49a1961fb51f5db28441f101501ccec7e9868f54f9c325a55cb8811357fc','f2c37ada70d6478536cba302426dfc43d25ecb3d056a1dbfa305dc3a2e3ac30a','7bc0642136adf3b03aae7e579ceda4a7b7c3dc85005aa6e10e8243c3c4a4dad5','dd4ede1a0e0b7dfbb874d1f12294d1033c6f1a4c2003228dfb4c24ded8152dab'))&set(REGISTRY_BASELINES); ok=ok and passed
+    print(f"  [{'ok' if passed else 'FAIL'}] the fence holds exactly da9965ce (M1: cf03cb20's rows under the folder rename), 57d48639 (ENG1, Lessons #811 and #814: 3247 rows), e5ad9a99 (A2-LIST in flight, Lessons #821: 3263 rows) , 2a3fd81a (A1-AAA in flight, Lessons #822: 3340 rows) 83c05fa9 (A1-LIST in flight, Lessons #823: 3325 rows) and bfd86772 (A1-PACKS in flight, Lessons #828: 4069 rows) 6d12b63f (AAA-LANDING in flight, Lessons #825, #829 and #830: 4113 rows) and 20e3b7a5 (TT-A2 in flight, Lessons #824, #833 and #834: 4134 rows); d33d431c retired at ENG1; 177dfeb2 retired at R-RAISE; dd4ede1a retired at M-AD; 7bc06421 retired at M-AB; f2c37ada retired at M-S; 1dec49a1 retired at M-N; d8066b84 retired at the B follow-up; 16195414 and cf03cb20 retired at M1; e8882f70 retired at the vg follow-up, dcc90960 at the us follow-up, 5c4fc989 at the up follow-up, 1a358a41 at the uj follow-up, 60e0cd4c at the uf follow-up and 08c427b8 at the tq follow-up; no half of any earlier W1 pair nor the io-3 pair's first half")
     # GC1 second unit: both current and historical source trees, plus firing controls.
     ict='/Lessons/ICT/Teaching_Packs/'
     legacy=row(ict+'GROW/old.pdf'); gc1=row(GC1_PREFIX+'Week_01/pupil.pdf'); ict_a2=row(ICT_A2_PUBLIC_PREFIX+'GROW_ICT_A2_W01/Public/ICT_GROW_A2_W01.html')

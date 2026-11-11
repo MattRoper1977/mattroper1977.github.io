@@ -22,7 +22,7 @@ const manifest=JSON.parse(fs.readFileSync(manifestPath,'utf8'));
 const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
 const key=r=>decodeURIComponent(r).replace(/\/index\.html$/,'').replace(/\/$/,'')||'/';
 (async()=>{
- const browser=await chromium.launch({headless:true,args:['--enable-webgl','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
+ const browser=await chromium.launch({headless:true,channel:process.env.PLAY_BROWSER_CHANNEL||'chrome',args:['--enable-webgl','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist']});
  const done=[];
  for(const route of routes){
   const entry=manifest.screens.find(s=>key(s.route)===key(route));
@@ -33,10 +33,22 @@ const key=r=>decodeURIComponent(r).replace(/\/index\.html$/,'').replace(/\/$/,''
   const page=await context.newPage();
   await page.goto(base+encodeURI(route)+(route.includes('?')?'&':'?')+'splash=skip',{waitUntil:'load',timeout:60000});
   await page.waitForTimeout(3000);
-  const jpeg=await page.screenshot({type:'jpeg',quality:82,fullPage:false});
+  const source=await page.screenshot({type:'png',fullPage:false});
+  // Normalize the real capture to the shelf's 640x360 poster contract.
+  // A separate page resizes it; the game itself is never modified.
+  const resize=await context.newPage();
+  await resize.setContent('<canvas width="640" height="360"></canvas>');
+  const encoded=await resize.evaluate(async data=>{const img=new Image();img.src=data;await img.decode();const c=document.querySelector('canvas');c.getContext('2d').drawImage(img,0,0,640,360);return c.toDataURL('image/jpeg',0.82).split(',')[1];},'data:image/png;base64,'+source.toString('base64'));
+  const jpeg=Buffer.from(encoded,'base64');
   await context.close();
   fs.writeFileSync(path.join(dir,entry.file),jpeg);
   entry.sha256=sha(jpeg);entry.published_sha256=published;entry.status='reviewed';
+  entry.captured_head=require('node:child_process').execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+  entry.captured_at=new Date().toISOString();
+  entry.lessons_commit=JSON.parse(fs.readFileSync(path.join(built,'..','build-report.json'))).source_heads.Lessons;
+  entry.generator='tools/capture_play_screens.cjs; 1280x720 real capture resized to 640x360';
+  delete entry.workflow_run;delete entry.artifact_sha256;
+  if(process.env.GITHUB_RUN_ID)entry.workflow_run=Number(process.env.GITHUB_RUN_ID);
   done.push({route,file:entry.file,bytes:jpeg.length,sha256:entry.sha256,published_sha256:published});
   console.log(JSON.stringify(done[done.length-1]));
  }
