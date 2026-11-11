@@ -21,7 +21,7 @@
     for (var i = 0; i < hubLinks.length; i++) {
       routes[canonicalRoute(hubLinks[i].getAttribute('href'))] = true;
     }
-    if (document.querySelector('main.ad-main')) {
+    if (document.querySelector('main.aud-main')) {
       var audienceLinks = document.querySelectorAll(
         'nav.ad-audiences a[href], .mbm-menu-group a[href^="/for/"], .mf-switch-grid a[href^="/for/"]'
       );
