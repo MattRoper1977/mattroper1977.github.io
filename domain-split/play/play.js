@@ -343,6 +343,8 @@
   $('filters-form').addEventListener('submit', () => { /* method=dialog closes the drawer */ });
 
   /* ---- wiring ---- */
+  const syncPlaceholder = () => { query.placeholder = (typeof matchMedia === 'function' && matchMedia('(max-width: 760px)').matches) ? ('Search ' + data.catalogue + ' games') : 'Search games'; };
+  syncPlaceholder(); window.addEventListener('resize', syncPlaceholder);
   $('discovery-form').addEventListener('submit', e => { e.preventDefault(); state.q = query.value.slice(0, 160); render(); });
   query.addEventListener('input', () => { state.q = query.value.slice(0, 160); render(); });
   $('search-jump').addEventListener('click', e => { e.preventDefault(); query.scrollIntoView({block: 'center'}); query.focus({preventScroll: true}); });
