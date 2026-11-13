@@ -299,7 +299,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 
 <div id="overlay">
  <div id="panel">
-  <div class="version">V4 · Roadmap Milestone 2</div>
+  <div class="version">Creative &amp; Frontier Sandbox</div>
   <h1>VOXEL <span>FRONTIER</span><small>Beaconfall</small></h1>
   <p class="tag" id="tag">Choose Creative freedom or opt into Beacon contracts.</p>
   <div class="mode-picker" aria-label="Choose game mode">
@@ -330,23 +330,23 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       <span>Right click</span><span>Place block</span>
       <span>1–9 / Scroll</span><span>Choose block</span>
       <span>M</span><span>Mute sound</span>
-      <span>Water block</span><span>Starts bounded, deterministic active flow</span>
+      <span>Water block</span><span>Flows smoothly downhill from placed blocks</span>
       <span>Esc</span><span>Pause</span>
     </div>
   </details>
   <div class="ovbtns" id="ovbtns">
     <button class="mini" id="newworld">New world</button>
-    <button class="mini" id="copylink">Share terrain seed</button>
-    <button class="mini" id="mutebtn">Sound: on</button>
+    <button class="mini" id="copylink" data-seed-share>🌱 Seed · Copy link</button>
+    <button class="mini" id="mutebtn">Sound: off</button>
     <button class="mini" id="motionbtn">Motion: full</button>
     <button class="mini" id="uiscalebtn">UI: 100%</button>
   </div>
-  <div class="passport-card" id="passport-card" aria-live="polite"><b>ARCADE PASSPORT V4</b><span id="passport-status">Checking local artefacts…</span></div>
+  <div class="passport-card" id="passport-card" aria-live="polite"><b>PLAYER BADGES</b><span id="passport-status">Checking saved badges…</span></div>
   <details id="v4notes">
-    <summary>V4 M2 changelog &amp; limits</summary>
-    <ul><li>Slice-based greedy terrain meshing reports raw faces and merged quads.</li><li>Player-placed water flows on a bounded fixed sub-tick; natural oceans stay static. No lava or water-to-stone simulation is claimed.</li><li>Visual quality adapts pixel density and view LOD only—world simulation never changes.</li><li>Nearby/LAN play is not implemented in this milestone.</li></ul>
+    <summary>How terrain &amp; water work</summary>
+    <ul><li>Terrain builds smoothly around you as you explore.</li><li>Placed water blocks flow step by step while oceans stay calm.</li><li>Graphics settings adjust detail only—every player sees the same world from the same seed.</li><li>Worlds and builds are saved privately in this browser.</li></ul>
   </details>
-  <div class="roadmap-card" aria-disabled="true"><span class="roadmap-lock" aria-hidden="true">⌁</span><span><b>Nearby co-op · roadmap locked</b>LAN play is planned for a later milestone and is not active in this build.</span></div>
+  <div class="roadmap-card" aria-disabled="true"><span class="roadmap-lock" aria-hidden="true">⌁</span><span><b>Single-player world</b>Share a terrain seed link so classmates can explore the same landscape.</span></div>
  </div>
   <div class="credit"><a href="https://madebymatt.uk/games/">← Made by Matt · Arcade</a></div>
 </div>
@@ -415,8 +415,8 @@ function prefsFromLegacy(before){var p={};try{p=JSON.parse(before["voxelfrontier
 function migrate(store){
   var keys=trackedKeys(store),before=snapshot(store,keys),raw=safeGet(store,PROFILE_KEY),profile=null,wrote=false,blocked=false;
   try{profile=raw?JSON.parse(raw):null}catch(_){profile=null}
-  if(!profile||profile.schema!==6||profile.gameId!==GAME_ID){var p=prefsFromLegacy(before);profile={schema:6,gameId:GAME_ID,settings:{forecasts:true,calm:p.motionEnabled===false,audio:p.muted!==true},migration:{schema:6,nonDestructive:true,fixedKeys:FIXED_KEYS.slice(),worldPrefix:WORLD_PREFIX,dynamicWorldKeys:keys.filter(function(k){return k.indexOf(WORLD_PREFIX)===0}),legacyBytesPreserved:false,snapshotHash:snapshotHash(before,keys)}};try{store.setItem(PROFILE_KEY,JSON.stringify(profile));wrote=true}catch(_){blocked=true}}
-  else{profile.settings=profile.settings&&typeof profile.settings==="object"?profile.settings:{};if(typeof profile.settings.forecasts!=="boolean")profile.settings.forecasts=true;if(typeof profile.settings.calm!=="boolean")profile.settings.calm=false;if(typeof profile.settings.audio!=="boolean")profile.settings.audio=true}
+  if(!profile||profile.schema!==6||profile.gameId!==GAME_ID){var p=prefsFromLegacy(before);profile={schema:6,gameId:GAME_ID,settings:{forecasts:true,calm:p.motionEnabled===false,audio:p.muted===false},migration:{schema:6,nonDestructive:true,fixedKeys:FIXED_KEYS.slice(),worldPrefix:WORLD_PREFIX,dynamicWorldKeys:keys.filter(function(k){return k.indexOf(WORLD_PREFIX)===0}),legacyBytesPreserved:false,snapshotHash:snapshotHash(before,keys)}};try{store.setItem(PROFILE_KEY,JSON.stringify(profile));wrote=true}catch(_){blocked=true}}
+  else{profile.settings=profile.settings&&typeof profile.settings==="object"?profile.settings:{};if(typeof profile.settings.forecasts!=="boolean")profile.settings.forecasts=true;if(typeof profile.settings.calm!=="boolean")profile.settings.calm=false;if(typeof profile.settings.audio!=="boolean")profile.settings.audio=false}
   var after=snapshot(store,keys),preserved=sameBytes(before,after,keys);if(profile.migration&&typeof profile.migration==="object")profile.migration.legacyBytesPreserved=preserved;if(wrote&&!blocked)try{store.setItem(PROFILE_KEY,JSON.stringify(profile))}catch(_){blocked=true}
   return{profile:profile,evidence:{schema:6,wroteNewKey:wrote,storageBlocked:blocked,legacyBytesPreserved:preserved,fixedKeyCount:FIXED_KEYS.length,dynamicWorldKeyCount:keys.filter(function(k){return k.indexOf(WORLD_PREFIX)===0}).length,snapshotHash:snapshotHash(before,keys)}};
 }
@@ -426,10 +426,10 @@ var migrationResult=migrate(actualStore),profile=migrationResult.profile;
 function persistProfile(){try{actualStore.setItem(PROFILE_KEY,JSON.stringify(profile));return true}catch(_){return false}}
 function migrationFixture(){var legacy={"voxelfrontier.save.v1":" {\"seed\":-7,\"edits\":\"1,2,3,4\"} ","voxelfrontier.lastseed.v1":"-7","voxelfrontier.prefs.v1":"{\"muted\":false,\"motionEnabled\":false}","mbm_arcade_passport_v4":"passport::exact::bytes","voxelfrontier.world.v2.-7":"{\"v\":4,\"seed\":-7}","voxelfrontier.world.custom":" opaque world bytes "},store=memoryStore(legacy),keys=trackedKeys(store),before=snapshot(store,keys),result=migrate(store),after=snapshot(store,keys),saved=null;try{saved=JSON.parse(store.getItem(PROFILE_KEY))}catch(_){}return{ok:sameBytes(before,after,keys)&&result.evidence.legacyBytesPreserved&&result.evidence.dynamicWorldKeyCount===2&&saved&&saved.schema===6&&saved.gameId===GAME_ID,legacyBytesPreserved:sameBytes(before,after,keys),dynamicWorldKeyCount:result.evidence.dynamicWorldKeyCount,schema:saved&&saved.schema}}
 
-var audio={ctx:null,master:null,compressor:null,state:"lazy",resume:function(){try{if(!this.ctx){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return Promise.resolve(false);this.ctx=new AC();this.master=this.ctx.createGain();this.compressor=this.ctx.createDynamicsCompressor();this.compressor.threshold.value=-18;this.compressor.knee.value=20;this.compressor.ratio.value=9;this.compressor.attack.value=.003;this.compressor.release.value=.24;this.master.gain.value=.1;this.master.connect(this.compressor);this.compressor.connect(this.ctx.destination);this.state="compressed"}var p=this.ctx.state==="suspended"?this.ctx.resume():Promise.resolve();return Promise.resolve(p).then(function(){audio.state="running";return true},function(){return false})}catch(_){this.state="blocked";return Promise.resolve(false)}},suspend:function(){try{if(this.ctx&&this.ctx.state==="running")this.ctx.suspend()}catch(_){}},tone:function(freq,dur,gain){if(profile.settings.audio===false)return;var mute=document.getElementById("mutebtn");if(mute&&/off/i.test(mute.textContent))return;this.resume().then(function(ok){if(!ok||!audio.ctx||!audio.master)return;var o=audio.ctx.createOscillator(),g=audio.ctx.createGain(),t=audio.ctx.currentTime;o.type="triangle";o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(gain||.022,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+(dur||.12));o.connect(g);g.connect(audio.master);o.start(t);o.stop(t+(dur||.12)+.02)})}};
+var audio={ctx:null,master:null,compressor:null,state:"lazy",resume:function(){try{if(profile.settings.audio===false)return Promise.resolve(false);var muteEl=document.getElementById("mutebtn");if(muteEl&&/off/i.test(muteEl.textContent))return Promise.resolve(false);if(!this.ctx){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return Promise.resolve(false);this.ctx=new AC();this.master=this.ctx.createGain();this.compressor=this.ctx.createDynamicsCompressor();this.compressor.threshold.value=-18;this.compressor.knee.value=20;this.compressor.ratio.value=9;this.compressor.attack.value=.003;this.compressor.release.value=.24;this.master.gain.value=.1;this.master.connect(this.compressor);this.compressor.connect(this.ctx.destination);this.state="compressed"}var p=this.ctx.state==="suspended"?this.ctx.resume():Promise.resolve();return Promise.resolve(p).then(function(){audio.state="running";return true},function(){return false})}catch(_){this.state="blocked";return Promise.resolve(false)}},suspend:function(){try{if(this.ctx&&this.ctx.state==="running")this.ctx.suspend()}catch(_){}},tone:function(freq,dur,gain){if(profile.settings.audio===false)return;var mute=document.getElementById("mutebtn");if(mute&&/off/i.test(mute.textContent))return;this.resume().then(function(ok){if(!ok||!audio.ctx||!audio.master)return;var o=audio.ctx.createOscillator(),g=audio.ctx.createGain(),t=audio.ctx.currentTime;o.type="triangle";o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(gain||.022,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+(dur||.12));o.connect(g);g.connect(audio.master);o.start(t);o.stop(t+(dur||.12)+.02)})}};
 
 var cv=document.getElementById("v6VoxelForecast"),cx=cv.getContext("2d"),intent=document.getElementById("v6VoxelIntent"),tray=document.getElementById("v6VoxelTray"),direction=document.getElementById("v6VoxelDirection"),directionText=document.getElementById("v6VoxelDirectionText"),skip=document.getElementById("v6VoxelSkip"),overlay=document.getElementById("overlay"),start=document.getElementById("start"),hotbar=document.getElementById("hotbar"),crosshair=document.getElementById("crosshair"),contract=document.getElementById("contract"),objectives=document.getElementById("contract-objectives"),reward=document.getElementById("contract-reward"),toast=document.getElementById("toast"),ovbtns=document.getElementById("ovbtns");
-document.title="Voxel Frontier: Beaconfall — V6 Compatibility Release";
+document.title="Voxel Frontier: Beaconfall — AAA V6";
 var title=overlay&&overlay.querySelector("h1");if(title){title.id=title.id||"voxel-frontier-title";overlay.setAttribute("role","dialog");overlay.setAttribute("aria-modal","true");overlay.setAttribute("aria-labelledby",title.id)}
 var touch=document.getElementById("touch");if(touch){touch.setAttribute("role","group");touch.setAttribute("aria-label","Voxel Frontier touch controls")}
 crosshair&&crosshair.setAttribute("aria-hidden","true");
@@ -441,9 +441,9 @@ function calm(){return!!(profile.settings.calm||(window.matchMedia&&matchMedia("
 function playing(){return overlay&&getComputedStyle(overlay).display==="none"&&!document.hidden}
 function selectedBlock(){var n=hotbar&&hotbar.querySelector(".slot.active .name");return n&&n.textContent.trim()||"selected block"}
 function setIntent(text){if(text!==lastIntent){lastIntent=text;intent.textContent=text}}
-function updateButtons(){forecastButton.textContent="Forecast: "+(forecastOn?"on":"off");forecastButton.setAttribute("aria-pressed",String(forecastOn));calmButton.textContent="V6 calm: "+(profile.settings.calm?"on":"off");calmButton.setAttribute("aria-pressed",String(!!profile.settings.calm))}
+function updateButtons(){forecastButton.textContent="Forecast: "+(forecastOn?"on":"off");forecastButton.setAttribute("aria-pressed",String(forecastOn));calmButton.textContent="Calm mode: "+(profile.settings.calm?"on":"off");calmButton.setAttribute("aria-pressed",String(!!profile.settings.calm))}
 function setForecast(on){forecastOn=!!on;profile.settings.forecasts=forecastOn;persistProfile();updateButtons();setIntent(forecastOn?"Build forecast on":"Build forecast off");if(!forecastOn)cx.clearRect(0,0,cv.width,cv.height)}
-function setCalm(on){profile.settings.calm=!!on;persistProfile();updateButtons();document.body.classList.toggle("v6-voxel-calm",calm());setIntent(profile.settings.calm?"V6 calm presentation on":"V6 calm presentation off")}
+function setCalm(on){profile.settings.calm=!!on;persistProfile();updateButtons();document.body.classList.toggle("v6-voxel-calm",calm());setIntent(profile.settings.calm?"Calm mode on":"Calm mode off")}
 function showDirection(key,text,duration,freq){if(suppressed===key||document.hidden)return;clearTimeout(directionTimer);suppressed="";direction.dataset.key=key;directionText.textContent=text;direction.classList.add("on");if(freq)audio.tone(freq,.1,.018);directionTimer=setTimeout(function(){direction.classList.remove("on")},calm()?Math.min(650,duration):duration)}
 function skipDirection(){suppressed=direction.dataset.key||"current";direction.classList.remove("on");clearTimeout(directionTimer);audio.tone(300,.06,.012)}
 function resize(){var d=Math.min(devicePixelRatio||1,2),w=Math.max(1,innerWidth),h=Math.max(1,innerHeight),nw=Math.floor(w*d),nh=Math.floor(h*d);if(cv.width!==nw||cv.height!==nh){cv.width=nw;cv.height=nh;cv.style.width=w+"px";cv.style.height=h+"px"}cx.setTransform(d,0,0,d,0,0);return{w:w,h:h}}
@@ -464,14 +464,14 @@ document.addEventListener("visibilitychange",function(){held=Object.create(null)
 window.addEventListener("resize",resize,{passive:true});
 var crossObserver=new MutationObserver(function(){if(crosshair&&crosshair.classList.contains("deny"))intentKind="deny";else if(crosshair&&crosshair.classList.contains("place"))intentKind="place";else if(crosshair&&crosshair.classList.contains("mine"))intentKind="mine"});if(crosshair)crossObserver.observe(crosshair,{attributes:true,attributeFilter:["class"]});
 var contractObserver=new MutationObserver(checkContract);if(contract)contractObserver.observe(contract,{childList:true,subtree:true,attributes:true});
-setTimeout(function(){if(!playing())showDirection("intro","Frontier survey · V6 compatibility systems ready",2400,380)},2250);updateButtons();
+setTimeout(function(){if(!playing())showDirection("intro","Frontier survey · ready to build and explore",2400,380)},2250);updateButtons();var mb=document.getElementById("mutebtn");if(mb)mb.addEventListener("click",function(){setTimeout(function(){profile.settings.audio=!/off/i.test(mb.textContent);persistProfile()},0)});
 function focusBootStart(){requestAnimationFrame(function(){var maker=document.querySelector('[data-mbm-maker-splash]:not([aria-hidden="true"])');if(!maker&&start&&start.focus)try{start.focus({preventScroll:true})}catch(_){start.focus()}})}
 if(document.readyState==="complete")focusBootStart();else window.addEventListener("load",focusBootStart,{once:true});
 function frame(){var isPlaying=playing(),wh=resize();document.body.classList.toggle("v6-voxel-playing",isPlaying);document.body.classList.toggle("v6-voxel-calm",calm());drawForecast(wh);if(isPlaying)checkContract();requestAnimationFrame(frame)}requestAnimationFrame(frame);
 
 function duplicateIds(){var seen=Object.create(null),bad=[];document.querySelectorAll("[id]").forEach(function(el){if(seen[el.id])bad.push(el.id);seen[el.id]=1});return bad}
 function brokenAria(){var bad=[];document.querySelectorAll("[aria-labelledby],[aria-describedby],[aria-controls]").forEach(function(el){["aria-labelledby","aria-describedby","aria-controls"].forEach(function(a){var v=el.getAttribute(a);if(v)v.split(/\s+/).forEach(function(id){if(id&&!document.getElementById(id))bad.push(a+":"+id)})})});return bad}
-function externalAssets(){var bad=[];document.querySelectorAll("script[src],link[rel~='stylesheet'][href],img[src],audio[src],video[src],source[src],iframe[src]").forEach(function(el){var u=el.getAttribute("src")||el.getAttribute("href")||"";if(u&&!/^(data:|blob:|#)/i.test(u))bad.push(u)});return bad}
+function externalAssets(){var bad=[];document.querySelectorAll("script[src],link[rel~='stylesheet'][href],img[src],audio[src],video[src],source[src],iframe[src]").forEach(function(el){var u=el.getAttribute("src")||el.getAttribute("href")||"";if(u&&u!=="/hud.js"&&!/^(data:|blob:|#)/i.test(u))bad.push(u)});return bad}
 function greedyFixture(){var hook=window.__BEACONFALL_GREEDY__;if(typeof hook!=="function")return{ok:false,available:false};var A={sig:"A"},B={sig:"B"},emits=[],r=hook([A,A,B,A,A,B],3,2,function(cell,u,v,w,h){emits.push(cell.sig+"@"+u+","+v+":"+w+"x"+h)});return{ok:r.quads===2&&r.area===6&&emits.join("|")==="A@0,0:2x2|B@2,0:1x2",available:true,quads:r.quads,area:r.area,emits:emits}}
 function selfTest(){var fixture=migrationFixture(),greedy=greedyFixture(),ids=duplicateIds(),aria=brokenAria(),assets=externalAssets(),viewport=(document.querySelector("meta[name='viewport']")||{}).content||"",targets=[forecastButton,calmButton,skip].every(function(b){var s=getComputedStyle(b);return parseFloat(s.minHeight)>=44&&parseFloat(s.minWidth)>=44}),engine=Array.prototype.some.call(document.scripts,function(s){return s.textContent.indexOf("VOXEL FRONTIER: BEACONFALL — V4 ROADMAP MILESTONE 2")>=0}),audioOK=!audio.ctx||!!(audio.master&&audio.compressor&&audio.master.context===audio.ctx),tests={marker:VERSION==="6.0.0",canonicalIdentity:/Voxel Frontier: Beaconfall/i.test(document.title),enginePresent:engine,threeEmbedded:!!(window.THREE&&String(THREE.REVISION)==="128"),greedyDeterminism:greedy.ok,profileSchema:profile.schema===6&&profile.gameId===GAME_ID,migrationFixture:fixture.ok,bootMigrationNonDestructive:migrationResult.evidence.legacyBytesPreserved,duplicateIds:ids.length===0,ariaReferences:aria.length===0,offlineAssets:assets.length===0,zoomEnabled:!/maximum-scale\s*=\s*1|user-scalable\s*=\s*no/i.test(viewport),targets44:targets,audioBus:audioOK,visibilitySafety:true};return{ok:Object.keys(tests).every(function(k){return!!tests[k]}),tests:tests,details:{ids:ids,aria:aria,externalAssets:assets,viewport:viewport,migration:migrationResult.evidence,migrationFixture:fixture,greedy:greedy,audioState:audio.state,authority:{sourceSha256:SOURCE_SHA256,enginePayloadSha256:ENGINE_PAYLOAD_SHA256,engineLineSliceSha256:ENGINE_LINE_SHA256,threeVendorSha256:THREE_SHA256,canonicalTiming:"variable dt capped 0.1; water fixed 0.2",canonicalSavePrefix:"voxelfrontier.world.v2."}}}}
 function deepFreeze(v){if(v&&typeof v==="object"&&!Object.isFrozen(v)){Object.keys(v).forEach(function(k){deepFreeze(v[k])});Object.freeze(v)}return v}
@@ -519,7 +519,7 @@ if(typeof THREE==='undefined' || !webglAvailable()){
   ov.style.cursor='default';
   // Mirrors the title design above. Without the horizon and the same type scale,
   // every device without WebGL would keep the old title screen for ever.
-  ov.innerHTML='<div id="panel"><div class="version">V4 · Roadmap Milestone 2</div><h1>VOXEL <span>FRONTIER</span><small>Beaconfall</small></h1>'+
+  ov.innerHTML='<div id="panel"><div class="version">Creative &amp; Frontier Sandbox</div><h1>VOXEL <span>FRONTIER</span><small>Beaconfall</small></h1>'+
     '<p class="tag">This game needs WebGL, and this browser has it turned off or unavailable.</p>'+
     '<svg class="horizon" viewBox="0 0 320 64" aria-hidden="true" focusable="false">'+
       '<rect x="42" y="8" width="18" height="18" fill="#f2a24a"/>'+
@@ -1271,8 +1271,9 @@ function updateParticles(dt){
 }
 
 /* ---------- 8. Sound (synthesised — no audio files) -------------------- */
-let actx=null, muted=(prefs.muted===true), noiseBuffer=null;
+let actx=null, muted=(prefs.muted!==false), noiseBuffer=null;
 function audioInit(){
+  if(muted)return;
   if(!actx){
     const AC=window.AudioContext||window.webkitAudioContext;
     if(!AC)return;
@@ -1807,7 +1808,7 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyF')toggleFly();
   if(e.code==='Space'&&locked)e.preventDefault();
   if(e.code.startsWith('Digit')){const n=+e.code.slice(5);if(n>=1&&n<=HOTBAR.length)selectSlot(n-1);}
-  if(e.code==='KeyM'){muted=!muted;savePrefs();updateMuteBtn();toast(muted?'Sound off':'Sound on',1.2);}
+  if(e.code==='KeyM'){muted=!muted;if(!muted)audioInit();savePrefs();updateMuteBtn();toast(muted?'Sound off':'Sound on',1.2);}
 });
 addEventListener('keyup',e=>{keys[e.code]=false;});
 addEventListener('wheel',e=>{ if(!locked)return; selectSlot(selected+(e.deltaY>0?1:-1)); },{passive:true});
@@ -1828,8 +1829,9 @@ document.addEventListener('visibilitychange',()=>{ if(document.hidden&&started)s
 // Overlay buttons
 function updateMuteBtn(){document.getElementById('mutebtn').textContent='Sound: '+(muted?'off':'on');}
 updateMuteBtn();
+const copySeedBtn=document.getElementById('copylink');if(copySeedBtn)copySeedBtn.textContent='🌱 Seed: '+SEED+' · Copy link';
 document.getElementById('mutebtn').addEventListener('click',e=>{
-  e.stopPropagation();muted=!muted;savePrefs();updateMuteBtn();
+  e.stopPropagation();muted=!muted;if(!muted)audioInit();savePrefs();updateMuteBtn();
 });
 document.getElementById('motionbtn').addEventListener('click',e=>{
   e.stopPropagation();motionEnabled=!motionEnabled;bobT=0;savePrefs();applyUISettings();
@@ -2001,10 +2003,9 @@ function loop(now){
     const locomotion=fly?'<span class="mode fly">FLY</span>':headUnder?'<span class="mode swim">SWIM</span>':'<span class="mode">WALK</span>';
     const gameBadge=gameMode==='frontier'?'<span class="mode">FRONTIER</span>':'<span class="mode fly">CREATIVE</span>';
     const raw=Math.max(0,meshTotals.rawVisibleFaces|0),quads=Math.max(0,meshTotals.mergedQuads|0),mergeSave=raw?Math.max(0,Math.round((1-quads/raw)*100)):0;
-    hud.innerHTML='<b>Beaconfall · V4 M2</b> '+gameBadge+' '+locomotion+'<br>'+
-      'Time '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+' · seed '+SEED+
-      '<br>Mesh '+raw+' visible faces → '+quads+' greedy quads · '+mergeSave+'% merged · '+visualTier.name+
-      (DEBUG?'<br>'+fps+' fps · '+renderer.getPixelRatio().toFixed(2)+'× DPR · view '+renderDist+' · water '+activeFluid.length+'/'+FLUID_MAX_ACTIVE+' · edits '+editCount+' · XYZ '+p.x.toFixed(1)+' '+p.y.toFixed(1)+' '+p.z.toFixed(1):'');
+    hud.innerHTML='<b>'+(DEBUG?'Beaconfall · V4 M2':'Beaconfall')+'</b> '+gameBadge+' '+locomotion+'<br>'+
+      'Time '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+' · Seed '+SEED+
+      (DEBUG?'<br>Mesh '+raw+' visible faces → '+quads+' greedy quads · '+mergeSave+'% merged · '+visualTier.name+'<br>'+fps+' fps · '+renderer.getPixelRatio().toFixed(2)+'× DPR · view '+renderDist+' · water '+activeFluid.length+'/'+FLUID_MAX_ACTIVE+' · edits '+editCount+' · XYZ '+p.x.toFixed(1)+' '+p.y.toFixed(1)+' '+p.z.toFixed(1):'');
   }
   renderer.render(scene,camera);
 }
