@@ -124,7 +124,7 @@
     .original-note { margin: 10px auto 22px; color: #8198aa; font-size: 12px; line-height: 1.45; max-width: 650px; }
     .start-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 560px; margin: 0 auto; }
     .pixel-button {
-      appearance: none; border: 2px solid #f6f8f2; border-radius: 7px; padding: 14px 16px;
+      appearance: none; min-width: 44px; min-height: 44px; border: 2px solid #f6f8f2; border-radius: 7px; padding: 14px 16px;
       color: #fff; background: #17304a; font-weight: 850; letter-spacing: .03em; cursor: pointer;
       box-shadow: inset 0 0 0 3px #365878, 0 5px 0 #060b12; transition: transform .08s ease, filter .08s ease;
     }
@@ -379,7 +379,7 @@
     <div id="semantic-actions" role="group" aria-label="Current game choices"></div>
 
     <div id="quick-controls" aria-label="Display and audio controls">
-      <button class="icon-button" id="toggle-audio" aria-label="Toggle audio" title="Toggle procedural audio">♫</button>
+      <button class="icon-button" id="toggle-audio" aria-label="Audio off" aria-pressed="false" title="Toggle game sound">♫</button>
       <button class="icon-button" id="toggle-contrast" aria-label="Toggle high contrast" title="Toggle high contrast">◐</button>
       <button class="icon-button" id="toggle-motion" aria-label="Toggle calm motion" aria-pressed="false" title="Toggle calm motion">≈</button>
     </div>
@@ -425,34 +425,35 @@
            appeared contiguously in the source, only in the rendered DOM. GF1
            asserts on rendered text for that reason. -->
       <h1 class="brand" id="game-title" tabindex="-1">EMBER<span>WILD</span></h1>
-      <p class="edition-mark">Ascension · Wayfinder’s Reach 3.5.0 Systems Build</p>
+      <p class="edition-mark">Ascension · Wayfinder’s Reach Edition</p>
       <p class="subtitle">Come home to a wounded Vale. Learn why frightened Emberkin are reclaiming the land, uncover the human choices that awakened the Reclamation Pulse, and decide what kind of world both sides will inherit.</p>
       <p class="original-note">All creatures, names, environments, sounds and artwork in this package are original. No third-party franchise assets or proprietary worldbuilding are included.</p>
       <div class="start-actions">
         <button class="pixel-button primary" id="start-new">Start new journey</button>
-        <button class="pixel-button gold" id="start-continue">Continue latest verified save</button>
-        <button class="pixel-button" id="start-info">Controls & engine notes</button>
+        <button class="pixel-button gold" id="start-continue">Continue saved journey</button>
+        <button class="pixel-button" id="start-info">Controls &amp; how to play</button>
+        <button class="pixel-button" id="seed-share" type="button" data-seed-share aria-label="Copy shareable world seed link">🌱 Seed · Copy link</button>
         <button class="pixel-button dev-only" onclick="document.getElementById('map-import').click()">Import editor map</button>
       </div>
       <div class="start-meta">
         <span>WASD / Arrows · Z/Enter confirm · X/Esc back · M field kit</span>
         <span class="dev-only">Developer tools · T encounter · P profiler · I map import</span>
-        <span id="renderer-status">Cinematic 3D preparing</span>
+        <span id="renderer-status">3D view preparing</span>
       </div>
     </div>
   </section>
 
   <section id="help-panel" hidden role="dialog" aria-modal="true" aria-labelledby="help-title" tabindex="-1">
     <div class="help-card glass">
-      <h2 id="help-title">Field controls & architecture</h2>
+      <h2 id="help-title">Field controls &amp; guide</h2>
       <div class="help-grid">
         <section><h3>Explore</h3><p>Use WASD, arrow keys or the touch D-pad. Movement snaps to grid centres but animates smoothly. Hold Shift to sprint. Approach a character and press Z, Enter or Space—or tap the on-screen A button.</p></section>
         <section><h3>Battle</h3><p>Early Vale encounters are deliberately gentler than your level-six starter, and every battle menu is untimed. Damaging techniques offer an optional Resonance Pulse: press A, Z, Enter or Space as the rings meet for bonus power, or ignore it with no penalty. Calm Motion supplies an automatic GOOD pulse. The first encounter explains each choice.</p></section>
         <section><h3>Home & direction</h3><p>Wayfinder's Rest is your home in the south-west of Wayfinder's Reach. Ena's clinic lies west of the plaza, Corin's Depot to the south-east, and the Water Garden to the north-west. Use your hearth to sleep, revive and fully recharge every Emberkin; the Field Note always gives your next clear destination.</p></section>
         <section><h3>Story & choice</h3><p>Follow the Reclamation Pulse from Prism Vale and the Depths through Cobalt Estuary, Sunken Canopy, Basalt Caldera, Crystalline Chasm and Aether Peak. Listen to Emberkin, Rootwardens and the Meridian Company, then choose one of five futures at the summit.</p></section>
-        <section><h3>World systems</h3><p>The six-region route includes elevation, stairs, a directional ledge vault, tall-grass encounters, tidal bridges, crystal crossings, a cutaway home, NPC sight cones and an elevation-aware A* pathfinder.</p></section>
-        <section><h3>Rendering</h3><p>Ascension draws the Vale as a true perspective WebGL2 diorama with 3D terrain, cliffs, water, foliage, characters, cinematic lighting and depth fog. It remains completely offline and automatically falls back to the proven software renderer when WebGL2 is unavailable.</p></section>
-        <section><h3>Audio, access & privacy</h3><p>Every sound is synthesized in the browser. Calm motion, high contrast, screen-reader status and full keyboard access are supported. Progress stays on this device only; clearing this browser's site data removes it.</p></section>
+        <section><h3>World systems</h3><p>The six-region route includes elevation, stairs, a directional ledge vault, tall-grass encounters, tidal bridges, crystal crossings, a cutaway home, character sight lines and smart pathfinding across hills.</p></section>
+        <section><h3>Rendering</h3><p>Ascension draws the Vale in 3D with cliffs, water, trees, characters, warm lighting and mist. It runs completely offline and automatically switches to a 2D view when 3D graphics are unavailable.</p></section>
+        <section><h3>Audio, access &amp; privacy</h3><p>Every sound is made live in the browser, and sound starts off by default. Calm motion, high contrast, screen-reader status and full keyboard access are supported. Progress stays on this device only; clearing this browser's site data removes it.</p></section>
         <section class="dev-only"><h3>Developer tools</h3><p>Add ?dev=1 to expose the profiler, safe test encounter and JSON map importer.</p></section>
       </div>
       <div class="help-actions"><button class="pixel-button primary" id="help-close">Return</button></div>
@@ -469,7 +470,7 @@
 /*
  * EMBERWILD // GPU Particle Suite v1.2.0
  * Zero-dependency WebGL2 instanced particles with a Canvas fallback.
- * Copyright (c) 2026 Matt Roper / Made by Matt.
+ * Copyright (c) 2026 Made by Matt.
  */
 (function (root, factory) {
   const api = factory(root.EWCore || (typeof require === 'function' ? require('./engine-core.js') : null));
@@ -2009,7 +2010,7 @@
       const sourceVersion=Math.max(1,Math.trunc(Number(data.version)||1));
       if (!data.version) data.version = 1;
       if (data.version === 1) {
-        data.settings = data.settings || { audio: true, reducedMotion: false, highContrast: false };
+        data.settings = data.settings || { audio: false, reducedMotion: false, highContrast: false };
         data.version = 2;
       }
       if (data.version === 2) {
@@ -2057,7 +2058,7 @@
       if(data.version===7)data.version=8;
       if(data.version===8){
         const rawSettings=data.settings&&typeof data.settings==='object'?data.settings:{};
-        data.settings={audio:rawSettings.audio!==false,reducedMotion:rawSettings.reducedMotion===true,highContrast:rawSettings.highContrast===true,highResMode:rawSettings.highResMode===true,touchControls:['auto','on','off'].includes(rawSettings.touchControls)?rawSettings.touchControls:'auto',renderer:['auto','software','cinematic'].includes(rawSettings.renderer)?rawSettings.renderer:'auto'};
+        data.settings={audio:rawSettings.audio===true,reducedMotion:rawSettings.reducedMotion===true,highContrast:rawSettings.highContrast===true,highResMode:rawSettings.highResMode===true,touchControls:['auto','on','off'].includes(rawSettings.touchControls)?rawSettings.touchControls:'auto',renderer:['auto','software','cinematic'].includes(rawSettings.renderer)?rawSettings.renderer:'auto'};
         const words=Array.isArray(data.flags)?data.flags.slice(0,8).map(value=>(Number(value)||0)>>>0):[];while(words.length<8)words.push(0);
         const has=bit=>Boolean(words[bit>>5]&(1<<(bit&31))),put=(bit,on)=>{const mask=1<<(bit&31);words[bit>>5]=on?(words[bit>>5]|mask)>>>0:(words[bit>>5]&~mask)>>>0;};
         // Persisted schema-v8 journeys exist only after the Hearthside Vigil
@@ -2197,7 +2198,7 @@
 
   class RetroAudioEngine {
     constructor() {
-      this.ctx = null; this.master = null; this.compressor = null; this.musicBus = null; this.musicFilter = null; this.enabled = true;
+      this.ctx = null; this.master = null; this.compressor = null; this.musicBus = null; this.musicFilter = null; this.enabled = false;
       this.failed = false; this.pulseWaves = {}; this.noiseBuffer = null; this.musicTimer = null; this.musicStep = 0; this.tempo = 132; this._musicLowHp = false;
       // Audio is enhancement only.  Every public entry point is fail-closed so
       // a suspended, revoked, or half-created AudioContext can never stop play.
@@ -8639,7 +8640,7 @@
     constructor(){
       this.devMode=new URLSearchParams(location.search).get('dev')==='1';
       if(this.devMode)document.documentElement.setAttribute('data-dev','1');
-      this.version=APP_VERSION;this.mode=GameMode.BOOT;this.callHistory=[];this.charmTier=1;this.depthsRecord={deepest:0};this.depths=null;this.activeFieldBuff=0;this.contractState=getInitialContractState();this.currentZoneId=WORLD_ZONES.VALE;this.worldSeed=((Date.now()^0x454d4245)>>>0)||0x454d4245;this.customMapSchema=null;this.valeCustomSchema=null;this.returnZoneId=WORLD_ZONES.VALE;this.den=[];this.nextUid=1;this.denView=null;this.bagView=null;this.codexView=null;this.campfireView=null;this.campfireNPC=null;this.endingView=null;this.fastTravelView=null;this.evo=null;this.pendingEvolutions=[];this.evolutionRetryBlocked=false;this.evolutionEngine=new EmberEvolutionEngine({rules:EVOLUTION_RULES});this.map=WorldMapManager.getZone(this.currentZoneId,this.worldSeed);this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG((Date.now()^0xa37e5d)>>>0);this.surfaceFootsteps=new SurfaceFootstepFX();this.audio=new RetroAudioEngine();this.haptics=new HapticEngine();this.battleTransition=new BattleTransitionEngine(this);this.saveManager=new SaveManager();this.sprites=new SpriteFactory();this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};const economy=getInitialEconomyState();this.cinderMarks=economy.cinderMarks;this.codex=economy.codex;this.codexEngine=new ResonanceCodexEngine(this);this.shopController=new ShopController(this);this.redeemedSlipNonces=[];this.tradeExchange=new TradeExchangeController(this);this.settings={audio:true,reducedMotion:false,highContrast:false,highResMode:false,touchControls:'auto',renderer:'auto'};this.dioramaEffects=EWStore.get('diorama_effects')==='1';this.dioramaSessionOff=false;this.dioramaProbeFrames=0;this.dioramaProbeSum=0;this.playTime=0;this.steps=0;this.objective='Rest at the glowing hearth in Wayfinder\'s Rest.';this.toast=null;this.toastTimer=0;this.battle=null;this.activeTrainerNPC=null;this.pendingEncounter=null;this.encounterToken=0;if(this.chainTracker){this.chainTracker.chain=0;this.chainTracker.bannerTimer=0;this.chainTracker.bannerText='';}this.completionBanner=0;this.currentWeather=WeatherType.CLEAR;this.weatherCycle=-1;this.starting=false;this.rafId=0;this.runtimeFailed=false;this.fixedStep=1/60;this.maxFrameDelta=.25;this.accumulator=0;this.renderAlpha=0;this.systemPaused=false;this.systemPauseNameEditorOpen=false;this.simulationWaiters=[];
+      this.version=APP_VERSION;this.mode=GameMode.BOOT;this.callHistory=[];this.charmTier=1;this.depthsRecord={deepest:0};this.depths=null;this.activeFieldBuff=0;this.contractState=getInitialContractState();this.currentZoneId=WORLD_ZONES.VALE;const _qsSeed=(()=>{try{const q=new URLSearchParams(location.search).get("seed");if(!q||!/^[A-Za-z0-9_-]{1,24}$/.test(q))return null;if(/^\d+$/.test(q)){const n=Number(q)>>>0;return{num:n||0x454d4245,label:q};}let h=2166136261>>>0;for(let i=0;i<q.length;i++){h^=q.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return{num:h||0x454d4245,label:q};}catch(_){return null;}})();this.urlSeedSpec=_qsSeed;this.worldSeed=_qsSeed?_qsSeed.num:(((Date.now()^0x454d4245)>>>0)||0x454d4245);this.seedLabel=_qsSeed?_qsSeed.label:String(this.worldSeed);this.customMapSchema=null;this.valeCustomSchema=null;this.returnZoneId=WORLD_ZONES.VALE;this.den=[];this.nextUid=1;this.denView=null;this.bagView=null;this.codexView=null;this.campfireView=null;this.campfireNPC=null;this.endingView=null;this.fastTravelView=null;this.evo=null;this.pendingEvolutions=[];this.evolutionRetryBlocked=false;this.evolutionEngine=new EmberEvolutionEngine({rules:EVOLUTION_RULES});this.map=WorldMapManager.getZone(this.currentZoneId,this.worldSeed);this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG(this.urlSeedSpec?((this.worldSeed^0xa37e5d)>>>0||1):((Date.now()^0xa37e5d)>>>0));this.surfaceFootsteps=new SurfaceFootstepFX();this.audio=new RetroAudioEngine();this.haptics=new HapticEngine();this.battleTransition=new BattleTransitionEngine(this);this.saveManager=new SaveManager();this.sprites=new SpriteFactory();this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};const economy=getInitialEconomyState();this.cinderMarks=economy.cinderMarks;this.codex=economy.codex;this.codexEngine=new ResonanceCodexEngine(this);this.shopController=new ShopController(this);this.redeemedSlipNonces=[];this.tradeExchange=new TradeExchangeController(this);this.settings={audio:false,reducedMotion:false,highContrast:false,highResMode:false,touchControls:'auto',renderer:'auto'};this.dioramaEffects=EWStore.get('diorama_effects')==='1';this.dioramaSessionOff=false;this.dioramaProbeFrames=0;this.dioramaProbeSum=0;this.playTime=0;this.steps=0;this.objective='Rest at the glowing hearth in Wayfinder\'s Rest.';this.toast=null;this.toastTimer=0;this.battle=null;this.activeTrainerNPC=null;this.pendingEncounter=null;this.encounterToken=0;if(this.chainTracker){this.chainTracker.chain=0;this.chainTracker.bannerTimer=0;this.chainTracker.bannerText='';}this.completionBanner=0;this.currentWeather=WeatherType.CLEAR;this.weatherCycle=-1;this.starting=false;this.rafId=0;this.runtimeFailed=false;this.fixedStep=1/60;this.maxFrameDelta=.25;this.accumulator=0;this.renderAlpha=0;this.systemPaused=false;this.systemPauseNameEditorOpen=false;this.simulationWaiters=[];
       const spawn=this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:4,z:17,y:0,facing:'W'};
       this.party=[new Monster({speciesId:'spriglet',level:6,seed:0x4d415454})];
       this.identity=sanitizeIdentity(DEFAULT_IDENTITY);this.starterChoice='spriglet';this.identityView=null;this.starterAttunement=null;this.onboardingHadSave=false;this.onboardingNewGamePlus=false;
@@ -8674,7 +8675,7 @@
         return true;
       }).map(entity=>new NPCActor(entity,map));
     }
-    bindControls(){document.getElementById('start-new')?.addEventListener('click',()=>this.startNew());document.getElementById('start-continue')?.addEventListener('click',()=>this.continueGame());document.getElementById('start-info')?.addEventListener('click',()=>document.getElementById('help-panel').hidden=false);document.getElementById('help-close')?.addEventListener('click',()=>document.getElementById('help-panel').hidden=true);document.getElementById('toggle-audio')?.addEventListener('click',()=>{this.settings.audio=this.audio.setEnabled(!this.settings.audio)&&!this.audio.failed;this.toastMessage(`Audio ${this.settings.audio?'on':'off'}.`);});document.getElementById('toggle-contrast')?.addEventListener('click',()=>{this.settings.highContrast=!this.settings.highContrast;document.body.classList.toggle('high-contrast',this.settings.highContrast);this.toastMessage(`High contrast ${this.settings.highContrast?'on':'off'}.`);});}
+    bindControls(){document.getElementById('start-new')?.addEventListener('click',()=>this.startNew());document.getElementById('start-continue')?.addEventListener('click',()=>this.continueGame());document.getElementById('start-info')?.addEventListener('click',()=>document.getElementById('help-panel').hidden=false);document.getElementById('help-close')?.addEventListener('click',()=>document.getElementById('help-panel').hidden=true);document.getElementById('toggle-audio')?.addEventListener('click',()=>{this.settings.audio=this.audio.setEnabled(!this.settings.audio)&&!this.audio.failed;this.toastMessage(`Audio ${this.settings.audio?'on':'off'}.`);});document.getElementById('toggle-contrast')?.addEventListener('click',()=>{this.settings.highContrast=!this.settings.highContrast;document.body.classList.toggle('high-contrast',this.settings.highContrast);this.toastMessage(`High contrast ${this.settings.highContrast?'on':'off'}.`);});const seedBtn=document.getElementById('seed-share');const syncSeedBtn=()=>{if(seedBtn)seedBtn.textContent=`🌱 Seed: ${this.seedLabel||this.worldSeed} · Copy link`;};this.syncSeedButton=syncSeedBtn;syncSeedBtn();seedBtn?.addEventListener('click',()=>{const lbl=String(this.seedLabel||this.worldSeed);const u=new URL(location.href);u.searchParams.set('seed',lbl);try{navigator.clipboard.writeText(u.toString());}catch(_){}if(seedBtn){seedBtn.textContent=`🌱 Seed: ${lbl} · Copied`;setTimeout(syncSeedBtn,1600);}});}
     setupImport(){const input=document.getElementById('map-import');input?.addEventListener('change',async()=>{const file=input.files?.[0];if(!file)return;try{const payload=JSON.parse(await file.text());this.loadCustomMap(payload);this.toastMessage('Custom map loaded from the editor.','#71d5c3');}catch(error){this.toastMessage(`Map import failed: ${error.message}`,'#ff7b7b');}input.value='';});}
     setupSaveArchive(){const input=document.getElementById('save-import');input?.addEventListener('change',async()=>{const file=input.files?.[0];if(!file)return;try{await this.importJourneyArchiveFile(file);}finally{input.value='';}});}
     exportJourneyArchive(){
@@ -8720,7 +8721,7 @@
       this.releaseGameFocus=()=>{app?.removeAttribute('inert');start.inert=true;this.focusGameplay();};
     }
     focusGameplay(){requestAnimationFrame(()=>document.getElementById('ui-canvas')?.focus({preventScroll:true}));}
-    initAudioSafely(){try{if(this.audio.init()===false||this.audio.failed)throw new Error('AUDIO_UNAVAILABLE');this.settings.audio=this.audio.setEnabled(this.settings.audio);return !this.audio.failed;}catch(error){console.info('Audio unavailable; Emberwild will continue silently.',error?.message||error);this.settings.audio=false;try{this.audio.setEnabled(false);}catch(_){}this.syncControlStates?.();return false;}}
+    initAudioSafely(){try{if(!this.settings.audio){this.audio.setEnabled(false);this.syncControlStates?.();return true;}if(this.audio.init()===false||this.audio.failed)throw new Error('AUDIO_UNAVAILABLE');this.settings.audio=this.audio.setEnabled(this.settings.audio);return !this.audio.failed;}catch(error){console.info('Audio unavailable; Emberwild will continue silently.',error?.message||error);this.settings.audio=false;try{this.audio.setEnabled(false);}catch(_){}this.syncControlStates?.();return false;}}
     startLoop(){if(this.running||this.rafId||this.runtimeFailed)return false;this.running=true;this.systemPaused=false;document.body.classList.remove('system-paused');const touch=document.getElementById('touch-a');if(touch){touch.textContent='A';touch.setAttribute('aria-label','Confirm or interact');}this.lastTime=performance.now();this.accumulator=0;this.renderAlpha=0;this.capturePreviousRenders();this.rafId=requestAnimationFrame(t=>this.loop(t));window.__EMBERWILD_READY__=true;return true;}
     bestSave(){
       const candidates=['SLOT_1','AUTOSAVE'].flatMap(slot=>this.saveManager.readCandidates(slot).map(result=>({slot,result}))).filter(entry=>this.validateSaveCandidate(entry.result.data));
@@ -8745,7 +8746,7 @@
       this.battleTransition?.cancel();
       this.tradeExchange?.stopScan();if(this.tradeExchange)this.tradeExchange.active=false;
       this.cancelPendingEncounter();this.clearSimulationWaiters();this.systemPaused=false;document.body.classList.remove('system-paused');this.input?.releaseAllInput();if(this.rafId)cancelAnimationFrame(this.rafId);this.rafId=0;this.running=false;this.runtimeFailed=false;window.__EMBERWILD_READY__=false;this.battle=null;this.activeTrainerNPC=null;this.depthsEncounterNPC=null;this.depthsBossPending=false;this.depths=null;this.depthsEntry=null;this.valeMap=null;this.valeReturn=null;this.valeCustomSchema=null;this.customMapSchema=null;this.returnZoneId=WORLD_ZONES.VALE;
-      this.currentZoneId=WORLD_ZONES.VALE;this.worldSeed=((Date.now()^0x454d4245)>>>0)||0x454d4245;this.map=WorldMapManager.getZone(this.currentZoneId,this.worldSeed);this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG((Date.now()^0xa37e5d)>>>0);this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};const economy=getInitialEconomyState();this.cinderMarks=economy.cinderMarks;this.codex=economy.codex;this.codexView=null;this.shopController.reset();this.party=[new Monster({speciesId:'spriglet',level:6,seed:0x4d415454})];this.den=[];this.nextUid=1;this.redeemedSlipNonces=[];this.denView=null;this.bagView=null;this.campfireView=null;this.campfireNPC=null;this.endingView=null;this.fastTravelView=null;this.evo=null;this.pendingEvolutions=[];this.evolutionRetryBlocked=false;this.callHistory=[];this.charmTier=1;this.depthsRecord={deepest:0};this.activeFieldBuff=0;this.contractState=getInitialContractState();this.playTime=0;this.steps=0;this.lastAutoSaveStep=0;this.objective='Rest at the glowing hearth in Wayfinder\'s Rest.';this.completionBanner=0;this.currentWeather=WeatherType.CLEAR;this.weatherCycle=-1;this.toast=null;this.toastTimer=0;
+      this.currentZoneId=WORLD_ZONES.VALE;this.worldSeed=this.urlSeedSpec?this.urlSeedSpec.num:(((Date.now()^0x454d4245)>>>0)||0x454d4245);this.seedLabel=this.urlSeedSpec?this.urlSeedSpec.label:String(this.worldSeed);this.syncSeedButton?.();this.map=WorldMapManager.getZone(this.currentZoneId,this.worldSeed);this.flags=new BitmaskFlags(256);this.rng=new DeterministicPRNG(this.urlSeedSpec?((this.worldSeed^0xa37e5d)>>>0||1):((Date.now()^0xa37e5d)>>>0));this.inventory={prism_pod:6,bright_pod:0,field_tonic:3};this.collection={spriglet:1};const economy=getInitialEconomyState();this.cinderMarks=economy.cinderMarks;this.codex=economy.codex;this.codexView=null;this.shopController.reset();this.party=[new Monster({speciesId:'spriglet',level:6,seed:0x4d415454})];this.den=[];this.nextUid=1;this.redeemedSlipNonces=[];this.denView=null;this.bagView=null;this.campfireView=null;this.campfireNPC=null;this.endingView=null;this.fastTravelView=null;this.evo=null;this.pendingEvolutions=[];this.evolutionRetryBlocked=false;this.callHistory=[];this.charmTier=1;this.depthsRecord={deepest:0};this.activeFieldBuff=0;this.contractState=getInitialContractState();this.playTime=0;this.steps=0;this.lastAutoSaveStep=0;this.objective='Rest at the glowing hearth in Wayfinder\'s Rest.';this.completionBanner=0;this.currentWeather=WeatherType.CLEAR;this.weatherCycle=-1;this.toast=null;this.toastTimer=0;
       this.identity=sanitizeIdentity(DEFAULT_IDENTITY);this.starterChoice=null;this.identityView=null;this.starterAttunement=null;this.onboardingHadSave=false;this.onboardingNewGamePlus=false;
       const spawn=this.map.entities.find(e=>e.id==='player_spawn')||this.map.entities.find(e=>e.type==='PLAYER_SPAWN')||{x:4,z:17,y:0,facing:'W'};this.npcs=this.createNPCsForMap(this.map);this.player.map=this.map;const safe=this.resolveSafePosition(this.map,spawn,spawn,this.npcs);this.player.teleport(safe.x,safe.z,safe.y);this.player.facing=safe.facing;this.encounters=new EncounterEngine(this.rng,this.currentEncounterTable());this.pathfinder=new AStarPathfinder(this.map,(x,z)=>this.isOccupied(x,z));if(this.ui?.dialogue){this.ui.dialogue.active=false;this.ui.dialogue.lines=[];this.ui.dialogue.resolve=null;this.ui.dialogue.previousMode=null;}if(this.ui){this.ui.menuIndex=0;this.ui.semanticSignature='';this.ui.semanticFocusRequested=false;this.ui.semanticActionActive=false;}this.fitRendererToMap();this.setRendererVisible(true);document.body.classList.remove('battle-active','menu-active','den-active','dialogue-active','evolution-active');
     }
@@ -8881,7 +8882,7 @@
       }catch(error){console.error('Continue launch recovered.',error);this.running=false;if(this.rafId)cancelAnimationFrame(this.rafId);this.rafId=0;this.mode=GameMode.BOOT;const screen=document.getElementById('start-screen');if(screen){screen.hidden=false;screen.inert=false;}document.getElementById('app')?.setAttribute('inert','');this.announce('Continue could not start on this device. The title screen remains available.');}
       finally{this.starting=false;}
     }
-    announceRenderer(){const status=document.getElementById('renderer-status');if(status)status.textContent=this.renderer===this.cinematicRenderer?'Offline cinematic WebGL2 active':'Compatibility renderer active';}
+    announceRenderer(){const status=document.getElementById('renderer-status');if(status)status.textContent=this.renderer===this.cinematicRenderer?'Offline 3D view active':'2D safe view active';}
     activateSoftwareRenderer(reason='Compatibility view active.'){
       if(this.softwareRenderer.failed){if(this.cinematicRenderer?.failed||this.renderer!==this.cinematicRenderer)EWRendererFailure.raise('all-world-renderers-unavailable');else if(this.running)this.toastMessage('Compatibility view is unavailable; cinematic 3D remains active.','#f6d979');return false;}
       try{this.softwareRenderer.fitToMap(this.map);}catch(error){console.error('Compatibility renderer could not fit the map.',error);this.softwareRenderer.failed=true;if(this.renderer!==this.cinematicRenderer||this.cinematicRenderer?.failed)EWRendererFailure.raise('software-renderer-fit-failed');return false;}
