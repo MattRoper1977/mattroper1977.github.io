@@ -1,0 +1,60 @@
+name: HC3 published pinch and desktop checks
+on:
+  pull_request:
+    paths: ['tools/hc3_zoom_publications.py', 'tools/hc3_zoom_browser.cjs', '.github/workflows/hc3-served-zoom.yml']
+  push:
+    branches: [main]
+    paths: ['tools/hc3_zoom_publications.py', 'tools/hc3_zoom_browser.cjs', '.github/workflows/hc3-served-zoom.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+concurrency:
+  group: hc3-served-zoom-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  served:
+    name: Published HC3 zoom population with real touch controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Matt-s-Apps-
+          ref: main
+          path: .sources/Apps
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: MattRoper1977/Games
+          ref: main
+          path: .sources/Games
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Recover source-bound successful publication artifacts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tools/hc3_zoom_publications.py --apps .sources/Apps --games .sources/Games --output audit-output/hc3-zoom
+      - name: Install the existing build-only browser runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Prove touch detection then measure actual served phone and desktop pages
+        run: xvfb-run -a node tools/hc3_zoom_browser.cjs audit-output/hc3-zoom/zoom-publications.json
+      - name: Preserve route findings and controls even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hc3-served-zoom-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            audit-output/hc3-zoom/zoom-*.json
+            audit-output/hc3-zoom/phone-*.png
+          if-no-files-found: error
