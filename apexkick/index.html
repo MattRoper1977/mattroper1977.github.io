@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Apex Kick: World Stage — V10.2 AAA Broadcast Edition</title>
+<title>Apex Kick: World Stage</title>
 <style>
   :root {
     --bg: #070b14;
@@ -384,13 +384,13 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       <button class="btn-icon" id="btn-open-trophies">🏅 Trophies</button>
       <button class="btn-icon" id="btn-weather" title="Cycle Weather">🌦️ Weather</button>
       <button class="btn-icon active" id="btn-assist">Forecast: ON</button>
-      <button class="btn-icon" id="btn-cam">Cam: TV</button>
-      <button class="btn-icon" id="btn-sound">🔊</button>
+      <button class="btn-icon" id="btn-cam">Camera: Stadium</button>
+      <button class="btn-icon" id="btn-sound">🔇</button>
       <button class="btn-icon" id="btn-menu">☰ Hub</button>
     </div>
   </div>
 
-  <div id="replay-badge">↺ ACTION REPLAY · SLOW-MO</div>
+  <div id="replay-badge">↺ ACTION REPLAY · SLOW REPLAY</div>
 
   <div class="center-banner" id="center-banner">
     <div class="banner-title" id="banner-title">TOP BINS!</div>
@@ -419,10 +419,11 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   <div class="modal-card">
     <div class="hero-header">
       <div>
-        <div class="brand-title">APEX KICK: WORLD STAGE V10.2</div>
-        <div class="brand-sub">AAA Broadcast Edition · 9 Game Modes · Live Jumbotron · Shot Radar · Dynamic Weather</div>
+        <div class="brand-title">APEX KICK: WORLD STAGE</div>
+        <div class="brand-sub">9 Game Modes · Stadium Scoreboard · Shot Map · Changing Weather</div>
       </div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn-secondary" id="seed-share" data-seed-share type="button" style="min-height:44px;">🌱 Seed: <span id="hub-seed-val">202611</span> · Copy link</button>
         <button class="btn-secondary" id="btn-hub-trophies">🏅 Trophies (<span id="hub-trophy-count">0/10</span>)</button>
         <button class="btn-secondary" id="btn-hub-locker" style="border-color:var(--gold); color:var(--gold);">🛒 Locker (<span id="hub-credits">◈ 2,500</span>)</button>
       </div>
@@ -578,10 +579,31 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   // 2. PERSISTENT SAVE STATE (own mbm_-namespaced key; corrupt save backed up, never fatal;
   //    the shared sports passport and earlier Apex Kick saves are never written here)
   // =========================================================================
+  const urlSeedRaw = (() => { try { return new URLSearchParams(location.search).get('seed'); } catch (_) { return null; } })();
+  const hasUrlSeed = urlSeedRaw !== null && urlSeedRaw.trim() !== '';
+  const matchSeed = (() => {
+    if (hasUrlSeed) {
+      const n = Number(urlSeedRaw);
+      if (Number.isFinite(n)) return (Math.abs(Math.trunc(n)) >>> 0) || 202611;
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < urlSeedRaw.length; i++) h = Math.imul(h ^ urlSeedRaw.charCodeAt(i), 16777619) >>> 0;
+      return h || 202611;
+    }
+    const d = new Date();
+    return ((d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate()) >>> 0);
+  })();
+  let seedState = matchSeed >>> 0;
+  const shotRand = () => {
+    if (!hasUrlSeed) return Math.random();
+    let t = (seedState += 0x6D2B79F5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
   const SAVE_KEY = 'mbm_apexkick_v10_save';
   const defaultSave = () => ({
     credits: 2500, goals: 0, shots: 0, keeperSaves: 0, bestScore: 0, bestTimeAttack: 0,
-    unlockedStage: 1, sound: true, assist: true,
+    unlockedStage: 1, sound: false, assist: true,
     ownedKits: ['cyan'], equippedKit: 'cyan', ownedTrails: ['emerald'], equippedTrail: 'emerald',
     trophies: []
   });
@@ -1275,13 +1297,14 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 
     if (state.mode === 'shootout2p') state.activePlayer = (state.shotIndex % 2) + 1;
 
+    if (hasUrlSeed) seedState = ((matchSeed + state.stageIdx * 97 + state.shotIndex * 31) >>> 0) || 1;
     let dist = stg.dist;
-    let angleDeg = stg.forceAngle || ((Math.random() - 0.5) * 28);
+    let angleDeg = stg.forceAngle || ((shotRand() - 0.5) * 28);
     if (state.shotIndex === 0 && !stg.forceAngle) angleDeg = 0;
-    if (state.mode === 'volley') { dist = 24 + Math.random() * 5; angleDeg = (Math.random() > 0.5 ? 1 : -1) * (28 + Math.random() * 10); }
-    else if (state.mode === 'crossbar') { dist = 20 + state.shotIndex * 2.5; angleDeg = (Math.random() - 0.5) * 22; }
-    else if (state.mode === 'keeper') { dist = 18 + Math.random() * 8; angleDeg = (Math.random() - 0.5) * 26; }
-    else if (state.mode === 'timeattack') { dist = state.shotIndex === 0 ? 18 : 16 + Math.random() * 10; angleDeg = state.shotIndex === 0 ? 0 : (Math.random() - 0.5) * 44; }
+    if (state.mode === 'volley') { dist = 24 + shotRand() * 5; angleDeg = (shotRand() > 0.5 ? 1 : -1) * (28 + shotRand() * 10); }
+    else if (state.mode === 'crossbar') { dist = 20 + state.shotIndex * 2.5; angleDeg = (shotRand() - 0.5) * 22; }
+    else if (state.mode === 'keeper') { dist = 18 + shotRand() * 8; angleDeg = (shotRand() - 0.5) * 26; }
+    else if (state.mode === 'timeattack') { dist = state.shotIndex === 0 ? 18 : 16 + shotRand() * 10; angleDeg = state.shotIndex === 0 ? 0 : (shotRand() - 0.5) * 44; }
     else if (state.mode === 'shootout2p') {
       const roundNum = Math.floor(state.shotIndex / 2);
       dist = roundNum === 0 ? 14 : (17 + roundNum * 2);
@@ -1293,7 +1316,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       state.cornerSide = side;
       state.spawnPos.set(side * 24, BALL_R, 0.6);
       // A straight swipe crosses onto the striker's ring; bending it in direct is the skill shot
-      state.cornerAim.set(side * (-1.5 + Math.random() * 4), 0, 5.5 + Math.random() * 3.5);
+      state.cornerAim.set(side * (-1.5 + shotRand() * 4), 0, 5.5 + shotRand() * 3.5);
     } else {
       const rad = THREE.MathUtils.degToRad(angleDeg);
       state.spawnPos.set(Math.sin(rad) * dist, BALL_R, Math.cos(rad) * dist);
@@ -1304,7 +1327,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     state.ballSpin.set(0, 0, 0);
 
     const windMax = state.mode === 'timeattack' ? Math.min(stg.windMax, 3) : stg.windMax;
-    state.wind.set(+((Math.random() * 2 - 1) * windMax).toFixed(1), 0, 0);
+    state.wind.set(+((shotRand() * 2 - 1) * windMax).toFixed(1), 0, 0);
 
     applyEquippedCosmetics();
 
@@ -2352,7 +2375,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     ctx.fillStyle = 'rgba(13,21,38,0.92)'; ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 1; ctx.stroke();
     ctx.font = '800 9px sans-serif'; ctx.fillStyle = '#00d9f5';
-    ctx.fillText('SHOT IMPACT RADAR', 10, 15);
+    ctx.fillText('SHOT GOAL MAP', 10, 15);
     const S = 19, gx = (x) => 100 + x * S, gy = (y) => 84 - y * S;
     ctx.fillStyle = 'rgba(255,204,51,0.22)';
     ctx.fillRect(gx(-3.66), gy(2.44), (3.66 - 2.35) * S, (2.44 - 1.55) * S);
@@ -2377,7 +2400,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     ctx.fillText(RADAR_LABELS[kind], 192, 15);
     ctx.textAlign = 'left';
     ctx.font = '800 10px sans-serif'; ctx.fillStyle = '#f1f5f9';
-    ctx.fillText(`xG ${Math.round(state.xg * 100)}%`, 10, 106);
+    ctx.fillText(`CHANCE ${Math.round(state.xg * 100)}%`, 10, 106);
     ctx.fillText(`${state.maxSpeedKmh} km/h`, 120, 106);
     ctx.fillStyle = '#94a3b8';
     ctx.fillText(`SPIN ${state.spinRpm} rpm`, 10, 122);
@@ -2594,10 +2617,21 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   document.getElementById('btn-assist').addEventListener('click', () => { save.assist = !save.assist; persistSave(); syncToggleButtons(); });
   document.getElementById('btn-cam').addEventListener('click', (e) => {
     state.camMode = (state.camMode + 1) % 3;
-    e.currentTarget.textContent = ['Cam: TV', 'Cam: Pro', 'Cam: High'][state.camMode];
+    e.currentTarget.textContent = ['Camera: Stadium', 'Camera: Pitch', 'Camera: High'][state.camMode];
     if (state.phase === 'aiming') kicker.visible = state.mode !== 'keeper' && state.camMode !== 1;
     if (state.phase === 'aiming' || state.phase === 'idle') positionCameraForShot(true);
   });
+  const seedValEl = document.getElementById('hub-seed-val');
+  if (seedValEl) seedValEl.textContent = String(matchSeed);
+  const seedShareBtn = document.getElementById('seed-share');
+  if (seedShareBtn) {
+    seedShareBtn.addEventListener('click', () => {
+      const link = location.origin + location.pathname + '?seed=' + matchSeed;
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).catch(() => {});
+      seedShareBtn.innerHTML = '🌱 Seed: <span id="hub-seed-val">' + matchSeed + '</span> · Copied!';
+      setTimeout(() => { seedShareBtn.innerHTML = '🌱 Seed: <span id="hub-seed-val">' + matchSeed + '</span> · Copy link'; }, 1800);
+    });
+  }
   document.getElementById('btn-sound').addEventListener('click', () => { save.sound = !save.sound; persistSave(); syncToggleButtons(); });
   document.getElementById('btn-reset-save').addEventListener('click', () => {
     if (!window.confirm('Reset ALL progress — credits, kits, trails, trophies, Tour stages and Time Attack best? This cannot be undone.')) return;
