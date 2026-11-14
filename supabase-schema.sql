@@ -16,7 +16,11 @@ create table if not exists public.profiles (
   display_name text,
   tier text not null default 'member',
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint profiles_name_len_chk check (
+    coalesce(char_length(name), 0) <= 80
+    and coalesce(char_length(display_name), 0) <= 80
+  )
 );
 
 -- Upgrade older installs created by the July schema without dropping data.
@@ -25,13 +29,30 @@ alter table public.profiles add column if not exists display_name text;
 alter table public.profiles add column if not exists tier text not null default 'member';
 alter table public.profiles add column if not exists created_at timestamptz not null default now();
 alter table public.profiles add column if not exists updated_at timestamptz not null default now();
+alter table public.profiles drop constraint if exists profiles_name_len_chk;
+alter table public.profiles add constraint profiles_name_len_chk check (
+  coalesce(char_length(name), 0) <= 80
+  and coalesce(char_length(display_name), 0) <= 80
+) not valid;
 
 create table if not exists public.member_data (
   user_id uuid primary key references auth.users(id) on delete cascade,
   data jsonb not null default '{"schema":1,"favourites":{}}'::jsonb,
   version bigint not null default 1 check (version > 0),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  constraint member_data_size_chk check (
+    pg_column_size(data) <= 65536
+    and jsonb_typeof(data) = 'object'
+    and jsonb_typeof(coalesce(data->'favourites', '{}'::jsonb)) = 'object'
+  )
 );
+
+alter table public.member_data drop constraint if exists member_data_size_chk;
+alter table public.member_data add constraint member_data_size_chk check (
+  pg_column_size(data) <= 65536
+  and jsonb_typeof(data) = 'object'
+  and jsonb_typeof(coalesce(data->'favourites', '{}'::jsonb)) = 'object'
+) not valid;
 
 alter table public.profiles enable row level security;
 alter table public.member_data enable row level security;
@@ -145,6 +166,66 @@ grant update (name, display_name, updated_at) on table public.profiles to authen
 revoke all on table public.member_data from anon;
 revoke all on table public.member_data from authenticated;
 grant select, insert, update, delete on table public.member_data to authenticated;
+
+-- Private rate-limit store for the public subscribe-mailing-list Edge Function.
+create schema if not exists mailing_private;
+revoke all on schema mailing_private from public, anon, authenticated;
+
+create table if not exists mailing_private.subscribe_events (
+  id bigserial primary key,
+  email_hash text not null check (email_hash ~ '^[0-9a-f]{64}$'),
+  created_at timestamptz not null default now()
+);
+create index if not exists subscribe_events_created_at_idx on mailing_private.subscribe_events (created_at desc);
+create index if not exists subscribe_events_email_hash_idx on mailing_private.subscribe_events (email_hash, created_at desc);
+
+alter table mailing_private.subscribe_events enable row level security;
+revoke all on table mailing_private.subscribe_events from public, anon, authenticated;
+
+create or replace function public.check_mailing_subscribe_budget(p_email_hash text)
+returns text
+language plpgsql
+security definer
+set search_path = mailing_private, public, pg_temp
+as $$
+declare
+  recent_min integer;
+  recent_hr integer;
+  recent_email integer;
+begin
+  if p_email_hash is null or p_email_hash !~ '^[0-9a-f]{64}$' then
+    raise exception 'invalid_email_hash' using errcode = '22023';
+  end if;
+
+  delete from mailing_private.subscribe_events
+   where created_at < now() - interval '2 hours';
+
+  select count(*) into recent_email
+    from mailing_private.subscribe_events
+   where email_hash = p_email_hash
+     and created_at >= now() - interval '5 minutes';
+
+  if recent_email > 0 then
+    return 'cooldown';
+  end if;
+
+  select count(*) filter (where created_at >= now() - interval '1 minute'),
+         count(*)
+    into recent_min, recent_hr
+    from mailing_private.subscribe_events
+   where created_at >= now() - interval '1 hour';
+
+  if recent_min >= 6 or recent_hr >= 30 then
+    return 'rate_limited';
+  end if;
+
+  insert into mailing_private.subscribe_events (email_hash) values (p_email_hash);
+  return 'ok';
+end;
+$$;
+
+revoke all on function public.check_mailing_subscribe_budget(text) from public, anon, authenticated;
+grant execute on function public.check_mailing_subscribe_budget(text) to service_role;
 
 -- Useful readback after running this file:
 -- select tablename, rowsecurity from pg_tables where schemaname='public' and tablename in ('profiles','member_data');

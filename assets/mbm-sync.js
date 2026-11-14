@@ -71,9 +71,14 @@
       });
   }
   /* The row id is a SEPARATE hash of the code. Knowing the id therefore gives
-     you the ciphertext and nothing else — it does not shortcut to the key. */
+     you the ciphertext and nothing else — it does not shortcut to the key.
+     A separate write token prevents an observer who learns `id` from overwriting
+     or deleting the row. */
   function deriveId(code) {
     return C.digest("SHA-256", enc.encode(normalise(code) + "|id")).then(hex);
+  }
+  function deriveWriteKey(code) {
+    return C.digest("SHA-256", enc.encode(normalise(code) + "|write")).then(hex);
   }
 
   function encrypt(key, obj) {
@@ -181,19 +186,31 @@
     return {
       name: "supabase",
       get: function (id) {
-        return fetch(base + "?id=eq." + id + "&select=blob,updated_at", { headers: H })
+        return fetch(base + "?id=eq." + id + "&select=blob,updated_at", {
+          headers: Object.assign({}, H, { "x-sync-id": String(id || "") })
+        })
           .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
           .then(function (rows) { return (rows && rows[0]) || null; });
       },
-      put: function (id, blob) {
+      put: function (id, blob, writeKey) {
         return fetch(base, {
           method: "POST",
-          headers: Object.assign({}, H, { Prefer: "resolution=merge-duplicates,return=minimal" }),
+          headers: Object.assign({}, H, {
+            Prefer: "resolution=merge-duplicates,return=minimal",
+            "x-sync-id": String(id || ""),
+            "x-sync-write-key": String(writeKey || "")
+          }),
           body: JSON.stringify({ id: id, blob: blob, bytes: blob.length })
         }).then(function (r) { if (!r.ok) return r.text().then(function (t) { throw new Error("HTTP " + r.status + " " + t.slice(0, 120)); }); return true; });
       },
-      del: function (id) {
-        return fetch(base + "?id=eq." + id, { method: "DELETE", headers: H })
+      del: function (id, writeKey) {
+        return fetch(base + "?id=eq." + id, {
+          method: "DELETE",
+          headers: Object.assign({}, H, {
+            "x-sync-id": String(id || ""),
+            "x-sync-write-key": String(writeKey || "")
+          })
+        })
           .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return true; });
       }
     };
@@ -222,20 +239,20 @@
     useTransport: function (t) { transport = t; return Sync; },
     memoryTransport: memoryTransport,
     supabaseTransport: supabaseTransport,
-    _internals: { deriveId: deriveId, deriveKey: deriveKey, encrypt: encrypt,
-                  decrypt: decrypt, merge: merge, collect: collect, WORDS: WORDS },
+    _internals: { deriveId: deriveId, deriveKey: deriveKey, deriveWriteKey: deriveWriteKey,
+                  encrypt: encrypt, decrypt: decrypt, merge: merge, collect: collect, WORDS: WORDS },
 
     /* Push local -> server. Rejects rather than truncating on oversize. */
     push: function (code) {
       if (!transport) return Promise.reject(new Error("no transport configured"));
       var payload = { v: 1, at: Date.now(), data: collect() };
-      return Promise.all([deriveId(code), deriveKey(code)]).then(function (r) {
+      return Promise.all([deriveId(code), deriveKey(code), deriveWriteKey(code)]).then(function (r) {
         return encrypt(r[1], payload).then(function (blob) {
           if (blob.length > MAX_BYTES) {
             throw new Error("Your saves are " + Math.round(blob.length / 1024) +
               " KB, over the " + (MAX_BYTES / 1024) + " KB limit. Nothing was sent.");
           }
-          return transport.put(r[0], blob).then(function () {
+          return transport.put(r[0], blob, r[2]).then(function () {
             return { bytes: blob.length, keys: Object.keys(payload.data).length };
           });
         });
@@ -263,7 +280,9 @@
 
     forget: function (code) {
       if (!transport) return Promise.reject(new Error("no transport configured"));
-      return deriveId(code).then(function (id) { return transport.del(id); });
+      return Promise.all([deriveId(code), deriveWriteKey(code)]).then(function (r) {
+        return transport.del(r[0], r[1]);
+      });
     },
 
     /* THE GATE. Sets MBM_CAPS["cloud-sync"] only after a real write, a real
