@@ -97,6 +97,8 @@ TILES_USED = set()
 
 def tile_art(row):
     tag = row.get('tag')
+    if tag not in TILE_MOTIFS and row.get('group') in ('activities', 'staff'):
+        tag = 'Class game'
     if tag not in TILE_MOTIFS:
         return ''
     TILES_USED.add(tag)
