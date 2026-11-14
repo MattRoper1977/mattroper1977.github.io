@@ -22,4 +22,7 @@ assert(merge(oldSaved,newRemoved).favourites['/games/'].saved===false,'newer rem
 assert(merge(newRemoved,oldSaved).favourites['/games/'].saved===false,'merge is timestamp-deterministic regardless of argument order');
 const newSaved={schema:1,favourites:{'/games/':{href:'/games/',title:'Games updated',saved:true,updatedAt:'2026-08-08T08:06:00Z'}}};
 assert(merge(newRemoved,newSaved).favourites['/games/'].title==='Games updated','newer saved record wins after an older removal');
+const untrusted={schema:1,favourites:{'//evil.example':{href:'//evil.example',title:'Bad',saved:true},'/\\evil.example':{href:'/\\evil.example',title:'Bad2',saved:true},'javascript:alert(1)':{href:'javascript:alert(1)',title:'Bad3',saved:true},'/tools/':{href:'/tools/',title:'Tools',saved:true,updatedAt:'2026-08-08T08:07:00Z'}}};
+const cleaned=merge(untrusted,{schema:1,favourites:{}});
+assert(Object.keys(cleaned.favourites).length===1&&cleaned.favourites['/tools/'].saved===true,'untrusted non-path favourite hrefs are stripped during normalisation');
 console.log('member merge conflict tests passed');

@@ -144,14 +144,27 @@
     };
   }
 
+  var SAFE_FAVOURITE_HREF = /^\/(?![\/\\])[A-Za-z0-9._~\/-]*$/;
+  function validFavouriteHref(href) {
+    return typeof href === 'string' && href.length >= 1 && href.length <= 160 && SAFE_FAVOURITE_HREF.test(href);
+  }
   function emptyMember() {
     return { schema: 1, favourites: {} };
   }
   function normaliseMemberData(value) {
     var data = value && typeof value === 'object' ? clone(value) : emptyMember();
-    if (data.schema !== 1) data.schema = 1;
-    if (!data.favourites || typeof data.favourites !== 'object' || Array.isArray(data.favourites)) data.favourites = {};
-    return data;
+    var raw = data.favourites && typeof data.favourites === 'object' && !Array.isArray(data.favourites) ? data.favourites : {};
+    var clean = {};
+    Object.keys(raw).slice(0, 200).forEach(function (k) {
+      var item = raw[k];
+      if (!item || typeof item !== 'object') return;
+      var href = String(item.href || k || '').trim();
+      if (!validFavouriteHref(href)) return;
+      var title = String(item.title || href).trim().slice(0, 120) || href;
+      var updatedAt = typeof item.updatedAt === 'string' ? item.updatedAt.slice(0, 40) : '';
+      clean[href] = { href: href, title: title, saved: !!item.saved, updatedAt: updatedAt };
+    });
+    return { schema: 1, favourites: clean };
   }
   function mergeFavouriteMaps(a, b) {
     var out = {}, keys = {};
@@ -335,7 +348,7 @@
   }
   function setFavourite(href, title, saved) {
     href = String(href || '').trim(); title = String(title || '').trim().slice(0, 120);
-    if (!/^\//.test(href) || /^\/\//.test(href)) return Promise.reject(new Error('Only Made by Matt links can be saved here.'));
+    if (!validFavouriteHref(href)) return Promise.reject(new Error('Only Made by Matt links can be saved here.'));
     var current = state.member ? normaliseMemberData(state.member.data) : emptyMember();
     current.favourites[href] = { href: href, title: title || href, saved: !!saved, updatedAt: nowISO() };
     return saveMemberData(current);

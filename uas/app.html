@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>UAS Register · Made by Matt</title>
 <meta name="description" content="Claim, track and file AQA Unit Award Scheme units in one place. Runs in your browser, works offline, and every record stays on your device.">
 <link rel="canonical" href="https://madebymatt.uk/uas/app.html">
@@ -838,6 +839,11 @@ async function ensurePdfJs(){
   if(window.pdfjsLib)return;
   await loadScript("vendor/pdfjs/pdf.min.js");
   window.pdfjsLib.GlobalWorkerOptions.workerSrc="vendor/pdfjs/pdf.worker.min.js";
+  const origGetDoc=window.pdfjsLib.getDocument.bind(window.pdfjsLib);
+  window.pdfjsLib.getDocument=function(src){
+    const opts=(src&&typeof src==="object"&&!ArrayBuffer.isView(src)&&!(src instanceof ArrayBuffer))?Object.assign({},src,{isEvalSupported:false}):{data:src,isEvalSupported:false};
+    return origGetDoc(opts);
+  };
 }
 async function ensureTesseract(){
   if(window.Tesseract)return;
@@ -872,7 +878,7 @@ async function handlePdfText(file){
   try{
     await ensurePdfJs();
     const buf=await file.arrayBuffer();
-    const pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+    const pdf=await window.pdfjsLib.getDocument({data:buf,isEvalSupported:false}).promise;
     let text="";
     for(let p=1;p<=pdf.numPages;p++){
       const page=await pdf.getPage(p);
@@ -905,7 +911,7 @@ async function handleOcr(files){
     for(const f of files){
       if(f.type==="application/pdf"||/\.pdf$/i.test(f.name)){
         await ensurePdfJs();
-        const pdf=await window.pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+        const pdf=await window.pdfjsLib.getDocument({data:await f.arrayBuffer(),isEvalSupported:false}).promise;
         for(let p=1;p<=pdf.numPages;p++){
           const page=await pdf.getPage(p);
           const vp=page.getViewport({scale:2});
