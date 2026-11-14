@@ -246,6 +246,7 @@ def render_page(preview, kind, origin, config):
 
 def games_privacy(origin):
     return ('<!doctype html><html lang="en-GB"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src \'self\' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: blob:; font-src \'self\' data:; connect-src \'self\' https://*.supabase.co; object-src \'none\'; base-uri \'self\'; form-action \'self\'">'
             '<title>Privacy and saved progress · Made by Matt Games</title><link rel="canonical" href="' + origin + '/privacy/">'
             '<style>body{max-width:760px;margin:3rem auto;padding:0 1.25rem;font:1.05rem/1.7 system-ui;color:#18223b;background:#f5f3ec}a{color:#174e45}h1{line-height:1.2}</style>'
             '<main><a href="/">Back to games</a><h1>Privacy and saved progress</h1>'
