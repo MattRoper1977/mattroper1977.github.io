@@ -34,18 +34,97 @@
   const cards = [...grid.querySelectorAll('[data-card]')].map(el => ({el, ids: el.dataset.games.split(' '), shown: el.dataset.card}));
   const activityCards = [...grid.querySelectorAll('[data-activity]')].map(el => ({el, g: byId.get(el.dataset.activity)}));
   const normalize = v => String(v).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  // Search covers title, category and the one-line descriptions (TX (b)); J92 R3/R18
-  // adds the landed sub-genre, pitch and "what you do" lines, each field kept apart
-  // so a hit can say where it matched.
-  const searchFields = [['Title', g => [g.title, g.displayTitle || '', g.series || '']], ['Category', g => [g.genre]], ['Sub-genre', g => [g.subGenre || '']],
-    ['Pitch', g => [g.pitch || '']], ['Description', g => [g.line || '', g.description]], ['What you do', g => g.whatYouDo || []]];
-  const searchable = new Map(games.map(g => [g.id, searchFields.map(([label, pick]) => [label, normalize(pick(g).join(' '))])]));
-  const searchWords = () => normalize(state.q).split(/\s+/).filter(Boolean);
-  const searchHit = (g, words) => words.every(w => searchable.get(g.id).some(([, text]) => text.includes(w)));
-  const matchedIn = g => { const words = searchWords(); if (!words.length) return ''; const field = searchable.get(g.id).find(([, text]) => words.some(w => text.includes(w))); return field ? 'Matched in ' + field[0] : ''; };
+  const foldPlain = v => normalize(v).replace(/&/g, ' and ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  const foldCompact = v => normalize(v).replace(/[^\p{L}\p{N}]+/gu, '');
   const state = {q: '', mood: '', genre: '', control: '', mode: '', list: '', facet: ''};
   const facetNames = (data.facets || []).map(f => f.name);
   const bandLabel = g => (g.sessionBand && data.bandLabels && data.bandLabels[g.sessionBand]) || '';
+  const SYNONYMS = {
+    soccer: ['football', 'pitch', 'kick', 'goal'],
+    football: ['soccer', 'kick', 'match', 'cup'],
+    defense: ['defence'],
+    defence: ['defense'],
+    color: ['colour'],
+    colour: ['color'],
+    car: ['cars', 'driving', 'racing', 'drift', 'track'],
+    cars: ['car', 'driving', 'racing', 'drift', 'track'],
+    driving: ['racing', 'drift', 'car', 'track'],
+    racing: ['driving', 'drift', 'race', 'track'],
+    snooker: ['pool', 'cue', 'billiards'],
+    pool: ['snooker', 'cue', 'billiards'],
+    chill: ['calm', 'relax', 'cosy'],
+    relax: ['calm', 'chill', 'cosy'],
+    relaxing: ['calm', 'chill'],
+    cosy: ['calm', 'chill'],
+    cozy: ['calm', 'chill'],
+    brain: ['puzzle', 'puzzles', 'logic', 'thinky'],
+    riddle: ['puzzle', 'puzzles', 'mystery'],
+    logic: ['puzzle', 'puzzles', 'thinky', 'strategy'],
+    friends: ['multiplayer', 'together', 'local', 'versus'],
+    '2p': ['multiplayer', 'together', 'local', 'two player'],
+    versus: ['multiplayer', 'together', 'local'],
+    coop: ['multiplayer', 'together', 'team', 'teams'],
+    mobile: ['touch', 'phone', 'tablet'],
+    phone: ['touch', 'mobile', 'tablet'],
+    tablet: ['touch', 'mobile', 'phone'],
+    controller: ['gamepad'],
+    gamepad: ['controller']
+  };
+  const expandTerm = w => {
+    const c = foldCompact(w);
+    const extras = SYNONYMS[w] || SYNONYMS[c] || [];
+    return [w, ...(c && c !== w ? [c] : []), ...extras];
+  };
+  // Search covers title, category and the one-line descriptions (TX (b)); J92 R3/R18
+  // adds the landed sub-genre, pitch and "what you do" lines, plus controls/modes/moods,
+  // each field kept apart with weights so hits rank naturally and say where they matched.
+  const searchFields = [
+    ['Title', 100, g => [g.title, g.displayTitle || '', g.series || '']],
+    ['Category', 65, g => [g.genre]],
+    ['Sub-genre', 75, g => [g.subGenre || '']],
+    ['Pitch', 50, g => [g.pitch || '']],
+    ['Description', 35, g => [g.line || '', g.description]],
+    ['What you do', 30, g => g.whatYouDo || []],
+    ['Controls & modes', 22, g => [
+      ...(g.controls || []), ...(g.inputs || []), ...(g.moods || []), ...(g.facets || []), bandLabel(g),
+      ((g.modes || []).includes('local') || (g.modes || []).includes('classroom-teams')) ? 'multiplayer 2p two player versus local shared screen together' : '',
+      (g.controls || []).includes('touch') ? 'touch mobile phone tablet tap' : ''
+    ]]
+  ];
+  const searchable = new Map(games.map(g => [g.id, searchFields.map(([label, weight, pick]) => {
+    const raw = pick(g).join(' ');
+    return {label, weight, text: normalize(raw), plain: foldPlain(raw), compact: foldCompact(raw)};
+  })]));
+  const searchWords = () => foldPlain(state.q).split(/\s+/).filter(Boolean);
+  const fieldMatchesTerm = (f, term) => {
+    if (!term) return false;
+    if (f.text.includes(term) || f.plain.includes(term)) return true;
+    const c = foldCompact(term);
+    return c.length >= 4 && f.compact.includes(c);
+  };
+  const wordHitField = (g, word) => {
+    const fieldsForGame = searchable.get(g.id) || [];
+    const variants = expandTerm(word);
+    for (const f of fieldsForGame) {
+      if (fieldMatchesTerm(f, variants[0])) return {label: f.label, score: f.weight + (f.label === 'Title' && f.plain.startsWith(variants[0]) ? 35 : 0)};
+    }
+    for (const f of fieldsForGame) {
+      if (variants.slice(1).some(v => fieldMatchesTerm(f, v))) return {label: f.label, score: Math.max(10, f.weight - 12)};
+    }
+    return null;
+  };
+  const searchHit = (g, words) => words.every(w => Boolean(wordHitField(g, w)));
+  const searchScore = (g, words) => words.reduce((sum, w) => { const h = wordHitField(g, w); return sum + (h ? h.score : 0); }, 0);
+  const matchedIn = g => {
+    const words = searchWords();
+    if (!words.length) return '';
+    let best = null;
+    for (const w of words) {
+      const h = wordHitField(g, w);
+      if (h && (!best || h.score > best.score)) best = h;
+    }
+    return best ? 'Matched in ' + best.label : '';
+  };
   let activeGame = null, returnFocus = null, cameFromGame = false, filtersOpener = null;
 
   /* ---- spotlight: one featured game at a time, advanced only by Next ---- */
@@ -119,8 +198,14 @@
     for (const k of ['control', 'mode', 'list']) { const el = $(k), v = params.get(k) || ''; state[k] = [...el.options].some(o => o.value === v) ? v : ''; }
     paintControls();
   }
+  function syncQueryAffordances() {
+    const clearBtn = $('query-clear'), kbdHint = $('search-kbd'), hasText = Boolean(query.value.length);
+    if (clearBtn) clearBtn.hidden = !hasText;
+    if (kbdHint) kbdHint.hidden = hasText;
+  }
   function paintControls() {
     query.value = state.q; ['genre', 'control', 'mode', 'list'].forEach(k => { $(k).value = state[k]; });
+    syncQueryAffordances();
     document.querySelectorAll('.chip-button').forEach(b => {
       const on = b.dataset.chip === 'genre' ? state.genre === b.dataset.genre : b.dataset.chip === 'control' ? state.control === b.dataset.control : !state.genre && !state.control && !state.mood && !state.facet;
       b.setAttribute('aria-pressed', String(on));
@@ -178,7 +263,8 @@
           thumb.className = 'thumb' + (source ? '' : ' thumb-block');
           thumb.innerHTML = source ? '<img src="' + esc(source) + '" alt="" loading="lazy" width="640" height="360">' : '<span class="thumb-title">' + esc(title(g)) + '</span>';
           if (source) thumb.removeAttribute('aria-hidden'); else thumb.setAttribute('aria-hidden', 'true');
-          card.el.querySelector('.card-meta').innerHTML = (card.ids.length > 1 ? '<span class="chip">' + card.ids.length + ' editions</span>' : '') + (g.updated ? '<span class="chip">Updated ' + esc(g.updated.label) + '</span>' : '') + (bandLabel(g) ? '<span class="chip pill-session">' + esc(bandLabel(g)) + '</span>' : '') + (needsKeyboard(g) ? '<span class="chip warn" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>Needs a keyboard</span>' : '');
+          const ctrlBadges = ((g.controls || []).includes('touch') ? '<span class="chip pill-ctrl">Touch</span>' : '') + ((g.controls || []).includes('keyboard') ? '<span class="chip pill-ctrl">Keys</span>' : '') + ((g.controls || []).includes('gamepad') ? '<span class="chip pill-ctrl">Pad</span>' : '');
+          card.el.querySelector('.card-meta').innerHTML = (card.ids.length > 1 ? '<span class="chip pill-editions">' + card.ids.length + ' editions</span>' : '') + (g.updated ? '<span class="chip pill-updated">Updated ' + esc(g.updated.label) + '</span>' : '') + (bandLabel(g) ? '<span class="chip pill-session">' + esc(bandLabel(g)) + '</span>' : '') + ctrlBadges + (needsKeyboard(g) ? '<span class="chip warn" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>Needs a keyboard</span>' : '');
           bindImages(card.el);
         }
       }
@@ -188,18 +274,33 @@
     const words = searchWords();
     let shownActivities = 0;
     for (const a of activityCards) { const on = activityState && searchHit(a.g, words); a.el.hidden = !on; if (on) shownActivities++; const hint = a.el.querySelector('.card-match'), where = on ? matchedIn(a.g) : ''; if (hint) { hint.textContent = where; hint.hidden = !where; } }
-    // Recently opened orders cards within each shelf; every card keeps its own shelf.
+    // Recently opened orders cards within each shelf; active text search ranks best matches first; clearing restores manifest order.
     for (const s of shelves) {
       const own = cards.filter(c => c.el.parentElement === s.track);
-      const ordered = state.list === 'recent' ? [...own].sort((a, b) => Math.min(...a.ids.map(i => (recent.indexOf(i) + 1 || 1e9))) - Math.min(...b.ids.map(i => (recent.indexOf(i) + 1 || 1e9)))) : own;
+      const ordered = state.list === 'recent'
+        ? [...own].sort((a, b) => Math.min(...a.ids.map(i => (recent.indexOf(i) + 1 || 1e9))) - Math.min(...b.ids.map(i => (recent.indexOf(i) + 1 || 1e9))))
+        : words.length
+          ? [...own].map((c, idx) => ({c, idx, score: c.el.hidden ? -1 : searchScore(byId.get(c.shown), words)})).sort((a, b) => b.score - a.score || a.idx - b.idx).map(x => x.c)
+          : own;
       ordered.forEach((card, index) => { if (s.track.children[index] !== card.el) s.track.insertBefore(card.el, s.track.children[index] || null); });
       const visibleHere = [...s.track.children].filter(el => !el.hidden);
       s.el.hidden = visibleHere.length === 0;
       if (active()) { const n = visibleHere.filter(el => el.dataset.card).reduce((t, el) => t + cards.find(c => c.el === el).ids.filter(id => matches(byId.get(id))).length, 0), m = visibleHere.length - visibleHere.filter(el => el.dataset.card).length; s.count.textContent = n + (n === 1 ? ' game' : ' games') + (m ? ' · ' + m + ' activities' : ''); } else s.count.textContent = s.base;
     }
-    $('empty-state').hidden = visibleCards + shownActivities !== 0;
+    const isEmpty = visibleCards + shownActivities === 0;
+    $('empty-state').hidden = !isEmpty;
     const selected = state.list === 'favourites' ? favourites : state.list === 'recent' ? recent : null;
     $('empty-description').textContent = selected && selected.length === 0 ? (state.list === 'favourites' ? 'Press the heart on a game card to start your favourites.' : 'Games appear here when you open them from this collection.') : 'Try a different word or clear a filter.';
+    const suggestBox = $('empty-suggestions');
+    if (suggestBox) {
+      const showSuggest = isEmpty && !(selected && selected.length === 0);
+      suggestBox.hidden = !showSuggest;
+      if (showSuggest && !suggestBox.innerHTML) {
+        const topGenres = (data.genres || []).slice(0, 4).map(x => '<button type="button" class="button suggest-chip" data-suggest-genre="' + esc(x.name) + '">' + esc(x.name) + '</button>').join('');
+        suggestBox.innerHTML = topGenres + '<button type="button" class="button suggest-chip" data-suggest-control="touch">Touch games</button>';
+      }
+    }
+    syncQueryAffordances();
     status.textContent = active() ? shown + ' of ' + data.catalogue + ' games' : data.catalogue + ' games';
     $('clear-favourites').hidden = state.list !== 'favourites';
     $('clear-recent-list').hidden = state.list !== 'recent';
@@ -212,6 +313,20 @@
       button.textContent = 'Remove'; button.setAttribute('aria-label', 'Remove from recently opened: ' + title(g)); card.el.append(button);
     }
     $('lanes').hidden = active();
+    const continueDock = $('continue-dock'), continueTrack = $('continue-track');
+    if (continueDock && continueTrack) {
+      const picks = !active() ? recent.map(id => byId.get(id)).filter(Boolean).slice(0, 4) : [];
+      continueDock.hidden = picks.length === 0;
+      if (picks.length) {
+        continueTrack.innerHTML = picks.map(g => {
+          const imgSrc = (g.media && g.media.poster) || g.image;
+          const thumbHtml = imgSrc ? '<img src="' + esc(imgSrc) + '" alt="" loading="lazy" width="152" height="88">' : '';
+          return '<div class="continue-pill"><span class="continue-thumb" aria-hidden="true">' + thumbHtml + '</span>'
+            + '<span class="continue-meta"><span class="continue-name">' + esc(title(g)) + '</span><span class="continue-genre">' + esc(g.subGenre || g.genre) + '</span></span>'
+            + '<a class="play small" data-play="' + esc(g.id) + '" href="' + esc(g.route) + '">Play<span class="sr-only"> ' + esc(title(g)) + '</span></a></div>';
+        }).join('');
+      }
+    }
     grid.classList.toggle('is-filtering', active()); // J92 R18: the shelves unroll into a grid while filtering (CSS only)
     requestAnimationFrame(paintShelves); // the toggle relays the tracks without a scroll or resize event: repaint their controls once layout has settled
     paintActiveFilters();
@@ -285,7 +400,11 @@
     // J92 R18: similar games are the catalogue's other rows of the same genre, manifest order, editions of this game excluded.
     const kin = new Set(g.editions || [g.id]), peers = catalogue.filter(o => o.genre === g.genre && !kin.has(o.id)).slice(0, 3), similar = $('dialog-similar');
     similar.hidden = !peers.length;
-    similar.querySelector('ul').innerHTML = peers.map(m => '<li><button type="button" class="edition-open" data-edition="' + esc(m.id) + '">' + esc(title(m)) + '</button><a class="play small" data-play="' + esc(m.id) + '" href="' + esc(m.route) + '">Play<span class="sr-only"> ' + esc(title(m)) + '</span></a></li>').join('');
+    similar.querySelector('ul').innerHTML = peers.map(m => {
+      const src = (m.media && m.media.poster) || m.image;
+      const th = src ? '<span class="similar-thumb" aria-hidden="true"><img src="' + esc(src) + '" alt="" loading="lazy" width="128" height="72"></span>' : '<span class="similar-thumb" aria-hidden="true"></span>';
+      return '<li class="similar-item">' + th + '<button type="button" class="edition-open" data-edition="' + esc(m.id) + '">' + esc(title(m)) + '</button><a class="play small" data-play="' + esc(m.id) + '" href="' + esc(m.route) + '">Play<span class="sr-only"> ' + esc(title(m)) + '</span></a></li>';
+    }).join('');
     $('dialog-favourite').dataset.favourite = g.id; paintFavourite(); $('share-status').textContent = '';
     poster(g);
     history.replaceState(history.state, '', addressWithGame(g));
@@ -345,6 +464,17 @@
   /* ---- wiring ---- */
   $('discovery-form').addEventListener('submit', e => { e.preventDefault(); state.q = query.value.slice(0, 160); render(); });
   query.addEventListener('input', () => { state.q = query.value.slice(0, 160); render(); });
+  query.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && query.value && !dialog.open && !filters.open) {
+      e.preventDefault();
+      e.stopPropagation();
+      query.value = '';
+      state.q = '';
+      render();
+    }
+  });
+  const clearBtn = $('query-clear');
+  if (clearBtn) clearBtn.addEventListener('click', () => { query.value = ''; state.q = ''; render(); query.focus(); });
   $('search-jump').addEventListener('click', e => { e.preventDefault(); query.scrollIntoView({block: 'center'}); query.focus({preventScroll: true}); });
   $('empty-reset').addEventListener('click', () => { reset(); $('all-games-title').focus(); });
   $('surprise').hidden = false;
@@ -369,6 +499,16 @@
     const removeFilter = e.target.closest('[data-remove-filter]');
     if (removeFilter) { choose({[removeFilter.dataset.removeFilter]: ''}, false); ($('active-filters').querySelector('.active-filter') || $('all-games-title')).focus(); return; }
     if (e.target.closest('[data-clear-all]')) { reset(); $('all-games-title').focus(); return; }
+    const suggest = e.target.closest('[data-suggest-genre], [data-suggest-control]');
+    if (suggest) {
+      fields.forEach(k => { state[k] = ''; });
+      if (suggest.dataset.suggestGenre) state.genre = suggest.dataset.suggestGenre;
+      if (suggest.dataset.suggestControl) state.control = suggest.dataset.suggestControl;
+      paintControls();
+      render();
+      focusResults();
+      return;
+    }
     const select = e.target.closest('[data-spot-select]');
     if (select) { showSpot(Number(select.dataset.spotSelect)); return; }
     const guide = e.target.closest('a.guide-link');
@@ -394,6 +534,13 @@
   $('dialog-close').addEventListener('click', () => closeInfo());
   dialog.addEventListener('cancel', e => { e.preventDefault(); closeInfo(); });
   trapTab(dialog); trapTab(filters);
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && !dialog.open && !filters.open && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      query.scrollIntoView({block: 'center'});
+      query.focus({preventScroll: true});
+    }
+  });
   document.querySelector('.menu').addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.currentTarget.open = false; e.currentTarget.querySelector('summary').focus(); } });
   document.querySelectorAll('.menu a').forEach(a => a.addEventListener('click', () => { document.querySelector('.menu').open = false; }));
   window.addEventListener('pagehide', () => { rememberPosition(); stopMedia(); });

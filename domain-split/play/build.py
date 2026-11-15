@@ -51,14 +51,35 @@ def date_label(iso):
 def shown_title(row):
     return row.get('displayTitle') or row['title']
 
-def play_link(row, small=False):
-    return ('<a class="play' + (' small' if small else '') + '" data-play="' + esc(row['id']) + '" href="' + esc(row['route']) + '">Play<span class="sr-only"> ' + esc(shown_title(row)) + '</span></a>')
+PLAY_TRI = '<svg class="play-tri" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" focusable="false"><path d="M4.2 2.8 13.4 8 4.2 13.2Z" fill="currentColor"/></svg>'
 
-def guide_link(row):
+SHELF_ACCENTS = {
+    'Classroom': ('94, 242, 214', '<circle cx="8" cy="8" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="8" r="2.6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 18.5c1.3-4 7.7-4 9 0M11.5 18.5c1.3-4 7.7-4 9 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'),
+    'Sport': ('52, 211, 153', '<circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 7.5c2.5 2 9.5 2 12 0M6 16.5c2.5-2 9.5-2 12 0M12 3.5v17" fill="none" stroke="currentColor" stroke-width="1.6"/>'),
+    'Action': ('251, 146, 60', '<path d="M13 2.5 5.5 13h5.5l-1 8.5L18.5 11H13l0-8.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'),
+    'Adventure': ('56, 189, 248', '<circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><polygon points="15.5,8.5 13.2,13.2 8.5,15.5 10.8,10.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>'),
+    'Puzzles': ('192, 132, 252', '<path d="M12 3.5 20.5 12 12 20.5 3.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>'),
+    'Strategy': ('251, 191, 36', '<path d="M5 19h14M6.5 16l-1.5-8 4.5 3 2.5-5 2.5 5 4.5-3-1.5 8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>'),
+    'Creative': ('244, 114, 182', '<path d="M12 3.5c4.7 0 8.5 3.5 8.5 7.8 0 2.5-1.8 4.2-4 4.2h-1.6c-.9 0-1.5.7-1.5 1.5 0 .7.4 1.3.4 1.9 0 1-.8 1.6-1.8 1.6-4.7 0-8.5-3.8-8.5-8.5S7.3 3.5 12 3.5Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="8.5" cy="10.5" r="1.2" fill="currentColor"/><circle cx="12" cy="8.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="10.5" r="1.2" fill="currentColor"/>'),
+}
+
+def shelf_rgb(genre):
+    return SHELF_ACCENTS.get(genre, ('94, 242, 214', '<circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>'))[0]
+
+def shelf_emblem(genre):
+    rgb, path_svg = SHELF_ACCENTS.get(genre, ('94, 242, 214', '<circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>'))
+    return '<span class="shelf-emblem" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" focusable="false">' + path_svg + '</svg></span>'
+
+def play_link(row, small=False):
+    return ('<a class="play' + (' small' if small else '') + '" data-play="' + esc(row['id']) + '" href="' + esc(row['route']) + '">' + PLAY_TRI + '<span>Play</span><span class="sr-only"> ' + esc(shown_title(row)) + '</span></a>')
+
+def guide_link(row, compact=False):
     """J92 R14: the card's second action is the sheet's existing ?game= deep link.
     check.cjs forbids data-info on cards (tx (e): no modal from cards), so this is
     a plain link play.js may intercept; without JavaScript it reloads into the sheet."""
-    return '<a class="button guide-link" href="?game=' + esc(quote(row['id'], safe='')) + '">Guide &amp; modes</a>'
+    label = 'Guide' if compact else 'Guide &amp; modes'
+    sr = ('<span class="sr-only"> &amp; modes: ' + esc(shown_title(row)) + '</span>') if compact else ''
+    return '<a class="button guide-link" href="?game=' + esc(quote(row['id'], safe='')) + '">' + label + sr + '</a>'
 
 def kicker(row):
     """J92 R3: the kicker is the manifest's sub_genre; rows without one (the
@@ -148,20 +169,28 @@ def band_pill(row):
     session_band_labels; a row whose band is unstated shows nothing."""
     return ('<span class="chip pill-session">' + esc(row['sessionBandLabel']) + '</span>') if row.get('sessionBandLabel') else ''
 
+def control_pills(row):
+    out = ''
+    controls = row.get('controls') or []
+    if 'touch' in controls:
+        out += '<span class="chip pill-ctrl"><svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><rect x="4.5" y="1.5" width="7" height="13" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="12" r=".8" fill="currentColor"/></svg>Touch</span>'
+    if 'keyboard' in controls:
+        out += '<span class="chip pill-ctrl"><svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><rect x="1.5" y="3.5" width="13" height="9" rx="1.8" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 6.8h1.2M7.4 6.8h1.2M10.3 6.8h1.2M5 9.8h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Keys</span>'
+    if 'gamepad' in controls:
+        out += '<span class="chip pill-ctrl">Pad</span>'
+    return out
+
 def badges(row, members):
     out = ''
     if len(members) > 1:
-        out += '<span class="chip">' + str(len(members)) + ' editions</span>'
+        out += '<span class="chip pill-editions">' + str(len(members)) + ' editions</span>'
     if row.get('updated'):
-        out += '<span class="chip">Updated ' + esc(date_label(row['updated']['date'])) + '</span>'
-    return out + band_pill(row) + keyboard_chip(row)
+        out += '<span class="chip pill-updated">Updated ' + esc(date_label(row['updated']['date'])) + '</span>'
+    return out + band_pill(row) + control_pills(row) + keyboard_chip(row)
 
 def card(row, members, by_id):
-    """One shelf card: art, title, the one-line "what you do", badges for data
-    that exists, and Play. `members` are every edition (ids) when the row leads
-    a series; the other CATALOGUE editions' Play anchors stay on the card, so
-    every catalogue game is reachable from exactly one card. No modal, no
-    preview: the card's only actions are links (and the existing favourite)."""
+    """One shelf card: edge-to-edge art, sub-genre kicker, title, pitch, scannable
+    capability pills, and a compact single-row action bar (Play + Guide + ♡)."""
     media = row.get('media', {})
     image = media.get('poster') or row.get('image', '')
     title = row['series'] if row.get('series') else shown_title(row)
@@ -171,69 +200,70 @@ def card(row, members, by_id):
     if catalogue_editions:
         more = '<ul class="card-editions" data-editions>' + ''.join('<li>' + play_link(e, small=True) + '<span class="edition-name">' + esc(shown_title(e)) + '</span></li>' for e in catalogue_editions) + '</ul>'
     return ('<article class="game-card" data-card="' + esc(row['id']) + '" data-games="' + esc(' '.join(i for i in members if by_id[i]['group'] == 'games')) + '">'
-            + thumb(row, image, title) + kicker(row) + '<h4 class="card-title">' + esc(title) + '</h4><p class="card-line">' + esc(body_line(row)) + '</p><p class="card-match" hidden></p>'
-            '<div class="card-meta">' + badges(row, members) + '</div><div class="card-actions">' + play_link(row) + favourite_button(row) + guide_link(row) + '</div>' + more + '</article>')
+            + thumb(row, image, title)
+            + '<div class="card-body">' + kicker(row) + '<h4 class="card-title">' + esc(title) + '</h4><p class="card-line">' + esc(body_line(row)) + '</p><p class="card-match" hidden></p>'
+            '<div class="card-meta">' + badges(row, members) + '</div><div class="card-actions">' + play_link(row) + guide_link(row, compact=True) + favourite_button(row) + '</div>' + more + '</div></article>')
 
 def activity_card(row):
     image = row.get('image', '')
     label = 'Staff activity' if row['group'] == 'staff' else 'Classroom activity'
     return ('<article class="game-card activity-card" data-activity="' + esc(row['id']) + '">'
-            + thumb(row, image, shown_title(row)) + '<h4 class="card-title">' + esc(shown_title(row)) + '</h4><p class="card-line">' + esc(row['line']) + '</p><p class="card-match" hidden></p>'
-            '<div class="card-meta"><span class="chip">' + label + '</span></div><div class="card-actions">' + play_link(row) + guide_link(row) + '</div></article>')
+            + thumb(row, image, shown_title(row))
+            + '<div class="card-body"><h4 class="card-title">' + esc(shown_title(row)) + '</h4><p class="card-line">' + esc(row['line']) + '</p><p class="card-match" hidden></p>'
+            '<div class="card-meta"><span class="chip">' + label + '</span></div><div class="card-actions">' + play_link(row) + guide_link(row, compact=True) + '</div></div></article>')
 
 def shelf_id(name):
     return 'classroom' if name == 'Classroom' else 'shelf-' + re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
 
 def shelf(name, cards, count_text, note=''):
-    """TX (d): one horizontal, scroll-snapped shelf per category. The 44px
-    previous/next controls are inert markup until play.js wires them."""
+    """TX (d): one horizontal, scroll-snapped shelf per category, accented with its category emblem."""
     sid = shelf_id(name)
-    return ('<section class="shelf" id="' + sid + '" data-shelf="' + esc(name) + '" aria-labelledby="' + sid + '-title">'
-            '<div class="shelf-head"><h3 id="' + sid + '-title">' + esc(name) + '</h3><p class="shelf-count" data-shelf-count>' + esc(count_text) + '</p>'
+    return ('<section class="shelf" id="' + sid + '" data-shelf="' + esc(name) + '" style="--shelf-rgb:' + shelf_rgb(name) + '" aria-labelledby="' + sid + '-title">'
+            '<div class="shelf-head">' + shelf_emblem(name) + '<div class="shelf-title-wrap"><h3 id="' + sid + '-title">' + esc(name) + '</h3><p class="shelf-count" data-shelf-count>' + esc(count_text) + '</p></div>'
             '<div class="shelf-nav" hidden><button type="button" class="shelf-step" data-shelf-step="-1" aria-controls="' + sid + '-track" aria-label="Previous ' + esc(name) + ' games">‹</button>'
             '<button type="button" class="shelf-step" data-shelf-step="1" aria-controls="' + sid + '-track" aria-label="Next ' + esc(name) + ' games">›</button></div></div>'
             + (('<p class="muted shelf-note">' + esc(note) + '</p>') if note else '') +
             '<div class="shelf-track" id="' + sid + '-track">' + ''.join(cards) + '</div></section>')
 
 def spotlight(rows):
-    """TX (a): every featured row, manifest order, one shown at a time once
-    play.js runs; AK10-AB puts the manifest's one spotlight row first.
-    A visible Next control; nothing advances on its own; no video.
-    J92 R17: pagination dots and a featured playlist rail (one 44px control per
-    featured row) are derived from the same rows; both are inert markup, hidden
-    until play.js wires them, so the no-script page still shows every item.
-    J92 R3: the kicker is the sub_genre and the body the pitch."""
+    """Cinema marquee Spotlight with dynamic per-game ambient lighting, optional silent gameplay
+    preview trigger, and curated Up Next playlist rail."""
     n = len(rows)
-    items = ''.join('<li class="spot-card feature-card" data-spot="' + esc(r['id']) + '">' + thumb(r, (r.get('media') or {}).get('poster') or r.get('image', ''), shown_title(r)).replace(' loading="lazy"', '')
-                    + '<div class="feature-body">' + kicker(r).replace('card-kicker', 'feature-kicker') + '<h3 class="feature-title">' + esc(shown_title(r)) + '</h3>'
-                    '<p class="card-line">' + esc(body_line(r)) + '</p><div class="card-meta"><span class="chip">' + esc(r['genre']) + '</span>' + band_pill(r) + keyboard_chip(r) + '</div>'
-                    '<div class="card-actions">' + play_link(r) + '</div></div></li>' for r in rows)
+    items = ''
+    for idx, r in enumerate(rows):
+        rgb = shelf_rgb(r['genre'])
+        watch_btn = ('<button type="button" class="button spot-watch" data-watch="' + esc(r['id']) + '">▶ Gameplay<span class="sr-only"> preview</span></button>') if (r.get('media') or {}).get('video') else ''
+        lead_badge = '<span class="spot-ribbon">' + ('★ Editor’s Spotlight' if idx == 0 else 'Featured Selection') + '</span>'
+        items += ('<li class="spot-card feature-card" data-spot="' + esc(r['id']) + '" style="--spot-rgb:' + rgb + '">'
+                  '<div class="spot-media">' + thumb(r, (r.get('media') or {}).get('poster') or r.get('image', ''), shown_title(r)).replace(' loading="lazy"', '') + lead_badge + '</div>'
+                  '<div class="feature-body">' + kicker(r).replace('card-kicker', 'feature-kicker') + '<h3 class="feature-title">' + esc(shown_title(r)) + '</h3>'
+                  '<p class="card-line">' + esc(body_line(r)) + '</p><div class="card-meta"><span class="chip chip-accent">' + esc(r['genre']) + '</span>' + band_pill(r) + control_pills(r) + keyboard_chip(r) + '</div>'
+                  '<div class="card-actions">' + play_link(r) + watch_btn + guide_link(r, compact=True) + favourite_button(r) + '</div></div></li>')
     dots = ''.join('<li><button type="button" class="spot-dot" data-spot-select="' + str(i) + '" aria-current="false" aria-label="Spotlight ' + str(i + 1) + ' of ' + str(n) + ': ' + esc(shown_title(r)) + '"></button></li>' for i, r in enumerate(rows))
     def playlist_thumb(r):
         image = (r.get('media') or {}).get('poster') or r.get('image', '')
         if image:
-            return '<span class="playlist-thumb" aria-hidden="true"><img src="' + esc(image) + '" alt="" loading="lazy" width="64" height="36"></span>'
+            return '<span class="playlist-thumb" aria-hidden="true"><img src="' + esc(image) + '" alt="" loading="lazy" width="80" height="45"></span>'
         return '<span class="playlist-thumb" aria-hidden="true">' + tile_art(r) + '</span>'
-    playlist = ''.join('<li><button type="button" class="playlist-btn" data-spot-select="' + str(i) + '" aria-current="false">' + playlist_thumb(r) + '<span class="playlist-name">' + esc(shown_title(r)) + '</span></button></li>' for i, r in enumerate(rows))
-    return ('<section class="spotlight" id="spotlight" aria-labelledby="spotlight-title"><div class="spotlight-head"><h2 id="spotlight-title">Spotlight</h2>'
-            '<p id="spot-status" class="muted" aria-live="polite" hidden></p><button type="button" class="button" id="spot-next" hidden>Next<span class="sr-only"> spotlight game</span> <span aria-hidden="true">→</span></button></div>'
+    playlist = ''.join('<li><button type="button" class="playlist-btn" data-spot-select="' + str(i) + '" aria-current="false">' + playlist_thumb(r) + '<span class="playlist-copy"><span class="playlist-name">' + esc(shown_title(r)) + '</span><span class="playlist-sub">' + esc(r.get('subGenre') or r['genre']) + '</span></span></button></li>' for i, r in enumerate(rows))
+    return ('<section class="spotlight" id="spotlight" aria-labelledby="spotlight-title"><div class="spotlight-head"><div class="spot-head-left"><span class="spot-gem" aria-hidden="true">◆</span><h2 id="spotlight-title">Spotlight</h2>'
+            '<p id="spot-status" class="count-pill" aria-live="polite" hidden></p></div><button type="button" class="button spot-next-btn" id="spot-next" hidden>Next<span class="sr-only"> spotlight game</span> <span aria-hidden="true">→</span></button></div>'
             '<div class="spotlight-stage"><div class="spotlight-main"><ol class="spot-list">' + items + '</ol>'
             '<ol class="spot-dots" aria-label="Spotlight pages" hidden>' + dots + '</ol></div>'
-            '<aside class="featured-playlist" aria-labelledby="playlist-title" hidden><h3 id="playlist-title" class="playlist-heading">Featured playlist</h3><ol class="playlist-items">' + playlist + '</ol></aside></div></section>')
+            '<aside class="featured-playlist" aria-labelledby="playlist-title" hidden><h3 id="playlist-title" class="playlist-heading">Up next in Spotlight</h3><ol class="playlist-items">' + playlist + '</ol></aside></div></section>')
 
 def release_rail(rows):
-    """J92 R6 (F-new-release-occupants): one box per `updated` entry in the
-    dataset, newest first (manifest order within a date), data-release=<id>, no
-    data-shelf (check.cjs: no invented shelf). An empty array renders nothing."""
+    """J92 R6: New and updated rail with edge-to-edge card artwork."""
     updated = sorted([r for r in rows if r.get('updated')], key=lambda r: r['updated']['date'], reverse=True)
     if not updated:
         return ''
     boxes = ''.join('<li class="release-box" data-release="' + esc(r['id']) + '">' + thumb(r, (r.get('media') or {}).get('poster') or r.get('image', ''), shown_title(r))
-                    + '<p class="card-kicker">Updated ' + esc(date_label(r['updated']['date'])) + '</p><h3 class="release-title">' + esc(shown_title(r)) + '</h3>'
-                    '<p class="card-line">' + esc(r['updated']['description']) + '</p><div class="card-actions">' + play_link(r) + '</div></li>' for r in updated)
+                    + '<div class="card-body"><p class="card-kicker pill-updated-kicker">Updated ' + esc(date_label(r['updated']['date'])) + '</p><h3 class="release-title">' + esc(shown_title(r)) + '</h3>'
+                    '<p class="card-line">' + esc(r['updated']['description']) + '</p><div class="card-actions">' + play_link(r) + guide_link(r, compact=True) + '</div></div></li>' for r in updated)
     n = len(updated)
-    return ('<section class="shelf release-rail" id="new-and-updated" data-rail="updated" aria-labelledby="new-and-updated-title">'
-            '<div class="shelf-head"><h2 id="new-and-updated-title">New and updated</h2><p class="shelf-count" data-shelf-count>' + str(n) + (' game' if n == 1 else ' games') + '</p>'
+    return ('<section class="shelf release-rail" id="new-and-updated" data-rail="updated" style="--shelf-rgb:251, 191, 36" aria-labelledby="new-and-updated-title">'
+            '<div class="shelf-head"><span class="shelf-emblem" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" focusable="false"><path d="M12 3l2.4 5.6L20 11l-5.6 2.4L12 19l-2.4-5.6L4 11l5.6-2.4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>'
+            '<div class="shelf-title-wrap"><h2 id="new-and-updated-title">New and updated</h2><p class="shelf-count" data-shelf-count>' + str(n) + (' game' if n == 1 else ' games') + '</p></div>'
             '<div class="shelf-nav" hidden><button type="button" class="shelf-step" data-shelf-step="-1" aria-controls="new-and-updated-track" aria-label="Previous updated games">‹</button>'
             '<button type="button" class="shelf-step" data-shelf-step="1" aria-controls="new-and-updated-track" aria-label="Next updated games">›</button></div></div>'
             '<ol class="shelf-track" id="new-and-updated-track">' + boxes + '</ol></section>')
@@ -429,8 +459,9 @@ def refresh(output, review=False, source_revisions=None):
 
     assets = target/'assets/play'
     assets.mkdir(parents=True, exist_ok=True)
-    for name in ['play.css','play.js']:
-        shutil.copyfile(HERE/name, assets/name)
+    for name in ['play.css','play.js','space-grotesk-latin.woff2']:
+        if (HERE/name).exists():
+            shutil.copyfile(HERE/name, assets/name)
     for clip in [r['media'] for r in rows if r['media']]:
         for field in ['video','poster']:
             name = Path(clip[field]).name

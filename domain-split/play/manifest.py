@@ -32,7 +32,7 @@ def verify(root):
         assert manifest.get(field) == expected, f'Play manifest {field}'
     assert manifest.get('short_name'), 'Play short name missing'
     for field in ('theme_color', 'background_color'):
-        assert manifest.get(field) == '#081422', f'{field} differs from Play token layer'
+        assert manifest.get(field) == '#090c12', f'{field} differs from Play token layer'
     # The browser chrome colour the homepage declares must be the colour the installed app declares.
     assert parser.theme_colors == [manifest['theme_color']], 'Homepage theme-color must equal the manifest theme_color'
     # Every icon is one of the Play install icons derived from the accepted Play mark
