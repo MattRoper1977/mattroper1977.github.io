@@ -19,6 +19,20 @@ def icon_name(label):
     return 'book'
 
 
+TEACHER_SHORTCUT_ICONS = {
+    'saved lessons': 'saved',
+    'planning and evidence': 'planning',
+    'classroom tools': 'lifeskills',
+    'primary lessons': 'primary',
+    'teaching workspace': 'workspace',
+    'recommended shelf': 'recommended',
+}
+
+
+def teacher_shortcut_icon(label):
+    return TEACHER_SHORTCUT_ICONS.get(label.strip().lower(), icon_name(label))
+
+
 def once(text, before, after):
     if text.count(before) != 1:
         raise ValueError('§26 icon source boundary changed: ' + before[:90])
@@ -31,7 +45,7 @@ def correct_icons(text, route):
             text = once(text, '<strong>' + label, '<strong>' + line_icon(name) + label)
     if route == '/for/teachers/':
         text = re.sub(r'(<a class="fd-shortcut"[^>]*>)(<h3>)([^<]+)',
-                      lambda m: m[1] + line_icon(icon_name(m[3])) + m[2] + m[3], text)
+                      lambda m: m[1] + '<span class="fd-shortcut-icon" aria-hidden="true">' + line_icon(teacher_shortcut_icon(m[3])) + '</span>' + m[2] + m[3], text)
     if route == '/Lessons/':
         # The source catalogue owns every row. Only the local icon dictionary
         # used by its subject-card renderer is substituted, with a book fallback.
