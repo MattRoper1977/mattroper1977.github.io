@@ -75,8 +75,96 @@
     }
     return false;
   }
+  function syncPickButtons() {
+    const input = form && document.getElementById(page + '-q');
+    const cur = input ? input.value.trim().toLowerCase() : '';
+    document.querySelectorAll('[data-search-pick]').forEach(btn => {
+      const val = (btn.dataset.searchPick || '').trim().toLowerCase();
+      btn.setAttribute('aria-pressed', String(Boolean(val && cur === val)));
+    });
+  }
+  function lessonEntry(raw) {
+    const rawStr = typeof raw === 'string' ? raw.trim() : (raw && typeof raw === 'object' ? String(raw.route || raw.url || raw.path || '').trim() : '');
+    if (!rawStr || /^(?:javascript|data):/i.test(rawStr)) return null;
+    const candidate = rawStr.startsWith('/') ? rawStr : '/Lessons/' + rawStr.replace(/^\/+/, '');
+    try {
+      const u = new URL(candidate, location.origin);
+      if (u.origin !== location.origin || !/^\/Lessons\/.*\.html$/i.test(u.pathname) || /\/games?\//i.test(u.pathname)) return null;
+      const parts = u.pathname.replace(/^\/Lessons\//i, '').split('/').filter(Boolean);
+      const filePart = parts.length ? parts[parts.length - 1] : '';
+      const cleanTitle = decodeURIComponent(filePart.replace(/\.html$/i, '')).replace(/[_-]+/g, ' ').trim();
+      const title = (typeof raw === 'object' && raw && raw.title) ? String(raw.title) : cleanTitle;
+      if (!title) return null;
+      const tierSeg = parts.find(s => /^(build|grow|launch)$/i.test(s));
+      const tier = (typeof raw === 'object' && raw && /^(build|grow|launch)$/i.test(String(raw.pathway || '')))
+        ? String(raw.pathway).toLowerCase()
+        : (tierSeg ? tierSeg.toLowerCase() : '');
+      const area = (typeof raw === 'object' && raw && raw.subject)
+        ? String(raw.subject)
+        : (parts.length > 1 ? decodeURIComponent(parts[0]).replace(/[_-]+/g, ' ').trim() : 'Lesson');
+      return { href: u.pathname + u.search + u.hash, title, tier, area };
+    } catch (_) {
+      return null;
+    }
+  }
+  function initFrontdoorExtras() {
+    document.querySelectorAll('[data-search-pick]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = form && document.getElementById(page + '-q');
+        if (!input) return;
+        const term = (btn.dataset.searchPick || '').trim();
+        input.value = input.value.trim().toLowerCase() === term.toLowerCase() ? '' : term;
+        syncPickButtons();
+        limit = limitStep;
+        if (catalogue) render();
+      });
+    });
+    const recentPrefix = page === 'teachers' ? 'teacher' : (page === 'pupils' ? 'pupil' : page);
+    const recentSection = document.getElementById(recentPrefix + '-recent');
+    const recentList = document.getElementById(recentPrefix + '-recent-list');
+    if (recentSection && recentList) {
+      let stored = [];
+      try { stored = JSON.parse(localStorage.getItem('mbm.lesson.recent.v1') || '[]'); } catch (_) { stored = []; }
+      const entries = (Array.isArray(stored) ? stored : []).map(lessonEntry).filter(Boolean).slice(0, 3);
+      if (entries.length) {
+        recentList.replaceChildren(...entries.map(item => {
+          const cardLink = document.createElement('a');
+          cardLink.className = 'fd-recent-card';
+          cardLink.href = item.href;
+          if (item.tier) {
+            const pill = document.createElement('span');
+            pill.className = 'fd-tier-pill ' + item.tier;
+            pill.textContent = item.tier.toUpperCase();
+            cardLink.appendChild(pill);
+          }
+          const h3 = document.createElement('h3');
+          h3.textContent = item.title;
+          const meta = document.createElement('p');
+          meta.textContent = item.area;
+          cardLink.append(h3, meta);
+          return cardLink;
+        }));
+        recentSection.hidden = false;
+      }
+    }
+    if (page === 'teachers') {
+      const savedCopy = document.querySelector('.fd-shortcut[href="/Lessons/?view=saved"] p');
+      if (savedCopy && !savedCopy.querySelector('.fd-saved-count')) {
+        let saved = [];
+        try { saved = JSON.parse(localStorage.getItem('mbm.lesson.saved.v1') || '[]'); } catch (_) { saved = []; }
+        const count = Array.isArray(saved) ? saved.filter(x => (typeof x === 'string' && x.trim()) || (x && typeof x === 'object' && (x.route || x.url || x.path))).length : 0;
+        if (count > 0) {
+          const badge = document.createElement('span');
+          badge.className = 'fd-saved-count';
+          badge.textContent = count + (count === 1 ? ' saved lesson' : ' saved lessons');
+          savedCopy.append(' ', badge);
+        }
+      }
+    }
+  }
   function render() {
     if (!form || !catalogue) return;
+    syncPickButtons();
     const q = document.getElementById(page + '-q').value.toLowerCase().trim().split(/\s+/).filter(Boolean);
     const pathwaySelect = document.getElementById(page + '-pathway');
     const pathway = pathwaySelect ? pathwaySelect.value.toLowerCase() : '';
@@ -91,6 +179,7 @@
     status.textContent = rows.length ? 'Showing ' + results.children.length + ' of ' + rows.length + (kind === 'games' ? ' games.' : ' results.') : (kind === 'games' ? 'No matches yet. Try a game name, football or adventure.' : 'No matches. Try a shorter topic or choose all pathways.');
     document.getElementById(page + '-more').hidden = rows.length <= limit;
   }
+  initFrontdoorExtras();
   if (!form && kind !== 'games') return;
   if (status) status.textContent = kind === 'games' ? 'Loading games…' : 'Loading resources…';
   fetch('/data/domain-catalogue.json', { cache: 'no-cache' }).then(response => {
@@ -100,10 +189,11 @@
     catalogue = data;
     if (form) {
       const query = new URLSearchParams(location.search);
-      document.getElementById(page + '-q').value = query.get('q') || '';
-      form.addEventListener('submit', event => { event.preventDefault(); limit = limitStep; render(); });
-      form.addEventListener('input', () => { limit = limitStep; render(); });
-      form.addEventListener('change', () => { limit = limitStep; render(); });
+      const qInput = document.getElementById(page + '-q');
+      if (qInput && !qInput.value) qInput.value = query.get('q') || '';
+      form.addEventListener('submit', event => { event.preventDefault(); limit = limitStep; syncPickButtons(); render(); });
+      form.addEventListener('input', () => { limit = limitStep; syncPickButtons(); render(); });
+      form.addEventListener('change', () => { limit = limitStep; syncPickButtons(); render(); });
       document.getElementById(page + '-more').addEventListener('click', () => {
         const n = document.getElementById(page + '-results').children.length;
         limit += limitStep; render();

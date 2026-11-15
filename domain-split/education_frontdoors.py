@@ -45,9 +45,61 @@ ICONS = {
     'search': '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
 }
 
+FRONTDOOR_ICONS = {
+    'saved': '<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/><path d="m9 10 2 2 4-4"/>',
+    'planning': '<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h4"/>',
+    'primary': '<path d="M12 20V9"/><path d="M12 13c-4 0-6-2.5-6-6 3.5 0 6 2 6 6Z"/><path d="M12 11c0-3.5 2.5-6 6-6 0 3.5-2 6-6 6Z"/>',
+    'workspace': '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20l4-4 4 4M12 16v4M7 9h6M7 12h10"/>',
+    'recommended': '<polygon points="12 2 14.9 8.6 22 9.3 16.6 14 18.2 21 12 17.3 5.8 21 7.4 14 2 9.3 9.1 8.6"/>',
+    'assembly': '<path d="M3 11v2a2 2 0 0 0 2 2h2l3 4h2l-1-4h2l6 3V6l-6 3H5a2 2 0 0 0-2 2Z"/>',
+    'baseline': '<circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/>',
+    'careers': '<path d="M12 3v18M5 6h11l3 2.5L16 11H5V6ZM19 13H8l-3 2.5L8 18h11v-5Z"/>',
+    'community': '<circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="8" r="2.5"/><path d="M3.5 19v-2a4.5 4.5 0 0 1 9 0v2M11.5 19v-2a4.5 4.5 0 0 1 9 0v2"/>',
+    'dt': '<path d="M4 20V4h5v11h11v5H4Z"/><path d="M9 8H6M9 12H6M12 15v3M16 15v3"/>',
+    'ict': '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M8 9l-2 2 2 2M16 9l2 2-2 2M13 8l-2 6"/>',
+    'intervention': '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>',
+    'local': '<path d="M12 21s-6-5.4-6-10a6 6 0 1 1 12 0c0 4.6-6 10-6 10Z"/><circle cx="12" cy="11" r="2"/>',
+    'rse': '<path d="M12 20s-7-4.5-7-9.5A4 4 0 0 1 12 7.5a4 4 0 0 1 7 3C19 15.5 12 20 12 20Z"/>',
+    'rshe': '<path d="M12 20s-7-4.5-7-9.5A4 4 0 0 1 12 7.5a4 4 0 0 1 7 3C19 15.5 12 20 12 20Z"/><path d="M9 11h6M12 8v6"/>',
+    'rivers': '<path d="M3 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 13c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>',
+    'cpd': '<path d="m2 9 10-5 10 5-10 5-10-5Z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5M22 9v6"/>',
+    'trekkers': '<path d="m3 19 6-10 4 6 3-4 5 8H3Z"/><path d="m9 9 2 3"/>',
+    'tutor': '<path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4V6Z"/><path d="M8 9h8M8 13h5"/>',
+}
+
 
 def line_icon(name):
-    return '<svg class="fd-icon" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + ICONS.get(name, ICONS['book']) + '</svg>'
+    path = ICONS.get(name) or FRONTDOOR_ICONS.get(name, ICONS['book'])
+    return '<svg class="fd-icon" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + path + '</svg>'
+
+
+def subject_meta(slug, raw_name):
+    exact = {
+        'science': ('science', 'fd-acc-science', 'Science', 'Experiments, nature, forces and space', 'Biology, chemistry, physics and enquiry'),
+        'humanities-re': ('humanities-re', 'fd-acc-humanities', 'Humanities & RE', 'History, places, beliefs and big questions', 'History, geography, ethics and worldviews'),
+        'art-studio': ('art-studio', 'fd-acc-art', 'Art Studio', 'Drawing, painting, making and artists', 'Visual art, studio practice and projects'),
+        'lifeskills': ('lifeskills', 'fd-acc-lifeskills', 'Lifeskills', 'Everyday skills, wellbeing and independence', 'Personal development, money and life skills'),
+        'x-assembly': ('assembly', 'fd-acc-humanities', 'Assemblies & Themes', 'Whole-school stories and big questions', 'Whole-school themes and reflection'),
+        'x-baseline': ('baseline', 'fd-acc-science', 'Starting Checks', 'Short tasks to show what you already know', 'Initial subject and skill snapshots'),
+        'x-careers': ('careers', 'fd-acc-lifeskills', 'Careers & Future Plans', 'Jobs, workplaces and next steps', 'Workplaces, pathways and future options'),
+        'x-community-projects': ('community', 'fd-acc-wellbeing', 'Community Projects', 'Teamwork and local action tasks', 'Practical teamwork and community action'),
+        'x-dt': ('dt', 'fd-acc-art', 'Design & Making (DT)', 'Plan, build and test practical ideas', 'Design, making and practical builds'),
+        'x-ict': ('ict', 'fd-acc-digital', 'Computing & Digital (ICT)', 'Digital skills, safety and creative tech', 'Computing tasks and digital literacy'),
+        'x-intervention-y10': ('intervention', 'fd-acc-science', 'Focused Boost (Year 10)', 'Guided catch-up and confidence builders', 'Targeted Year 10 catch-up sessions'),
+        'x-local-choice': ('local', 'fd-acc-humanities', 'Local Area Topics', 'Places, heritage and nature enquiries', 'Place-based enrichment enquiries'),
+        'x-planning': ('planning', 'fd-acc-lifeskills', 'Organising & Study Skills', 'Plan tasks and track your steps', 'Curriculum and session organisation'),
+        'x-rse': ('rse', 'fd-acc-wellbeing', 'Relationships & Growing Up', 'Respect, friendships and staying safe', 'Relationships and safety lessons'),
+        'x-rshe': ('rshe', 'fd-acc-wellbeing', 'Health, Wellbeing & Relationships', 'Healthy habits, feelings and safety', 'Health, wellbeing and relationships'),
+        'x-rivers': ('rivers', 'fd-acc-humanities', 'Rivers & Landscapes', 'Water, valleys and fieldwork enquiries', 'Physical geography enquiries'),
+        'x-staff-cpd': ('cpd', 'fd-acc-digital', 'Staff Guides (Ask Your Teacher)', 'Adult training materials for staff', 'Professional development sessions'),
+    }
+    if slug in exact:
+        return exact[slug]
+    if 'trekkers' in slug:
+        return ('trekkers', 'fd-acc-wellbeing', 'Outdoor & Trail Challenges', 'Navigation, teamwork and outdoor routes', 'Outdoor learning and route challenges')
+    if 'tutor-time' in slug:
+        return ('tutor', 'fd-acc-lifeskills', 'Form & Tutor Time', 'Daily check-ins, citizenship and staying safe', 'Tutor-time discussion and safeguarding')
+    return ('book', 'fd-acc-science', raw_name, 'Classroom activities and lessons', 'Classroom lessons and materials')
 
 
 def preview_data(bp):
@@ -76,10 +128,19 @@ def subject_tiles(bp, lessons, featured=False, pupil_calm=False):
     cards = bp.subject_pathway_cards(lessons)
     extras = [] if featured else bp.extra_subject_tiles(lessons)
     def tile_html(slug, name):
-        return '<a class="fd-subject ' + esc(slug) + '" href="/Lessons/subject.html?subject=' + esc(slug) + '"><h3>' + esc(name) + '</h3><span class="fd-symbol" aria-hidden="true">' + line_icon(slug) + '</span><span class="fd-arrow" aria-hidden="true">→</span></a>'
+        icon_key, accent_cls, pupil_title, pupil_cue, teacher_cue = subject_meta(slug, name)
+        title = pupil_title if pupil_calm else name
+        cue = pupil_cue if pupil_calm else teacher_cue
+        return ('<a class="fd-subject ' + esc(slug) + ' ' + accent_cls + '" href="/Lessons/subject.html?subject=' + esc(slug) + '">'
+                '<h3>' + esc(title) + '</h3>'
+                '<p class="fd-subject-cue">' + esc(cue) + '</p>'
+                '<span class="fd-symbol" aria-hidden="true">' + line_icon(icon_key) + '</span>'
+                '<span class="fd-arrow" aria-hidden="true">→</span></a>')
     primary_html = ''.join(tile_html(c['slug'], c['name']) for c in cards)
     if pupil_calm and extras:
-        extra_html = '<details class="fd-extra-subjects"><summary>More classroom areas</summary><div class="fd-subjects fd-extra-grid">' + ''.join(tile_html(s, n) for s, n in extras) + '</div></details>'
+        extra_html = ('<details class="fd-extra-subjects"><summary class="fd-extra-summary"><span>More classroom areas</span>'
+                      '<span class="fd-extra-count">' + str(len(extras)) + ' areas</span></summary>'
+                      '<div class="fd-subjects fd-extra-grid">' + ''.join(tile_html(s, n) for s, n in extras) + '</div></details>')
         return '<div class="fd-subjects" data-subject-tiles>' + primary_html + extra_html + '</div>'
     return '<div class="fd-subjects" data-subject-tiles>' + primary_html + ''.join(tile_html(s, n) for s, n in extras) + '</div>'
 
@@ -292,16 +353,61 @@ def render(kind, origin, bp):
         body += '<section class="fd-maker" id="about"><div class="wrap">' + line_icon('person') + '<h2>Made by a teacher. For real classrooms.</h2><a href="/commission/#about-matt">Meet Matt →</a>' + mailing_link() + '</div></section>'
         body += '<script type="application/json" id="home-preview-data">' + json.dumps(preview_data(bp), ensure_ascii=True).replace('<', '\\u003c') + '</script>'
     elif kind == 'teachers':
-        body = '<section class="fd-hero wrap"><div><p class="fd-eyebrow">TEACHERS</p><h1>Ready for your next lesson?</h1><p class="fd-lead">Find a lesson, gather your resources and get ready to teach.</p>' + search(kind) + '<div class="fd-actions">' + action('/Lessons/', 'Browse lessons →') + action('/resources/', 'Find unit packs', True) + '</div></div>' + hero_art(bp, kind) + '</section>'
-        shortcuts = [('/Lessons/?view=saved', 'Saved lessons', 'Return to lessons saved on this device.'), ('/resources/', 'Planning and evidence', 'Find schemes of work and evidence packs.'), ('/Matt-s-Apps-/', 'Classroom tools', 'Open tools for your lesson.')]
-        if primary: shortcuts.append(('/Lessons/primary/', 'Primary lessons', 'Explore lessons for primary pupils.'))
-        body += '<section class="fd-section wrap"><h2>Your teaching shortcuts</h2><div class="fd-shortcuts">' + ''.join('<a class="fd-shortcut" href="' + esc(r) + '"><h3>' + esc(t) + '</h3><p>' + esc(d) + '</p><span aria-hidden="true">→</span></a>' for r, t, d in shortcuts) + '</div></section>'
+        teacher_picks = ''.join('<button type="button" class="fd-topic-btn" data-search-pick="' + esc(t) + '" aria-pressed="false">' + esc(t) + '</button>'
+                                for t in ('Science', 'Humanities', 'Lifeskills', 'Art', 'BUILD', 'GROW', 'LAUNCH'))
+        body = ('<section class="fd-hero wrap"><div><p class="fd-eyebrow">TEACHERS</p><h1>Ready for your next lesson?</h1>'
+                '<p class="fd-lead">Find a lesson, gather your resources and get ready to teach.</p>'
+                + search(kind)
+                + '<div class="fd-topic-picks" role="group" aria-label="Quick search filters">' + teacher_picks + '</div>'
+                + '<div class="fd-actions">' + action('/Lessons/', 'Browse lessons →') + action('/resources/', 'Find unit packs', True) + '</div></div>'
+                + hero_art(bp, kind) + '</section>')
+        body += ('<section class="fd-section wrap" id="teacher-recent" hidden aria-labelledby="teacher-recent-title">'
+                 '<div class="fd-section-head"><h2 id="teacher-recent-title">Recently opened on this device</h2></div>'
+                 '<div class="fd-recent-grid" id="teacher-recent-list"></div></section>')
+        shortcuts = [
+            ('/Lessons/?view=saved', 'Saved lessons', 'Return to lessons saved on this device.'),
+            ('/resources/', 'Planning and evidence', 'Find schemes of work and evidence packs.'),
+            ('/Matt-s-Apps-/', 'Classroom tools', 'Open tools for your lesson.'),
+        ]
+        if primary:
+            shortcuts.append(('/Lessons/primary/', 'Primary lessons', 'Explore lessons for primary pupils.'))
+        shortcuts.extend([
+            ('/teach/', 'Teaching workspace', 'Plan sequences, print packs and classroom routines.'),
+            ('/Lessons/?view=recommended', 'Recommended shelf', 'Open ready-to-teach lessons picked for this term.'),
+        ])
+        body += ('<section class="fd-section wrap"><h2>Your teaching shortcuts</h2><div class="fd-shortcuts">'
+                 + ''.join('<a class="fd-shortcut" href="' + esc(r) + '"><h3>' + esc(t) + '</h3><p>' + esc(d) + '</p><span class="fd-shortcut-arrow" aria-hidden="true">→</span></a>' for r, t, d in shortcuts)
+                 + '</div></section>')
         body += '<section class="fd-section wrap"><div class="fd-section-head"><h2>Browse by subject</h2><a href="/Lessons/">All subjects →</a></div>' + subjects + '</section>'
         body += '<section class="fd-maker"><div class="wrap"><h2>Made by a teacher. For real classrooms.</h2><p>Questions, ideas or something your class needs?</p><a href="mailto:contactmadebymatt@gmail.com">Contact Matt →</a><p>' + mailing_link() + '</p></div></section>'
         note = record['teachers']
         body += '<section class="fd-section fd-safety wrap" id="teacher-note"><h2 id="teacher-note-title">' + esc(note['noteTitle']) + '</h2><p>' + esc(note['note']) + '</p></section>'
     else:
-        body = '<section class="fd-hero wrap"><div><p class="fd-eyebrow">PUPILS</p><h1>What are you learning today?</h1><p class="fd-lead">Choose your subject. Your teacher will help you find your pathway and lesson.</p></div></section><section class="fd-section wrap" id="pupil-search"><h2>Find your activity</h2>' + search(kind) + '<p class="fd-muted">Nothing to install. Ask your teacher if you are not sure where to start.</p></section><section class="fd-section wrap"><h2>Choose your subject</h2>' + subjects + '</section>'
+        pupil_picks = ''.join('<button type="button" class="fd-topic-btn" data-search-pick="' + esc(t) + '" aria-pressed="false">' + esc(t) + '</button>'
+                              for t in ('Forces', 'Plants', 'History', 'Drawing', 'Money'))
+        pupil_pathway_cards = ''.join(
+            '<article class="fd-pupil-pathway" data-pathway="' + esc(k) + '">'
+            '<span class="fd-tier-pill ' + esc(k) + '">' + esc(label) + '</span>'
+            '<p>' + esc(desc) + '</p></article>'
+            for k, label, desc in [
+                ('build', 'BUILD', 'Short, clear steps with visual prompts and steady support.'),
+                ('grow', 'GROW', 'Everyday topics with helpful hints as you work more independently.'),
+                ('launch', 'LAUNCH', 'Deeper challenges for independent study and planning what comes next.'),
+            ]
+        )
+        body = ('<section class="fd-hero wrap"><div><p class="fd-eyebrow">PUPILS</p><h1>What are you learning today?</h1>'
+                '<p class="fd-lead">Choose your subject. Your teacher will help you find your pathway and lesson.</p></div></section>'
+                '<section class="fd-section wrap" id="pupil-search"><h2>Find your activity</h2>' + search(kind)
+                + '<div class="fd-topic-picks" role="group" aria-label="Try a topic">' + pupil_picks + '</div>'
+                + '<p class="fd-muted">Nothing to install. Ask your teacher if you are not sure where to start.</p></section>'
+                '<section class="fd-section wrap" id="pupil-recent" hidden aria-labelledby="pupil-recent-title">'
+                '<div class="fd-section-head"><h2 id="pupil-recent-title">Continue your recent lesson</h2></div>'
+                '<div class="fd-recent-grid" id="pupil-recent-list"></div></section>'
+                '<section class="fd-section wrap"><h2>Choose your subject</h2>' + subjects + '</section>'
+                '<section class="fd-section wrap" id="pupil-pathways" aria-labelledby="pupil-pathways-title">'
+                '<h2 id="pupil-pathways-title">Which pathway do I pick?</h2>'
+                '<p class="fd-muted">Your teacher will tell you whether to open BUILD, GROW or LAUNCH inside your subject.</p>'
+                '<div class="fd-pupil-pathway-grid">' + pupil_pathway_cards + '</div></section>')
     route = '/' if kind == 'home' else record[kind]['route']
     title = {'home': 'Big on ideas. Light on prep.', 'teachers': 'Teachers', 'pupils': 'Pupils'}[kind]
     description = 'Interactive lessons, practical resources and useful teaching tools—all in one place, ready to help you bring learning to life.' if kind == 'home' else 'Practical lessons and teaching packs, ready to adapt.'

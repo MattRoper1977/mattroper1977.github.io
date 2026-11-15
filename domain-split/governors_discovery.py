@@ -81,7 +81,29 @@ def card(row):
 
 
 def page(rows, checked_date, audiences):
-    topics = sorted({r['topic'] for r in rows})
+    origin_counts = {g: sum(1 for r in rows if r['origin'] == g) for g, _, _ in GROUPS}
+    topic_counts = {}
+    for r in rows:
+        topic_counts[r['topic']] = topic_counts.get(r['topic'], 0) + 1
+    topics = sorted(topic_counts)
+    glance = (
+        '<ul class="gv-glance" aria-label="At a glance">'
+        + f'<li><strong>{len(rows)}</strong> governance &amp; curriculum links</li>'
+        + f'<li><strong>{origin_counts["official"]}</strong> official guidance</li>'
+        + f'<li><strong>{origin_counts["sector"]}</strong> sector training</li>'
+        + f'<li><strong>{origin_counts["made-by-matt"]}</strong> Made by Matt</li>'
+        + f'<li>Links checked {escape(checked_date)} · No account needed</li>'
+        + '</ul>'
+    )
+    topic_pills = (
+        '<div class="gv-topic-pills" role="group" aria-label="Filter by topic">'
+        + f'<button type="button" class="gv-topic-pill" data-topic-pick="" aria-pressed="true">All topics ({len(rows)})</button>'
+        + ''.join(
+            f'<button type="button" class="gv-topic-pill" data-topic-pick="{escape(t, quote=True)}" aria-pressed="false">{escape(t)} ({topic_counts[t]})</button>'
+            for t in topics
+        )
+        + '</div>'
+    )
     related = ''.join('<a href="'+escape(audiences[key]['route'], quote=True)+'">'+
                       escape(audiences[key]['label'])+'</a>'
                       for key in ('trusts', 'schools', 'parents'))
@@ -100,17 +122,19 @@ def page(rows, checked_date, audiences):
 <main id="main" class="gv-wrap"><section class="gv-hero" aria-labelledby="page-title"><p class="gv-eyebrow">Supporting your school community</p>
 <h1 id="page-title">Governors &amp; trustees</h1><p class="gv-lead">Good questions start with a clear picture. Find the guidance for your board, build your confidence in the role and explore what learning can look like.</p>
 <div class="gv-actions"><a class="gv-button" href="#governance-resources">Find guidance &amp; training</a><a class="gv-button gv-secondary" href="#gv-made-by-matt">Explore teaching resources</a></div>
+'''+glance+'''
 <p class="gv-intro-note">The official guidance here is for England. Sector providers may also support Wales; each resource names its jurisdiction. Made by Matt materials are teacher-created resources.</p></section>
 <section class="gv-prompts" aria-labelledby="gv-prompts-title"><h2 id="gv-prompts-title">A useful starting point for your next conversation</h2><div class="gv-prompt-grid">
-<article><h3>Your role</h3><p>Read the guide for your school type. Ask your governance professional about the board’s responsibilities, delegated decisions and induction plan.</p></article>
-<article><h3>Safeguarding</h3><p>Use the current safeguarding guidance to discuss how the board receives assurance, checks training and follows up concerns through the school’s procedures.</p></article>
-<article><h3>SEND &amp; inclusion</h3><p>Ask how pupils and families are heard, how barriers to learning are identified and how leaders know that support is helping.</p></article>
-<article><h3>Curriculum</h3><p>Look at a sequence of lessons. Ask what pupils build on, how activities are adapted and how teachers check what pupils understand.</p></article>
+<article><span class="gv-step" aria-hidden="true">01</span><h3>Your role</h3><p>Read the guide for your school type. Ask your governance professional about the board’s responsibilities, delegated decisions and induction plan.</p></article>
+<article><span class="gv-step" aria-hidden="true">02</span><h3>Safeguarding</h3><p>Use the current safeguarding guidance to discuss how the board receives assurance, checks training and follows up concerns through the school’s procedures.</p></article>
+<article><span class="gv-step" aria-hidden="true">03</span><h3>SEND &amp; inclusion</h3><p>Ask how pupils and families are heard, how barriers to learning are identified and how leaders know that support is helping.</p></article>
+<article><span class="gv-step" aria-hidden="true">04</span><h3>Curriculum</h3><p>Look at a sequence of lessons. Ask what pupils build on, how activities are adapted and how teachers check what pupils understand.</p></article>
 </div><p class="gv-small">These conversation prompts are Made by Matt’s own suggestions. Use them alongside your board’s agreed role and the linked guidance.</p></section>
 <section id="governance-resources" class="gv-finder" aria-labelledby="gv-finder-title"><h2 id="gv-finder-title">Find the support you need</h2>
 <form id="gv-search-form" role="search"><div class="gv-search-field"><label for="gv-search">Search governance resources</label><input id="gv-search" type="search" placeholder="Try safeguarding, SEND or induction" autocomplete="off"></div>
 <div><label for="gv-origin">Publisher group</label><select id="gv-origin"><option value="">All resources</option><option value="official">Official guidance</option><option value="sector">Training &amp; sector support</option><option value="made-by-matt">Made by Matt</option></select></div>
 <div><label for="gv-topic">Topic</label><select id="gv-topic"><option value="">All topics</option>'''+''.join('<option>'+escape(t)+'</option>' for t in topics)+'''</select></div><button type="reset">Clear filters</button></form>
+'''+topic_pills+'''
 <p id="gv-result-count" role="status" aria-live="polite">'''+str(len(rows))+''' resources</p><p class="gv-small">Publisher content and booking terms can change. Links and access information checked '''+escape(checked_date)+'''. External links take you to the named publisher.</p>
 <noscript><p>All resources are listed below. Search and filters need JavaScript; the links work without it.</p></noscript></section>
 <p id="gv-empty" hidden>No matching resources. Try a broader search or clear the filters.</p>'''+groups+'''

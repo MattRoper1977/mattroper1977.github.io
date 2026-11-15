@@ -112,21 +112,46 @@ def audience_link(key, all_audiences):
 def make_page(key, page, audience, all_audiences):
     route = audience['route']
     rows = page['resources']
-    topics = sorted({r['topic'] for r in rows})
+    origin_counts = {g: sum(1 for r in rows if r['origin'] == g) for g in ORIGINS}
+    topic_counts = {}
+    for r in rows:
+        topic_counts[r['topic']] = topic_counts.get(r['topic'], 0) + 1
+    topics = sorted(topic_counts)
     buttons = ''.join(link(label, href, 'gv-button' + ('' if i == 0 else ' gv-secondary'))
                       for i, (label, href) in enumerate(page['buttons']))
-    prompts = ''.join(f'<article><h3>{esc(t)}</h3><p>{esc(d)}</p></article>' for t, d in page['prompts'])
+    glance = (
+        '<ul class="gv-glance" aria-label="At a glance">'
+        + f'<li><strong>{len(rows)}</strong> checked resources</li>'
+        + (f'<li><strong>{origin_counts["official"]}</strong> official guidance</li>' if origin_counts['official'] else '')
+        + f'<li><strong>{origin_counts["sector"]}</strong> sector &amp; support</li>'
+        + f'<li><strong>{origin_counts["made-by-matt"]}</strong> Made by Matt</li>'
+        + '<li>Free to open · No account needed</li>'
+        + '</ul>'
+    )
+    prompts = ''.join(
+        f'<article><span class="gv-step" aria-hidden="true">{i:02d}</span><h3>{esc(t)}</h3><p>{esc(d)}</p></article>'
+        for i, (t, d) in enumerate(page['prompts'], 1)
+    )
     if page.get('promptsSource'):
         lead, label, href, tail = page['promptsSource']
         small = f'<p class="gv-small gv-source">{esc(lead)} {link(label, href)} {esc(tail)}</p>'
     else:
         small = f'<p class="gv-small">{esc(page["promptsNote"])}</p>'
+    topic_pills = (
+        '<div class="gv-topic-pills" role="group" aria-label="Filter by topic">'
+        + f'<button type="button" class="gv-topic-pill" data-topic-pick="" aria-pressed="true">All topics ({len(rows)})</button>'
+        + ''.join(
+            f'<button type="button" class="gv-topic-pill" data-topic-pick="{esc(t)}" aria-pressed="false">{esc(t)} ({topic_counts[t]})</button>'
+            for t in topics
+        )
+        + '</div>'
+    )
     groups = ''.join(
         f'<section class="gv-group" data-governance-group aria-labelledby="gv-{g}"><div class="gv-section-head">'
         f'<h2 id="gv-{g}">{esc(title)}</h2><p>{esc(description)}</p></div><div class="gv-grid">'
         + ''.join(card(r) for r in rows if r['origin'] == g) + '</div></section>'
         for g, title, description in page['groups'])
-    hub_links = '<p class="gv-hub-links" id="trusted-resources">' + ' · '.join(link(l, h) for l, h in page['hubLinks']) + '</p>'
+    hub_links = '<p class="gv-hub-links" id="trusted-resources">' + ''.join(link(l, h, 'gv-hub-pill') for l, h in page['hubLinks']) + '</p>'
     related = ''.join(link(label, href) for href, label in (audience_link(k, all_audiences) for k in page['related']))
     # education_expansion appends the governors row to this menu.
     others = ''.join(link(a['label'], a['route']) for a in all_audiences.values())
@@ -148,6 +173,7 @@ def make_page(key, page, audience, all_audiences):
 <main id="main" class="gv-wrap aud-main"><section class="gv-hero" aria-labelledby="page-title"><p class="gv-eyebrow">{esc(page["eyebrow"])}</p>
 <h1 id="page-title">{esc(page["title"])}</h1><p class="gv-lead">{esc(page["lead"])}</p>
 <div class="gv-actions">{buttons}</div>
+{glance}
 <p class="gv-intro-note">{esc(page["note"])}</p></section>
 <section id="{esc(page["promptsId"])}" class="gv-prompts" aria-labelledby="gv-prompts-title"><h2 id="gv-prompts-title">{esc(page["promptsTitle"])}</h2><div class="gv-prompt-grid">
 {prompts}
@@ -156,6 +182,7 @@ def make_page(key, page, audience, all_audiences):
 <form id="gv-search-form" role="search"><div class="gv-search-field"><label for="gv-search">{esc(page["finderLabel"])}</label><input id="gv-search" type="search" placeholder="{esc(page["finderPlaceholder"])}" autocomplete="off"></div>
 <div><label for="gv-origin">Publisher group</label><select id="gv-origin"><option value="">All resources</option>{''.join(f'<option value="{g}">{esc(t)}</option>' for g, t, _ in page["groups"])}</select></div>
 <div><label for="gv-topic">Topic</label><select id="gv-topic"><option value="">All topics</option>{''.join('<option>'+esc(t)+'</option>' for t in topics)}</select></div><button type="reset">Clear filters</button></form>
+{topic_pills}
 <p id="gv-result-count" role="status" aria-live="polite">{len(rows)} resources</p><p class="gv-small">Publisher content, prices and booking terms can change. Each card shows the date its link and access details were checked. External links take you to the named publisher.</p>
 <noscript><p>All resources are listed below. Search and filters need JavaScript; the links work without it.</p></noscript>
 {hub_links}</section>
@@ -164,7 +191,7 @@ def make_page(key, page, audience, all_audiences):
 <h3>Useful links</h3><div class="gv-actions">{utilities}{link("Resources", "/resources/")}{link("Tools", "/tools/")}</div>
 <h3 id="choose-homepage">Other starting points</h3><nav class="gv-actions" aria-label="Audience homepages">{others}</nav>
 <p id="audience-play-showcase" class="mbm-external-play">{link("Made by Matt Play — separate games website", PLAY + "/")}</p>
-<p class="gv-small gv-adult-links">{" · ".join(link(l, h) for l, h in ADULT_LINKS)}</p></section>
+<p class="gv-small gv-adult-links">{''.join(link(l, h, 'gv-hub-pill') for l, h in ADULT_LINKS)}</p></section>
 </main></body></html>
 '''
 
