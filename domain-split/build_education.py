@@ -384,6 +384,9 @@ def build(output, lessons, apps=None, allow_sparse=False):
             if name=='site' and relative in {'resources/index.html','tools/index.html'}:
                 text=target.read_text()
                 text=text.replace('</head>','<link rel="stylesheet" href="/assets/education-navigation.css"></head>',1)
+                if relative=='tools/index.html':
+                    bridge = '<div class="tx-wrap" style="padding:1rem 1rem 1.4rem"><div class="bridge"><span class="stamp">CROSS-ESTATE BRIDGE</span><h3>Looking for full-screen pupil &amp; teacher studios?</h3><p>Every classroom studio runs standalone in the browser with no sign-in, alongside printable teaching packs.</p><div class="acts"><a href="/Matt-s-Apps-/">Open Creative &amp; Classroom Studios \u2192</a><a href="/resources/">Browse Printable &amp; Editable Packs \u2192</a></div></div></div>'
+                    text=text.replace('<section class="commit">', bridge + '<section class="commit">', 1)
                 write(dest,relative,text)
             # One education-only navigation adapter for the published lesson
             # experience. Games were excluded above; raw teaching files and
@@ -472,6 +475,75 @@ def build(output, lessons, apps=None, allow_sparse=False):
         from education_chrome_correction import refresh as refresh_chrome_icons
         refresh_chrome_icons(output)
         report['support'] = refresh_support(output, lessons, ROOT)
+        unified = {}
+        try:
+            si = json.loads((output / 'education-site' / 'data' / 'mbm-search-index.json').read_text(encoding='utf8'))
+            for entry in si.get('entries', []):
+                route = str(entry.get('route') or '').strip()
+                if not route or is_game(route) or entry.get('category') == 'external' or entry.get('external'):
+                    continue
+                kind = 'packs' if 'pack' in str(entry.get('contentType', '')).lower() else ('tools' if route.startswith(('/tools/', '/Matt-s-Apps-/', '/uas/', '/asdan/', '/artsaward/', '/evidence-binder/')) else 'lessons')
+                unified[route] = {
+                    'title': str(entry.get('title') or route),
+                    'route': route,
+                    'kind': kind,
+                    'meta': ' · '.join(x for x in (entry.get('contentType'), entry.get('subject'), entry.get('year')) if x),
+                    'hay': ' '.join(str(x) for x in [entry.get('title', ''), entry.get('description', ''), entry.get('subject', ''), entry.get('family', ''), ' '.join(entry.get('keywords') or []), route]).lower(),
+                }
+        except OSError:
+            pass
+        try:
+            res_rows = json.loads((output / 'education-lessons' / 'resources.json').read_text(encoding='utf8'))
+            dt_path = output / 'education-lessons' / 'assets' / 'catalogue' / 'display-titles.json'
+            dt_entries = json.loads(dt_path.read_text(encoding='utf8')).get('entries', {}) if dt_path.is_file() else {}
+            pw_names = {'BUILD': 'BASE', 'GROW': 'TRACK', 'LAUNCH': 'SUMMIT'}
+            for r in res_rows:
+                fpath = str(r.get('file') or r.get('url') or '').strip()
+                if not fpath or is_game(fpath):
+                    continue
+                route = fpath if fpath.startswith('/') else '/Lessons/' + fpath.lstrip('/')
+                if is_game(route) or route in unified:
+                    continue
+                disp = dt_entries.get(fpath, {}).get('displayTitle') or r.get('displayTitle') or r.get('title') or fpath
+                pw_raw = str(r.get('pathway') or '')
+                for k, v in pw_names.items():
+                    if k in fpath.upper() or k in str(r.get('title', '')).upper():
+                        pw_raw = v
+                        break
+                unified[route] = {
+                    'title': str(disp),
+                    'route': route,
+                    'kind': 'packs' if r.get('kind') == 'pack' else 'lessons',
+                    'meta': ' · '.join(x for x in (r.get('subject'), r.get('halfTerm'), pw_raw) if x),
+                    'hay': ' '.join(str(x) for x in [disp, r.get('title', ''), r.get('subject', ''), r.get('family', ''), r.get('halfTerm', ''), r.get('unit', ''), r.get('desc', '') or r.get('description', ''), ' '.join(r.get('keywords') or []), pw_raw, fpath]).lower(),
+                }
+        except OSError:
+            pass
+        try:
+            ap = json.loads((output / 'education-apps' / 'apps.json').read_text(encoding='utf8'))
+            for sp in ap.get('spaces', []):
+                cat = sp.get('cat', '')
+                for item in sp.get('items', []):
+                    key = str(item.get('f') or '').strip()
+                    if not key:
+                        continue
+                    route = key if key.startswith(('http://', 'https://', '/')) else '/Matt-s-Apps-/' + key
+                    if is_game(route) or route in unified:
+                        continue
+                    name = item.get('n') or key
+                    desc = item.get('d') or ''
+                    unified[route] = {
+                        'title': str(name),
+                        'route': route,
+                        'kind': 'tools',
+                        'meta': cat,
+                        'hay': ' '.join([str(name), str(desc), str(cat), route]).lower(),
+                    }
+        except OSError:
+            pass
+        ordered = [unified[k] for k in sorted(unified)]
+        write(output / 'education-site', 'data/mbm-unified-search.json', json.dumps({'schema': 1, 'entries': ordered}, ensure_ascii=False) + '\n')
+        report['unified_search_count'] = len(ordered)
     # Enrichment must never reintroduce excluded discovery records. Run after
     # every generator, including overlays, Apps, audiences and usage metadata.
     for name, (_, prefix) in roots.items():

@@ -18,7 +18,7 @@
   a count. Nothing on this page is typed: every count, date and label is read from a record.
 -->
 <style>
-:root{--ink:#18223b;--navy:#161d3d;--paper:#fffefa;--ground:#f5f3ec;--line:#d5dcd9;--muted:#536078;--mint:#8ee6cb;--amber:#f2a24a;--blue:#33608f;--purple:#7c5cb8;--green:#247761;--focus:#0b1020}
+:root{--ink:#18223b;--navy:#161d3d;--paper:#fffefa;--ground:#f5f3ec;--line:#d5dcd9;--muted:#343b57;--mint:#8ee6cb;--amber:#f2a24a;--blue:#33608f;--purple:#7c5cb8;--green:#15472f;--focus:#0b1020}
 *{box-sizing:border-box}html{background:var(--ground)}body{margin:0;font:16px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--ground)}
 a{color:inherit}.skip{position:absolute;left:-999px;top:0;background:var(--navy);color:#fff;padding:.6rem 1rem;z-index:50}.skip:focus{left:8px;top:8px}
 .wrap{max-width:70rem;margin:0 auto;padding:0 1rem}
@@ -59,11 +59,11 @@ dialog.sheet{border:0;border-radius:14px 14px 0 0;padding:0;width:100%;max-width
    highlumen also carried --rx-deep -> --navy, --rx-mint -> --mint and
    --rx-mintd -> --green, and takes a black rule line so its borders keep the
    contrast the palette is for. cream is the default and sets no attribute. */
-[data-theme="pink"]{--ground:#F9E8EC;--paper:#FFF9FA;--ink:#1B2140;--muted:#4A5170}
-[data-theme="blue"]{--ground:#E7EEF7;--paper:#F8FBFF;--ink:#1B2140;--muted:#4A5170}
-[data-theme="light"]{--ground:#F7F7F4;--paper:#FFFFFF;--ink:#1B2140;--muted:#4A5170}
-[data-theme="dark"]{--ink:#e9ecf3;--paper:#1c2440;--ground:#121831;--line:#34405f;--muted:#b8c3d9}[data-theme="dark"] .chip{background:#26305a;color:var(--ink);border-color:#3f4c75}[data-theme="dark"] .chip.label{background:#26305a}[data-theme="dark"] .sheet-close{background:#26305a;color:var(--ink)}[data-theme="dark"] .drift{background:#3a2f1c}[data-theme="dark"] .empty{border-color:#3f4c75}
-[data-theme="highlumen"]{--ground:#FFFFFF;--paper:#FFFFFF;--ink:#000000;--muted:#3A3A3A;--line:#000000;--navy:#0B1020;--mint:#FFFFFF;--green:#0F5132}
+[data-theme="pink"]{--ground:#F9E8EC;--paper:#FFF9FA;--ink:#1B2140;--muted:#343B57}
+[data-theme="blue"]{--ground:#E7EEF7;--paper:#F8FBFF;--ink:#1B2140;--muted:#343B57}
+[data-theme="light"]{--ground:#F7F7F4;--paper:#FFFFFF;--ink:#1B2140;--muted:#343B57}
+[data-theme="dark"]{--ink:#e9ecf3;--paper:#1c2440;--ground:#121831;--line:#34405f;--muted:#cfd8ea}[data-theme="dark"] .chip{background:#26305a;color:var(--ink);border-color:#3f4c75}[data-theme="dark"] .chip.label{background:#26305a}[data-theme="dark"] .sheet-close{background:#26305a;color:var(--ink)}[data-theme="dark"] .drift{background:#3a2f1c}[data-theme="dark"] .empty{border-color:#3f4c75}
+[data-theme="highlumen"]{--ground:#FFFFFF;--paper:#FFFFFF;--ink:#000000;--muted:#18223B;--line:#000000;--navy:#0B1020;--mint:#FFFFFF;--green:#0F5132}
 [data-theme="highlumen"] .chip{background:#FFFFFF;color:#000000;border-color:#000000}
 [data-theme="highlumen"] .unit,[data-theme="highlumen"] .empty{border-color:#000000}
 </style>
@@ -101,11 +101,11 @@ html[data-theme="dark"] .rx-hero.rx-intro :focus-visible{outline-color:#d5eedd}
 .unit{padding:.85rem 1rem 1rem;gap:.75rem;box-shadow:0 2px 10px rgba(22,29,61,.08)}
 .unit.science{border-top-color:#bd6825}.unit.humanities-re{border-top-color:#247761}.unit.art-studio{border-top-color:#7c5cb8}.unit.lifeskills{border-top-color:#536f8b}
 .unit h3{font-size:1.3rem;margin:0}.unit .chip{line-height:1.35;min-height:44px;min-width:44px;border-radius:9px}
-.unit .chip.label{font-size:.75rem;min-height:30px;letter-spacing:.025em}
+.unit .chip.label{font-size:.78125rem;min-height:30px;letter-spacing:.025em}
 /* Native dark mode also marks body; keep each pale pathway badge's paired ink. */
-body[data-mbm-palette="education"] .unit .chip.label.tier.BUILD{color:var(--mbm-pathway-build-ink,#8a4c0b)}
-body[data-mbm-palette="education"] .unit .chip.label.tier.GROW{color:var(--mbm-pathway-grow-ink,#2f6b4d)}
-body[data-mbm-palette="education"] .unit .chip.label.tier.LAUNCH{color:var(--mbm-pathway-launch-ink,#6e5a0c)}
+body[data-mbm-palette="education"] .unit .chip.label.tier.BUILD{color:var(--mbm-pathway-build-ink,#5c3004)}
+body[data-mbm-palette="education"] .unit .chip.label.tier.GROW{color:var(--mbm-pathway-grow-ink,#15472f)}
+body[data-mbm-palette="education"] .unit .chip.label.tier.LAUNCH{color:var(--mbm-pathway-launch-ink,#4a3b04)}
 .unit .chip.more{border:1px solid var(--line);color:var(--ink);background:var(--edu-soft,#eef2f5)}
 .unit .go{margin-top:auto;align-self:flex-start}
 .sheet{overscroll-behavior:contain}
@@ -222,8 +222,10 @@ function unitCard(k){const label=k.unit?`${k.halfTerm} · ${k.unit}`:k.halfTerm;
   return `<article class="rx-cardx unit ${esc(CARDS[k.card]?k.card:'extra')}" data-key="${esc(k.id)}" data-half-term="${esc(k.halfTerm)}"><div class="chips"><span class="chip label">${esc(nameOf(k.card))}</span>${k.tier?`<span class="chip label tier ${esc(k.tier)}">${esc(k.tier)}</span>`:''}</div><h3>${esc(label)}</h3>${k.lessons.length?`<p class="meta">${esc(COPY.lessonsMeta(k.lessons.length,k.halfTerm))}</p>`:''}<div class="chips">${chips}</div>${k.lessons.length?`<a class="go" href="${esc(subject)}">${esc(COPY.delivery)}</a>`:''}</article>`;}
 function docRow(r){const fmt=r._site&&!r._href?'':r._fmt;const link=r._href?`<a href="${esc(safeHref(r._href))}"${r._fmt==='packs'?' download':''}>${esc(displayTitle(r))}</a>`:`<span class="status">${esc(displayTitle(r))}${r.status?` · ${esc(r.status)}`:''}</span>`;return `<li class="rx-cardx doc">${link}${referenceDetail(r)}${fmt?`<span class="badge">${esc(FORMAT_LABEL[fmt]||fmt)}</span>`:''}${r._tier?`<span class="chip label tier">${esc(r._tier)}</span>`:''}<span class="badge">${esc(r.family||r.subject||'')}</span></li>`;}
 /* Multi-word search: every word of the query must appear (the old page's documented rule). */
+const RX_SYNS={electricity:['circuits','current','voltage'],circuits:['electricity','series','parallel'],plants:['photosynthesis','leaves','roots'],photosynthesis:['plants','leaves'],forces:['gravity','friction','motion','magnets'],humanities:['history','geography','religion','ethics'],lifeskills:['money','wellbeing','careers','safety'],art:['drawing','painting','sculpture'],base:['build'],track:['grow'],summit:['launch'],pack:['slides','worksheet','editable','pptx','docx']};
+function rxFuzzyWord(hayWords,w){if(w.length<5||!/^[a-z]+$/.test(w))return false;const maxD=w.length>=8?2:1;return hayWords.some(c=>{if(c.length<4||c[0]!==w[0]||(maxD===2&&c.slice(0,2)!==w.slice(0,2))||Math.abs(c.length-w.length)>maxD)return false;let p=Array.from({length:w.length+1},(_,i)=>i);for(let i=1;i<=c.length;i++){const cur=[i];let m=i;for(let j=1;j<=w.length;j++){const k=c[i-1]===w[j-1]?0:1;cur[j]=Math.min(cur[j-1]+1,p[j]+1,p[j-1]+k);if(cur[j]<m)m=cur[j];}if(m>maxD)return false;p=cur;}return p[w.length]<=maxD;});}
 function hay(parts){return parts.join(' ').toLowerCase();}
-function wordsMatch(text,q){const words=q.split(/\s+/).filter(Boolean);return !words.length||words.every(w=>text.includes(w));}
+function wordsMatch(text,q){const words=q.split(/\s+/).filter(Boolean);if(!words.length)return true;const hw=text.split(/[^a-z0-9]+/).filter(Boolean);return words.every(w=>text.includes(w)||(RX_SYNS[w]||[]).some(s=>text.includes(s))||rxFuzzyWord(hw,w));}
 function matches(r,q){return !q||wordsMatch(hay([r.title,displayTitle(r),r.id,r.file,r.desc,r.description,r.subject,r.family,r.halfTerm,r.unit,...(r.keywords||[]),...(r.tags||[])]),q);}
 function render(){
   const p=params();const q=(p.get('q')||'').toLowerCase().trim(),sub=p.get('subject')||'',pw=(p.get('pathway')||'').toUpperCase(),unit=p.get('unit')||'';
