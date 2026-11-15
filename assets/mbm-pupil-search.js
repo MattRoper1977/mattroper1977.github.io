@@ -60,12 +60,49 @@
     if (status) status.textContent = '';
   }
 
+  var PUPIL_SYNS = {
+    space: ['orbit', 'planet', 'star', 'rocket', 'galaxy'],
+    maths: ['number', 'fraction', 'sum', 'calc', 'geometry', 'count'],
+    math: ['number', 'fraction', 'sum', 'calc', 'geometry'],
+    word: ['spelling', 'reading', 'letters', 'phonics'],
+    memory: ['pair', 'match', 'recall'],
+    puzzle: ['maze', 'logic', 'grid', 'sort']
+  };
+  function pupilFuzzy(hw, tok) {
+    if (tok.length < 5 || !/^[a-z]+$/.test(tok)) return false;
+    var maxD = tok.length >= 8 ? 2 : 1;
+    for (var k = 0; k < hw.length; k++) {
+      var c = hw[k];
+      if (c.length < 4 || c[0] !== tok[0] || (maxD === 2 && c.slice(0, 2) !== tok.slice(0, 2)) || Math.abs(c.length - tok.length) > maxD) continue;
+      var p = []; for (var j = 0; j <= tok.length; j++) p[j] = j;
+      var ok = true;
+      for (var i = 1; i <= c.length; i++) {
+        var cur = [i], m = i;
+        for (var l = 1; l <= tok.length; l++) {
+          var cost = c[i - 1] === tok[l - 1] ? 0 : 1;
+          cur[l] = Math.min(cur[l - 1] + 1, p[l] + 1, p[l - 1] + cost);
+          if (cur[l] < m) m = cur[l];
+        }
+        if (m > maxD) { ok = false; break; }
+        p = cur;
+      }
+      if (ok && p[tok.length] <= maxD) return true;
+    }
+    return false;
+  }
+
   function apply(q) {
     var terms = q.toLowerCase().split(/\s+/).filter(Boolean);
     if (!terms.length) { reset(); return; }
     var hits = 0;
     items.forEach(function (i) {
-      var match = terms.every(function (t) { return i.hay.indexOf(t) >= 0; });
+      var hw = i.hay.split(/[^a-z0-9]+/).filter(Boolean);
+      var match = terms.every(function (t) {
+        if (i.hay.indexOf(t) >= 0) return true;
+        var sy = PUPIL_SYNS[t] || [];
+        if (sy.some(function (s) { return i.hay.indexOf(s) >= 0; })) return true;
+        return pupilFuzzy(hw, t);
+      });
       i.card.hidden = !match;
       if (match) hits++;
     });

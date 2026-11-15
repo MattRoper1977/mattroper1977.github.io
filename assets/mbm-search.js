@@ -43,14 +43,42 @@
     ].join(' '));
     return entry.__haystack;
   }
+  var SEARCH_SYNS={electricity:['circuits','current','voltage'],circuits:['electricity','series','parallel'],plants:['photosynthesis','leaves','roots'],photosynthesis:['plants','leaves'],forces:['gravity','friction','motion','magnets'],humanities:['history','geography','religion','ethics'],lifeskills:['money','wellbeing','careers','safety'],art:['drawing','painting','sculpture'],base:['build'],track:['grow'],summit:['launch'],timer:['clock','countdown','stopwatch'],picker:['random','wheel'],seating:['desk','plan'],register:['outcomes','portfolio','evidence']};
+  function fuzzyWordMatch(hayWords,tok){
+    if(tok.length<5||!/^[a-z]+$/.test(tok))return false;
+    var maxD=tok.length>=8?2:1;
+    for(var i=0;i<hayWords.length;i++){
+      var c=hayWords[i];
+      if(c.length<4||c[0]!==tok[0]||(maxD===2&&c.slice(0,2)!==tok.slice(0,2))||Math.abs(c.length-tok.length)>maxD)continue;
+      var p=[];for(var k=0;k<=tok.length;k++)p[k]=k;
+      var ok=true;
+      for(var a=1;a<=c.length;a++){
+        var cur=[a],m=a;
+        for(var b=1;b<=tok.length;b++){var cost=c[a-1]===tok[b-1]?0:1;cur[b]=Math.min(cur[b-1]+1,p[b]+1,p[b-1]+cost);if(cur[b]<m)m=cur[b];}
+        if(m>maxD){ok=false;break;}
+        p=cur;
+      }
+      if(ok&&p[tok.length]<=maxD)return true;
+    }
+    return false;
+  }
   function score(entry,query){
     var q=norm(query);
     if(!q)return 1;
     var tokens=q.split(/\s+/).filter(Boolean);
     var hay=buildHaystack(entry);
-    if(!tokens.every(function(token){return hay.indexOf(token)!==-1;}))return -1;
+    var hw=hay.split(' ').filter(Boolean);
+    var exactAll=true;
+    var okAll=tokens.every(function(token){
+      if(hay.indexOf(token)!==-1)return true;
+      exactAll=false;
+      var sy=SEARCH_SYNS[token]||[];
+      if(sy.some(function(s){return hay.indexOf(s)!==-1;}))return true;
+      return fuzzyWordMatch(hw,token);
+    });
+    if(!okAll)return -1;
     var title=norm(entry.title);
-    var result=0;
+    var result=exactAll?20:0;
     if(title===q)result+=500;
     if(title.indexOf(q)===0)result+=260;
     if(title.indexOf(q)!==-1)result+=130;

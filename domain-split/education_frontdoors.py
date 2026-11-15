@@ -72,12 +72,16 @@ def preview_data(bp):
     return valid
 
 
-def subject_tiles(bp, lessons, featured=False):
+def subject_tiles(bp, lessons, featured=False, pupil_calm=False):
     cards = bp.subject_pathway_cards(lessons)
     extras = [] if featured else bp.extra_subject_tiles(lessons)
-    return '<div class="fd-subjects" data-subject-tiles>' + ''.join(
-        '<a class="fd-subject ' + esc(slug) + '" href="/Lessons/subject.html?subject=' + esc(slug) + '"><h3>' + esc(name) + '</h3><span class="fd-symbol" aria-hidden="true">' + line_icon(slug) + '</span><span class="fd-arrow" aria-hidden="true">→</span></a>'
-        for slug, name in [(c['slug'], c['name']) for c in cards] + extras) + '</div>'
+    def tile_html(slug, name):
+        return '<a class="fd-subject ' + esc(slug) + '" href="/Lessons/subject.html?subject=' + esc(slug) + '"><h3>' + esc(name) + '</h3><span class="fd-symbol" aria-hidden="true">' + line_icon(slug) + '</span><span class="fd-arrow" aria-hidden="true">→</span></a>'
+    primary_html = ''.join(tile_html(c['slug'], c['name']) for c in cards)
+    if pupil_calm and extras:
+        extra_html = '<details class="fd-extra-subjects"><summary>More classroom areas</summary><div class="fd-subjects fd-extra-grid">' + ''.join(tile_html(s, n) for s, n in extras) + '</div></details>'
+        return '<div class="fd-subjects" data-subject-tiles>' + primary_html + extra_html + '</div>'
+    return '<div class="fd-subjects" data-subject-tiles>' + primary_html + ''.join(tile_html(s, n) for s, n in extras) + '</div>'
 
 
 PATHWAY_MANIFEST = 'pathway-definitions.json'
@@ -266,7 +270,7 @@ def render(kind, origin, bp):
         import home_slots
         return home_slots.render_home(origin, bp)
     record = json.loads(bp.AUDIENCE_RECORD.read_text())['audiences']
-    subjects = subject_tiles(bp, bp.LESSONS_ROOT, featured=kind == 'home')
+    subjects = subject_tiles(bp, bp.LESSONS_ROOT, featured=kind == 'home', pupil_calm=kind == 'pupils')
     primary = bp.LESSONS_ROOT is not None and (bp.LESSONS_ROOT / 'primary/index.html').is_file()
     if kind == 'home':
         hero = '<p class="fd-eyebrow">MADE BY A TEACHER. BUILT FOR REAL CLASSROOMS.</p><h1>Big on ideas. Light on prep.</h1><p class="fd-lead">Interactive lessons, practical resources and useful teaching tools—all in one place, ready to help you bring learning to life.</p>' + search(kind) + '<div class="fd-actions">' + action('/Lessons/', 'Browse lessons →', True) + action('/resources/?type=pack', 'Teaching packs', True) + '</div>'
@@ -297,7 +301,7 @@ def render(kind, origin, bp):
         note = record['teachers']
         body += '<section class="fd-section fd-safety wrap" id="teacher-note"><h2 id="teacher-note-title">' + esc(note['noteTitle']) + '</h2><p>' + esc(note['note']) + '</p></section>'
     else:
-        body = '<section class="fd-hero wrap"><div><p class="fd-eyebrow">PUPILS</p><h1>What are you learning today?</h1><p class="fd-lead">Choose your subject. Your teacher will help you find your pathway and lesson.</p></div></section><section class="fd-section wrap"><h2>Choose your subject</h2>' + subjects + '</section><section class="fd-section wrap" id="pupil-search"><h2>Find your activity</h2>' + search(kind) + '<p class="fd-muted">Nothing to install. Ask your teacher if you are not sure where to start.</p></section>'
+        body = '<section class="fd-hero wrap"><div><p class="fd-eyebrow">PUPILS</p><h1>What are you learning today?</h1><p class="fd-lead">Choose your subject. Your teacher will help you find your pathway and lesson.</p></div></section><section class="fd-section wrap" id="pupil-search"><h2>Find your activity</h2>' + search(kind) + '<p class="fd-muted">Nothing to install. Ask your teacher if you are not sure where to start.</p></section><section class="fd-section wrap"><h2>Choose your subject</h2>' + subjects + '</section>'
     route = '/' if kind == 'home' else record[kind]['route']
     title = {'home': 'Big on ideas. Light on prep.', 'teachers': 'Teachers', 'pupils': 'Pupils'}[kind]
     description = 'Interactive lessons, practical resources and useful teaching tools—all in one place, ready to help you bring learning to life.' if kind == 'home' else 'Practical lessons and teaching packs, ready to adapt.'

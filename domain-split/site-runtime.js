@@ -38,6 +38,43 @@
     }
     a.append(label, h, p, action); return a;
   }
+  const RT_SYNS = {
+    electricity: ['circuits', 'current', 'voltage'],
+    circuits: ['electricity', 'series', 'parallel'],
+    plants: ['photosynthesis', 'leaves', 'roots'],
+    photosynthesis: ['plants', 'leaves'],
+    forces: ['gravity', 'friction', 'motion', 'magnets'],
+    humanities: ['history', 'geography', 'religion', 'ethics'],
+    lifeskills: ['money', 'wellbeing', 'careers', 'safety'],
+    art: ['drawing', 'painting', 'sculpture'],
+    base: ['build'],
+    track: ['grow'],
+    summit: ['launch'],
+    pack: ['slides', 'worksheet', 'editable', 'pptx', 'docx'],
+  };
+  function rtFuzzy(hw, w) {
+    if (w.length < 5 || !/^[a-z]+$/.test(w)) return false;
+    const maxD = w.length >= 8 ? 2 : 1;
+    for (let i = 0; i < hw.length; i++) {
+      const c = hw[i];
+      if (c.length < 4 || c[0] !== w[0] || (maxD === 2 && c.slice(0, 2) !== w.slice(0, 2)) || Math.abs(c.length - w.length) > maxD) continue;
+      let p = Array.from({ length: w.length + 1 }, (_, k) => k);
+      let ok = true;
+      for (let a = 1; a <= c.length; a++) {
+        const cur = [a];
+        let m = a;
+        for (let b = 1; b <= w.length; b++) {
+          const cost = c[a - 1] === w[b - 1] ? 0 : 1;
+          cur[b] = Math.min(cur[b - 1] + 1, p[b] + 1, p[b - 1] + cost);
+          if (cur[b] < m) m = cur[b];
+        }
+        if (m > maxD) { ok = false; break; }
+        p = cur;
+      }
+      if (ok && p[w.length] <= maxD) return true;
+    }
+    return false;
+  }
   function render() {
     if (!form || !catalogue) return;
     const q = document.getElementById(page + '-q').value.toLowerCase().trim().split(/\s+/).filter(Boolean);
@@ -45,7 +82,9 @@
     const pathway = pathwaySelect ? pathwaySelect.value.toLowerCase() : '';
     const rows = catalogue[page === 'teachers' ? 'education' : page].filter(item => {
       const text = [item.title, item.description, item.subject, ...(item.keywords || []), ...(Array.isArray(item.pathways) ? item.pathways : [item.pathways])].join(' ').toLowerCase();
-      return q.every(w => text.includes(w)) && (!pathway || new RegExp('\\b' + pathway + '\\b').test(text));
+      const hw = text.split(/[^a-z0-9]+/).filter(Boolean);
+      const qOk = q.every(w => text.includes(w) || (RT_SYNS[w] || []).some(s => text.includes(s)) || rtFuzzy(hw, w));
+      return qOk && (!pathway || new RegExp('\\b' + pathway + '\\b').test(text));
     });
     const results = document.getElementById(page + '-results');
     results.replaceChildren(...rows.slice(0, limit).map(item => card(item, false)));

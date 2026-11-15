@@ -324,7 +324,7 @@ def refresh(output, site_source):
         if not path.is_file():
             raise ValueError('Missing navigation surface: ' + str(path))
         text = path.read_text()
-        theme = has_reading_theme(text)
+        theme = True  # Universal 6-theme + Display options across all Education pages.
         control = SEARCH_CONTROLS.get(route)
         search = '#' + control if control and ('id="' + control + '"') in text else SEARCH_FALLBACK
         searches[route] = search
