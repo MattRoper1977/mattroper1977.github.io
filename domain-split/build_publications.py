@@ -245,10 +245,30 @@ def render_page(preview, kind, origin, config):
 
 
 def games_privacy(origin):
+    css = (
+        '*{box-sizing:border-box}'
+        'body{margin:0;padding:2rem 1rem 3.5rem;font:1rem/1.68 system-ui,-apple-system,Segoe UI,sans-serif;color:#f5f7fb;background:#090c12;'
+        'background-image:radial-gradient(ellipse 60rem 30rem at 80% -4rem,rgba(94,242,214,.11),transparent 65%),radial-gradient(ellipse 50rem 28rem at 15% 4rem,rgba(139,92,246,.12),transparent 62%)}'
+        'main{max-width:820px;margin:0 auto 1.5rem;padding:clamp(1.25rem,3vw,2.2rem);border-radius:20px;background:#121824;border:1px solid rgba(148,163,184,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 20px 44px -16px rgba(0,0,0,.65)}'
+        'a{color:#5ef2d6;text-underline-offset:3px;font-weight:700}'
+        'main>a:first-child{display:inline-flex;align-items:center;min-height:44px;min-width:44px;padding:.45rem .95rem;margin-bottom:1rem;border-radius:11px;background:#1a2436;border:1px solid rgba(94,242,214,.35);text-decoration:none}'
+        'main>a:first-child:hover{background:#223048;border-color:#5ef2d6}'
+        'h1,h2{line-height:1.18;letter-spacing:-.02em;color:#f5f7fb}'
+        'h1{font-size:clamp(1.85rem,4.5vw,2.6rem);margin:.2rem 0 1rem}'
+        'h2{font-size:1.3rem;margin:1.6rem 0 .55rem;color:#88f9e4}'
+        'p{color:#cbd5e1;overflow-wrap:anywhere}'
+        '.mbm-usage{--usage-ink:#f5f7fb;--usage-muted:#cbd5e1;--usage-bg:#121824;--usage-line:rgba(148,163,184,.22);--usage-mint:#5ef2d6;max-width:820px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 18px 40px -16px rgba(0,0,0,.6)}'
+        '.mbm-usage a{color:#5ef2d6;display:inline-flex;align-items:center;min-height:44px}'
+        '.mbm-usage button,.mbm-usage select{background:#1a2436;color:#f5f7fb;border-color:rgba(148,163,184,.36);min-height:44px;min-width:44px}'
+        '.mbm-usage button[data-usage-choice="allow"]{background:#5ef2d6;color:#051e19;border-color:#5ef2d6}'
+        '.mbm-usage button[aria-pressed="true"]{outline:2.5px solid #5ef2d6;outline-offset:2px}'
+        '.mbm-usage :focus-visible,a:focus-visible{outline:2.5px solid #5ef2d6;outline-offset:3px}'
+        '.usage-note,.usage-status{background:#172133!important;border-color:rgba(94,242,214,.3)!important;color:#e2e8f0!important}'
+    )
     return ('<!doctype html><html lang="en-GB"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src \'self\' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: blob:; font-src \'self\' data:; connect-src \'self\' https://*.supabase.co; object-src \'none\'; base-uri \'self\'; form-action \'self\'">'
-            '<title>Privacy and saved progress · Made by Matt Games</title><link rel="canonical" href="' + origin + '/privacy/">'
-            '<style>body{max-width:760px;margin:3rem auto;padding:0 1.25rem;font:1.05rem/1.7 system-ui;color:#18223b;background:#f5f3ec}a{color:#174e45}h1{line-height:1.2}</style>'
+            '<meta name="theme-color" content="#090c12"><title>Privacy and saved progress · Made by Matt Games</title><link rel="canonical" href="' + origin + '/privacy/">'
+            '<style>' + css + '</style>'
             '<main><a href="/">Back to games</a><h1>Privacy and saved progress</h1>'
             '<p>Games can store progress and preferences in this browser. The same game in another browser, on another device or at another website address can have a different save.</p>'
             '<h2>Moving from madebymatt.uk</h2><p>This games website uses a new address. Existing saves at madebymatt.uk do not transfer automatically. Publishing this site does not delete that browser data. Keep any exports or backups offered by your game.</p>'
@@ -414,11 +434,23 @@ def main():
         copy_file(HERE / 'game-saves.js', target, 'assets/game-saves.js')
         copy_file(HERE / 'game-saves.html', target, 'game-saves/index.html')
         copy_file(HERE / 'game-storage-allowlist.json', target, 'data/game-storage-allowlist.json')
+    play_saves_css = (
+        '<meta name="theme-color" content="#090c12"><style>'
+        'body{color:#f5f7fb;background:#090c12;background-image:radial-gradient(ellipse 60rem 30rem at 78% -4rem,rgba(94,242,214,.11),transparent 65%),radial-gradient(ellipse 50rem 28rem at 15% 4rem,rgba(139,92,246,.12),transparent 62%);max-width:52rem;margin:2rem auto;padding:0 1.25rem 3rem}'
+        'main>a:first-child{display:inline-flex;align-items:center;min-height:44px;padding:.45rem .95rem;margin-bottom:.75rem;border-radius:11px;background:#172032;border:1px solid rgba(94,242,214,.35);text-decoration:none;font-weight:700}'
+        'section{background:#121824;border:1px solid rgba(148,163,184,.24);border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 18px 40px -16px rgba(0,0,0,.6)}'
+        'h1,h2{color:#f5f7fb;letter-spacing:-.02em}h2{color:#88f9e4}p,label,small{color:#cbd5e1}'
+        'button,a.button{background:linear-gradient(135deg,#74f8df 0%,#3adbb9 100%);color:#051e19;border-radius:12px;min-height:48px;font-weight:750}'
+        'a{color:#5ef2d6;font-weight:650}input[type=file]{padding:.55rem;border-radius:10px;background:#0b1019;border:1px solid rgba(148,163,184,.3);color:#f5f7fb;min-height:44px}'
+        '#save-status{background:#172133;border:1px solid rgba(94,242,214,.3);color:#f5f7fb;border-radius:12px}'
+        'a:focus-visible,button:focus-visible,input:focus-visible{outline:2.5px solid #5ef2d6;outline-offset:3px}'
+        '</style></head>'
+    )
     put(games, 'game-saves/index.html', (games / 'game-saves/index.html').read_text().replace(
         '<title>Move your game saves · Made by Matt</title>',
         '<link rel="canonical" href="'+PLAY_CANONICAL_ORIGIN+'/game-saves/"><title>Move your game saves · Made by Matt</title>',
         1,
-    ).replace('https://madebymatt-play.uk/game-saves/', PLAY_CANONICAL_ORIGIN+'/game-saves/'))
+    ).replace('</head>', play_saves_css, 1).replace('https://madebymatt-play.uk/game-saves/', PLAY_CANONICAL_ORIGIN+'/game-saves/'))
     # Preserve the canonical shelf bytes for existing mirror consumers.
     for path in ['games.json', 'Games/games.json', 'data/source-manifests/games.json']:
         copy_file(ROOT / 'data/source-manifests/games.json', games, path)
@@ -427,7 +459,18 @@ def main():
     put(games, 'robots.txt', 'User-agent: *\nAllow: /\nSitemap: '+PLAY_CANONICAL_ORIGIN+'/sitemap.xml\n')
     urls = [PLAY_CANONICAL_ORIGIN+r for r in ['/', '/games/'] + PLAY_UTILITY_ROUTES + [quote(unquote(r['normalizedDecodedRoute']), safe='/') for r in rows]]
     put(games, 'sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + ''.join('<url><loc>'+html.escape(u)+'</loc></url>' for u in urls) + '</urlset>')
-    put(games, '404.html', '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Find a game · Made by Matt</title><main><h1>That game address was not found.</h1><p><a href="/">Find your game on the games homepage</a>.</p></main></html>')
+    not_found_html = (
+        '<!doctype html><html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+        '<meta name="theme-color" content="#090c12"><title>Find a game · Made by Matt</title>'
+        '<style>*{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:1.5rem;font:1rem/1.6 system-ui,-apple-system,Segoe UI,sans-serif;color:#f5f7fb;background:#090c12;'
+        'background-image:radial-gradient(ellipse 56rem 28rem at 50% 0,rgba(94,242,214,.14),transparent 65%)}'
+        'main{max-width:32rem;width:100%;padding:2rem 1.75rem;border-radius:22px;background:#121824;border:1px solid rgba(148,163,184,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 24px 54px -16px rgba(0,0,0,.75);text-align:center}'
+        'h1{margin:0 0 .75rem;font-size:clamp(1.5rem,4vw,2rem);line-height:1.18;letter-spacing:-.025em}p{margin:0;color:#cbd5e1}'
+        'a{display:inline-flex;align-items:center;justify-content:center;min-height:46px;margin-top:.85rem;padding:.65rem 1.25rem;border-radius:12px;background:linear-gradient(135deg,#74f8df 0%,#3adbb9 100%);color:#051e19;font-weight:750;text-decoration:none}'
+        'a:focus-visible{outline:2.5px solid #5ef2d6;outline-offset:3px}</style></head>'
+        '<body><main><h1>That game address was not found.</h1><p><a href="/">Find your game on the games homepage</a></p></main></body></html>'
+    )
+    put(games, '404.html', not_found_html)
     # Verify every declared initial-load reference for the 69 payloads.
     missing = []
     external = []
