@@ -295,7 +295,7 @@ if (!ONLY) {
       `ctx.fillRect(0,0,this.canvas.width,this.canvas.height);ctx.restore();}\n` + anchor);
     applied = strobed !== src;
     if (applied) {
-      const dir = fs.mkdtempSync(path.join(ROOT, 'olympics', '__strobe-'));
+      const dir = fs.mkdtempSync(path.join(ROOT, 'worldstage', '__strobe-'));
       fs.writeFileSync(path.join(dir, 'index.html'), strobed);
       const rel = '/worldstage/' + path.basename(dir) + '/index.html';
       const ctx = await browser.newContext({ viewport: { width: 960, height: 600 } });
