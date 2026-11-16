@@ -72,9 +72,9 @@ const CLOCK = `(() => {
    Thumbnails stay real frames at the game's native 16:9, because a thumbnail
    SHOULD be a moment from play. */
 const SHOTS = [
-  { name: 'thumb-ceremony.png', w: 1280, h: 720, scene: 'ceremony', why: 'candidate 1 — the medal ceremony podium' },
-  { name: 'thumb-sprint.png', w: 1280, h: 720, scene: 'sprint', why: 'candidate 2 — the 100m under way' },
-  { name: 'thumb-skijump.png', w: 1280, h: 720, scene: 'skiJump', why: 'candidate 3 — the ski jump in flight' }
+  { name: 'thumb-ceremony.png', w: 960, h: 540, scene: 'ceremony', why: 'candidate 1 — the medal ceremony podium' },
+  { name: 'thumb-sprint.png', w: 960, h: 540, scene: 'sprint', why: 'candidate 2 — the 100m under way' },
+  { name: 'thumb-skijump.png', w: 960, h: 540, scene: 'skiJump', why: 'candidate 3 — the ski jump in flight' }
 ];
 
 /* Every string below is the game's own. "GLOBAL GAMES" and "CHAMPIONSHIP
@@ -143,9 +143,11 @@ for (const shot of (BANNER_ONLY ? [] : SHOTS)) {
     const drive = window.__drive;
     const app = window.MBMGlobalGames.app;
     const skip = document.querySelector('.mbm-skip'); if (skip) skip.click();
+    const mSkip = document.querySelector('[data-mbm-maker-splash]'); if (mSkip) mSkip.click();
     drive(80);
     if (scene === 'ambient') { drive(240); return; }   /* let the title scene settle into motion */
     document.getElementById('newGamesBtn').click(); drive(10);
+    const vSkip = document.querySelector('#v6-intro .v6-skip'); if (vSkip) vSkip.click(); drive(10);
     document.querySelector('[data-mode="ultimate"]').click(); drive(10);
     document.getElementById('autoAttrs').click(); drive(10);
     document.getElementById('beginTournament').click(); drive(20);

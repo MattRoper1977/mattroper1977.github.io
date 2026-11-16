@@ -375,14 +375,15 @@ async function playDay(page, { resolve = true } = {}) {
       const app = window.MBMGlobalGames.app;
       const event = app.activeEvent;
       const dt = window.__olympics.fixedDt;
+      const targetElapsed = Math.max(0.1, (event ? event.elapsed : 0) + 0.05);
       let ticks = 0;
-      while (event && event.elapsed <= 0.1 && ticks < 120) { event.tick(dt); ticks++; }
+      while (event && event.elapsed <= targetElapsed && ticks < 120) { event.tick(dt); ticks++; }
       window.__mbmOlympicsRestartBefore = event;
-      return { elapsed: event ? event.elapsed : null, ticks, dt, sameEvent: event === app.activeEvent };
+      return { elapsed: event ? event.elapsed : null, ticks, dt, sameEvent: event === app.activeEvent, targetElapsed };
     });
     t('O4 [control] restart setup uses the shipped fixed-step authority',
       beforeRestart.sameEvent && beforeRestart.dt === 1 / 120 && beforeRestart.ticks > 0 &&
-        beforeRestart.ticks < 120 && beforeRestart.elapsed > 0.1,
+        beforeRestart.ticks < 120 && beforeRestart.elapsed > beforeRestart.targetElapsed - 1e-9,
       JSON.stringify(beforeRestart));
     await click(page, '#pauseBtn');
     await click(page, '#restartBtn');
