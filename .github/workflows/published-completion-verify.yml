@@ -66,7 +66,12 @@ jobs:
           # Moved again 2026-10-27 (ruling wf-3, L31) WITH its Apps companion below: the Lessons pin 12ad298a -> 9b2d03bb685bdf750d649add949e6d02097dca38, the squash
           # merge of Lessons #721 (wf-2: the catalogue checker rejects an underivable companion-pack catalogue instead of crashing; no published
           # path moves). Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: 357d841fbb3e7da9fb6bde1eab2e18e0650637b4
+          # Moved 2026-11-17 (lesson swap carrier move, ruling thread 17 November) WITH the two other EQUAL pins (education-publication.yml,
+          # published-completion-verify.yml, domain-split-verify.yml), per L31: the Lessons pin 357d841f -> c308e2daa50bd70d762be0285d41feec4d0b80d2, the merge of
+          # Lessons #888 on Lessons main. Every published path that moved between the two commits is already admitted by a row holding both
+          # digests (the lesson swap admissions of 16 and 17 November, the last being Site #675), so this move changes no admission row.
+          # Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: c308e2daa50bd70d762be0285d41feec4d0b80d2
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/setup-node@v4
