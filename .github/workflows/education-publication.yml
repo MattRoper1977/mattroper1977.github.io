@@ -205,7 +205,12 @@ jobs:
           # Lessons #888 on Lessons main. Every published path that moved between the two commits is already admitted by a row holding both
           # digests (the lesson swap admissions of 16 and 17 November, the last being Site #675), so this move changes no admission row.
           # Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'c308e2daa50bd70d762be0285d41feec4d0b80d2' }}
+          # Moved again 2026-11-17 (second lesson swap carrier move, ruling thread 17 November) WITH the two other EQUAL pins (education-publication.yml,
+          # published-completion-verify.yml, domain-split-verify.yml), per L31: the Lessons pin c308e2da -> baca32ab146ec6650cff65b77b061b79d16da272, the merge of
+          # Lessons #893 on Lessons main. Every published path that moved between the two commits is already admitted by a row holding both
+          # digests or by an ARRIVING row (Site #677 and #678, then the lesson swap admissions Site #679, #680 and #681), so this move changes
+          # no admission row. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || 'baca32ab146ec6650cff65b77b061b79d16da272' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
