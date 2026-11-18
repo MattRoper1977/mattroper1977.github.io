@@ -84,6 +84,7 @@ def subject_meta(slug, raw_name):
         'x-careers': ('careers', 'fd-acc-lifeskills', 'Careers & Future Plans', 'Jobs, workplaces and next steps', 'Workplaces, pathways and future options'),
         'x-community-projects': ('community', 'fd-acc-wellbeing', 'Community Projects', 'Teamwork and local action tasks', 'Practical teamwork and community action'),
         'x-dt': ('dt', 'fd-acc-art', 'Design & Making (DT)', 'Plan, build and test practical ideas', 'Design, making and practical builds'),
+        'x-food': ('lifeskills', 'fd-acc-lifeskills', 'Food & Cooking', 'Food groups, safe kitchens and simple snacks', 'Food groups, kitchen safety and simple cooking'),
         'x-ict': ('ict', 'fd-acc-digital', 'Computing & Digital (ICT)', 'Digital skills, safety and creative tech', 'Computing tasks and digital literacy'),
         'x-intervention-y10': ('intervention', 'fd-acc-science', 'Focused Boost (Year 10)', 'Guided catch-up and confidence builders', 'Targeted Year 10 catch-up sessions'),
         'x-local-choice': ('local', 'fd-acc-humanities', 'Local Area Topics', 'Places, heritage and nature enquiries', 'Place-based enrichment enquiries'),
