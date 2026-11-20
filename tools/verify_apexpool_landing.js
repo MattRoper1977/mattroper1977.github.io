@@ -29,8 +29,14 @@ const FILE = supplied || path.join(__dirname, '..', 'apexpool', 'index.html');
  * Verified before moving rather than re-pinned on sight: 8432492^ hashes to the
  * OLD pin exactly, and the whole delta is the generated exit block.
  * Previous: 4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad (88751 B) */
-const EXPECTED_BYTES = 109078;
-const EXPECTED_SHA256 = 'a74cda506121faed526f392fd3e97a1278f569afc4037427eb7119d6450bf784';
+const EXPECTED_BYTES = 106852;
+const EXPECTED_SHA256 = 'd9fc7d3db0fb3d88d203fa34697551b028125694917e1125d8e7a73a408a6304';
+/* 20 Nov 2026: moved from a74cda506121faed526f392fd3e97a1278f569afc4037427eb7119d6450bf784
+ * (109078 B) for the owner-reported bug fixes: the aim guide is one cue path and one
+ * object-ball path, the table stays steady while aiming, Space shoots again after an
+ * in-game button has focus, the screen-shake keyframe and advisory canvas are gone,
+ * and a sound toggle is added. The small buttons also gained min-width:44px so the
+ * new Sound toggle's "On" meets the 44px target (ruling thread approval, 20 Nov). */
 /* 13 Nov 2026: moved from 5d0f1580b89e3b6d65b4db75b45f4ad78353b87d761b34af93e9a1fd08ccc92a
  * (109038 B). The whole delta is one statement in updateView: the aiming camera no
  * longer zooms or pans, so the right-hand pockets stay on screen at 800x600 and 1280x720. */

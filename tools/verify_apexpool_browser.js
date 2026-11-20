@@ -28,8 +28,9 @@ async function waitBoot(page){await page.goto(BASE+'/apexpool/',{waitUntil:'domc
   const title=await page.locator('.wordmark').innerText();
   record(vp.name+'-title',/APEX\s*POOL/i.test(title),title.replace(/\s+/g,' '));
   const metrics=await page.evaluate(()=>({canvas:document.querySelectorAll('canvas').length,w:document.getElementById('table').width,h:document.getElementById('table').height,scrollW:document.documentElement.scrollWidth,innerW:innerWidth,scrollH:document.documentElement.scrollHeight,innerH:innerHeight,debug:window.__AP_DEBUG.sentinel}));
-  const canvasContract=await page.evaluate(()=>{const a=document.getElementById('v6Advisory'),s=getComputedStyle(a);return{count:document.querySelectorAll('canvas').length,advisoryHidden:a.getAttribute('aria-hidden'),pointerEvents:s.pointerEvents}});
-  record(vp.name+'-authoritative-plus-advisory-canvases',metrics.canvas===2&&metrics.w>0&&metrics.h>0&&canvasContract.advisoryHidden==='true'&&canvasContract.pointerEvents==='none',JSON.stringify(canvasContract));
+  // 20 Nov 2026: the advisory canvas was removed with the aim-guide fix; the table is the only canvas.
+  const canvasContract=await page.evaluate(()=>({count:document.querySelectorAll('canvas').length,advisory:!!document.getElementById('v6Advisory')}));
+  record(vp.name+'-one-authoritative-canvas',metrics.canvas===1&&canvasContract.count===1&&!canvasContract.advisory&&metrics.w>0&&metrics.h>0,JSON.stringify(canvasContract));
   record(vp.name+'-no-page-overflow',metrics.scrollW===metrics.innerW&&metrics.scrollH===metrics.innerH,JSON.stringify(metrics));
   record(vp.name+'-sentinel',metrics.debug==='apexpool-build-2026-08-04');
   await page.screenshot({path:path.join(OUT,vp.name+'-title.png'),fullPage:true});
