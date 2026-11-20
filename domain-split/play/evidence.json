@@ -2441,6 +2441,49 @@
         "description": "Layer Press added to the canonical game shelf.",
         "commit": "93caaba70ea15bf4dae8bfc3ed64c8106eccbb71"
       }
+    },
+    "/magnetmates": {
+      "genre": "Action",
+      "genres": [
+        "Action",
+        "Puzzles"
+      ],
+      "description": "Stretch a magnetic band between two pods and bounce scrap into matching chutes in Magnet Mates.",
+      "audience": "general",
+      "controls": [
+        "keyboard",
+        "touch"
+      ],
+      "modes": [
+        "single",
+        "local"
+      ],
+      "instructions": "Two players on one keyboard, or one player with an AI mate. Player one: WASD moves, Space holds the magnet. Player two: the arrow keys move, Enter holds the magnet. B toggles the AI mate and Esc pauses. Mouse: move and click. Touch: one zone for each pod.",
+      "evidence": [
+        {
+          "control": "keyboardMouse",
+          "needle": "P1: WASD + Space",
+          "line": 1435,
+          "excerpt": "ontrols summary\">           <span class=\"ctrl-chip ctrl-p1\">P1: WASD + Space</span>           <span class=\"ctrl-chip ctrl-p2\">P2: Arrows + Enter</span>           <span class=\"ctrl-chip ctrl-util\">"
+        },
+        {
+          "control": "touch",
+          "needle": "Touch: Twin Zones",
+          "line": 1438,
+          "excerpt": " + Click</span>           <span class=\"ctrl-chip ctrl-util\">Touch: Twin Zones</span>           <span class=\"ctrl-chip ctrl-util\">AI Mate: B</span>           <span class=\"ctrl-chip ctrl-util\">Pause:"
+        }
+      ],
+      "source": {
+        "repository": "Site",
+        "path": "magnetmates/index.html",
+        "sha256": "62f03875fba983d171ccf2463a540c2d8365dc4731b12150360821d3af91a9ad",
+        "published_sha256": "62f03875fba983d171ccf2463a540c2d8365dc4731b12150360821d3af91a9ad"
+      },
+      "updated": {
+        "date": "2026-11-20",
+        "description": "Magnet Mates added to the canonical game shelf.",
+        "commit": "PENDING"
+      }
     }
   }
 }
