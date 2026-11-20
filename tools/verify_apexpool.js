@@ -109,7 +109,14 @@ ok('zero-external-style-dependencies',!/<link\s+[^>]*rel="stylesheet"/i.test(htm
 ok('no-network-calls',!/\bfetch\s*\(|XMLHttpRequest|WebSocket/.test(html));
 const canvases=[...html.matchAll(/<canvas\b[^>]*>/g)].map(m=>m[0]);
 // 20 Nov 2026: the advisory canvas was removed with the aim-guide fix; the table is the only canvas.
-ok('one-authoritative-canvas',canvases.length===1&&/id="table"/.test(canvases[0])&&!/v6Advisory/.test(html),canvases.join(' | '));
+// 20 Nov 2026 (later, pool 3D v3): a second canvas, #table3d, draws the 3D view of the same
+// table. It is a view only: aria-hidden, pointer-events:none, and never the input or the
+// accessible name. So the gate now holds exactly one canvas that is NOT aria-hidden, and it
+// must be #table; every other canvas must be the hidden, non-interactive #table3d view.
+const authoritative=canvases.filter(c=>!/aria-hidden="true"/.test(c));
+const views=canvases.filter(c=>/aria-hidden="true"/.test(c));
+const viewsInert=views.every(c=>/id="table3d"/.test(c))&&(views.length===0||/#table3d\{[^}]*pointer-events:none/.test(html));
+ok('one-authoritative-canvas',authoritative.length===1&&/id="table"/.test(authoritative[0])&&views.length<=1&&viewsInert&&!/v6Advisory/.test(html),canvases.join(' | '));
 ok('canvas-guard-present',/id="noCanvas"/.test(html)&&/if\(!ctx\)/.test(html));
 ok('splash-has-unconditional-timer',/timer=setTimeout\(dismiss,1200\)/.test(html));
 ok('splash-removes-listeners-and-node',/removeEventListener\(ev\[i\],dismiss,true\)/.test(html)&&/parentNode\.removeChild\(el\)/.test(html));
