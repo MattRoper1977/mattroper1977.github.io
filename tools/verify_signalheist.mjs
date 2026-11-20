@@ -89,6 +89,9 @@ async function boot(browser, origin, opts = {}) {
   const page = await ctx.newPage();
   page.on('pageerror', e => errors.push(String(e.message)));
   page.on('request', r => { const u = r.url(); if (!u.startsWith(origin) && !u.startsWith('data:') && !u.startsWith('blob:')) external.push(u); });
+  // Record, then refuse, anything that leaves the origin: the request is still counted,
+  // and a runner with no outbound network cannot hang the load event on it.
+  await ctx.route(u => !String(u).startsWith(origin) && !/^(data|blob):/.test(String(u)), r => r.abort());
   await page.goto(origin + '/signalheist/');
   await page.waitForTimeout(opts.wait || 1200);
   return { ctx, page, errors, external };
