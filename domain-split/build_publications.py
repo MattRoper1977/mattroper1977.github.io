@@ -318,7 +318,7 @@ def main():
     if config['education_origin'] != 'https://madebymatt.uk' or config['games_origin'] != 'https://madebymatt-play.uk':
         raise ValueError('Purchased-domain allocation has changed; update the deployment plan first')
     rows = project_game_routes(json.loads(CENSUS.read_text())['rows'])
-    assert len(rows) == len({normal(r['normalizedDecodedRoute']) for r in rows}) == 70
+    assert len(rows) == len({normal(r['normalizedDecodedRoute']) for r in rows}) == 71
     entries = json.loads((ROOT / 'data/mbm-search-index.json').read_text())['entries']
     search_by_route = {normal(e['route']): e for e in entries if e['category'] == 'game'}
     payloads = []
@@ -493,7 +493,7 @@ def main():
               'education_origin':config['education_origin'],'games_origin':config['games_origin'],
               'source_heads':{name:source_head(path) for name,path in roots.items()},
               'source_census_sha256':sha(CENSUS),
-              'counts':{'canonical_games':63,'additional_classroom_activities':7,'game_payloads':len(payloads),
+              'counts':{'canonical_games':64,'additional_classroom_activities':7,'game_payloads':len(payloads),
                         'game_output_files':sum(p.is_file() for p in games.rglob('*')),
                         'education_overlay_pages':5,'missing_initial_load_refs':len(missing),
                         'external_initial_load_refs':len(external)},

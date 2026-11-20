@@ -6,6 +6,9 @@ import json
 from pathlib import Path
 from urllib.parse import urljoin
 import usage_discovery as usage
+# A resource id is a sha256 digest in hex. Named so a shelf that happens to hold this many
+# games is not mistaken for a typed copy of the shelf count (tools/census_typed_literals.py).
+SHA256_HEX_CHARS=64
 
 class Scripts(HTMLParser):
     def __init__(self):super().__init__();self.sources=[]
@@ -44,7 +47,7 @@ def check(output, baseline=None):
     rows=usage.read(output/'usage-registry.json');seen=set();counts={'lessons':0,'downloads':0,'games':0};checked=0
     for row in rows:
         identity=(row['source'],row['resource_id']);assert identity not in seen;seen.add(identity)
-        assert len(row['resource_id'])==64 and row['source'] in {'education','play'}
+        assert len(row['resource_id'])==SHA256_HEX_CHARS and row['source'] in {'education','play'}
         assert not any(x in row['route'] for x in ['?','#'])
         assert row['kind'] in {'lesson','pack','resource','game'}
         assert set(row['event_types'])<= {'lesson_open','download_request','game_launch'}

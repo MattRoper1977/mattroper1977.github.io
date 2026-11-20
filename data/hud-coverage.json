@@ -264,6 +264,19 @@
    "note": "Declared at launch. Skybreak Vector is a single-file WebGL 2 flight-combat game with an optional phone HOTAS over local WebRTC (iceServers:[], no relay). The generated inline exit supplies the estate way out without retracting that boundary; the named verifier checks the declaration and the rendered control."
   },
   {
+   "route": "/layerpress/",
+   "verifier": "tools/verify_layerpress.mjs",
+   "gates": [
+    "LPG1 single file: no script src, no stylesheet link, no remote URL in the source, and zero non-same-origin requests while a drop is played",
+    "LPG2 every localStorage key the game writes while played carries the mbm_layerpress_ prefix, observed at runtime",
+    "LPG3 generated inline exit: region byte-identical to the generator, rendered at 44 px or more, reachable by keyboard",
+    "LPG4 every visible title-screen and play-screen button is 44 px or more at 390, 768 and 1440 wide",
+    "LPG5 reduced motion turns Calm Mode on by default, proven against a no-preference control",
+    "LPG6 the game boots without a page error and keeps working with storage blocked"
+   ],
+   "note": "Declared at launch. Layer Press is a single-file streetwear print studio puzzle: one inline script, zero external references, so a <script src=\"/hud.js\"> tag would retract the promise the file makes and the generated inline exit region carries the way out instead. Its save keys carry the mbm_layerpress_ prefix from first publication."
+  },
+  {
    "route": "/signalheist/",
    "verifier": "tools/verify_signalheist.mjs",
    "gates": [

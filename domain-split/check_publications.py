@@ -36,10 +36,10 @@ def main():
     assert 'Sitemap: https://www.madebymatt-play.uk/sitemap.xml' in robots_txt
     sitemap_xml = (games/'sitemap.xml').read_text(encoding='utf-8')
     locs = re.findall(r'<loc>([^<]+)</loc>', sitemap_xml)
-    assert len(locs) == 76 and all(u.startswith('https://www.madebymatt-play.uk/') and ' ' not in u and '(' not in u and ')' not in u for u in locs)
+    assert len(locs) == 77 and all(u.startswith('https://www.madebymatt-play.uk/') and ' ' not in u and '(' not in u and ')' not in u for u in locs)
     for util_r in ('/privacy/', '/game-saves/', '/stats/', '/stats/on-this-device/'):
         assert f'https://www.madebymatt-play.uk{util_r}' in locs
-    assert len(report['payloads'])==70
+    assert len(report['payloads'])==71
     for item in report['payloads']:
         p=games/item['path'];assert p.is_file()
         assert hashlib.sha256(p.read_bytes()).hexdigest()==item['published_sha256']
@@ -97,7 +97,7 @@ def main():
     for root in [site,games]:
         assert (root/'game-saves/index.html').is_file()
         assert (root/'assets/game-saves.js').is_file()
-    result={'status':'PASS','game_payloads':70,'new_education_pages_checked':tested,'initial_education_requests_to_games':0,'served_mailing_config':'kept','publication_trees':4,'browser_testing':'not performed','live_cutover':'not performed'}
+    result={'status':'PASS','game_payloads':71,'new_education_pages_checked':tested,'initial_education_requests_to_games':0,'served_mailing_config':'kept','publication_trees':4,'browser_testing':'not performed','live_cutover':'not performed'}
     (OUT/'verification.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result,indent=2))
 if __name__=='__main__':main()
