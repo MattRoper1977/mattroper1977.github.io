@@ -2358,6 +2358,47 @@
         "published_sha256": "d8b38bbe40045da821673c4546336e8e862502664803a2a89a95da73f087b4a1"
       },
       "updated": null
+    },
+    "/signalheist": {
+      "genre": "Action",
+      "genres": [
+        "Action"
+      ],
+      "description": "Sneak through neon vault rooms, grab loot and reach the exit before the heat catches you in Signal Heist.",
+      "audience": "general",
+      "controls": [
+        "keyboard",
+        "touch"
+      ],
+      "modes": [
+        "single"
+      ],
+      "instructions": "Single player. Keyboard: WASD or arrows move, Space blinks, E or Shift drops a decoy, P or Esc pauses. Touch: drag the pad to glide and tap Blink or Decoy.",
+      "evidence": [
+        {
+          "control": "keyboardMouse",
+          "needle": "<kbd>WASD</kbd>/<kbd>Arrows</kbd> move",
+          "line": 608,
+          "excerpt": "\" class=\"unlock-line\"></div>         <div class=\"keys-line\"><kbd>WASD</kbd>/<kbd>Arrows</kbd> move · <kbd>Space</kbd> blink · <kbd>E</kbd>/<kbd>Shift</kbd> decoy · <kbd>P</kbd>/<kbd>Esc</kbd> pause · <kbd>C</kbd> camera · <kbd>Enter</kbd> start</div>"
+        },
+        {
+          "control": "touch",
+          "needle": "DRAG TO GLIDE",
+          "line": 744,
+          "excerpt": "ouch-deck\">     <div id=\"dpadZone\" class=\"dpad-zone\">       DRAG TO GLIDE       <div id=\"dpadKnob\" class=\"dpad-knob\"></div>     </div>     <div class=\"touch-actions\">       <button id=\"touchDecoyBtn\" class=\"touch-act-btn decoy off\" type=\"button\">    "
+        }
+      ],
+      "source": {
+        "repository": "Site",
+        "path": "signalheist/index.html",
+        "sha256": "3c14570ee9741774b7e39db4dfbb0cdec65ce8beab462ba668d392c0a6e1096e",
+        "published_sha256": "3c14570ee9741774b7e39db4dfbb0cdec65ce8beab462ba668d392c0a6e1096e"
+      },
+      "updated": {
+        "date": "2026-11-20",
+        "description": "Signal Heist added to the canonical game shelf.",
+        "commit": null
+      }
     }
   }
 }

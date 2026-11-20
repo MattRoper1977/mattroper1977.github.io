@@ -262,6 +262,19 @@
     "SG7 real-input playability: launch, one air target destroyed, mission ends with a rank, profile persists"
    ],
    "note": "Declared at launch. Skybreak Vector is a single-file WebGL 2 flight-combat game with an optional phone HOTAS over local WebRTC (iceServers:[], no relay). The generated inline exit supplies the estate way out without retracting that boundary; the named verifier checks the declaration and the rendered control."
+  },
+  {
+   "route": "/signalheist/",
+   "verifier": "tools/verify_signalheist.mjs",
+   "gates": [
+    "SHG1 single file: no script src, no stylesheet link, no remote URL in the source, and zero non-same-origin requests while a run is played",
+    "SHG2 every localStorage key the game writes while played carries the mbm_signalheist_ prefix, observed at runtime",
+    "SHG3 generated inline exit: region byte-identical to the generator, rendered at 44 px or more, reachable by keyboard",
+    "SHG4 every visible start-screen button is 44 px or more at 390, 768 and 1440 wide",
+    "SHG5 reduced motion changes rendered behaviour (intro sweep and bloom off), proven against a negative control",
+    "SHG6 the game boots without a page error and a started run reaches the playing screen"
+   ],
+   "note": "Declared at launch. Signal Heist is a single-file canvas stealth runner: one inline script, zero external references, so a <script src=\"/hud.js\"> tag would retract the promise the file makes and the generated inline exit region carries the way out instead. Its save keys were renamed to the mbm_signalheist_ prefix before first publication, so no player save predates the rename."
   }
  ],
  "_amendedWhy": "THE LEDGER HAD TWO CATEGORIES AND NEEDED THREE. It measured the games it DECLINED to wire and listed them under `excluded`. It did not check whether any of the ten it DID wire carried the same single-file contract. apexgolf did: verify_apexgolf.js G17 asserted `no <script src> at all`, so the Stage 2B line broke it on 10 August 2026 and it stayed red for fifteen days - invisible, because a `grep | wc -l` step under `pipefail` in apexgolf-verify.yml died before the verifier ever ran, and the workflow is pull_request-only and filtered. Two faults, one day, and the noisy one hid the real one. Found by Order T's estate census, 25 August 2026. This list is the third category: wired, contract retained, verifier amended to say so.",

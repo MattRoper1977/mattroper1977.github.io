@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 96" role="img" aria-labelledby="title desc">
+  <title id="title">Signal Heist</title>
+  <desc id="desc">A glowing diamond runner slipping across a dark neon grid between a guard's sweeping sight cone and a laser line, toward an open exit ring, with loot chips scattered on the floor.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#050811"/><stop offset=".6" stop-color="#0C1428"/><stop offset="1" stop-color="#0891B2"/></linearGradient>
+    <radialGradient id="ring" cx=".5" cy=".5" r=".5"><stop offset=".55" stop-color="#22D3EE" stop-opacity="0"/><stop offset="1" stop-color="#22D3EE" stop-opacity=".55"/></radialGradient>
+  </defs>
+  <rect width="120" height="96" rx="10" fill="url(#bg)"/>
+  <!-- the vault floor grid -->
+  <path d="M10 20h100M10 34h100M10 48h100M10 62h100M10 76h100M20 12v74M38 12v74M56 12v74M74 12v74M92 12v74" stroke="#38BDF8" stroke-width=".5" opacity=".22"/>
+  <!-- a wall block -->
+  <path d="M56 20h18v14H56z" fill="#1E293B" stroke="#475569" stroke-width=".6"/>
+  <!-- the guard and its sight cone -->
+  <path d="M96 26 70 44l8 8Z" fill="#F43F5E" opacity=".22"/>
+  <circle cx="96" cy="26" r="3.6" fill="#F43F5E"/>
+  <!-- the laser line -->
+  <path d="M38 64h36" stroke="#F43F5E" stroke-width="1.4"/>
+  <circle cx="38" cy="64" r="1.6" fill="#FDA4AF"/><circle cx="74" cy="64" r="1.6" fill="#FDA4AF"/>
+  <!-- loot chips -->
+  <path d="M29 27l3 3-3 3-3-3Z" fill="#FDE047"/>
+  <path d="M85 72l3 3-3 3-3-3Z" fill="#FDE047"/>
+  <path d="M65 54l2.4 2.4-2.4 2.4-2.4-2.4Z" fill="#FDE047" opacity=".5"/>
+  <!-- the exit ring -->
+  <circle cx="100" cy="76" r="9" fill="url(#ring)"/>
+  <circle cx="100" cy="76" r="7" fill="none" stroke="#22D3EE" stroke-width="1.4"/>
+  <!-- the runner, with its trail -->
+  <path d="M18 80 C30 74 36 58 46 52" stroke="#A3E635" stroke-width="1.6" fill="none" opacity=".55" stroke-linecap="round"/>
+  <path d="M48 44l6 6-6 6-6-6Z" fill="#A3E635"/>
+  <path d="M48 47.5l2.5 2.5-2.5 2.5-2.5-2.5Z" fill="#ECFCCB"/>
+</svg>
