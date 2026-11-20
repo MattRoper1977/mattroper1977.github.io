@@ -29,8 +29,15 @@ async function waitBoot(page){await page.goto(BASE+'/apexpool/',{waitUntil:'domc
   record(vp.name+'-title',/APEX\s*POOL/i.test(title),title.replace(/\s+/g,' '));
   const metrics=await page.evaluate(()=>({canvas:document.querySelectorAll('canvas').length,w:document.getElementById('table').width,h:document.getElementById('table').height,scrollW:document.documentElement.scrollWidth,innerW:innerWidth,scrollH:document.documentElement.scrollHeight,innerH:innerHeight,debug:window.__AP_DEBUG.sentinel}));
   // 20 Nov 2026: the advisory canvas was removed with the aim-guide fix; the table is the only canvas.
-  const canvasContract=await page.evaluate(()=>({count:document.querySelectorAll('canvas').length,advisory:!!document.getElementById('v6Advisory')}));
-  record(vp.name+'-one-authoritative-canvas',metrics.canvas===1&&canvasContract.count===1&&!canvasContract.advisory&&metrics.w>0&&metrics.h>0,JSON.stringify(canvasContract));
+  // 20 Nov 2026 (later, pool 3D v3): #table3d draws the 3D view of the same table. It may
+  // be on screen, but it is never the input or the accessible surface: aria-hidden and
+  // pointer-events:none, read from the live DOM. #table stays the one authoritative canvas.
+  const canvasContract=await page.evaluate(()=>{const all=[...document.querySelectorAll('canvas')];
+    const authoritative=all.filter(c=>c.getAttribute('aria-hidden')!=='true').map(c=>c.id);
+    const views=all.filter(c=>c.getAttribute('aria-hidden')==='true').map(c=>({id:c.id,pointer:getComputedStyle(c).pointerEvents}));
+    return {count:all.length,authoritative,views,advisory:!!document.getElementById('v6Advisory')};});
+  const viewsInert=canvasContract.views.every(v=>v.id==='table3d'&&v.pointer==='none')&&canvasContract.views.length<=1;
+  record(vp.name+'-one-authoritative-canvas',canvasContract.authoritative.length===1&&canvasContract.authoritative[0]==='table'&&viewsInert&&!canvasContract.advisory&&metrics.w>0&&metrics.h>0,JSON.stringify(canvasContract));
   record(vp.name+'-no-page-overflow',metrics.scrollW===metrics.innerW&&metrics.scrollH===metrics.innerH,JSON.stringify(metrics));
   record(vp.name+'-sentinel',metrics.debug==='apexpool-build-2026-08-04');
   await page.screenshot({path:path.join(OUT,vp.name+'-title.png'),fullPage:true});

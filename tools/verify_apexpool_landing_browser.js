@@ -168,7 +168,10 @@ async function assertTargets(page, label) {
       media: matchMedia('(prefers-reduced-motion: reduce)').matches,
       splash: getComputedStyle(document.getElementById('mbmSplash')).transitionDuration,
       rule: getComputedStyle(document.querySelector('#mbmSplash .mbm-rule')).animationDuration,
-      replayGuard: document.documentElement.innerHTML.includes('!G.replayPlayed&&!reduced')
+      // 20 Nov 2026 (later, pool 3D v3): the guard reads !isCalm(), and isCalm() is
+      // reduced||S.calmMode, so reduced motion still suppresses the replay (and Calm Mode now does too).
+      replayGuard: document.documentElement.innerHTML.includes('!G.replayPlayed&&!reduced') ||
+        (document.documentElement.innerHTML.includes('!G.replayPlayed&&!isCalm()') && document.documentElement.innerHTML.includes('function isCalm(){return reduced||'))
     }));
     console.log('  DATA  reduced=' + JSON.stringify(reduced));
     ok('reduced-motion-media-active', reduced.media);
