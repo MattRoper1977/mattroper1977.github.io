@@ -163,9 +163,16 @@ const measure = page => page.evaluate(floor => {
 const shown = (page, id) => page.evaluate(id => { const e = document.getElementById(id); return !!e && !e.classList.contains('is-hidden'); }, id);
 const playing = async page => !(await shown(page, 'titleScreen')) && (await shown(page, 'hud'));
 
+// A broken copy (no WebGL, a throw at boot) may never draw these controls; a missing
+// control must turn its gate red, not stop the run.
+async function tryClick(page, sel) {
+  try { await page.click(sel, { timeout: 3000 }); return true; } catch (_) { return false; }
+}
+
 async function startRound(page) {
-  await page.click('#btnPlay');
+  const clicked = await tryClick(page, '#btnPlay');
   await page.waitForTimeout(700);
+  return clicked;
 }
 
 // The top HUD's pills and buttons must not sit under the estate exit (and the home
@@ -196,7 +203,7 @@ async function browserGates(browser, origin, g) {
   // HHG6a/b/d + HHG1d + HHG2b: boot, flip sound twice (a write), start a round, play keys, pause.
   {
     const { ctx, page, errors, external } = await boot(browser, origin, { viewport: { width: 1366, height: 768 } });
-    await page.click('#btnTitleSound'); await page.click('#btnTitleSound');
+    await tryClick(page, '#btnTitleSound'); await tryClick(page, '#btnTitleSound');
     await startRound(page);
     const on = await playing(page);
     for (const key of ['KeyD', 'ArrowLeft', 'Space']) { await page.keyboard.press(key); await page.waitForTimeout(120); }
@@ -223,7 +230,7 @@ async function browserGates(browser, origin, g) {
     const { ctx, page, errors } = await boot(browser, origin, { viewport: { width: 1366, height: 768 }, blockStorage: true });
     const blocked = await page.evaluate(() => { try { window.localStorage; return false; } catch (_) { return true; } });
     let on = false;
-    try { await page.click('#btnPlay', { timeout: 3000 }); await page.waitForTimeout(500); on = await playing(page); } catch (_) {}
+    if (await tryClick(page, '#btnPlay')) { await page.waitForTimeout(500); on = await playing(page); }
     g.gate('HHG6c', 'with storage blocked it boots and starts a round without a page error', blocked && on && errors.length === 0,
       `storage blocked ${blocked}, field ${on}, ${errors.length} error(s)${errors.length ? ': ' + errors[0] : ''}`);
     await ctx.close();
