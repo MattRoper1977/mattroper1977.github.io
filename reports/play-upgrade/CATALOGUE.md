@@ -2,9 +2,9 @@
 
 Input: the unchanged generated `data/domain-catalogue.json`, itself derived from the existing catalogue and retained-activity sources. No duplicate catalogue is introduced. Supplementary control/content evidence is keyed by normalized existing route and bound to the copied payload SHA-256.
 
-**69 unique payloads = 62 main catalogue entries + six additional classroom activities + one staff activity.** Four of the 62 main entries are themselves classroom games (Kids vs Staff and the three World Cup variants). The existing builder report calls all seven extras `additional_classroom_activities`; the Play UI distinguishes the staff item explicitly. No games were added, removed, renamed or rebalanced in this lane.
+**70 unique payloads = 63 main catalogue entries + six additional classroom activities + one staff activity.** Four of the 63 main entries are themselves classroom games (Kids vs Staff and the three World Cup variants). The existing builder report calls all seven extras `additional_classroom_activities`; the Play UI distinguishes the staff item explicitly. No games were added, removed, renamed or rebalanced in this lane.
 
-Displayed totals and filters derive from these records. Source instructions support control labels for 53 of 69 entries and player-mode labels for 13 of 69. Remaining fields explicitly say “Not yet verified”; homepage responsiveness is not compatibility evidence. Offline and network behavior is not generalized across the collection.
+Displayed totals and filters derive from these records. Source instructions support control labels for 54 of 70 entries and player-mode labels for 14 of 70. Remaining fields explicitly say “Not yet verified”; homepage responsiveness is not compatibility evidence. Offline and network behavior is not generalized across the collection.
 
 | Title | Collection | Genre | Source-supported controls | Source-supported players | Original route |
 |---|---|---|---|---|---|
@@ -70,6 +70,7 @@ Displayed totals and filters derive from these records. Source instructions supp
 | Town Life | Catalogue game | Creative | keyboard | Unknown | /townlife/ |
 | Touchline Dynasty | Catalogue game | Sport | Unknown | Unknown | /touchline/ |
 | Skybreak Vector | Catalogue game | Action | keyboard, gamepad | single | /skybreak/ |
+| Signal Heist | Catalogue game | Action | keyboard, touch | single | /signalheist/ |
 | Battle Arena | Classroom activity | Classroom | Unknown | Unknown | /Lessons/5%20Intervention%2010/InterventionA_Battle_Arena%20(1).html |
 | Current Rush | Classroom activity | Classroom | Unknown | Unknown | /Lessons/2%20Physics%2010/current_rush.html |
 | Escape Room | Classroom activity | Classroom | Unknown | Unknown | /Lessons/5%20Intervention%2010/InterventionB_Escape_Room.html |
