@@ -44,7 +44,9 @@ ok('rendered-line-comes-from-predicted-path',/function drawPrediction\(\)[\s\S]*
 ok('prediction-recomputes-on-spin-input',/spinY[^\n]*oninput[\s\S]*G\.predDirty=true/.test(html)&&/spinX[^\n]*oninput[\s\S]*G\.predDirty=true/.test(html));
 function departure(spinY){const a=Math.atan2(30,270),r=independentTrace(cleanWorld(a),{angle:a,power:.78,spinY,spinX:0,loft:0}),i=r.contact;if(i<0||!r.cue[i+8])return NaN;return Math.atan2(r.cue[i+8].y-r.cue[i].y,r.cue[i+8].x-r.cue[i].x);}
 const dep=[departure(-1),departure(0),departure(1)];ok('departure-line-changes-with-longitudinal-spin',dep.every(Number.isFinite)&&Math.max(...dep)-Math.min(...dep)>.2,dep.map(x=>x.toFixed(4)).join(', '));
-ok('angle-arc-is-not-hardcoded-to-ninety',/a1=Math\.atan2\(pr\.cue\[pr\.contactAt\+4\]/.test(html)&&!/Math\.PI\s*\/\s*2[^\n]*tangent/i.test(html));
+// 20 Nov 2026: the owner reported "loads of lines bouncing all over the table". The aim guide is now one cue path
+// and one object-ball path; the departure arc at the ghost ball is gone on purpose. Still no fixed 90-degree tangent.
+ok('aim-guide-has-no-departure-arc-and-no-fixed-tangent',!/a1=Math\.atan2\(pr\.cue\[pr\.contactAt\+4\]/.test(html)&&/fillText\('GHOST'/.test(html)&&!/Math\.PI\s*\/\s*2[^\n]*tangent/i.test(html));
 
 head('G5 — no hidden dice in called-leave modes');
 const hazards=Object.values(AP.HAZARDS);ok('all-modes-declare-leave-status',hazards.length>=7&&hazards.every(h=>typeof h.leaveEnabled==='boolean'&&h.reason));
@@ -106,7 +108,8 @@ ok('zero-external-script-dependencies',!/<script\s+[^>]*src=/i.test(html));
 ok('zero-external-style-dependencies',!/<link\s+[^>]*rel="stylesheet"/i.test(html));
 ok('no-network-calls',!/\bfetch\s*\(|XMLHttpRequest|WebSocket/.test(html));
 const canvases=[...html.matchAll(/<canvas\b[^>]*>/g)].map(m=>m[0]);
-ok('authoritative-plus-advisory-canvases',canvases.length===2&&canvases.some(x=>/id="table"/.test(x))&&canvases.some(x=>/id="v6Advisory"[^>]*aria-hidden="true"/.test(x))&&/#v6Advisory\{[^}]*pointer-events:none/.test(html),canvases.join(' | '));
+// 20 Nov 2026: the advisory canvas was removed with the aim-guide fix; the table is the only canvas.
+ok('one-authoritative-canvas',canvases.length===1&&/id="table"/.test(canvases[0])&&!/v6Advisory/.test(html),canvases.join(' | '));
 ok('canvas-guard-present',/id="noCanvas"/.test(html)&&/if\(!ctx\)/.test(html));
 ok('splash-has-unconditional-timer',/timer=setTimeout\(dismiss,1200\)/.test(html));
 ok('splash-removes-listeners-and-node',/removeEventListener\(ev\[i\],dismiss,true\)/.test(html)&&/parentNode\.removeChild\(el\)/.test(html));
