@@ -37,6 +37,9 @@ READER_RESOLVED = [
                  'labelled as one. A pin on something that does not exist yet, on purpose.')},
 ]
 
+# A sha256 digest in hex is this long. Named so a shelf that happens to hold this many games
+# is not mistaken for a typed copy of the shelf count (tools/census_typed_literals.py).
+SHA256_HEX_CHARS = 64
 HEX = re.compile(r'(?<![0-9a-fA-F])([0-9a-f]{64}|[0-9a-f]{40})(?![0-9a-fA-F])')
 SKIP_DIRS = {'.git', 'node_modules', '__pycache__', '_shelf', 'artifacts', 'audit-output'}
 # Where a pin can be held. A pin inside data/ is the record, not a dependent.
@@ -89,7 +92,7 @@ def derive():
                     pins.setdefault(art, [])
                     if not any(d['gate'] == rel and d['line'] == n for d in pins[art]):
                         pins[art].append({'gate': rel, 'line': n,
-                                          'algo': 'sha256' if len(h) == 64 else 'sha1-blob'})
+                                          'algo': 'sha256' if len(h) == SHA256_HEX_CHARS else 'sha1-blob'})
                 else:
                     unmatched.append({'gate': rel, 'line': n, 'literal': h[:12] + '…',
                                       'kind': classify_literal(lines, n, line)})
