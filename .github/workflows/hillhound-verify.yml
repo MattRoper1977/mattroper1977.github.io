@@ -1,0 +1,84 @@
+name: Hill Hound gate contract
+
+# /hillhound/ is a declared single-file game: one inline script block, zero
+# external references, and the generated inline exit region instead of
+# <script src="/hud.js">. data/hud-coverage.json cites this verifier by name,
+# so it has to be a thing that runs — a declared verifier nothing invokes is
+# worse than no verifier, because the ledger reads as coverage either way.
+
+on:
+  pull_request:
+    paths:
+      - 'hillhound/**'
+      - 'tools/verify_hillhound.mjs'
+      - 'data/hud-coverage.json'
+      - '.github/workflows/hillhound-verify.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'hillhound/**'
+      - 'tools/verify_hillhound.mjs'
+      - '.github/workflows/hillhound-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hillhound-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record measured identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/hillhound
+          {
+            node --version
+            wc -c hillhound/index.html
+            sha256sum hillhound/index.html
+            printf 'inline script blocks='; grep -c '<script>' hillhound/index.html || true
+            printf 'external script tags='; grep -c '<script[^>]*src=' hillhound/index.html || true
+            printf 'exit region markers='; grep -c 'MBM-INLINE-EXIT' hillhound/index.html || true
+            printf 'maker splash markers='; grep -c 'MBM-MAKER-SPLASH' hillhound/index.html || true
+          } | tee artifacts/hillhound/identity.txt
+
+      - name: Install pinned Chromium harness
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      # The runner kills silent jobs at 20 minutes, so everything is piped
+      # through tee rather than buffered.
+      - name: Run the gate contract
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_hillhound.mjs | tee artifacts/hillhound/gates.log
+
+      - name: Prove the gates can fail
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/verify_hillhound.mjs --selftest | tee artifacts/hillhound/nonvacuity.log
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hillhound-verification
+          path: artifacts/hillhound
+          retention-days: 14
