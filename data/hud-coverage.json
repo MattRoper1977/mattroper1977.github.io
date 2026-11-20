@@ -264,6 +264,19 @@
    "note": "Declared at launch. Skybreak Vector is a single-file WebGL 2 flight-combat game with an optional phone HOTAS over local WebRTC (iceServers:[], no relay). The generated inline exit supplies the estate way out without retracting that boundary; the named verifier checks the declaration and the rendered control."
   },
   {
+   "route": "/magnetmates/",
+   "verifier": "tools/verify_magnetmates.mjs",
+   "gates": [
+    "MMG1 single file: no script src, no stylesheet link, no remote URL in the source, and zero non-same-origin requests while a shift is played",
+    "MMG2 storage goes only through the helpers that add the mbm_magnetmates_ prefix, and every key written while played carries it, observed at runtime",
+    "MMG3 generated inline exit: region byte-identical to the generator, rendered at 44 px or more, reachable by keyboard; the canvas score pills clear the exit and the button bar, read from the canvas pixels",
+    "MMG4 every visible title-screen and in-play button is 44 px or more at 390, 768 and 1366 wide",
+    "MMG5 reduced motion turns Calm Mode on by default, proven against a no-preference control",
+    "MMG6 the game boots without a page error and keeps working with storage blocked"
+   ],
+   "note": "Declared at launch. Magnet Mates is a single-file magnet co-op arcade game: one inline script, zero external references, so a <script src=\"/hud.js\"> tag would retract the promise the file makes and the generated inline exit region carries the way out instead. Its save keys carry the mbm_magnetmates_ prefix from first publication."
+  },
+  {
    "route": "/layerpress/",
    "verifier": "tools/verify_layerpress.mjs",
    "gates": [

@@ -44,7 +44,7 @@ function members(actual, expected, label) {
 }
 function catalogueContract(manifest, census, catalogue) {
   const expectedGames = manifest.games.map(g => route(g.href));
-  assert.deepEqual(census.population, { canonicalShelfCount: 64, additionalCount: 7, totalCount: 71, uniqueNormalizedRouteCount: 71 }, 'The accepted 64 + 7 / 71 population contract changed');
+  assert.deepEqual(census.population, { canonicalShelfCount: 65, additionalCount: 7, totalCount: 72, uniqueNormalizedRouteCount: 72 }, 'The accepted 65 + 7 / 72 population contract changed');
   const acceptedGames = census.rows.filter(r => r.populationClass === 'canonical-shelf').map(r => route(r.normalizedDecodedRoute));
   assert.equal(acceptedGames.length, census.population.canonicalShelfCount, 'The canonical census is incomplete');
   members(expectedGames, acceptedGames, 'Current manifest preserves every accepted canonical game');
@@ -391,9 +391,9 @@ function controls() {
   assert.throws(() => route('http://www.madebymatt-play.uk/echovault/'), 'HTTPS downgrade was accepted');
   assert.throws(() => route('https://example.com/echovault/'), 'Foreign destination was accepted');
   assert.throws(() => route('/echovault/?pupil=private'), 'Sensitive query was accepted');
-  const games = Array.from({ length: 64 }, (_, n) => ({ href: `/control-game-${n}/` }));
+  const games = Array.from({ length: 65 }, (_, n) => ({ href: `/control-game-${n}/` }));
   const activities = Array.from({ length: 7 }, (_, n) => ({ route: `/control-activity-${n}/`, id: `activity-${n}` }));
-  const census = { population: { canonicalShelfCount: 64, additionalCount: 7, totalCount: 71, uniqueNormalizedRouteCount: 71 }, rows: [
+  const census = { population: { canonicalShelfCount: 65, additionalCount: 7, totalCount: 72, uniqueNormalizedRouteCount: 72 }, rows: [
     ...games.map(g => ({ populationClass: 'canonical-shelf', normalizedDecodedRoute: g.href })),
     ...activities.map((g, n) => ({ populationClass: 'w7-additional', normalizedDecodedRoute: g.route, governingSelector: { value: `R${n + 1}` } })),
   ] };
