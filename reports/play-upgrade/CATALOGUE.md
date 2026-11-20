@@ -2,9 +2,9 @@
 
 Input: the unchanged generated `data/domain-catalogue.json`, itself derived from the existing catalogue and retained-activity sources. No duplicate catalogue is introduced. Supplementary control/content evidence is keyed by normalized existing route and bound to the copied payload SHA-256.
 
-**72 unique payloads = 65 main catalogue entries + six additional classroom activities + one staff activity.** Four of the 65 main entries are themselves classroom games (Kids vs Staff and the three World Cup variants). The existing builder report calls all seven extras `additional_classroom_activities`; the Play UI distinguishes the staff item explicitly. No games were added, removed, renamed or rebalanced in this lane.
+**73 unique payloads = 66 main catalogue entries + six additional classroom activities + one staff activity.** Four of the 66 main entries are themselves classroom games (Kids vs Staff and the three World Cup variants). The existing builder report calls all seven extras `additional_classroom_activities`; the Play UI distinguishes the staff item explicitly. No games were added, removed, renamed or rebalanced in this lane.
 
-Displayed totals and filters derive from these records. Source instructions support control labels for 56 of 72 entries and player-mode labels for 16 of 72. Remaining fields explicitly say “Not yet verified”; homepage responsiveness is not compatibility evidence. Offline and network behavior is not generalized across the collection.
+Displayed totals and filters derive from these records. Source instructions support control labels for 57 of 73 entries and player-mode labels for 17 of 73. Remaining fields explicitly say “Not yet verified”; homepage responsiveness is not compatibility evidence. Offline and network behavior is not generalized across the collection.
 
 | Title | Collection | Genre | Source-supported controls | Source-supported players | Original route |
 |---|---|---|---|---|---|
@@ -73,6 +73,7 @@ Displayed totals and filters derive from these records. Source instructions supp
 | Signal Heist | Catalogue game | Action | keyboard, touch | single | /signalheist/ |
 | Layer Press | Catalogue game | Puzzles | keyboard, touch | single | /layerpress/ |
 | Magnet Mates | Catalogue game | Action | keyboard, touch | single, local | /magnetmates/ |
+| Hill Hound | Catalogue game | Action | keyboard, touch | single | /hillhound/ |
 | Battle Arena | Classroom activity | Classroom | Unknown | Unknown | /Lessons/5%20Intervention%2010/InterventionA_Battle_Arena%20(1).html |
 | Current Rush | Classroom activity | Classroom | Unknown | Unknown | /Lessons/2%20Physics%2010/current_rush.html |
 | Escape Room | Classroom activity | Classroom | Unknown | Unknown | /Lessons/5%20Intervention%2010/InterventionB_Escape_Room.html |

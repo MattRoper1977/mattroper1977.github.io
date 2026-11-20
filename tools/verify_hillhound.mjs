@@ -44,6 +44,9 @@ const RAW_BUDGET = 409600;
 const VIEWPORTS = [[390, 844], [768, 1024], [1366, 768]];
 const HUD_VIEWPORTS = [[768, 1024], [1280, 720], [1366, 768], [1920, 1080]];
 const FLOOR = 44;
+// A drawn meadow measured 580 colours at 1366; the WebGL-missing fallback page has a handful.
+const MEADOW_MIN_COLOURS = 40;
+const MEADOW_MIN_GREEN = 0.3;
 
 function loadChromium() {
   const req = createRequire(import.meta.url);
@@ -204,7 +207,7 @@ async function browserGates(browser, origin, g) {
     const paused = await shown(page, 'pauseScreen');
     g.gate('HHG6a', 'boots and plays with no page error', errors.length === 0, errors.slice(0, 2).join(' | ') || 'clean');
     g.gate('HHG6b', 'Play reaches the field and Escape opens the pause screen', on && paused, `field ${on}, paused ${paused}`);
-    g.gate('HHG6d', 'the 3D meadow is drawn (many colours, mostly green)', ink.colours >= 40 && ink.greenShare >= 0.3,
+    g.gate('HHG6d', 'the 3D meadow is drawn (many colours, mostly green)', ink.colours >= MEADOW_MIN_COLOURS && ink.greenShare >= MEADOW_MIN_GREEN,
       `${ink.colours} distinct colours, green share ${ink.greenShare}`);
     g.gate('HHG1d', 'zero non-same-origin requests while booted and played', external.length === 0, external.slice(0, 3).join(' | ') || '0 requests left the page origin');
     const keys = await page.evaluate(() => Object.keys(localStorage));
