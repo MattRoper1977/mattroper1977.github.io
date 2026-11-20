@@ -283,7 +283,7 @@ async function selftest(html, browser) {
     { gate: 'MMG3b@390', why: 'shrink the exit control', mutate: s => s.replace('</head>', '<style>#mbmexit-back{width:30px!important;height:30px!important;min-width:0!important;min-height:0!important}</style>\n</head>') },
     { gate: 'MMG3c@1366', why: 'drop the pill fit that clears the exit', mutate: s => s.replace('    ctx.translate(fit.x, 32);\n    ctx.scale(fit.s, fit.s);\n    ctx.translate(-14, -32);\n', '') },
     { gate: 'MMG3c@768', why: 'let the pills run under the button bar', mutate: s => s.replace('    const s = Math.max(0.5, Math.min(1, (end - start) / 726));', '    const s = 1;') },
-    { gate: 'MMG4@390', why: 'shrink one title-screen button below 44 px', mutate: s => s.replace('</head>', '<style>#btnHowTo{min-width:0!important;min-height:0!important;width:30px!important;height:30px!important;padding:0!important}</style>\n</head>') },
+    { gate: 'MMG4@768', why: 'shrink the Play button below 44 px', mutate: s => s.replace('</head>', '<style>#btnPlay{min-width:0!important;min-height:0!important;width:30px!important;height:30px!important;padding:0!important;overflow:hidden!important}</style>\n</head>') },
     { gate: 'MMG5', why: 'ignore the reduced-motion preference', mutate: s => s.replace('!!(reduceMotionMQ && reduceMotionMQ.matches)', 'false') },
     { gate: 'MMG6a', why: 'throw at boot', mutate: s => s.replace('const memStore = Object.create(null);', 'const memStore = Object.create(null);\n  throw new Error("boom");') },
     { gate: 'MMG6b', why: 'unwire the Play button', mutate: s => s.replace("btnPlay.addEventListener('click', () => startShift());", "btnPlay.addEventListener('dblclick', () => startShift());") },
