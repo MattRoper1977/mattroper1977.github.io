@@ -50,6 +50,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
  repeating-linear-gradient(0deg,rgba(255,255,255,.017) 0,rgba(255,255,255,.017) 1px,transparent 1px,transparent 4px)}
 #screen{z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:calc(46px + var(--safeT)) calc(16px + var(--safeR)) calc(16px + var(--safeB)) calc(16px + var(--safeL));overflow:auto;overscroll-behavior:contain}
 #screen>*{margin:auto;flex-shrink:0}
+#screen>.wrap{max-height:min(920px,94vh,100%)}
 .glass{background:linear-gradient(145deg,rgba(18,28,58,.95),rgba(6,11,27,.94));border:1px solid var(--line);box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(18px) saturate(1.22);border-radius:18px}
 .wrap{width:min(1120px,96vw);max-height:min(920px,94vh);overflow:auto;padding:clamp(20px,3.5vw,40px)}
 .head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:24px}
@@ -1817,14 +1818,16 @@ class InputManager{
  bind(){
   const block=new Set(['Space','ArrowLeft','ArrowRight','ArrowUp','ArrowDown']);
   addEventListener('keydown',e=>{
-   if(game&&game.state==='PLAYING'&&block.has(e.code))e.preventDefault();
+   if(game&&game.state==='PLAYING'&&e.code==='Escape'&&!e.repeat){e.preventDefault();game.togglePause();return}
+   if(!game||game.state!=='PLAYING'||game.paused||e.defaultPrevented||e.altKey||e.ctrlKey||e.metaKey)return;
+   if(e.code==='Space'&&e.target.closest?.('button'))return;
+   if(block.has(e.code))e.preventDefault();
    if(e.repeat)return;
-   if(e.code==='Escape'&&game){game.togglePause();return}
    if(e.code==='KeyR'&&game&&game.state==='PLAYING'&&!game.paused&&!(game.tournament&&game.tournament.config.lanDuel)){e.preventDefault();game.restartActiveEvent();return}
    if(e.code==='KeyF'&&game&&game.state==='PLAYING'){e.preventDefault();game.toggleFpsMonitor();return}
    this.press(this._mapCode(e.code));
   },{passive:false});
-  addEventListener('keyup',e=>{if(game&&game.state==='PLAYING'&&block.has(e.code))e.preventDefault();this.release(this._mapCode(e.code))},{passive:false});
+  addEventListener('keyup',e=>{if(game&&game.state==='PLAYING'&&!game.paused&&block.has(e.code)&&!e.target.closest?.('button'))e.preventDefault();this.release(this._mapCode(e.code))},{passive:false});
   const pos=e=>this.mapFn(e.clientX,e.clientY);
   this.canvas.addEventListener('pointerdown',e=>{
    const p=pos(e);this.pointer.x=p.x;this.pointer.y=p.y;this.pointer.startX=p.x;this.pointer.startY=p.y;
@@ -1846,7 +1849,7 @@ class InputManager{
   },{passive:false});
   const up=e=>{const p=pos(e);this.pointer.x=p.x;this.pointer.y=p.y;this.pointer.down=false;this.pointer.released=true;if(this._mouseAltCode){this.release(this._mouseAltCode);this._mouseAltCode=null}};
   this.canvas.addEventListener('pointerup',up,{passive:false});
-  this.canvas.addEventListener('pointercancel',up,{passive:false});
+  this.canvas.addEventListener('pointercancel',()=>this.clearAll(),{passive:true});
   addEventListener('blur',()=>this.clearAll());
  }
  pollGamepad(){
@@ -1882,7 +1885,13 @@ class InputManager{
  isHeld(code){return this.held.has(code)}
  anyHeld(codes){return codes.some(c=>this.held.has(c))}
  endStep(){this.pressed.clear();this.released.clear();this.pointer.pressed=false;this.pointer.released=false}
- clearAll(){this.held.clear();this.pressed.clear();this.released.clear();this._gpHeld.clear();this._mouseAltCode=null;this.pointer.down=false;this.pointer.pressed=false;this.pointer.released=false}
+ clearAll(){this.held.clear();this.pressed.clear();this.released.clear();this._gpHeld.clear();this._mouseAltCode=null;this.pointer.down=false;this.pointer.pressed=false;this.pointer.released=false;
+  const ev=game&&game.activeEvent;
+  if(ev&&ev.holding){ev.holding=false;if(ev.id==='archery'){ev.holdTime=0;ev.pointerHold=false}if(ev.id==='javelin')ev.charge=0}
+  if(ev&&ev.dragging)ev.dragging=false;
+  if(game&&game.v4){game.v4.gesture.reset();if(game.v4.rhythm)game.v4.rhythm.path=[]}
+  document.querySelectorAll('.touchBtn.active').forEach(b=>b.classList.remove('active'));
+ }
 }
 
 class AudioEngine{
@@ -2903,27 +2912,45 @@ class GlobalGamesApp{
   this.showScreen('SETUP',`<section class="wrap glass"><div class="head"><div><div class="eyebrow">Team registration</div><h1 class="title">Build your contender</h1><p class="copy">Choose a nation, shape the kit, allocate exactly ten development points, then select the championship format.</p></div><button id="setupBack" class="ghost">Title</button></div>
    <div class="grid2"><div>
     <div class="card"><h3>Nation &amp; athlete</h3><div class="nations">${nations}</div><div class="fields" style="margin-top:13px"><label class="field">Athlete name<input id="athleteName" type="text" maxlength="24" value="${escapeHTML(d.athleteName)}" autocomplete="off"></label><label class="field">Difficulty<select id="difficulty"><option value="rookie" ${d.difficulty==='rookie'?'selected':''}>Rookie</option><option value="standard" ${d.difficulty==='standard'?'selected':''}>Standard</option><option value="pro" ${d.difficulty==='pro'?'selected':''}>Pro</option><option value="legend" ${d.difficulty==='legend'?'selected':''}>Legend</option></select></label><label class="field">Primary kit<input id="primaryKit" type="color" value="${d.primary}"></label><label class="field">Secondary kit<input id="secondaryKit" type="color" value="${d.secondary}"></label></div></div>
-    <div class="card"><div class="meterHead"><span>Athlete development</span><span>${left} points remaining</span></div>${setupAttributeMarkup('speed','Speed',d.attrs.speed,left)}${setupAttributeMarkup('power','Power',d.attrs.power,left)}${setupAttributeMarkup('stamina','Stamina',d.attrs.stamina,left)}<div class="btnrow" style="margin-top:12px"><button id="autoAttrs" class="ghost">Auto Allocate</button><button id="resetAttrs" class="ghost">Reset Points</button></div></div>
+    <div class="card"><div class="meterHead"><span>Athlete development</span><span id="setupPointsRemaining" aria-live="polite">${left} points remaining</span></div>${setupAttributeMarkup('speed','Speed',d.attrs.speed,left)}${setupAttributeMarkup('power','Power',d.attrs.power,left)}${setupAttributeMarkup('stamina','Stamina',d.attrs.stamina,left)}<div class="btnrow" style="margin-top:12px"><button id="autoAttrs" class="ghost">Auto Allocate</button><button id="resetAttrs" class="ghost">Reset Points</button></div></div>
    </div><div>
     <div class="card"><h3>Championship format</h3><div class="modes">${modes}</div>${d.mode==='custom'?`<div class="checks">${checks}</div><p class="note" style="margin:10px 0 0">Choose at least four events. Current schedule: ${schedule.length}.</p>`:''}</div>
-    <div class="card"><h3>Registration summary</h3><p class="copy"><strong style="color:white">${selected.flag} ${escapeHTML(d.athleteName||'Athlete')}</strong><br>${selected.name} · ${MODES[d.mode].name} · ${escapeHTML(d.difficulty)}</p><div class="pills"><span class="pill">${schedule.length} events</span><span class="pill">Speed ${d.attrs.speed}</span><span class="pill">Power ${d.attrs.power}</span><span class="pill">Stamina ${d.attrs.stamina}</span></div><button id="beginTournament" class="primary" style="width:100%" ${valid?'':'disabled'}>${left?`Allocate ${left} more point${left===1?'':'s'}`:schedule.length<4?'Select four events':'Enter Games Village'}</button><p class="note" style="margin:10px 0 0">Your nation competes against five AI teams drawn for this championship.</p></div>
+    <div class="card"><h3>Registration summary</h3><p class="copy"><strong style="color:white">${selected.flag} <span id="setupSummaryName">${escapeHTML(d.athleteName||'Athlete')}</span></strong><br>${selected.name} · ${MODES[d.mode].name} · ${escapeHTML(d.difficulty)}</p><div class="pills"><span class="pill">${schedule.length} events</span><span class="pill">Speed <span data-summary="speed">${d.attrs.speed}</span></span><span class="pill">Power <span data-summary="power">${d.attrs.power}</span></span><span class="pill">Stamina <span data-summary="stamina">${d.attrs.stamina}</span></span></div><button id="beginTournament" class="primary" style="width:100%" ${valid?'':'disabled'}>${left?`Allocate ${left} more point${left===1?'':'s'}`:schedule.length<4?'Select four events':'Enter Games Village'}</button><p class="note" style="margin:10px 0 0">Your nation competes against five AI teams drawn for this championship.</p></div>
    </div></div></section>`,'#athleteName');
   $('#setupBack').addEventListener('click',()=>this.showTitle());
-  $('#athleteName').addEventListener('input',e=>{d.athleteName=e.target.value});$('#difficulty').addEventListener('change',e=>{d.difficulty=e.target.value});
+  $('#athleteName').addEventListener('input',e=>{d.athleteName=e.target.value;$('#setupSummaryName').textContent=d.athleteName||'Athlete';this.updateSetupPoints()});$('#difficulty').addEventListener('change',e=>{d.difficulty=e.target.value});
   $('#primaryKit').addEventListener('input',e=>{d.primary=e.target.value});$('#secondaryKit').addEventListener('input',e=>{d.secondary=e.target.value});
   $$('.nation').forEach(btn=>btn.addEventListener('click',()=>{const n=NATIONS.find(x=>x.code===btn.dataset.nation);d.nation=n.code;d.primary=n.primary;d.secondary=n.secondary;this.showSetup()}));
   $$('.mode').forEach(btn=>btn.addEventListener('click',()=>{d.mode=btn.dataset.mode;if(d.mode==='custom'&&d.custom.size<4)d.custom=new Set(MODES.quick.schedule);this.showSetup()}));
   $$('.attrBtn').forEach(btn=>btn.addEventListener('click',()=>this.adjustSetupAttribute(btn.dataset.attr,Number(btn.dataset.delta))));
   $$('[data-custom]').forEach(ch=>ch.addEventListener('change',()=>{if(ch.checked)d.custom.add(ch.dataset.custom);else d.custom.delete(ch.dataset.custom);this.showSetup()}));
-  $('#autoAttrs').addEventListener('click',()=>this.autoAllocateAttributes());$('#resetAttrs').addEventListener('click',()=>{d.attrs={speed:5,power:5,stamina:5};this.showSetup()});
-  if(valid)$('#beginTournament').addEventListener('click',()=>this.beginTournament());
+  $('#autoAttrs').addEventListener('click',()=>this.autoAllocateAttributes());$('#resetAttrs').addEventListener('click',()=>{d.attrs={speed:5,power:5,stamina:5};this.updateSetupPoints()});
+  $('#beginTournament').addEventListener('click',()=>this.beginTournament());
+ }
+ updateSetupPoints(){
+  const d=this.setupDraft,left=this.setupPointsLeft();
+  $('#setupPointsRemaining').textContent=left+' points remaining';
+  for(const row of this.screen.querySelectorAll('.attr')){
+   const minus=row.querySelector('[data-delta="-1"]'),plus=row.querySelector('[data-delta="1"]');
+   const key=plus.dataset.attr,value=d.attrs[key];
+   row.querySelector('.val').textContent=value;
+   row.querySelector('.bar i').style.width=value*10+'%';
+   this.screen.querySelector('[data-summary="'+key+'"]').textContent=value;
+   const focused=document.activeElement;
+   minus.disabled=value<=5;plus.disabled=value>=10||left===0;
+   if(focused===plus&&plus.disabled&&!minus.disabled)minus.focus({preventScroll:true});
+   if(focused===minus&&minus.disabled&&!plus.disabled)plus.focus({preventScroll:true});
+  }
+  const enter=$('#beginTournament'),enoughEvents=d.mode!=='custom'||d.custom.size>=4;
+  enter.disabled=left!==0||!enoughEvents||!d.athleteName.trim();
+  enter.textContent=left?`Allocate ${left} more point${left===1?'':'s'}`:enoughEvents?'Enter Games Village':'Select four events';
  }
  adjustSetupAttribute(key,delta){
-  const d=this.setupDraft,v=d.attrs[key],left=this.setupPointsLeft();if(delta>0&&(left<=0||v>=10)){this.toast('All development points are already allocated','warn');return}if(delta<0&&v<=5)return;d.attrs[key]=clamp(v+delta,5,10);this.showSetup();
+  const d=this.setupDraft,v=d.attrs[key],left=this.setupPointsLeft();if(delta>0&&(left<=0||v>=10)){this.toast('All development points are already allocated','warn');return}if(delta<0&&v<=5)return;d.attrs[key]=clamp(v+delta,5,10);this.updateSetupPoints();
  }
  autoAllocateAttributes(){
   const d=this.setupDraft,n=NATIONS.find(x=>x.code===d.nation)||NATIONS[0],keys=['speed','power','stamina'].sort((a,b)=>n.stats[b]-n.stats[a]);d.attrs={speed:5,power:5,stamina:5};
-  for(let i=0;i<10;i++){let k=keys[i%keys.length];if(d.attrs[k]>=10)k=keys.find(x=>d.attrs[x]<10)||k;d.attrs[k]++}this.showSetup();
+  for(let i=0;i<10;i++){let k=keys[i%keys.length];if(d.attrs[k]>=10)k=keys.find(x=>d.attrs[x]<10)||k;d.attrs[k]++}this.updateSetupPoints();
  }
  beginTournament(){
   const d=this.setupDraft,left=this.setupPointsLeft(),schedule=d.mode==='custom'?EVENT_ORDER.filter(id=>d.custom.has(id)):[...MODES[d.mode].schedule];
@@ -2967,7 +2994,7 @@ class GlobalGamesApp{
   if(!this.tournament||this.state!=='PLAYING')return;this.paused=false;this.pauseLayer.classList.add('hidden');this.input.clearAll();this.particles.clear();this.accumulator=0;this.activeEvent=new EVENT_CLASSES[this.tournament.currentId](this,this.tournament);this.setupTouch(this.tournament.currentId);this.audio.setCrowd(.025);this.toast('Event restarted','warn');this.canvas.focus({preventScroll:true});
  }
  togglePause(force){
-  if(this.state!=='PLAYING'||!this.activeEvent)return;this.paused=typeof force==='boolean'?force:!this.paused;this.pauseLayer.classList.toggle('hidden',!this.paused);this.input.clearAll();this.audio.setCrowd(this.paused?.008:.04);if(!this.paused){this.lastFrame=performance.now();this.canvas.focus({preventScroll:true})}this.announce(this.paused?'Event paused':'Event resumed');
+  if(this.state!=='PLAYING'||!this.activeEvent)return;this.paused=typeof force==='boolean'?force:!this.paused;this.pauseLayer.classList.toggle('hidden',!this.paused);this.input.clearAll();this.audio.setCrowd(this.paused?.008:.04);if(this.paused)$('#resumeBtn').focus({preventScroll:true});else{this.lastFrame=performance.now();this.canvas.focus({preventScroll:true})}this.announce(this.paused?'Event paused':'Event resumed');
  }
  quitToTitle(){this.paused=false;this.pauseLayer.classList.add('hidden');this.activeEvent=null;this.tournament=null;this.showTitle()}
  finishActiveEvent(ev){
@@ -3358,8 +3385,8 @@ class GlobalGamesV4{
  enhanceResult(entry){if(!entry)return;const scoring=stationScoreV4(entry.eventId,entry.playerResult.score),olympiad=this.recordOlympiad(entry),hero=this.app.screen.querySelector('.resultHero');entry.v4={scoring,olympiad,biomechanics:entry.extra&&entry.extra.biomechanics,rhythmEfficiency:Number(entry.extra&&entry.extra.rhythmEfficiency)||0,rollbackFrames:Number(entry.extra&&entry.extra.rollbackFrames)||0};if(!hero)return;const card=document.createElement('div');card.className='replayCard';card.innerHTML=`<div class="replayIcon">▦</div><div><div class="eyebrow">V4 verified performance layer</div><b>${scoring.points} House station points</b><p class="note" style="margin:3px 0 0">${escapeHTML(scoring.system)}${entry.v4.rhythmEfficiency?` · phase efficiency ${entry.v4.rhythmEfficiency.toFixed(0)}%`:''}${entry.v4.biomechanics?` · finish reserves ${Math.round(entry.v4.biomechanics.aerobic*100)}% aerobic / ${Math.round(entry.v4.biomechanics.anaerobic*100)}% anaerobic`:''}. ${olympiad?`${escapeHTML(olympiad.week)} best is stored in Passport V4.`:'No false claim of official scoring is made for this discipline.'}</p></div>`;hero.insertAdjacentElement('afterend',card)}
  enhanceRecords(){const head=this.app.screen.querySelector('.head');if(!head)return;const button=document.createElement('button');button.id='recordsScoringV4';button.className='ghost';button.textContent='Scoring Studio';head.querySelector('.btnrow')?head.querySelector('.btnrow').appendChild(button):head.appendChild(button);button.addEventListener('click',()=>this.showScoring())}
  showScoring(){const a=this.app,cards=Object.entries(DECATHLON_V4).map(([id,c])=>`<article class="scoreFormula"><span class="eyebrow">Official formula</span><b>${escapeHTML(c.label)}</b><strong>${c.kind==='track'?`⌊${c.a} × (${c.b} − T)^${c.c}⌋`:c.kind==='field-cm'?`⌊${c.a} × (cm − ${c.b})^${c.c}⌋`:`⌊${c.a} × (m − ${c.b})^${c.c}⌋`}</strong><small>Applied only to ${escapeHTML(EVENT_META[id].name)} marks in this game.</small></article>`).join('');a.showScreen('SCORING_V4',`<section class="wrap glass"><div class="head"><div><div class="eyebrow">Transparent World Stage maths</div><h1 class="title">Scoring Studio</h1><p class="copy">World Athletics decathlon coefficients are used only for the four matching events below. Swimming, archery, curling, weightlifting and ski jump use a clearly-labelled Made by Matt normalization against the game’s published arcade benchmark.</p></div><button id="scoringBackV4" class="ghost">Back</button></div><div class="scoringGrid">${cards}</div><div class="card" style="margin-top:15px"><h3>House station normalization</h3><p class="copy">Non-decathlon events convert performance to 0–1000 with <code>650 + 350 × (benchmark ratio − 1) / 0.22</code>, clamped to the range. This is an in-game comparison tool, not an official federation table.</p></div></section>`,'#scoringBackV4');$('#scoringBackV4').addEventListener('click',()=>a.showTitle())}
- installRhythmKeyboard(){addEventListener('keydown',e=>{if(this.app.state!=='RHYTHM_V4'||e.repeat)return;if(['KeyA','ArrowLeft'].includes(e.code)){e.preventDefault();this.rhythmHit(-1,'keyboard')}else if(['KeyD','ArrowRight','Space'].includes(e.code)){e.preventDefault();this.rhythmHit(1,'keyboard')}},{passive:false})}
- showRhythmLab(){const a=this.app;a.showScreen('RHYTHM_V4',`<section class="wrap glass"><div class="head"><div><div class="eyebrow">V4 Practice Academy · no rewards</div><h1 class="title">Rhythm Lab</h1><p class="copy">Alternate A / D, Left / Right, or draw smooth arcs around the centre. The lab scores timing consistency only; it does not spend Energy or award Credits.</p></div><button id="rhythmBackV4" class="ghost">Back</button></div><div class="rhythmStage"><canvas id="rhythmCanvasV4" aria-label="Rhythm gesture practice area"></canvas></div><div class="rhythmControls"><button id="rhythmLeftV4" class="secondary">A · LEFT PHASE</button><button id="rhythmRightV4" class="primary">D · RIGHT PHASE</button></div><div class="rewardBanner"><span><b id="rhythmStatusV4">Start with either side</b><br><small class="note">Target cadence: one phase every 320 ms · smooth, not frantic.</small></span><strong id="rhythmScoreV4">—</strong></div></section>`,'#rhythmBackV4');this.rhythm={lastAt:0,lastSide:0,score:0,hits:0,path:[],arc:0,lastAngle:null};$('#rhythmBackV4').addEventListener('click',()=>a.showTitle());$('#rhythmLeftV4').addEventListener('click',()=>this.rhythmHit(-1,'button'));$('#rhythmRightV4').addEventListener('click',()=>this.rhythmHit(1,'button'));const canvas=$('#rhythmCanvasV4'),point=e=>{const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}},down=e=>{const p=point(e);this.rhythm.path=[p];this.rhythm.cx=p.x;this.rhythm.cy=p.y;this.rhythm.arc=0;this.rhythm.lastAngle=null;try{canvas.setPointerCapture(e.pointerId)}catch{}},move=e=>{if(!this.rhythm.path.length)return;const p=point(e),dx=p.x-this.rhythm.cx,dy=p.y-this.rhythm.cy;if(Math.hypot(dx,dy)>28){const angle=Math.atan2(dy,dx);if(this.rhythm.lastAngle!==null){let d=angle-this.rhythm.lastAngle;if(d>Math.PI)d-=Math.PI*2;if(d<-Math.PI)d+=Math.PI*2;this.rhythm.arc+=d;if(Math.abs(this.rhythm.arc)>.7){this.rhythmHit(this.rhythm.arc<0?-1:1,'gesture');this.rhythm.arc=0}}this.rhythm.lastAngle=angle}this.rhythm.path.push(p);if(this.rhythm.path.length>70)this.rhythm.path.shift()},up=()=>{this.rhythm.path=[];this.rhythm.lastAngle=null};canvas.addEventListener('pointerdown',down,{passive:true});canvas.addEventListener('pointermove',move,{passive:true});canvas.addEventListener('pointerup',up,{passive:true});canvas.addEventListener('pointercancel',up,{passive:true});this.drawRhythmLab()}
+ installRhythmKeyboard(){addEventListener('keydown',e=>{if(this.app.state!=='RHYTHM_V4'||e.defaultPrevented||e.altKey||e.ctrlKey||e.metaKey)return;if(e.code==='Space'&&e.target.closest?.('button'))return;if(e.repeat){if(['Space','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();return}if(['KeyA','ArrowLeft'].includes(e.code)){e.preventDefault();this.rhythmHit(-1,'keyboard')}else if(['KeyD','ArrowRight','Space'].includes(e.code)){e.preventDefault();this.rhythmHit(1,'keyboard')}},{passive:false})}
+ showRhythmLab(){const a=this.app;a.showScreen('RHYTHM_V4',`<section class="wrap glass"><div class="head"><div><div class="eyebrow">V4 Practice Academy · no rewards</div><h1 class="title">Rhythm Lab</h1><p class="copy">Alternate A / D, Left / Right, or draw smooth arcs around the centre. The lab scores timing consistency only; it does not spend Energy or award Credits.</p></div><button id="rhythmBackV4" class="ghost">Back</button></div><div class="rhythmStage"><canvas id="rhythmCanvasV4" tabindex="0" aria-label="Rhythm gesture practice area"></canvas></div><div class="rhythmControls"><button id="rhythmLeftV4" class="secondary">A · LEFT PHASE</button><button id="rhythmRightV4" class="primary">D · RIGHT PHASE</button></div><div class="rewardBanner"><span><b id="rhythmStatusV4">Start with either side</b><br><small class="note">Target cadence: one phase every 320 ms · smooth, not frantic.</small></span><strong id="rhythmScoreV4">—</strong></div></section>`,'#rhythmCanvasV4');this.rhythm={lastAt:0,lastSide:0,score:0,hits:0,path:[],arc:0,lastAngle:null};$('#rhythmBackV4').addEventListener('click',()=>a.showTitle());$('#rhythmLeftV4').addEventListener('click',()=>this.rhythmHit(-1,'button'));$('#rhythmRightV4').addEventListener('click',()=>this.rhythmHit(1,'button'));const canvas=$('#rhythmCanvasV4'),point=e=>{const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}},down=e=>{const p=point(e);this.rhythm.path=[p];this.rhythm.cx=p.x;this.rhythm.cy=p.y;this.rhythm.arc=0;this.rhythm.lastAngle=null;try{canvas.setPointerCapture(e.pointerId)}catch{}},move=e=>{if(!this.rhythm.path.length)return;const p=point(e),dx=p.x-this.rhythm.cx,dy=p.y-this.rhythm.cy;if(Math.hypot(dx,dy)>28){const angle=Math.atan2(dy,dx);if(this.rhythm.lastAngle!==null){let d=angle-this.rhythm.lastAngle;if(d>Math.PI)d-=Math.PI*2;if(d<-Math.PI)d+=Math.PI*2;this.rhythm.arc+=d;if(Math.abs(this.rhythm.arc)>.7){this.rhythmHit(this.rhythm.arc<0?-1:1,'gesture');this.rhythm.arc=0}}this.rhythm.lastAngle=angle}this.rhythm.path.push(p);if(this.rhythm.path.length>70)this.rhythm.path.shift()},up=()=>{this.rhythm.path=[];this.rhythm.lastAngle=null};canvas.addEventListener('pointerdown',down,{passive:true});canvas.addEventListener('pointermove',move,{passive:true});canvas.addEventListener('pointerup',up,{passive:true});canvas.addEventListener('pointercancel',up,{passive:true});this.drawRhythmLab()}
  rhythmHit(side,source){const r=this.rhythm;if(!r)return;const now=performance.now(),alternated=!r.lastSide||side!==r.lastSide,interval=r.lastAt?now-r.lastAt:320,phase=clamp(1-Math.abs(interval-320)/300,0,1),quality=alternated?phase:phase*.25;r.score=r.hits?lerp(r.score,quality,.25):quality;r.hits++;r.lastSide=side;r.lastAt=now;const status=$('#rhythmStatusV4'),score=$('#rhythmScoreV4');if(status)status.textContent=!alternated?'Repeat side — swap sides next':quality>.82?'Phase locked':quality>.52?'Controlled cadence':'Slow down and find the pulse';if(score)score.textContent=`${Math.round(r.score*100)}%`;if(source==='gesture')this.app.audio.modalV4('water',.025);else this.app.audio.tap(side)}
  drawRhythmLab(){if(this.app.state!=='RHYTHM_V4'||!this.rhythm)return;const c=$('#rhythmCanvasV4');if(!c)return;const d=Math.min(2,devicePixelRatio||1),rect=c.getBoundingClientRect(),w=Math.max(1,Math.round(rect.width*d)),h=Math.max(1,Math.round(rect.height*d));if(c.width!==w||c.height!==h){c.width=w;c.height=h}const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,rect.width,rect.height);const cx=rect.width/2,cy=rect.height/2,pulse=Motion.reduced?0.5:(performance.now()%640)/640;ctx.strokeStyle='rgba(71,231,255,.22)';ctx.lineWidth=18;ctx.beginPath();ctx.arc(cx,cy,70,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#ffd75e';ctx.lineWidth=7;ctx.beginPath();ctx.arc(cx,cy,70,-Math.PI/2,-Math.PI/2+pulse*Math.PI*2);ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx+Math.cos(-Math.PI/2+pulse*Math.PI*2)*70,cy+Math.sin(-Math.PI/2+pulse*Math.PI*2)*70,8,0,Math.PI*2);ctx.fill();if(this.rhythm.path.length>1){ctx.strokeStyle='#bb8cff';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();this.rhythm.path.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke()}ctx.fillStyle='#dff8ff';ctx.font='900 13px ui-monospace';ctx.textAlign='center';ctx.fillText('DRAW AN ARC OR ALTERNATE A / D',cx,cy+6);requestAnimationFrame(()=>this.drawRhythmLab())}
  bindDataV4(){
