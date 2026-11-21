@@ -170,6 +170,7 @@ if (arcadeUrl) {
   let expectedCards = expected;       // what the browse structure must render
   let wantCount = null;               // what the count line must name
   const nonLead = new Set();
+  let d2 = false;                     // the PLAY-D2 page shape, read from its dataset
   if (catalogueUrl) {
     try {
       const cat = await (await fetch(catalogueUrl, { cache: 'no-store' })).json();
@@ -192,12 +193,16 @@ if (arcadeUrl) {
         ? `#play-data: ${dataset.games.length} rows, ${Object.keys(dataset.series).length} series, counts ${JSON.stringify(dataset.counts)}, catalogue ${dataset.catalogue}`
         : 'no parseable #play-data (games[], series, counts, catalogue) on the arcade page, so no card expectation could be derived');
     if (usable) {
+      // PLAY-D2 (21 Nov 2026): the page that carries Pick-a-game packs and moods in its
+      // dataset gives every catalogue game its own card (no series collapse) and lists the
+      // classroom activities in its Teacher corner, not as cards; the staff row is not on it.
+      d2 = Array.isArray(dataset.packs) && Array.isArray(dataset.moods);
       const group = new Map(dataset.games.map((g) => [g.id, g.group]));
-      for (const ids of Object.values(dataset.series)) {
+      if (!d2) for (const ids of Object.values(dataset.series)) {
         const catalogueMembers = (Array.isArray(ids) ? ids : []).filter((id) => group.get(id) === 'games');
         for (const id of catalogueMembers.slice(1)) nonLead.add(id);
       }
-      expectedCards = total - nonLead.size;
+      expectedCards = d2 ? dataset.counts.games : total - nonLead.size;
       wantCount = dataset.counts.games;
     }
   }
@@ -205,6 +210,11 @@ if (arcadeUrl) {
   // Poll, never single-sample: the shelf arrives by fetch and the grid is
   // empty until it resolves. A single sample here is the census bug that
   // recorded two branded splashes as unbranded.
+  // The D2 grid opens collapsed to twelve once its script has run; show it whole, as a person does.
+  if (d2) {
+    await page.waitForFunction(() => !document.querySelector('#expand-btn') || document.documentElement.dataset.playReady === '1', null, { timeout: 15000 }).catch(() => {});
+    await page.evaluate(() => { const b = document.querySelector('#expand-btn'); if (b && b.getAttribute('aria-expanded') === 'false' && b.getClientRects().length) b.click(); }).catch(() => {});
+  }
   let rendered = -1;
   for (let i = 0; i < 60; i++) {
     // The browse structure moved from one A-Z grid (#allGrid) to genre
@@ -228,7 +238,8 @@ if (arcadeUrl) {
 
   check('arcade-renders-shelf', rendered >= expected && rendered === expectedCards,
     catalogueUrl
-      ? `${rendered} cards occupy real space in the browse structure, expected ${expectedCards} = ${total} catalogue routes − ${nonLead.size} non-lead series editions (derived from #play-data), shelf is ${expected} (rendered, not node-counted)`
+      ? (d2 ? `${rendered} cards occupy real space in the browse structure, expected ${expectedCards} = the games-group count (one card per catalogue game; activities in the Teacher corner; derived from #play-data), shelf is ${expected} (rendered, not node-counted)`
+            : `${rendered} cards occupy real space in the browse structure, expected ${expectedCards} = ${total} catalogue routes − ${nonLead.size} non-lead series editions (derived from #play-data), shelf is ${expected} (rendered, not node-counted)`)
       : `${rendered} cards occupy real space in the browse structure, shelf is ${expected} (rendered, not node-counted)`);
   const shelfMissing = await page.evaluate((hrefs) => hrefs.filter((h) => ![...document.querySelectorAll('a[href]')].some((a) => {
     const raw = a.getAttribute('href') || ''; let dec = raw; try { dec = decodeURIComponent(raw); } catch (_) {}
@@ -236,7 +247,10 @@ if (arcadeUrl) {
   check('arcade-every-shelf-entry', shelfMissing.length === 0,
     shelfMissing.length ? `no rendered link for ${shelfMissing.slice(0, 5).join(' ')}` : 'every shelf entry has a rendered link');
 
-  const countline = (await page.textContent('#countline').catch(() => null))
+  // #result-count is the play home's count line in every shape; PLAY-D2 also has an
+  // (empty) storage status ahead of it, so the first [role=status] is no longer it.
+  const countline = (await page.textContent('#countline', { timeout: 2000 }).catch(() => null))
+    || (await page.textContent('#result-count', { timeout: 2000 }).catch(() => null))
     || (await page.textContent('[role="status"]').catch(() => '')) || '';
   // R5: with a catalogue, the count line names the games-group count and not
   // the route total; a whole number, so 62 is not found inside 162.

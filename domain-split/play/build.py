@@ -474,63 +474,36 @@ def refresh(output, review=False, source_revisions=None):
             shutil.copyfile(source,assets/'media'/name)
     (target/'data/play-discovery.json').write_text(json.dumps({'counts':counts,'games':rows},ensure_ascii=False))
 
-    # --- Render -------------------------------------------------------------
+    # --- Render (PLAY-D2, 2026-11-21) ---------------------------------------
+    # The front page is the D2 "front door": four Pick-a-game cards, the mood
+    # buttons, Play again, ONE A-Z grid of every catalogue game and a collapsed
+    # Teacher corner. Every number and every list below is derived here from the
+    # catalogue joined to discovery-moods.json; play2.js only reads the dataset.
     by_id = {r['id']: r for r in rows}
     games = [r for r in rows if r['group'] == 'games']
-    activities = [r for r in rows if r['group'] != 'games']
-    genre_counts = Counter(r['genre'] for r in games)
-    genres = sorted(genre_counts, key=lambda g: (-genre_counts[g], g))
-    # TX (d): shelf order -- Classroom first (the classroom need), then the page's
-    # existing categories by size. The categories are the catalogue's own genre
-    # values; nothing is invented. Activities join the Classroom shelf.
-    shelf_names = ['Classroom'] + [g for g in genres if g != 'Classroom']
-    # TX (c): chips are those categories plus Keyboard / Touch, which filter only
-    # on DECLARED controls (a game with no verified controls matches neither).
-    declared = {c for r in games for c in r['controls']}
-    input_chips = [(v, label) for v, label in (('keyboard', 'Keyboard'), ('touch', 'Touch')) if v in declared]
-    chips = ('<button type="button" class="chip-button" data-chip="all" aria-pressed="true">All</button>'
-             + ''.join('<button type="button" class="chip-button" data-chip="genre" data-genre="' + esc(g) + '" aria-pressed="false">' + esc(g) + '</button>' for g in shelf_names)
-             + ''.join('<button type="button" class="chip-button" data-chip="control" data-control="' + v + '" aria-pressed="false">' + label + '</button>' for v, label in input_chips))
-    genre_options = '<option value="">All genres</option>' + ''.join('<option value="' + esc(g) + '">' + esc(g) + '</option>' for g in genres)
-    # J92 R9: facet chips are the manifest's declared classroom_facets values only,
-    # by size then name; the label is the value, capitalised. No facets, no row.
-    facet_counts = Counter(f for r in games for f in r['facets'])
-    facet_names = sorted(facet_counts, key=lambda f: (-facet_counts[f], f))
-    facet_row = ''
-    if facet_names:
-        facet_row = ('<div class="chip-row facet-row" role="group" aria-label="Classroom facets">'
-                     + ''.join('<button type="button" class="facet-chip" data-chip="facet" data-facet="' + esc(f) + '" aria-pressed="false">' + esc(f[:1].upper() + f[1:]) + '</button>' for f in facet_names) + '</div>')
-    # TX (a): the spotlight is every row the manifest flags featured, in manifest
-    # order. AK10-AB (AB-1, AB-2): the one row the manifest flags spotlight leads
-    # it, then the featured rows follow; no new section, and hero is not read.
+    activities = [r for r in rows if r['group'] == 'activities']
+    staff = [r for r in rows if r['group'] == 'staff']
+    pupil_rows = [r for r in rows if r['group'] != 'staff']
+    # The manifest's spotlight flag stays validated (exactly one row at most) even
+    # though the D2 page has no Spotlight: the flag still drives the Games shelf.
     spot_lead = [r for r in games if r.get('spotlight')]
     if len(spot_lead) > 1:
         raise ValueError('more than one spotlight row: ' + ', '.join(r['title'] for r in spot_lead))
     featured = spot_lead + [r for r in games if r['featured'] and not r.get('spotlight')]
-    by_shelf, covered = OrderedDict((n, []) for n in shelf_names), []
-    for r in games:
-        members = r.get('editions') or [r['id']]
-        lead = next(i for i in members if by_id[i]['group'] == 'games')
-        if r['id'] != lead:
-            continue  # not the lead of its series: its Play anchor rides on the lead card
-        by_shelf[r['genre']].append(card(r, members, by_id))
-        covered += [i for i in members if by_id[i]['group'] == 'games']
+    discovery = discovery_join(games, target)
+    genre_counts = Counter(r['genre'] for r in games)
+    genres = sorted(genre_counts, key=lambda g: (-genre_counts[g], g))
+    az = sorted(games, key=lambda r: shown_title(r).casefold())
+    mood_by_id = {m['id']: m for m in discovery['moods']}
+    cards = [game_card(r, discovery['rows'][r['id']], i < EAGER_CARDS, mood_by_id) for i, r in enumerate(az)]
+    covered = [r['id'] for r in az]
     if sorted(covered) != sorted(r['id'] for r in games) or len(covered) != len(set(covered)):
-        raise ValueError('shelves do not cover every catalogue game exactly once')
-    cards = [c for v in by_shelf.values() for c in v]
-    shelf_report = OrderedDict()
-    shelves_html = ''
-    for name, items in by_shelf.items():
-        members = [r for r in games if r['genre'] == name]
-        extra = [activity_card(r) for r in activities] if name == 'Classroom' else []
-        if not items and not extra:
-            continue
-        count = str(len(members)) + (' game' if len(members) == 1 else ' games')
-        if extra:
-            count += ' · ' + str(len(extra)) + ' activities'
-        note = 'Classroom games, whole-class quizzes and a staff training activity.' if name == 'Classroom' else ''
-        shelves_html += shelf(name, items + extra, count, note)
-        shelf_report[name] = {'cards': len(items) + len(extra), 'games': len(members), 'activities': len(extra)}
+        raise ValueError('the grid does not cover every catalogue game exactly once')
+    # Covers are served from /assets/play2/covers/ (the path discovery-moods.json names),
+    # copied only from their recorded bytes (checked in discovery_join).
+    (target/'assets/play2/covers').mkdir(parents=True, exist_ok=True)
+    for name in discovery['covers']:
+        shutil.copyfile(COVERS/name, target/'assets/play2/covers'/name)
     template = (HERE/'index.html').read_text()
     # Use the exact supplied mark approved by the user, with a checked file hash.
     brand = read('brand.json', {})
@@ -541,57 +514,205 @@ def refresh(output, review=False, source_revisions=None):
     if brand.get('status') in {'verified-original', 'user-approved'}:
         source = HERE / brand['file']
         assert hashlib.sha256(source.read_bytes()).hexdigest() == brand['sha256']
-        shutil.copyfile(source,assets/source.name)
-        logo = '<img src="/assets/play/'+esc(source.name)+'" alt="" width="48" height="48">'
+        shutil.copyfile(source, target/'assets/play'/source.name)
+        logo = '<img src="/assets/play/'+esc(source.name)+'" alt="" width="28" height="28">'
         # PLAY-D1 footer: the same approved mark closes the page, from the same
-        # verified bytes and the same served URL as the header -- no second asset,
-        # no recolour, no crop. alt="" is the rule, not an oversight: the link it
-        # sits in is named by the words beside it, so naming the image as well
-        # would read the brand to a screen reader twice. width and height are on
-        # the element, so the box is reserved before the JPEG decodes and the
-        # footer does not shift under it.
+        # verified bytes and the same served URL as the header. alt="" because the
+        # link it sits in is named by the words beside it; width and height reserve
+        # the box so the footer does not shift when the JPEG decodes.
         footer_logo = ('<img class="footer-mark" src="/assets/play/'+esc(source.name)
                        +'" alt="" width="32" height="32" decoding="async" loading="lazy">')
-    # PLAY-P1 part B: decorative masthead motif, placed only at its recorded bytes
-    # (hero-art.json binds the asset by sha256 and byte length). An .svg record is
-    # inlined directly into .intro-art with aria-hidden="true" (no request, no <img>).
-    hero = read('hero-art.json', {})
-    hero_art = ''
-    if hero.get('sha256'):
-        source = HERE / Path(hero['file']).name
-        art_bytes = source.read_bytes()
-        assert hashlib.sha256(art_bytes).hexdigest() == hero['sha256'] and len(art_bytes) == hero['bytes'], 'hero artwork differs from hero-art.json'
-        if source.suffix.lower() == '.svg':
-            hero_art = ('<div class="intro-art" aria-hidden="true" data-hero-sha="'+esc(hero['sha256'])+'" data-hero-bytes="'+str(int(hero['bytes']))+'">'
-                        +art_bytes.decode('utf-8').strip()+'</div>')
-        else:
-            shutil.copyfile(source, assets/source.name)
-            hero_art = ('<img class="intro-art" src="/assets/play/'+esc(source.name)+'" alt="" width="'+str(int(hero['width']))+'" height="'+str(int(hero['height']))
-                        +'" decoding="async" fetchpriority="low" data-hero-source="'+esc(hero['sourceSha256'])+'" data-hero-sha="'+esc(hero['sha256'])+'">')
-    lanes_html = (spotlight(featured) if featured else '') + release_rail(rows)
+    mood_counts = discovery['counts']
+    mood_buttons = ('<button type="button" class="mood-btn" data-mood="all" aria-pressed="true"><span class="mood-ic" aria-hidden="true">'
+                    + icon_svg('all') + '</span><span class="mood-label">' + esc(discovery['all_label']) + '</span></button>'
+                    + ''.join('<button type="button" class="mood-btn" data-mood="' + esc(m['id']) + '" aria-pressed="false" aria-label="' + esc(m['label'] + ', ' + str(mood_counts[m['id']]) + ' games')
+                              + '"><span class="mood-ic" aria-hidden="true">' + icon_svg(m['id']) + '</span><span class="mood-label">' + esc(m['label'])
+                              + '</span><span class="mood-count" aria-hidden="true">' + str(mood_counts[m['id']]) + '</span></button>' for m in discovery['moods']))
+    classroom = ''.join(activity_item(r) for r in activities)
     data = {'counts': counts, 'catalogue': len(games), 'genres': [{'name': g, 'count': genre_counts[g]} for g in genres],
-            'facets': [{'name': f, 'count': facet_counts[f]} for f in facet_names],
             'bandLabels': {b: band_labels[b] for b in sorted({r['sessionBand'] for r in games if r.get('sessionBand')})},
-            'series': series, 'games': [slim(r) for r in rows]}
-    substitutions = {'@@LOGO@@':logo, '@@FOOTERLOGO@@':footer_logo, '@@HEROART@@':hero_art, '@@CHIPS@@':chips, '@@FACETS@@':facet_row, '@@GENRES@@':genre_options, '@@FEATURED@@': lanes_html,
-        '@@COUNT@@': str(len(games)) + ' games', '@@GRID@@': shelves_html, '@@NOSCRIPT@@': noscript_list(rows), '@@TILES@@': tile_sprite(),
-        '@@DATA@@':json.dumps(data,ensure_ascii=False).replace('<','\\u003c')}
-    for a,b in substitutions.items(): template = template.replace(a,b)
+            'series': series, 'moods': [{'id': m['id'], 'label': m['label'], 'icon': m['icon'], 'count': mood_counts[m['id']]} for m in discovery['moods']],
+            'allLabel': discovery['all_label'], 'allIcon': discovery['all_icon'], 'packs': discovery['packs'], 'todayPool': discovery['today_pool'],
+            'synonyms': discovery['synonyms'], 'eager': EAGER_CARDS, 'collapsed': COLLAPSED_CARDS,
+            'games': [{**slim(r), **({'discovery': discovery['rows'][r['id']]} if r['group'] == 'games' else {})} for r in pupil_rows]}
+    substitutions = {'@@SPRITE@@': sprite(discovery), '@@LOGO@@': logo, '@@FOOTERLOGO@@': footer_logo, '@@MOODS@@': mood_buttons, '@@ALLTITLE@@': esc(discovery['all_label']) + ' games',
+                     '@@COUNT@@': str(len(games)) + ' games', '@@SHOWALL@@': 'Show all ' + str(len(games)), '@@GRID@@': ''.join(cards),
+                     '@@CLASSROOM@@': classroom, '@@ACTIVITIES@@': str(len(activities)), '@@NOSCRIPT@@': noscript_list(pupil_rows),
+                     '@@DATA@@': json.dumps(data, ensure_ascii=False).replace('<', '\\u003c')}
+    for a, b in substitutions.items():
+        if a not in template: raise ValueError('template slot missing: ' + a)
+        template = template.replace(a, b)
     assert '@@' not in template
+    # The staff calibration item is published (its payload and its catalogue row
+    # stay) but it is never linked from, named on, or carried by the pupil page.
+    for row in staff:
+        for needle in {row['route'], unquote(row['route']), row['id'], row['title']}:
+            if needle in template: raise ValueError('staff item reached the pupil page: ' + row['title'])
     for name in ALIASES:
         p=target/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(template)
     assert (target/'data/domain-catalogue.json').read_bytes() == original
     report={'counts':counts,'total':len(rows),'catalogue_sha256':hashlib.sha256(original).hexdigest(),
             'brand_status':brand.get('status','original-asset-unresolved'), 'accepted_clips':len(clips_by_route),
             'grid_cards':len(cards),'series':{k:len(v) for k,v in series.items()},'genres':genres,
-            'featured':[r['route'] for r in featured], 'shelves':shelf_report,
+            'featured':[r['route'] for r in featured],
+            'moods':mood_counts,'packs':[p['slug'] for p in discovery['packs']],'today_pool':len(discovery['today_pool']),
+            'covers':sorted(discovery['covers']),'pictures':dict(Counter(v['pictureKind'] for v in discovery['rows'].values())),
+            'staff_on_page':0,
             'updated_rail':[r['id'] for r in sorted([r for r in rows if r.get('updated')], key=lambda r: r['updated']['date'], reverse=True)],
-            'facets':{f: facet_counts[f] for f in facet_names}, 'tiles_without_screen':sorted(TILES_USED),
             'line_sources':dict(Counter(r['lineSource'] for r in rows)),
             'changed_game_payloads':0,'canonical_origin':ORIGIN,'shared_runtime_changed':False,
             'omitted_discovery':omitted_discovery}
     (Path(output)/'play-discovery-report.json').write_text(json.dumps(report,indent=2)+'\n')
     return report
+
+
+# --- PLAY-D2 front page helpers -----------------------------------------------
+COVERS = HERE / 'covers'
+DISCOVERY = HERE / 'discovery-moods.json'
+MOOD_IDS = ('fast', 'race', 'sport', 'solve', 'plan', 'explore', 'chill', 'mates')
+EAGER_CARDS = 8       # the first eight A-Z pictures load eagerly, the rest lazily
+COLLAPSED_CARDS = 12  # the A-Z grid shows this many until "Show all"
+HOOK_WORDS = 8
+COVER_LIMIT = 20 * 1024
+COVER_FORBIDDEN = re.compile(r'<\s*(script|image|text|foreignObject|use|a)\b|href\s*=|url\s*\(\s*(?!#)|@import|on[a-z]+\s*=', re.I)
+# One sprite per page: every card repeats only a <use> reference, so 66 cards stay small.
+SPRITE_SHAPES = {
+    'i-heart': ('0 0 20 20', '<path d="M10 16.8 8.7 15.6C4.4 11.7 1.8 9.4 1.8 6.4A3.8 3.8 0 0 1 5.6 2.6c1.5 0 2.9.8 3.6 2a4.2 4.2 0 0 1 3.6-2 3.8 3.8 0 0 1 3.8 3.8c0 3-2.6 5.3-6.9 9.2L10 16.8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'),
+    'i-keys': ('0 0 18 18', '<g fill="none" stroke="currentColor"><rect x="1.5" y="4" width="15" height="10" rx="2" stroke-width="1.6"/><path d="M4.5 7.2h1.5M8.2 7.2h1.6M12 7.2h1.5M5.2 10.8h7.6" stroke-width="1.5" stroke-linecap="round"/></g>'),
+    'i-tri': ('0 0 16 16', '<path d="M4.2 2.8 13.4 8 4.2 13.2Z" fill="currentColor"/>'),
+}
+HEART = '<svg class="heart" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><use href="#i-heart"/></svg>'
+KEYS_ICON = '<svg viewBox="0 0 18 18" aria-hidden="true" focusable="false"><use href="#i-keys"/></svg>'
+TRI = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#i-tri"/></svg>'
+
+def icon_svg(mood_id):
+    return '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false"><use href="#m-' + mood_id + '"/></svg>'
+
+def sprite(discovery):
+    symbols = [('m-all', '0 0 20 20', discovery['all_icon'])] + [('m-' + m['id'], '0 0 20 20', m['icon']) for m in discovery['moods']] + [(k, v[0], v[1]) for k, v in SPRITE_SHAPES.items()]
+    return '<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0">' + ''.join('<symbol id="' + i + '" viewBox="' + vb + '">' + body + '</symbol>' for i, vb, body in symbols) + '</svg>'
+
+def needs_keys(row):
+    return bool(row['controls']) and 'touch' not in row['controls']
+
+def discovery_join(games, target):
+    """Join discovery-moods.json to the catalogue by route and prove every rule the
+    D2 brief sets for it. Raises on the first broken rule; returns the joined data."""
+    spec = json.loads(DISCOVERY.read_text(encoding='utf-8'))
+    if spec.get('schema') != 1: raise ValueError('Unsupported discovery-moods.json schema')
+    moods = spec['moods']
+    if [m['id'] for m in moods] != list(MOOD_IDS): raise ValueError('discovery moods must be exactly ' + ', '.join(MOOD_IDS) + ' in that order')
+    for m in moods:
+        if not m.get('label', '').strip() or '<' in m['label'] or not m.get('icon', '').strip(): raise ValueError('mood needs a label and an icon: ' + m['id'])
+        if re.search(r'<\s*(script|image|text|use|a)\b|href|url\(', m['icon'], re.I): raise ValueError('mood icon must be plain shapes: ' + m['id'])
+    by_key = {key(r['route']): r for r in games}
+    rows_by_route = {key(k): v for k, v in spec['games'].items()}
+    if len(rows_by_route) != len(spec['games']): raise ValueError('discovery-moods.json repeats a route')
+    missing = sorted(set(by_key) - set(rows_by_route)); extra = sorted(set(rows_by_route) - set(by_key))
+    if missing or extra: raise ValueError('discovery-moods.json must hold every catalogue game once: missing ' + json.dumps(missing) + ' extra ' + json.dumps(extra))
+    covers = spec['covers']
+    for name, rec in covers.items():
+        if Path(name).name != name or not name.endswith('.svg'): raise ValueError('Invalid cover filename: ' + name)
+        raw = (COVERS/name).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != rec['sha256'] or len(raw) != rec['bytes']: raise ValueError('Cover bytes changed: ' + name)
+        text = raw.decode('utf-8')
+        if len(raw) > COVER_LIMIT: raise ValueError('Cover over 20 KB: ' + name)
+        if not re.match(r'<svg xmlns="http://www\.w3\.org/2000/svg" viewBox="0 0 640 360"', text): raise ValueError('Cover must be a 640x360 SVG: ' + name)
+        if COVER_FORBIDDEN.search(text) or text.count('http') != 1: raise ValueError('Cover carries text, script, a picture or an outside reference: ' + name)
+    on_disk = {p.name for p in COVERS.glob('*')}
+    if on_disk != set(covers): raise ValueError('covers on disk differ from discovery-moods.json covers: ' + json.dumps(sorted(on_disk ^ set(covers))))
+    out, counts, used_covers = {}, Counter(), set()
+    for k, spec_row in rows_by_route.items():
+        row = by_key[k]
+        if spec_row['title'] != shown_title(row): raise ValueError('discovery-moods.json title differs from the catalogue: ' + spec_row['title'])
+        primary, secondary = spec_row['primary'], spec_row['secondary']
+        if primary not in MOOD_IDS or (secondary is not None and (secondary not in MOOD_IDS or secondary == primary)): raise ValueError('Invalid mood for ' + spec_row['title'])
+        hook = spec_row['hook']
+        words = hook.split()
+        if not words or len(words) > HOOK_WORDS or not hook.endswith('.') or '<' in hook: raise ValueError('Hook must be one short sentence of eight words or fewer: ' + spec_row['title'])
+        picture = spec_row['picture']
+        if picture.startswith('/assets/play2/covers/'):
+            name = picture.rsplit('/', 1)[1]
+            if name not in covers: raise ValueError('Cover not recorded: ' + picture)
+            used_covers.add(name); kind = 'cover'
+        elif picture.startswith('/assets/play/screens/'):
+            if picture != row['image']: raise ValueError('Screen picture is not the byte-bound capture for ' + spec_row['title'])
+            kind = 'screen'
+        elif picture.startswith('/assets/play/media/'):
+            if picture != (row.get('media') or {}).get('poster'): raise ValueError('Media picture is not the accepted poster for ' + spec_row['title'])
+            kind = 'poster'
+        elif re.fullmatch(r'/assets/cards/[a-z0-9-]+\.(svg|webp)', picture):
+            if not (target/picture.lstrip('/')).is_file(): raise ValueError('Card picture is not published: ' + picture)
+            kind = 'card'
+        else:
+            raise ValueError('Picture must be a cover, a screen, an accepted poster or a published card: ' + picture)
+        counts[primary] += 1
+        if secondary: counts[secondary] += 1
+        out[row['id']] = {'primary': primary, 'secondary': secondary, 'hook': hook, 'picture': picture, 'pictureKind': kind,
+                          'wholeClass': spec_row['whole_class'] is True, 'twoPlayer': spec_row['two_player'] is True,
+                          'keysOnly': needs_keys(row), 'words': ' '.join(str(spec_row.get('words', '')).split())}
+    if used_covers != set(covers): raise ValueError('recorded covers that no game uses: ' + json.dumps(sorted(set(covers) - used_covers)))
+    ready = lambda gid: 'touch' in by_id_of(games)[gid]['controls'] and not out[gid]['wholeClass']
+    def ids(routes, label):
+        found = []
+        for route in routes:
+            r = by_key.get(key(route))
+            if r is None: raise ValueError(label + ' names a route that is not a catalogue game: ' + route)
+            found.append(r['id'])
+        if len(found) != len(set(found)): raise ValueError(label + ' repeats a game')
+        return found
+    packs = []
+    for p in spec['packs']:
+        if not re.fullmatch(r'[a-z0-9-]+', p['slug']) or not p['name'].strip(): raise ValueError('Invalid pack: ' + json.dumps(p))
+        members = ids(p['routes'], 'pack ' + p['slug'])
+        if len(members) != 3: raise ValueError('a pack holds exactly three games: ' + p['slug'])
+        bad = [m for m in members if not ready(m)]
+        if bad: raise ValueError('pack games must be touch-ready and not whole-class: ' + p['slug'] + ' ' + json.dumps(bad))
+        packs.append({'slug': p['slug'], 'name': p['name'], 'games': members})
+    if len(packs) < 2 or len({p['slug'] for p in packs}) != len(packs): raise ValueError('packs need at least two distinct slugs')
+    pool = ids(spec['today_pool'], 'today_pool')
+    bad = [m for m in pool if not ready(m)]
+    if bad: raise ValueError('Today pool games must be touch-ready and not whole-class: ' + json.dumps(bad))
+    if len(pool) < 7 + 3: raise ValueError('Today pool too small to avoid the week pack and repeats')
+    synonyms = spec['synonyms']
+    if not all(isinstance(v, list) and all(isinstance(s, str) for s in v) for v in synonyms.values()): raise ValueError('synonyms must map a word to a list of words')
+    all_label = spec['all_label'].replace('{n}', str(len(games)))
+    return {'rows': out, 'counts': {m: counts[m] for m in MOOD_IDS}, 'moods': moods, 'all_label': all_label, 'all_icon': spec['all_icon'],
+            'packs': packs, 'today_pool': pool, 'synonyms': synonyms, 'covers': covers}
+
+def by_id_of(rows):
+    return {r['id']: r for r in rows}
+
+def updated_text(row):
+    """J92 R6 kept: every row the catalogue marks updated says so on its one grid card.
+    Ruling 21 Nov: the ribbon and its spoken label carry no date or version text."""
+    return 'Updated' if row.get('updated') else ''
+
+def card_media(row, d, eager, moods):
+    load = 'loading="eager"' if eager else 'loading="lazy" decoding="async"'
+    mood = d['primary']
+    updated = updated_text(row)
+    return ('<span class="card-media thumb"><img src="' + esc(d['picture']) + '" alt="" width="640" height="360" ' + load + '>'
+            '<span class="thumb-title" aria-hidden="true">' + esc(shown_title(row)) + '</span>'
+            '<span class="mood-chip" aria-hidden="true">' + icon_svg(mood) + '<span>' + esc(moods[mood]['label']) + '</span></span>'
+            + ('<span class="upd-ribbon" data-release="' + esc(row['id']) + '" aria-hidden="true">' + esc(updated) + '</span>' if updated else '')
+            + ('<span class="kb-badge" data-needs-keyboard hidden>' + KEYS_ICON + '<span>Needs keyboard</span></span>' if d['keysOnly'] else '') + '</span>')
+
+def game_card(row, d, eager, moods):
+    """D2 card: picture, title, hook and play triangle are ONE link; the heart is a
+    sibling button. data-card/data-games/a[data-play] keep the shelf contract."""
+    title = shown_title(row)
+    return ('<article class="card card-sm game-card" data-card="' + esc(row['id']) + '" data-games="' + esc(row['id']) + '" data-mood="' + esc(d['primary']) + '"'
+            + (' data-keys-only' if d['keysOnly'] else '') + '>'
+            '<a class="card-link" href="' + esc(row['route']) + '" data-play="' + esc(row['id']) + '" aria-label="Play ' + esc(title) + (', ' + esc(updated_text(row).lower()) if row.get('updated') else '') + '">'
+            + card_media(row, d, eager, moods) +
+            '<span class="card-body"><span class="card-head"><span class="card-title">' + esc(title) + '</span><span class="play-tri" aria-hidden="true">' + TRI + '</span></span>'
+            '<span class="card-hook">' + esc(d['hook']) + '</span></span></a>'
+            '<button type="button" class="fav-btn" data-favourite="' + esc(row['id']) + '" aria-pressed="false" aria-label="Save ' + esc(title) + '" hidden>' + HEART + '</button></article>')
+
+def activity_item(row):
+    return ('<li class="activity-item" data-activity="' + esc(row['id']) + '"><a class="activity-link" data-play="' + esc(row['id']) + '" href="' + esc(row['route']) + '">'
+            '<span class="activity-name">' + esc(shown_title(row)) + '</span><span class="activity-sub">Lesson activity</span></a></li>')
 
 if __name__ == '__main__':
     ap=argparse.ArgumentParser();ap.add_argument('--output',required=True,type=Path);ap.add_argument('--review',action='store_true');args=ap.parse_args()

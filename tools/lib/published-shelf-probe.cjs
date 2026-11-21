@@ -6,6 +6,9 @@
 // [data-activity] cards on the Classroom shelf, category + Keyboard/Touch chips, a Spotlight of
 // every featured row, led by the one spotlight row). shelfShape() reads which one is served and every limb asserts the
 // contract of THAT shape, each derived from the same independent data as before.
+// PLAY-D2 (21 Nov 2026): a third shape, the D2 front page (one A-Z grid of one card per game,
+// eight mood buttons, Pick a game, Teacher corner, staff item absent). Its limbs derive moods,
+// packs and search from the committed domain-split/play/discovery-moods.json.
 // Derive complete membership independently from Games main and the accepted W7 census.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -157,7 +160,137 @@ async function readUx2Cards(page, visible = false) {
   })));
 }
 async function shelfShape(page) {
-  return (await page.locator('#game-grid [data-shelf]').count()) > 0 ? 'tx' : 'ux2';
+  if ((await page.locator('#game-grid [data-shelf]').count()) > 0) return 'tx';
+  // PLAY-D2 (21 Nov 2026): one A-Z grid, eight mood buttons, Pick a game, Teacher corner.
+  if ((await page.locator('#mood-grid').count()) === 1 && (await page.locator('#pick-grid').count()) === 1) return 'd2';
+  return 'ux2';
+}
+// ---- PLAY-D2 limbs. Every expectation is derived independently: membership from the
+// canonical catalogue, moods/packs/pool from the committed discovery-moods.json, never
+// from the page being judged.
+const MOODS_FILE = 'domain-split/play/discovery-moods.json';
+const fold = s => String(s).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
+function d2Spec(games) {
+  const spec = JSON.parse(fs.readFileSync(MOODS_FILE, 'utf8'));
+  const byRoute = new Map(Object.entries(spec.games).map(([r, v]) => [route(r), v]));
+  for (const g of games) assert(byRoute.has(route(g.route)), 'D2: a catalogue game has no committed discovery row: ' + g.route);
+  members([...byRoute.keys()], games.map(g => route(g.route)), 'D2 committed discovery covers the catalogue');
+  const of = g => byRoute.get(route(g.route));
+  const labels = new Map(spec.moods.map(m => [m.id, m.label]));
+  const synonyms = {}; for (const [w, list] of Object.entries(spec.synonyms || {})) synonyms[fold(w)] = list.map(fold).filter(Boolean);
+  const blob = g => { const x = of(g); return ' ' + fold([shownTitle(g), g.title, g.series || '', x.hook, x.primary, x.secondary || '', labels.get(x.primary) || '', labels.get(x.secondary) || '', x.words || '', x.two_player ? '2p 2 player two player mates versus' : '', x.whole_class ? 'class team quiz' : ''].join(' ')); };
+  const matches = (g, raw) => { const q = fold(raw); if (!q) return true; const b = blob(g), has = w => b.includes(' ' + w);
+    if (synonyms[q] && [q, ...synonyms[q]].some(v => v && has(v))) return true; return q.split(' ').every(t => has(t) || (synonyms[t] || []).some(has)); };
+  return { spec, of, labels, matches };
+}
+function d2Cards(actual, expected, label) {
+  members(actual.map(c => c.id), expected.map(g => g.id), label);
+  for (const card of actual) {
+    const game = expected.find(g => g.id === card.id);
+    assert.deepEqual(card.ids, [game.id], `${label}: a card carries another game`);
+    assert.equal(card.title, shownTitle(game), `${label}: card title`);
+    assert.equal(card.links.length, 1, `${label}: missing or duplicate play link`);
+    assert.equal(card.links[0].id, game.id, `${label}: play identity`);
+    assert.equal(route(card.links[0].href), route(game.route), `${label}: play destination`);
+    assert(card.links[0].label.startsWith('Play ' + shownTitle(game)), `${label}: accessible play title`);
+  }
+}
+async function readD2Cards(page, sel = '#game-grid .game-card[data-card]:visible') {
+  return page.locator(sel).evaluateAll(nodes => nodes.map(card => ({
+    id: card.dataset.card || card.dataset.pick, ids: (card.dataset.games || card.dataset.pick || '').split(' '),
+    title: card.querySelector('.card-title')?.textContent || '',
+    links: [...card.querySelectorAll('a[href]')].map(a => ({href: a.href, id: a.dataset.play, label: a.getAttribute('aria-label') || ''})),
+  })));
+}
+async function d2Classroom(page, activities, staff) {
+  await page.evaluate(() => { const t = document.querySelector('#classroom'); if (t && 'open' in t) t.open = true; });
+  const rows = await page.locator('#classroom [data-activity]').evaluateAll(nodes => nodes.map(row => ({
+    id: row.dataset.activity, title: row.querySelector('.activity-name')?.textContent, label: row.querySelector('.activity-sub')?.textContent,
+    visible: !!row.getClientRects().length, links: [...row.querySelectorAll('a[href]')].map(a => ({id: a.dataset.play, href: a.href})),
+  })));
+  members(rows.map(r => r.id), activities.map(g => g.id), 'Teacher corner activities');
+  for (const row of rows) {
+    const game = activities.find(g => g.id === row.id);
+    assert(row.visible, 'Teacher corner row is hidden once opened');
+    assert.equal(row.title, shownTitle(game), 'Activity title');
+    assert.equal(row.label, 'Lesson activity', 'Visible audience boundary');
+    assert.equal(row.links.length, 1, 'Activity play link count');
+    assert.equal(row.links[0].id, game.id, 'Activity play identity');
+    assert.equal(route(row.links[0].href), route(game.route), 'Activity destination');
+  }
+  const staffLinks = await page.evaluate(hrefs => [...document.querySelectorAll('a[href]')].filter(a => hrefs.includes(new URL(a.href).pathname)).length, staff.map(g => new URL(g.route, ORIGIN).pathname));
+  assert.equal(staffLinks, 0, 'Staff audience boundary: the staff item is linked from the pupil page');
+}
+async function d2Controls(page, games, activities, staff) {
+  // Mutate real DOM; each defect must be caught by the same checkers; restore exactly.
+  const mutations = [
+    {selector:'#game-grid .game-card[data-card] a[data-play]', kind:'remove'},
+    {selector:'#classroom [data-activity]', kind:'remove'},
+    {selector:'#game-grid .game-card[data-card]', kind:'identity'},
+    {selector:'#classroom [data-activity] .activity-sub', kind:'audience'},
+  ];
+  for (const mutation of mutations) {
+    assert.equal(await page.locator(mutation.selector).first().count(), 1, 'Missing mutation target');
+    await page.evaluate(({selector,kind}) => {
+      const node = document.querySelector(selector), parent=node.parentNode, next=node.nextSibling;
+      const previous = kind==='identity' ? node.getAttribute('data-card') : node.textContent;
+      window.__shelfRestore = () => { if(kind==='remove')parent.insertBefore(node,next);else if(kind==='identity')node.setAttribute('data-card',previous);else node.textContent=previous; };
+      if(kind==='remove')node.remove(); else if(kind==='identity')node.dataset.card='planted-wrong-id'; else node.textContent='Wrong audience';
+    }, mutation);
+    try {
+      await assert.rejects(async () => { d2Cards(await readD2Cards(page), games, 'DOM control'); await d2Classroom(page, activities, staff); },
+        'Planted shelf defect escaped: ' + mutation.kind);
+    } finally { await page.evaluate(() => {window.__shelfRestore();delete window.__shelfRestore;}); }
+    d2Cards(await readD2Cards(page), games, 'Restored DOM'); await d2Classroom(page, activities, staff);
+  }
+  return mutations.length;
+}
+async function d2Page(page, width, ctx) {
+  const { games, activities, staff, selected, target, expectedGames, additional, requests, report, total, checkCount } = ctx;
+  await page.waitForFunction(() => document.documentElement.dataset.playReady === '1', null, { timeout: 30000 });
+  for (const selector of ['#mood-grid','#pick-grid','#expand-btn']) assert.equal(await page.locator(selector).count(), 1, `Missing current page control ${selector}`);
+  const { spec, of, labels, matches } = d2Spec(games);
+  // Pick a game: one committed pack (its three games, in order) then a Today's pick from the pool.
+  const pick = await page.locator('#pick-grid > .card').evaluateAll(ns => ns.map(n => ({id: n.dataset.pick, href: n.querySelector('a[data-play]')?.href})));
+  assert.equal(pick.length, 4, 'Pick a game shows four cards');
+  const routeOf = id => games.find(g => g.id === id)?.route;
+  for (const p of pick) assert(routeOf(p.id) && route(p.href) === route(routeOf(p.id)), 'Pick-a-game destination');
+  const pack = spec.packs.find(pk => JSON.stringify(pk.routes.map(route)) === JSON.stringify(pick.slice(0, 3).map(p => route(p.href))));
+  assert(pack, 'Pick a game does not show one committed pack: ' + JSON.stringify(pick.map(p => p.id)));
+  assert(spec.today_pool.map(route).includes(route(pick[3].href)) && !pack.routes.map(route).includes(route(pick[3].href)), "Today's pick is not a pool game outside the pack");
+  // The A-Z grid, shown whole: every catalogue game once, one Play link each.
+  await page.evaluate(() => { const b = document.querySelector('#expand-btn'); if (b.getAttribute('aria-expanded') === 'false') b.click(); });
+  d2Cards(await readD2Cards(page), games, 'Complete visible grid');
+  await d2Classroom(page, activities, staff); await checkCount(total, false);
+  if (width === 320) report.renderedControls = await d2Controls(page, games, activities, staff);
+  // Moods: the committed set in order, each clicked; results and count derived from the committed rows.
+  members(await page.locator('#mood-grid .mood-btn').evaluateAll(ns => ns.map(n => n.dataset.mood)), ['all', ...spec.moods.map(m => m.id)], 'Mood controls');
+  for (const m of spec.moods) {
+    const want = games.filter(g => of(g).primary === m.id || of(g).secondary === m.id);
+    assert(want.length > 0, 'Mood controls: a committed mood holds no served game: ' + m.id);
+    await page.locator('#mood-grid .mood-btn[data-mood="' + m.id + '"]').click();
+    d2Cards(await readD2Cards(page, '#mood-cards > .card'), want, 'Mood results ' + m.id);
+    const ids = await page.locator('#mood-cards > .card').evaluateAll(ns => ns.map(n => n.dataset.pick));
+    const firstSecondary = ids.findIndex(id => of(games.find(g => g.id === id)).primary !== m.id);
+    assert(firstSecondary === -1 || ids.slice(firstSecondary).every(id => of(games.find(g => g.id === id)).primary !== m.id), 'Mood results put primary games first: ' + m.id);
+    assert.equal(await page.locator('#mood-results-title').innerText(), labels.get(m.id) + ' (' + want.length + ')', 'Mood count differs from independent matching games');
+  }
+  await page.locator('#mood-grid .mood-btn[data-mood="all"]').click();
+  assert(await page.locator('#mood-results').isHidden(), 'All games did not clear the mood');
+  // Search, derived with the committed words and synonyms, against the selected game's title.
+  const hits = games.filter(g => matches(g, selected.title));
+  await page.locator('#query').fill(selected.title);
+  d2Cards(await readD2Cards(page), hits, 'Search results');
+  assert(hits.some(g => route(g.route) === target), 'Search lost selected game'); await checkCount(hits.length);
+  await page.locator('#query').fill('mbm-no-such-game-verification');
+  assert.equal(await page.locator('#game-grid .game-card:visible').count(), 0, 'Nonmatching search is not empty');
+  assert(await page.locator('#empty-state').isVisible(), 'Empty state missing'); await checkCount(0);
+  await page.locator('#query').fill('');
+  d2Cards(await readD2Cards(page), games, 'Clearing search'); await d2Classroom(page, activities, staff);
+  assert(!(await page.locator('#empty-state').isVisible()), 'False empty state after clearing'); await checkCount(total, false);
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Shelf overflows viewport');
+  assert.equal(requests.filter(u => {try{return [...expectedGames,...additional].includes(route(u));}catch{return false;}}).length, 0, 'Shelf automatically loaded game payload');
+  return { moods: spec.moods.length, pack: pack.slug };
 }
 // `shown` says whether the activities should be visible in the current filter state. UX2 rows
 // are always visible; on the TX shelves activities follow All, the Classroom chip and search.
@@ -231,13 +364,21 @@ async function verify({ href }) {
       try {
         const response = await page.goto(ORIGIN + '/', { waitUntil: 'networkidle', timeout: 60000 });
         assert.equal(response.status(), 200); assert.equal(page.url(), ORIGIN + '/');
-        for (const selector of ['#game-grid','#result-count','#query','#empty-state','#discovery-form','#classroom','#filters-open']) {
+        const served = await shelfShape(page);
+        for (const selector of ['#game-grid','#result-count','#query','#empty-state','#discovery-form','#classroom', ...(served === 'd2' ? [] : ['#filters-open'])]) {
           assert.equal(await page.locator(selector).count(), 1, `Missing current shelf control ${selector}`);
         }
         const total = games.length;
         const checkCount = async (n, filtered = true) => assert.equal(await page.locator('#result-count').innerText(),
           filtered ? `${n} of ${total} games` : `${total} games`, 'Visible count differs from independent matching games');
         await page.waitForFunction(() => document.documentElement.classList.contains('js'));
+        if (served === 'd2') {
+          const d2 = await d2Page(page, width, { games, activities: activities.filter(g => g.group === 'activities'), staff: activities.filter(g => g.group === 'staff'), selected, target, expectedGames, additional, requests, report, total, checkCount });
+          await page.screenshot({path:path.join(out, `shelf-${width}.png`),animations:'disabled'});
+          report.cases.push({width,shape:'d2',games:total,cards:games.length,activities:activities.length,moods:d2.moods,pack:d2.pack,status:'PASS'});
+          console.log(`PASS ${width}px (D2): ${total} games in ${games.length} cards + Teacher corner; Pick a game, moods/search/clear/empty/count/HTTPS/reflow/no-auto-launch, staff absent`);
+          continue;
+        }
         ux2Cards(await readUx2Cards(page, true), groups, 'Complete visible grid');
         await classroomRows(page, activities); await checkCount(total, false);
         assert(!/sports/i.test(games.find(g => g.id === selected.id).genre), 'Selected game moved to Sports');
@@ -348,7 +489,8 @@ async function verify({ href }) {
     const context = await browser.newContext({javaScriptEnabled:false,viewport:{width:390,height:900}});
     try {
       const page=await context.newPage(); const response=await page.goto(ORIGIN+'/',{waitUntil:'load'}); assert.equal(response.status(),200);
-      ux2Cards(await readUx2Cards(page,true),groups,'No-JS complete grid'); await classroomRows(page,activities);
+      if (await shelfShape(page) === 'd2') { d2Cards(await readD2Cards(page), games, 'No-JS complete grid'); await d2Classroom(page, activities.filter(g => g.group === 'activities'), activities.filter(g => g.group === 'staff')); }
+      else { ux2Cards(await readUx2Cards(page,true),groups,'No-JS complete grid'); await classroomRows(page,activities); }
       const links=await page.locator('#game-grid .game-card[data-card] a[data-play]:visible').evaluateAll(ns=>ns.map(a=>a.href));
       members(links.map(route),expectedGames,'No-JS visible edition links'); report.noJavaScript='PASS';
     } finally {await context.close();}

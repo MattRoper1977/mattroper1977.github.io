@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <defs>
+    <linearGradient id="bb-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="65%" stop-color="#BAE6FD"/>
+      <stop offset="100%" stop-color="#E0F2FE"/>
+    </linearGradient>
+  </defs>
+  <!-- Bright sky + blocky clouds + warm voxel sun -->
+  <rect width="640" height="360" fill="url(#bb-sky)"/>
+  <rect x="518" y="34" width="66" height="66" rx="6" fill="#FDE047" stroke="#FEF9C3" stroke-width="5"/>
+  <g fill="#FFFFFF" fill-opacity="0.88">
+    <rect x="54" y="42" width="110" height="24" rx="4"/>
+    <rect x="78" y="28" width="62" height="18" rx="4"/>
+    <rect x="330" y="54" width="96" height="20" rx="4"/>
+  </g>
+  <!-- Distant sunlit voxel hills -->
+  <polygon points="0,230 95,180 185,210 310,165 445,200 565,175 640,205 640,360 0,360" fill="#60A5FA" fill-opacity="0.42"/>
+  <!-- Foreground voxel river & sunlit grass terrace -->
+  <rect x="0" y="268" width="640" height="92" fill="#2563EB"/>
+  <g fill="#38BDF8" fill-opacity="0.65">
+    <rect x="20" y="282" width="80" height="14"/>
+    <rect x="135" y="308" width="95" height="14"/>
+    <rect x="460" y="288" width="110" height="16"/>
+    <rect x="510" y="322" width="90" height="14"/>
+  </g>
+  <!-- Left voxel grass island + blocky tree -->
+  <g>
+    <polygon points="36,246 160,246 160,312 36,312" fill="#8B5A3C"/>
+    <rect x="36" y="232" width="124" height="24" fill="#22C55E"/>
+    <rect x="56" y="264" width="22" height="22" fill="#64748B"/>
+    <rect x="62" y="270" width="8" height="8" fill="#38BDF8"/>
+    <!-- Tree trunk & blocky canopy -->
+    <rect x="86" y="160" width="24" height="72" fill="#78350F"/>
+    <rect x="48" y="114" width="100" height="54" fill="#16A34A"/>
+    <rect x="66" y="88" width="64" height="32" fill="#4ADE80"/>
+  </g>
+  <!-- Hero isometric voxel fortress/shelter build in centre -->
+  <g transform="translate(215,134)">
+    <!-- Grass base slab -->
+    <rect x="0" y="128" width="248" height="26" fill="#22C55E"/>
+    <rect x="0" y="154" width="248" height="44" fill="#925E3A"/>
+    <!-- Stone + brick walls -->
+    <rect x="24" y="42" width="144" height="86" fill="#D97706"/>
+    <rect x="168" y="42" width="54" height="86" fill="#B45309"/>
+    <!-- Brick/plank seams -->
+    <g stroke="#78350F" stroke-opacity="0.45" stroke-width="2.5">
+      <path d="M24,64 H222 M24,86 H222 M24,108 H222"/>
+      <path d="M72,42 V128 M120,42 V128 M168,42 V128"/>
+    </g>
+    <!-- Glowing warm window & doorway -->
+    <rect x="44" y="68" width="38" height="60" fill="#451A03"/>
+    <rect x="108" y="64" width="42" height="36" fill="#FEF08A" stroke="#78350F" stroke-width="4"/>
+    <!-- Stepped roof blocks -->
+    <rect x="14" y="20" width="164" height="24" fill="#EA580C"/>
+    <rect x="178" y="20" width="52" height="24" fill="#C2410C"/>
+    <rect x="46" y="-4" width="116" height="24" fill="#F97316"/>
+    <!-- Glowing diamond-highlighted block snapping into place -->
+    <g transform="translate(154,-38)">
+      <rect x="0" y="0" width="44" height="44" fill="#FBBF24" stroke="#FFFFFF" stroke-width="4"/>
+      <rect x="8" y="8" width="12" height="12" fill="#FEF9C3"/>
+    </g>
+    <!-- Glowing golden torch block -->
+    <rect x="200" y="88" width="10" height="28" fill="#78350F"/>
+    <rect x="197" y="76" width="16" height="14" fill="#FDE047"/>
+  </g>
+  <!-- Crisp voxel pickaxe on right -->
+  <g transform="translate(534,205) rotate(-32)">
+    <rect x="-8" y="-12" width="16" height="110" rx="3" fill="#92400E" stroke="#FDE68A" stroke-width="2.5"/>
+    <path d="M-48,-18 H48 V4 H14 V-4 H-14 V4 H-48 Z" fill="#38BDF8" stroke="#E0F2FE" stroke-width="3"/>
+  </g>
+</svg>

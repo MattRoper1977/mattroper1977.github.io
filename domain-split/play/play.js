@@ -1,360 +1,231 @@
-/* Play discovery only. These exact keys never contain or clear game saves.
- * The page is complete without this file: every Play link is in the markup.
- * This adds the spotlight's Next control, the shelves' previous/next controls,
- * live filtering (search, category and input chips), the Filters drawer and the
- * game sheet (deep links and Surprise me only; cards never open it). */
+/* Made by Matt Play front page (PLAY-D2, 21 Nov 2026).
+ * The page is complete without this file: every game is a direct Play link in the
+ * A-Z grid and in the noscript list. This adds the four Pick-a-game cards, the mood
+ * buttons, Play again, live search, Pick for me, Calm, the How to play guides and
+ * the game sheet (?game= deep links). Everything it shows comes from #play-data,
+ * which build.py derives from the catalogue and discovery-moods.json.
+ * Storage: the existing keys mbm_play_favourites_v1 and mbm_play_recently_opened_v1
+ * (same JSON id-list format), mbm_play_browse_position_v1 in sessionStorage, and one
+ * new key, mbm_play_calm_v1, written only when Calm is pressed. Game saves are never
+ * read, written or cleared here. Nothing on the page moves on its own; no sound. */
 (() => {
   'use strict';
   const data = JSON.parse(document.getElementById('play-data').textContent);
-  const games = data.games, byId = new Map(games.map(g => [g.id, g]));
-  const catalogue = games.filter(g => g.group === 'games');
-  const keys = {favourites:'mbm_play_favourites_v1',recent:'mbm_play_recently_opened_v1',position:'mbm_play_browse_position_v1'};
-  const fields = ['q', 'mood', 'genre', 'control', 'mode', 'list', 'facet'];
+  const rows = data.games, byId = new Map(rows.map(g => [g.id, g]));
+  const catalogue = rows.filter(g => g.group === 'games');
+  const keys = {favourites: 'mbm_play_favourites_v1', recent: 'mbm_play_recently_opened_v1', position: 'mbm_play_browse_position_v1', calm: 'mbm_play_calm_v1'};
   const $ = id => document.getElementById(id);
-  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const title = g => g.displayTitle || g.title;
+  const d = g => g.discovery || {};
   const coarse = () => typeof matchMedia === 'function' && matchMedia('(hover: none) and (pointer: coarse)').matches;
+  const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const moods = new Map(data.moods.map(m => [m.id, m]));
+  const icon = id => '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false"><use href="#m-' + id + '"/></svg>';
+  const TRI = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><use href="#i-tri"/></svg>';
+  const HEART = '<svg class="heart" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><use href="#i-heart"/></svg>';
+  const KEYS_ICON = '<svg viewBox="0 0 18 18" aria-hidden="true" focusable="false"><use href="#i-keys"/></svg>';
+
+  /* ---- storage: exact existing format; a blocked store keeps an in-page list ---- */
   let durable = true;
-  document.documentElement.classList.add('js');
   function readList(name) {
     try {
       const parsed = JSON.parse(localStorage.getItem(keys[name]) || '[]');
-      return Array.isArray(parsed) ? [...new Set(parsed.filter(id => typeof id === 'string' && byId.has(id)))].slice(0, games.length) : [];
+      return Array.isArray(parsed) ? [...new Set(parsed.filter(id => typeof id === 'string' && byId.has(id)))].slice(0, rows.length) : [];
     } catch (_) { durable = false; return []; }
   }
-  let favourites = readList('favourites'), recent = readList('recent');
   function storageNotice(message) {
-    $('storage-status').textContent = message || (durable ? '' : 'Storage is unavailable. Your shortlist works for this open page only; games may have their own storage limits.');
+    $('storage-status').textContent = message || (durable ? '' : 'Storage is unavailable. Your list works for this open page only; games may have their own storage limits.');
   }
   function saveList(name, value) {
     try { localStorage.setItem(keys[name], JSON.stringify(value)); }
     catch (_) { durable = false; storageNotice(); }
   }
-  const grid = $('game-grid'), status = $('result-count'), query = $('query'), dialog = $('game-dialog'), filters = $('filters');
-  const cards = [...grid.querySelectorAll('[data-card]')].map(el => ({el, ids: el.dataset.games.split(' '), shown: el.dataset.card}));
-  const activityCards = [...grid.querySelectorAll('[data-activity]')].map(el => ({el, g: byId.get(el.dataset.activity)}));
-  const normalize = v => String(v).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const foldPlain = v => normalize(v).replace(/&/g, ' and ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
-  const foldCompact = v => normalize(v).replace(/[^\p{L}\p{N}]+/gu, '');
-  const state = {q: '', mood: '', genre: '', control: '', mode: '', list: '', facet: ''};
-  const facetNames = (data.facets || []).map(f => f.name);
-  const bandLabel = g => (g.sessionBand && data.bandLabels && data.bandLabels[g.sessionBand]) || '';
-  const SYNONYMS = {
-    soccer: ['football', 'pitch', 'kick', 'goal'],
-    football: ['soccer', 'kick', 'match', 'cup'],
-    defense: ['defence'],
-    defence: ['defense'],
-    color: ['colour'],
-    colour: ['color'],
-    car: ['cars', 'driving', 'racing', 'drift', 'track'],
-    cars: ['car', 'driving', 'racing', 'drift', 'track'],
-    driving: ['racing', 'drift', 'car', 'track'],
-    racing: ['driving', 'drift', 'race', 'track'],
-    snooker: ['pool', 'cue', 'billiards'],
-    pool: ['snooker', 'cue', 'billiards'],
-    chill: ['calm', 'relax', 'cosy'],
-    relax: ['calm', 'chill', 'cosy'],
-    relaxing: ['calm', 'chill'],
-    cosy: ['calm', 'chill'],
-    cozy: ['calm', 'chill'],
-    brain: ['puzzle', 'puzzles', 'logic', 'thinky'],
-    riddle: ['puzzle', 'puzzles', 'mystery'],
-    logic: ['puzzle', 'puzzles', 'thinky', 'strategy'],
-    friends: ['multiplayer', 'together', 'local', 'versus'],
-    '2p': ['multiplayer', 'together', 'local', 'two player'],
-    versus: ['multiplayer', 'together', 'local'],
-    coop: ['multiplayer', 'together', 'team', 'teams'],
-    mobile: ['touch', 'phone', 'tablet'],
-    phone: ['touch', 'mobile', 'tablet'],
-    tablet: ['touch', 'mobile', 'phone'],
-    controller: ['gamepad'],
-    gamepad: ['controller']
-  };
-  const expandTerm = w => {
-    const c = foldCompact(w);
-    const extras = SYNONYMS[w] || SYNONYMS[c] || [];
-    return [w, ...(c && c !== w ? [c] : []), ...extras];
-  };
-  // Search covers title, category and the one-line descriptions (TX (b)); J92 R3/R18
-  // adds the landed sub-genre, pitch and "what you do" lines, plus controls/modes/moods,
-  // each field kept apart with weights so hits rank naturally and say where they matched.
-  const searchFields = [
-    ['Title', 100, g => [g.title, g.displayTitle || '', g.series || '']],
-    ['Category', 65, g => [g.genre]],
-    ['Sub-genre', 75, g => [g.subGenre || '']],
-    ['Pitch', 50, g => [g.pitch || '']],
-    ['Description', 35, g => [g.line || '', g.description]],
-    ['What you do', 30, g => g.whatYouDo || []],
-    ['Controls & modes', 22, g => [
-      ...(g.controls || []), ...(g.inputs || []), ...(g.moods || []), ...(g.facets || []), bandLabel(g),
-      ((g.modes || []).includes('local') || (g.modes || []).includes('classroom-teams')) ? 'multiplayer 2p two player versus local shared screen together' : '',
-      (g.controls || []).includes('touch') ? 'touch mobile phone tablet tap' : ''
-    ]]
-  ];
-  const searchable = new Map(games.map(g => [g.id, searchFields.map(([label, weight, pick]) => {
-    const raw = pick(g).join(' ');
-    return {label, weight, text: normalize(raw), plain: foldPlain(raw), compact: foldCompact(raw)};
-  })]));
-  const searchWords = () => foldPlain(state.q).split(/\s+/).filter(Boolean);
-  const fieldMatchesTerm = (f, term) => {
-    if (!term) return false;
-    if (f.text.includes(term) || f.plain.includes(term)) return true;
-    const c = foldCompact(term);
-    return c.length >= 4 && f.compact.includes(c);
-  };
-  const wordHitField = (g, word) => {
-    const fieldsForGame = searchable.get(g.id) || [];
-    const variants = expandTerm(word);
-    for (const f of fieldsForGame) {
-      if (fieldMatchesTerm(f, variants[0])) return {label: f.label, score: f.weight + (f.label === 'Title' && f.plain.startsWith(variants[0]) ? 35 : 0)};
-    }
-    for (const f of fieldsForGame) {
-      if (variants.slice(1).some(v => fieldMatchesTerm(f, v))) return {label: f.label, score: Math.max(10, f.weight - 12)};
-    }
-    return null;
-  };
-  const searchHit = (g, words) => words.every(w => Boolean(wordHitField(g, w)));
-  const searchScore = (g, words) => words.reduce((sum, w) => { const h = wordHitField(g, w); return sum + (h ? h.score : 0); }, 0);
-  const matchedIn = g => {
-    const words = searchWords();
-    if (!words.length) return '';
-    let best = null;
-    for (const w of words) {
-      const h = wordHitField(g, w);
-      if (h && (!best || h.score > best.score)) best = h;
-    }
-    return best ? 'Matched in ' + best.label : '';
-  };
-  let activeGame = null, returnFocus = null, cameFromGame = false, filtersOpener = null;
+  let favourites = readList('favourites'), recent = readList('recent');
 
-  /* ---- spotlight: one featured game at a time, advanced only by Next ---- */
-  const spots = [...document.querySelectorAll('[data-spot]')];
-  let spotIndex = 0;
-  function showSpot(i) {
-    spotIndex = (i + spots.length) % spots.length;
-    spots.forEach((el, k) => { el.hidden = k !== spotIndex; });
-    $('spot-status').textContent = (spotIndex + 1) + ' of ' + spots.length;
-    // J92 R17: the dots and the playlist mark the shown row; they select, never advance.
-    document.querySelectorAll('[data-spot-select]').forEach(b => b.setAttribute('aria-current', String(Number(b.dataset.spotSelect) === spotIndex)));
+  /* ---- Calm: its own key, on by default under reduced motion ---- */
+  function applyCalm(on, persist) {
+    document.documentElement.classList.toggle('calm', on);
+    $('calm-btn').setAttribute('aria-pressed', String(on));
+    if (persist) { try { localStorage.setItem(keys.calm, on ? '1' : '0'); } catch (_) { durable = false; storageNotice(); } }
   }
-  if (spots.length > 1) {
-    $('spot-next').hidden = false; $('spot-status').hidden = false;
-    document.querySelectorAll('.spot-dots, .featured-playlist').forEach(el => { el.hidden = false; });
-    const stage = document.querySelector('.spotlight-stage'); if (stage && stage.querySelector('.featured-playlist')) stage.classList.add('has-playlist');
-    showSpot(0);
-    $('spot-next').addEventListener('click', () => showSpot(spotIndex + 1));
+  function initCalm() {
+    let saved = null;
+    try { saved = localStorage.getItem(keys.calm); } catch (_) {}
+    applyCalm(saved === null ? reducedMotion() : saved === '1', false);
   }
-  /* ---- shelves: 44px previous/next scroll each horizontal track ---- */
-  const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // J92 R6: the "New and updated" rail ([data-rail]) shares the track controls but is not a shelf.
-  const tracks = [...document.querySelectorAll('[data-shelf], [data-rail]')].map(el => ({el, track: el.querySelector('.shelf-track'), nav: el.querySelector('.shelf-nav'), count: el.querySelector('[data-shelf-count]'), base: el.querySelector('[data-shelf-count]').textContent}));
-  const shelves = tracks.filter(s => 'shelf' in s.el.dataset);
-  function paintShelfNav(s) {
-    const t = s.track, overflow = t.scrollWidth > t.clientWidth + 1;
-    s.nav.hidden = !overflow;
-    const [prev, next] = s.nav.querySelectorAll('[data-shelf-step]');
-    prev.disabled = t.scrollLeft <= 1; next.disabled = t.scrollLeft + t.clientWidth >= t.scrollWidth - 1;
+
+  /* ---- one card design, two sizes; the same markup build.py writes ---- */
+  let eagerLeft = data.eager;
+  function cardHTML(g, size, extra = {}) {
+    const x = d(g), m = moods.get(x.primary), eager = extra.eager || eagerLeft-- > 0;
+    return '<article class="card card-' + size + '" data-mood="' + esc(x.primary) + '" data-pick="' + esc(g.id) + '"' + (x.keysOnly ? ' data-keys-only' : '') + '>'
+      + '<a class="card-link" href="' + esc(g.route) + '" data-play="' + esc(g.id) + '" aria-label="Play ' + esc(title(g)) + '">'
+      + '<span class="card-media thumb"><img src="' + esc(x.picture) + '" alt="" width="640" height="360" ' + (eager ? 'loading="eager"' : 'loading="lazy" decoding="async"') + '>'
+      + '<span class="thumb-title" aria-hidden="true">' + esc(title(g)) + '</span>'
+      + '<span class="mood-chip" aria-hidden="true">' + icon(m.id) + '<span>' + esc(m.label) + '</span></span>'
+      + (extra.today ? '<span class="today-ribbon">Today</span>' : '')
+      + (x.keysOnly ? '<span class="kb-badge" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>' + KEYS_ICON + '<span>Needs keyboard</span></span>' : '') + '</span>'
+      + '<span class="card-body"><span class="card-head"><span class="card-title">' + esc(title(g)) + '</span><span class="play-tri" aria-hidden="true">' + TRI + '</span></span>'
+      + '<span class="card-hook">' + esc(x.hook) + '</span></span></a>'
+      + '<button type="button" class="fav-btn" data-favourite="' + esc(g.id) + '" aria-pressed="' + String(favourites.includes(g.id)) + '" aria-label="Save ' + esc(title(g)) + '">' + HEART + '</button></article>';
   }
-  tracks.forEach(s => {
-    s.nav.addEventListener('click', e => { const b = e.target.closest('[data-shelf-step]'); if (!b) return; s.track.scrollBy({left: Number(b.dataset.shelfStep) * Math.max(160, s.track.clientWidth * 0.9), behavior: reduced() ? 'auto' : 'smooth'});
-      setTimeout(() => paintShelfNav(s), 0); // the controls follow the track's own position after a step; the scroll event alone can arrive late in a headless, frame-starved page
-    });
-    s.track.addEventListener('scroll', () => paintShelfNav(s), {passive: true});
-    s.track.addEventListener('scrollend', () => paintShelfNav(s), {passive: true});
-  });
-  const paintShelves = () => tracks.forEach(paintShelfNav);
-  window.addEventListener('resize', paintShelves);
   function bindImages(root) {
-    root.querySelectorAll('.thumb img').forEach(img => {
+    root.querySelectorAll('.card-media img, .thumb img').forEach(img => {
       if (img.dataset.bound) return; img.dataset.bound = '1';
-      const failed = () => { const t = img.closest('.thumb'), card = t.closest('[data-card],[data-activity],[data-spot]'), name = card && card.querySelector('.card-title,.feature-title'); t.className = 'thumb thumb-block failed'; t.innerHTML = '<span class="thumb-title">' + esc(name ? name.textContent : '') + '</span>'; };
+      const failed = () => { const box = img.closest('.card-media, .thumb'); if (box) box.classList.add('failed'); img.hidden = true; };
       img.addEventListener('error', failed); if (img.complete && !img.naturalWidth && img.src) failed();
     });
   }
+  function paint(host, html) { host.innerHTML = html; bindImages(host); }
 
-  /* ---- filtering ---- */
-  function matches(g) {
-    const words = searchWords();
-    const selected = state.list === 'favourites' ? favourites : state.list === 'recent' ? recent : null;
-    // J92 R9: a facet filters strictly on the declared classroom_facets values.
-    return searchHit(g, words) && (!state.genre || g.genre === state.genre) && (!state.mood || (g.moods || []).includes(state.mood)) &&
-      (!state.control || (state.control === 'unknown' ? !(g.controls || []).length : (g.controls || []).includes(state.control))) &&
-      (!state.mode || (state.mode === 'unknown' ? !(g.modes || []).length : (g.modes || []).includes(state.mode))) &&
-      (!state.facet || (g.facets || []).includes(state.facet)) &&
-      (!selected || selected.includes(g.id));
+  /* ---- date maths: this week's pack by ISO week, Today's pick by local date ---- */
+  const isoWeek = (y, m, day) => { const t = new Date(Date.UTC(y, m, day)), n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n); const start = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil((((t - start) / 86400000) + 1) / 7); };
+  const dayIndex = (y, m, day) => Math.floor(Date.UTC(y, m, day) / 86400000);
+  function forcedPack() {
+    const raw = (new URLSearchParams(location.search).get('pack') || '').trim().toLowerCase();
+    if (!raw) return null;
+    const compact = raw.replace(/[^a-z0-9]/g, '');
+    return data.packs.find(p => p.slug === raw || p.name.toLowerCase() === raw || p.slug.replace(/[^a-z0-9]/g, '') === compact || p.slug.startsWith(raw) || p.name.toLowerCase().startsWith(raw)) || null;
   }
-  const active = () => fields.some(k => state[k]);
-  function syncUrl() {
-    const url = new URL(location.href); fields.forEach(k => url.searchParams.delete(k));
-    fields.forEach(k => { if (state[k]) url.searchParams.set(k, state[k]); });
-    history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+  function schedule(date, forced) {
+    const y = date.getFullYear(), m = date.getMonth(), day = date.getDate(), week = isoWeek(y, m, day);
+    const pack = forced || data.packs[week % data.packs.length], pool = data.todayPool, n = pool.length, di = dayIndex(y, m, day);
+    let today = pool[((di % n) + n) % n];
+    for (const s of [0, 18, 12, 24, 6, 30]) { const c = pool[(((di + s) % n) + n) % n]; if (!pack.games.includes(c)) { today = c; break; } }
+    return {week, pack, today};
   }
-  function applyUrl() {
-    const params = new URLSearchParams(location.search);
-    state.q = (params.get('q') || '').slice(0, 160);
-    state.mood = ['Calm','Fast','Thinky','Together'].includes(params.get('mood')) ? params.get('mood') : '';
-    state.genre = data.genres.some(x => x.name === params.get('genre')) ? params.get('genre') : '';
-    state.facet = facetNames.includes(params.get('facet')) ? params.get('facet') : '';
-    for (const k of ['control', 'mode', 'list']) { const el = $(k), v = params.get(k) || ''; state[k] = [...el.options].some(o => o.value === v) ? v : ''; }
-    paintControls();
+  window.__playSchedule = iso => { const [Y, M, D] = iso.split('-').map(Number), s = schedule(new Date(Y, M - 1, D), null); return {date: iso, week: s.week, pack: s.pack.slug, packGames: [...s.pack.games], today: s.today}; };
+  function renderPick() {
+    const now = new Date(), s = schedule(now, forcedPack()), y = schedule(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1), null);
+    $('pack-tag').textContent = 'This week: ' + s.pack.name;
+    const slots = [...s.pack.games, s.today].map(id => byId.get(id)).filter(Boolean);
+    paint($('pick-grid'), slots.map((g, i) => cardHTML(g, 'lg', {eager: true, today: i === 3})).join(''));
+    const yg = byId.get(y.today);
+    $('yesterday-bar').innerHTML = yg ? '<span>Yesterday’s pick:</span> <a class="yesterday-link" href="' + esc(yg.route) + '" data-play="' + esc(yg.id) + '">' + esc(title(yg)) + '</a>' : '';
   }
-  function syncQueryAffordances() {
-    const clearBtn = $('query-clear'), kbdHint = $('search-kbd'), hasText = Boolean(query.value.length);
-    if (clearBtn) clearBtn.hidden = !hasText;
-    if (kbdHint) kbdHint.hidden = hasText;
+
+  /* ---- moods: primary matches first, then secondary; kept in #mood= ---- */
+  const az = [...catalogue].sort((a, b) => title(a).localeCompare(title(b), 'en', {sensitivity: 'base'}));
+  const forDevice = list => coarse() ? [...list.filter(g => !d(g).keysOnly), ...list.filter(g => d(g).keysOnly)] : list;
+  let activeMood = 'all';
+  const moodFromHash = () => { const m = /^#mood=([a-z]+)$/i.exec(location.hash || ''); return m && moods.has(m[1].toLowerCase()) ? m[1].toLowerCase() : 'all'; };
+  function renderMoods() {
+    document.querySelectorAll('#mood-grid .mood-btn').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mood === activeMood)));
+    const box = $('mood-results');
+    if (!moods.has(activeMood)) { box.hidden = true; $('mood-cards').innerHTML = ''; return; }
+    const list = [...forDevice(az.filter(g => d(g).primary === activeMood)), ...forDevice(az.filter(g => d(g).secondary === activeMood))], m = moods.get(activeMood);
+    $('mood-results-title').innerHTML = '<span class="mood-ic" data-mood="' + esc(activeMood) + '">' + icon(m.id) + '</span><span>' + esc(m.label) + ' (' + list.length + ')</span>';
+    paint($('mood-cards'), list.map(g => cardHTML(g, 'lg')).join(''));
+    box.hidden = false;
   }
-  function paintControls() {
-    query.value = state.q; ['genre', 'control', 'mode', 'list'].forEach(k => { $(k).value = state[k]; });
-    syncQueryAffordances();
-    document.querySelectorAll('.chip-button').forEach(b => {
-      const on = b.dataset.chip === 'genre' ? state.genre === b.dataset.genre : b.dataset.chip === 'control' ? state.control === b.dataset.control : !state.genre && !state.control && !state.mood && !state.facet;
-      b.setAttribute('aria-pressed', String(on));
+  function setMood(mood) {
+    activeMood = moods.has(mood) ? mood : 'all';
+    const hash = activeMood === 'all' ? '' : '#mood=' + activeMood;
+    if (location.hash !== hash) history.pushState(history.state, '', location.pathname + location.search + hash);
+    renderMoods();
+  }
+
+  /* ---- Play again: up to three recent launches, then Saved ---- */
+  function renderAgain() {
+    const rec = recent.map(id => byId.get(id)).filter(g => g && g.group === 'games').slice(0, 3), fav = favourites.map(id => byId.get(id)).filter(g => g && g.group === 'games');
+    $('again-section').hidden = !rec.length && !fav.length;
+    $('recent-block').hidden = !rec.length; $('clear-again-btn').hidden = !rec.length; paint($('recent-grid'), rec.map(g => cardHTML(g, 'sm')).join(''));
+    $('saved-block').hidden = !fav.length; paint($('saved-grid'), fav.map(g => cardHTML(g, 'sm')).join(''));
+  }
+
+  /* ---- the A-Z grid: server-rendered, filtered here; word-start search ---- */
+  const grid = $('game-grid'), query = $('query'), status = $('result-count');
+  const gridCards = [...grid.querySelectorAll('[data-card]')];
+  if (coarse()) { gridCards.filter(c => c.hasAttribute('data-keys-only')).forEach(c => grid.append(c)); }
+  const fold = s => String(s).normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
+  const synonyms = {};
+  for (const [word, list] of Object.entries(data.synonyms || {})) synonyms[fold(word)] = list.map(fold).filter(Boolean);
+  const blobs = new Map(catalogue.map(g => {
+    const x = d(g), m1 = moods.get(x.primary), m2 = x.secondary ? moods.get(x.secondary) : null;
+    return [g.id, ' ' + fold([title(g), g.title, g.series || '', x.hook, x.primary, x.secondary || '', m1 ? m1.label : '', m2 ? m2.label : '', x.words, x.twoPlayer ? '2p 2 player two player mates versus' : '', x.wholeClass ? 'class team quiz' : ''].join(' '))];
+  }));
+  function matches(g, raw) {
+    const q = fold(raw); if (!q) return true;
+    const blob = blobs.get(g.id) || '', has = w => blob.includes(' ' + w);
+    if (synonyms[q] && [q, ...synonyms[q]].some(v => v && has(v))) return true;
+    return q.split(' ').every(t => has(t) || (synonyms[t] || []).some(has));
+  }
+  let expanded = false;
+  function renderGrid({url = true} = {}) {
+    const q = query.value.slice(0, 100), searching = Boolean(fold(q));
+    let shown = 0, listed = 0;
+    for (const card of grid.querySelectorAll('[data-card]')) {
+      const ok = matches(byId.get(card.dataset.card), q);
+      if (ok) listed++;
+      card.hidden = !ok || (!searching && !expanded && listed > data.collapsed);
+      if (!card.hidden) shown++;
+    }
+    status.textContent = searching ? listed + ' of ' + catalogue.length + ' games' : catalogue.length + ' games';
+    $('query-clear').hidden = !q;
+    $('empty-state').hidden = listed > 0;
+    $('expand-wrap').hidden = searching || listed <= data.collapsed;
+    $('expand-btn').textContent = expanded ? 'Show fewer' : 'Show all ' + catalogue.length;
+    $('expand-btn').setAttribute('aria-expanded', String(expanded));
+    if (url) { const u = new URL(location.href); if (searching) u.searchParams.set('q', q); else u.searchParams.delete('q'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); }
+    return shown;
+  }
+  function paintFavourites() {
+    document.querySelectorAll('[data-favourite]').forEach(b => {
+      const g = byId.get(b.dataset.favourite); if (!g) return;
+      const on = favourites.includes(g.id); b.hidden = false; b.setAttribute('aria-pressed', String(on));
+      if (b.id === 'dialog-favourite') { b.textContent = on ? 'Saved' : 'Favourite'; b.setAttribute('aria-label', (on ? 'Remove favourite: ' : 'Favourite: ') + title(g)); }
     });
-    document.querySelectorAll('.facet-chip').forEach(b => b.setAttribute('aria-pressed', String(state.facet === b.dataset.facet)));
+    $('dialog-remove-recent').hidden = !activeGame || !recent.includes(activeGame.id);
   }
-  // J92 R18: one removable chip per active filter, named by the control's own
-  // option text or value, plus Clear all. Nothing shows when nothing is active.
-  const facetLabel = f => f.slice(0, 1).toUpperCase() + f.slice(1);
-  function paintActiveFilters() {
-    const bar = $('active-filters'), items = [];
-    if (state.q) items.push(['q', $('query').labels[0].textContent + ': ' + state.q]);
-    if (state.mood) items.push(['mood', state.mood]);
-    if (state.genre) items.push(['genre', state.genre]);
-    for (const k of ['control', 'mode', 'list']) if (state[k]) { const el = $(k), opt = [...el.options].find(o => o.value === state[k]); items.push([k, el.labels[0].textContent + ': ' + (opt ? opt.textContent : state[k])]); }
-    if (state.facet) items.push(['facet', facetLabel(state.facet)]);
-    bar.hidden = items.length === 0;
-    bar.innerHTML = items.length ? items.map(([k, label]) => '<button type="button" class="active-filter" data-remove-filter="' + k + '" aria-label="Remove filter: ' + esc(label) + '">' + esc(label) + ' <span aria-hidden="true">×</span></button>').join('')
-      + '<button type="button" class="button clear-all" data-clear-all>Clear all</button>' : '';
-  }
-  function render({url = true} = {}) {
-    const focused = document.activeElement, focusedCard = focused && focused.closest('[data-card]');
-    let shown = 0, visibleCards = 0;
-    for (const card of cards) {
-      const hits = card.ids.map(id => byId.get(id)).filter(g => g && matches(g));
-      card.el.hidden = hits.length === 0;
-      if (hits.length) {
-        shown += hits.length; visibleCards++;
-        // A series card must launch a matching edition, not its unfiltered lead.
-        const g = hits[0], play = card.el.querySelector('.card-actions [data-play]');
-        const changedEdition = card.shown !== g.id; card.shown = g.id;
-        card.el.querySelector('.card-title').textContent = active() ? title(g) : (g.series || title(g));
-        // J92 R3: body = pitch, kicker = sub_genre; R14: the guide link follows the shown edition; R18: where a search matched.
-        card.el.querySelector('.card-line').textContent = g.pitch || g.line || g.genre;
-        const kickerEl = card.el.querySelector('.card-kicker'); if (kickerEl) { kickerEl.textContent = g.subGenre || ''; kickerEl.hidden = !g.subGenre; }
-        const guide = card.el.querySelector('.guide-link'); if (guide) guide.setAttribute('href', '?game=' + encodeURIComponent(g.id));
-        const hint = card.el.querySelector('.card-match'), where = matchedIn(g); if (hint) { hint.textContent = where; hint.hidden = !where; }
-        play.dataset.play = g.id; play.href = g.route; play.querySelector('.sr-only').textContent = ' ' + title(g);
-        // The card's Play anchor above is repointed at the matching edition, so the static
-        // edition list is derived here too: exactly card.ids minus whoever the Play anchor
-        // holds, in the markup's order. That is idempotent, so returning to the unfiltered
-        // lead restores the original list, and the card's distinct hrefs always equal its
-        // full edition set.
-        const others = card.ids.filter(id => id !== g.id);
-        card.el.querySelectorAll('[data-editions] > li').forEach((li, i) => {
-          const edition = byId.get(others[i]), anchor = li.querySelector('a[data-play]');
-          if (!edition || !anchor) return;
-          anchor.dataset.play = edition.id; anchor.href = edition.route;
-          const label = anchor.querySelector('.sr-only'); if (label) label.textContent = ' ' + title(edition);
-          const name = li.querySelector('.edition-name'); if (name) name.textContent = title(edition);
-        });
-        card.el.querySelector('[data-favourite]').dataset.favourite = g.id;
-        if (changedEdition) {
-          const source = g.media && g.media.poster || g.image, thumb = card.el.querySelector('.thumb');
-          thumb.className = 'thumb' + (source ? '' : ' thumb-block');
-          thumb.innerHTML = source ? '<img src="' + esc(source) + '" alt="" loading="lazy" width="640" height="360">' : '<span class="thumb-title">' + esc(title(g)) + '</span>';
-          if (source) thumb.removeAttribute('aria-hidden'); else thumb.setAttribute('aria-hidden', 'true');
-          const ctrlBadges = ((g.controls || []).includes('touch') ? '<span class="chip pill-ctrl">Touch</span>' : '') + ((g.controls || []).includes('keyboard') ? '<span class="chip pill-ctrl">Keys</span>' : '') + ((g.controls || []).includes('gamepad') ? '<span class="chip pill-ctrl">Pad</span>' : '');
-          card.el.querySelector('.card-meta').innerHTML = (card.ids.length > 1 ? '<span class="chip pill-editions">' + card.ids.length + ' editions</span>' : '') + (g.updated ? '<span class="chip pill-updated">Updated ' + esc(g.updated.label) + '</span>' : '') + (bandLabel(g) ? '<span class="chip pill-session">' + esc(bandLabel(g)) + '</span>' : '') + ctrlBadges + (needsKeyboard(g) ? '<span class="chip warn" data-needs-keyboard' + (coarse() ? '' : ' hidden') + '>Needs a keyboard</span>' : '');
-          bindImages(card.el);
-        }
-      }
-    }
-    // Activities live on the Classroom shelf: shown for All, the Classroom chip and a search.
-    const activityState = !state.mood && !state.control && !state.mode && !state.list && !state.facet && (!state.genre || state.genre === 'Classroom');
-    const words = searchWords();
-    let shownActivities = 0;
-    for (const a of activityCards) { const on = activityState && searchHit(a.g, words); a.el.hidden = !on; if (on) shownActivities++; const hint = a.el.querySelector('.card-match'), where = on ? matchedIn(a.g) : ''; if (hint) { hint.textContent = where; hint.hidden = !where; } }
-    // Recently opened orders cards within each shelf; active text search ranks best matches first; clearing restores manifest order.
-    for (const s of shelves) {
-      const own = cards.filter(c => c.el.parentElement === s.track);
-      const ordered = state.list === 'recent'
-        ? [...own].sort((a, b) => Math.min(...a.ids.map(i => (recent.indexOf(i) + 1 || 1e9))) - Math.min(...b.ids.map(i => (recent.indexOf(i) + 1 || 1e9))))
-        : words.length
-          ? [...own].map((c, idx) => ({c, idx, score: c.el.hidden ? -1 : searchScore(byId.get(c.shown), words)})).sort((a, b) => b.score - a.score || a.idx - b.idx).map(x => x.c)
-          : own;
-      ordered.forEach((card, index) => { if (s.track.children[index] !== card.el) s.track.insertBefore(card.el, s.track.children[index] || null); });
-      const visibleHere = [...s.track.children].filter(el => !el.hidden);
-      s.el.hidden = visibleHere.length === 0;
-      if (active()) { const n = visibleHere.filter(el => el.dataset.card).reduce((t, el) => t + cards.find(c => c.el === el).ids.filter(id => matches(byId.get(id))).length, 0), m = visibleHere.length - visibleHere.filter(el => el.dataset.card).length; s.count.textContent = n + (n === 1 ? ' game' : ' games') + (m ? ' · ' + m + ' activities' : ''); } else s.count.textContent = s.base;
-    }
-    const isEmpty = visibleCards + shownActivities === 0;
-    $('empty-state').hidden = !isEmpty;
-    const selected = state.list === 'favourites' ? favourites : state.list === 'recent' ? recent : null;
-    $('empty-description').textContent = selected && selected.length === 0 ? (state.list === 'favourites' ? 'Press the heart on a game card to start your favourites.' : 'Games appear here when you open them from this collection.') : 'Try a different word or clear a filter.';
-    const suggestBox = $('empty-suggestions');
-    if (suggestBox) {
-      const showSuggest = isEmpty && !(selected && selected.length === 0);
-      suggestBox.hidden = !showSuggest;
-      if (showSuggest && !suggestBox.innerHTML) {
-        const topGenres = (data.genres || []).slice(0, 4).map(x => '<button type="button" class="button suggest-chip" data-suggest-genre="' + esc(x.name) + '">' + esc(x.name) + '</button>').join('');
-        suggestBox.innerHTML = topGenres + '<button type="button" class="button suggest-chip" data-suggest-control="touch">Touch games</button>';
-      }
-    }
-    syncQueryAffordances();
-    status.textContent = active() ? shown + ' of ' + data.catalogue + ' games' : data.catalogue + ' games';
-    $('clear-favourites').hidden = state.list !== 'favourites';
-    $('clear-recent-list').hidden = state.list !== 'recent';
-    $('list-note').hidden = state.list !== 'recent';
-    $('surprise-status').textContent = '';
-    grid.querySelectorAll('[data-remove-recent]').forEach(b => b.remove());
-    if (state.list === 'recent') for (const card of cards.filter(c => !c.el.hidden)) {
-      const g = byId.get(card.shown), button = document.createElement('button');
-      button.type = 'button'; button.className = 'remove-recent'; button.dataset.removeRecent = g.id;
-      button.textContent = 'Remove'; button.setAttribute('aria-label', 'Remove from recently opened: ' + title(g)); card.el.append(button);
-    }
-    $('lanes').hidden = active();
-    const continueDock = $('continue-dock'), continueTrack = $('continue-track');
-    if (continueDock && continueTrack) {
-      const picks = !active() ? recent.map(id => byId.get(id)).filter(Boolean).slice(0, 4) : [];
-      continueDock.hidden = picks.length === 0;
-      if (picks.length) {
-        continueTrack.innerHTML = picks.map(g => {
-          const imgSrc = (g.media && g.media.poster) || g.image;
-          const thumbHtml = imgSrc ? '<img src="' + esc(imgSrc) + '" alt="" loading="lazy" width="152" height="88">' : '';
-          return '<div class="continue-pill"><span class="continue-thumb" aria-hidden="true">' + thumbHtml + '</span>'
-            + '<span class="continue-meta"><span class="continue-name">' + esc(title(g)) + '</span><span class="continue-genre">' + esc(g.subGenre || g.genre) + '</span></span>'
-            + '<a class="play small" data-play="' + esc(g.id) + '" href="' + esc(g.route) + '">Play<span class="sr-only"> ' + esc(title(g)) + '</span></a></div>';
-        }).join('');
-      }
-    }
-    grid.classList.toggle('is-filtering', active()); // J92 R18: the shelves unroll into a grid while filtering (CSS only)
-    requestAnimationFrame(paintShelves); // the toggle relays the tracks without a scroll or resize event: repaint their controls once layout has settled
-    paintActiveFilters();
-    $('filters-open').setAttribute('aria-pressed', String(Boolean(state.genre || state.control || state.mode || state.list)));
-    document.querySelectorAll('[data-collection]').forEach(a => { if (a.dataset.collection === state.list) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    paintFavourite();
-    if (url) syncUrl();
-    paintShelves();
-    if (focusedCard && !dialog.open) { if (!focusedCard.hidden && focused.isConnected) focused.focus(); else focusResults(); }
-  }
-  function reset() { fields.forEach(k => { state[k] = ''; }); paintControls(); render(); }
-  function choose(patch, scroll) {
-    Object.assign(state, patch); paintControls(); render();
-    if (scroll) $('all-games').scrollIntoView();
+  function renderAll({url = false} = {}) { renderAgain(); renderGrid({url}); paintFavourites(); }
+
+  /* ---- dialogs: focus stays inside, Escape closes, focus returns ---- */
+  function trapTab(host, close) {
+    host.addEventListener('keydown', e => {
+      if (e.key !== 'Tab') return;
+      const stops = [...host.querySelectorAll('a[href],button,input,select,textarea,[tabindex],video[controls]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length);
+      const first = stops[0], last = stops[stops.length - 1];
+      if (!first) { e.preventDefault(); return; }
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
+    host.addEventListener('cancel', e => { e.preventDefault(); close(); });
+    host.addEventListener('click', e => { if (e.target === host) { const r = host.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) close(); } });
   }
 
-  /* ---- position memory across a game visit (sessionStorage; no saves) ---- */
-  function rememberPosition() {
-    try { sessionStorage.setItem(keys.position, JSON.stringify({url: location.pathname + location.search, y: scrollY})); } catch (_) {}
+  /* ---- Pick for me: respects the mood and the device; no repeat of the last six ---- */
+  let pickHistory = [], pickOpener = null;
+  function pickPool() {
+    return catalogue.filter(g => { const x = d(g); if (coarse() && x.keysOnly) return false; if (activeMood !== 'mates' && x.wholeClass) return false; return activeMood === 'all' || x.primary === activeMood || x.secondary === activeMood; });
   }
-  const shelfPaths = new Set(['/', '/games/', '/Games/', '/main/', '/for/pupils/', '/Lessons/']);
-  function browseSnapshot() { try { const p = JSON.parse(sessionStorage.getItem(keys.position) || 'null'); if (!p || typeof p.url !== 'string' || !Number.isFinite(p.y) || p.y < 0) return null; const u = new URL(p.url, location.origin), pathname = u.pathname.replace(/index\.html$/, ''); if (u.origin !== location.origin || !shelfPaths.has(pathname) || u.search.length > 700) return null; return {url: pathname + u.search, y: p.y, search: u.search}; } catch (_) { return null; } }
-  function restorePosition(event) {
-    const p = browseSnapshot(), back = (event && event.persisted) || (performance.getEntriesByType('navigation')[0] || {}).type === 'back_forward';
-    if (p && p.search === location.search && (cameFromGame || back)) requestAnimationFrame(() => scrollTo(0, p.y));
+  function choose() {
+    const pool = pickPool(); if (!pool.length) return null;
+    const blocked = new Set(pickHistory.slice(-Math.min(6, pool.length - 1))), fresh = pool.filter(g => !blocked.has(g.id)), list = fresh.length ? fresh : pool;
+    const g = list[Math.floor(Math.random() * list.length)]; pickHistory = [...pickHistory, g.id].slice(-12); return g;
   }
+  function paintPick(g) {
+    const x = d(g), m = moods.get(x.primary);
+    $('pick-context').textContent = activeMood === 'all' ? 'From all ready games' : 'From ' + moods.get(activeMood).label;
+    paint($('pick-card'), '<div class="card pick-media" data-mood="' + esc(x.primary) + '"><span class="card-media thumb"><img src="' + esc(x.picture) + '" alt="" width="640" height="360"><span class="thumb-title" aria-hidden="true">' + esc(title(g)) + '</span><span class="mood-chip" aria-hidden="true">' + icon(m.id) + '<span>' + esc(m.label) + '</span></span></span></div><div class="pick-card-copy"><h3 class="pick-card-title" id="pick-card-title">' + esc(title(g)) + '</h3><p class="pick-card-hook">' + esc(x.hook) + '</p></div>');
+    const play = $('pick-play'); play.href = g.route; play.dataset.play = g.id; play.setAttribute('aria-label', 'Play ' + title(g)); $('pick-dialog').dataset.picked = g.id;
+  }
+  function openPick(trigger) { const g = choose(); if (!g) return; pickOpener = trigger; paintPick(g); if (!$('pick-dialog').open) $('pick-dialog').showModal(); $('pick-play').focus(); }
+  function closePick() { if ($('pick-dialog').open) $('pick-dialog').close(); if (pickOpener && pickOpener.isConnected) pickOpener.focus(); }
 
-  /* ---- the game sheet ---- */
+  /* ---- How to play guides: every game, each opening its game sheet ---- */
+  let guidesOpener = null;
+  function renderGuides(filter) {
+    const q = fold(filter || '');
+    $('guides-list').innerHTML = az.filter(g => !q || (' ' + fold(title(g) + ' ' + d(g).hook)).includes(' ' + q)).map(g => '<li class="guide-row"><div class="guide-info"><p class="guide-name">' + esc(title(g)) + '</p><p class="guide-note">' + esc(d(g).hook) + '</p></div><button type="button" class="btn" data-guide="' + esc(g.id) + '" aria-label="How to play ' + esc(title(g)) + '">Guide</button><a class="btn btn-primary" href="' + esc(g.route) + '" data-play="' + esc(g.id) + '" aria-label="Play ' + esc(title(g)) + '">Play</a></li>').join('');
+  }
+  function openGuides(trigger) { guidesOpener = trigger; $('guides-search').value = ''; renderGuides(''); if (!$('guides-dialog').open) $('guides-dialog').showModal(); $('guides-search').focus(); }
+  function closeGuides() { if ($('guides-dialog').open) $('guides-dialog').close(); if (guidesOpener && guidesOpener.isConnected) guidesOpener.focus(); }
+
+  /* ---- the game sheet (How to play guide), unchanged facts from the record ---- */
+  const dialog = $('game-dialog');
+  let activeGame = null, returnFocus = null;
+  const bandLabel = g => (g.sessionBand && data.bandLabels && data.bandLabels[g.sessionBand]) || '';
   const support = [['controls', 'touch', 'Touch'], ['controls', 'keyboard', 'Keyboard'], ['controls', 'gamepad', 'Gamepad'], ['modes', 'single', '1 player'], ['modes', 'local', 'Local / same-network options'], ['modes', 'classroom-teams', 'Shared-screen teams']];
   const needsKeyboard = g => (g.controls || []).length > 0 && !(g.controls || []).includes('touch');
   function stopMedia() { const video = dialog.querySelector('video'); if (video) { video.pause(); video.removeAttribute('src'); video.load(); } $('dialog-media').replaceChildren(); $('media-status').textContent = ''; }
@@ -366,13 +237,12 @@
     img.addEventListener('error', () => { holder.classList.add('failed'); holder.textContent = 'Image unavailable'; }); img.src = source; holder.append(img);
     const caption = document.createElement('figcaption'); caption.textContent = m.poster ? 'Captured gameplay preview.' : g.imageCaption || 'Captured game screen.'; figure.append(caption);
   }
-  // The address keeps the shelf state (search, chip, filters) and adds ?game=; the shared link is just the game.
   function addressWithGame(g) { const u = new URL(location.href); u.searchParams.set('game', g.id); return u.pathname + u.search + u.hash; }
   function shareUrl(g) { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('game', g.id); return u.href; }
-  function openInfo(g, trigger, watch = false) {
+  function openInfo(g, trigger) {
     if (!g || typeof dialog.showModal !== 'function') return;
     stopMedia(); activeGame = g; returnFocus = trigger || returnFocus;
-    $('dialog-title').textContent = title(g); $('dialog-kind').textContent = g.genre;
+    $('dialog-title').textContent = title(g); $('dialog-kind').textContent = g.group === 'games' && moods.get(d(g).primary) ? moods.get(d(g).primary).label : 'Lesson activity';
     $('dialog-description').textContent = g.description + (g.chapter ? ' New chapter: ' + g.chapter + '.' : '');
     const facts = g.details || {};
     $('dialog-mood').hidden = !g.moodReason; $('dialog-mood').textContent = g.moodReason || '';
@@ -389,46 +259,25 @@
     $('dialog-watch').hidden = !(g.media && g.media.video);
     const editions = $('dialog-editions'), members = (g.editions || []).map(id => byId.get(id)).filter(Boolean);
     editions.hidden = members.length < 2;
-    editions.querySelector('ul').innerHTML = members.map(m => '<li' + (m.id === g.id ? ' aria-current="true"' : '') + '><button type="button" class="edition-open" data-edition="' + esc(m.id) + '">' + esc(title(m)) + '</button><a class="play small" data-play="' + esc(m.id) + '" href="' + esc(m.route) + '">Play<span class="sr-only"> ' + esc(title(m)) + '</span></a></li>').join('');
-    // J92 R4/R10: the landed "what you do" lines, with the enrichment's input names and
-    // the session band as pills -- shown here only, never as a filter. Rows without
-    // enrichment (the activities, the staff tool) keep the record's paragraphs.
+    editions.querySelector('ul').innerHTML = members.map(m => '<li' + (m.id === g.id ? ' aria-current="true"' : '') + '><button type="button" class="btn edition-open" data-edition="' + esc(m.id) + '">' + esc(title(m)) + '</button><a class="btn btn-primary play small" data-play="' + esc(m.id) + '" href="' + esc(m.route) + '">Play<span class="sr-only"> ' + esc(title(m)) + '</span></a></li>').join('');
     const lines = g.whatYouDo || [], pills = (g.inputs || []).map(i => '<span class="chip pill-input">' + esc(i) + '</span>').join('') + (bandLabel(g) ? '<span class="chip pill-session">' + esc(bandLabel(g)) + '</span>' : '');
     $('dialog-what-you-do').hidden = !lines.length;
     $('dialog-what-list').innerHTML = lines.map(l => '<li>' + esc(l) + '</li>').join('');
     $('dialog-inputs').innerHTML = lines.length ? pills : '';
-    // J92 R18: similar games are the catalogue's other rows of the same genre, manifest order, editions of this game excluded.
-    const kin = new Set(g.editions || [g.id]), peers = catalogue.filter(o => o.genre === g.genre && !kin.has(o.id)).slice(0, 3), similar = $('dialog-similar');
-    similar.hidden = !peers.length;
-    similar.querySelector('ul').innerHTML = peers.map(m => {
-      const src = (m.media && m.media.poster) || m.image;
-      const th = src ? '<span class="similar-thumb" aria-hidden="true"><img src="' + esc(src) + '" alt="" loading="lazy" width="128" height="72"></span>' : '<span class="similar-thumb" aria-hidden="true"></span>';
-      return '<li class="similar-item">' + th + '<button type="button" class="edition-open" data-edition="' + esc(m.id) + '">' + esc(title(m)) + '</button><a class="play small" data-play="' + esc(m.id) + '" href="' + esc(m.route) + '">Play<span class="sr-only"> ' + esc(title(m)) + '</span></a></li>';
-    }).join('');
-    $('dialog-favourite').dataset.favourite = g.id; paintFavourite(); $('share-status').textContent = '';
+    $('dialog-favourite').dataset.favourite = g.id; $('dialog-favourite').hidden = g.group !== 'games'; paintFavourites(); $('share-status').textContent = '';
     poster(g);
     history.replaceState(history.state, '', addressWithGame(g));
     if (!dialog.open) dialog.showModal();
     $('dialog-close').focus();
-    if (watch) playPreview();
   }
-  function paintFavourite() {
-    document.querySelectorAll('[data-favourite]').forEach(b => {
-      const g = byId.get(b.dataset.favourite); if (!g) return;
-      const on = favourites.includes(g.id); b.hidden = false;
-      b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', (on ? 'Remove favourite: ' : 'Favourite: ') + title(g));
-      if (b.classList.contains('favourite')) b.innerHTML = (on ? '♥' : '♡') + '<span class="sr-only"> Favourite</span>';
-    });
-    $('dialog-remove-recent').hidden = !activeGame || !recent.includes(activeGame.id);
-  }
-  function focusResults() { (grid.querySelector('[data-shelf]:not([hidden]) :is([data-card],[data-activity]):not([hidden]) .card-actions a[data-play]') || $('empty-reset')).focus(); }
-  function changeRecent(id) {
-    const opener = document.activeElement, inSheet = dialog.open;
-    recent = id ? recent.filter(x => x !== id) : []; saveList('recent', recent);
-    render({url: false});
-    storageNotice((id ? 'Removed from recently opened.' : 'Recently opened cleared.') + ' Game saves were not changed.' + (durable ? '' : ' Storage is unavailable.'));
-    if (inSheet) $('dialog-close').focus();
-    else if (!opener.isConnected || !opener.getClientRects().length) focusResults();
+  function stripGameParam() { const u = new URL(location.href); if (u.searchParams.has('game')) { u.searchParams.delete('game'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } }
+  function focusResults() { (grid.querySelector('[data-card]:not([hidden]) a[data-play]') || $('all-games-title')).focus(); }
+  function closeInfo() {
+    if (!dialog.open) return; stopMedia(); dialog.close(); activeGame = null; stripGameParam();
+    // A deep-linked card can sit past the collapsed A-Z view: show the full list so focus returns to it.
+    const card = returnFocus && returnFocus.closest && returnFocus.closest('#game-grid [data-card]');
+    if (card && card.hidden && !expanded && matches(byId.get(card.dataset.card), query.value)) { expanded = true; renderGrid({url: false}); }
+    if (returnFocus && returnFocus.isConnected && returnFocus.getClientRects().length) returnFocus.focus(); else focusResults();
   }
   function playPreview() {
     const g = activeGame; if (!g || !g.media || !g.media.video) return; stopMedia();
@@ -438,124 +287,106 @@
     video.addEventListener('error', () => { if (!video.isConnected || activeGame !== g) return; $('media-status').textContent = 'This preview could not play. You can still open the game.'; video.pause(); video.removeAttribute('src'); video.load(); figure.remove(); poster(g); }, {once: true});
     video.play().catch(() => { if (!video.isConnected || activeGame !== g) return; $('media-status').textContent = 'Use the video Play control to start this preview.'; });
   }
-  function stripGameParam() { const u = new URL(location.href); if (u.searchParams.has('game')) { u.searchParams.delete('game'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } }
-  function closeInfo() { if (!dialog.open) return; stopMedia(); dialog.close(); activeGame = null; stripGameParam(); if (returnFocus && returnFocus.isConnected && returnFocus.getClientRects().length) returnFocus.focus(); else focusResults(); }
   function share() {
     const g = activeGame; if (!g) return; const url = shareUrl(g), payload = {title: title(g) + ' · Made by Matt Play', url};
     if (navigator.share) { navigator.share(payload).catch(() => {}); return; }
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(() => { $('share-status').textContent = 'Link copied.'; }, () => { $('share-status').textContent = url; });
     else $('share-status').textContent = url;
   }
-  function trapTab(host) {
-    host.addEventListener('keydown', e => { if (e.key !== 'Tab') return; const stops = [...host.querySelectorAll('a[href],button,input,select,textarea,[tabindex],video[controls]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length); const first = stops[0], last = stops[stops.length - 1]; if (!first) { e.preventDefault(); host.focus(); return; } if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } });
-    host.addEventListener('click', e => { if (e.target === host) { const r = host.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) (host === dialog ? closeInfo : closeFilters)(); } });
+  function changeRecent(id) {
+    recent = recent.filter(x => x !== id); saveList('recent', recent); renderAll();
+    storageNotice('Removed from recently opened. Game saves were not changed.' + (durable ? '' : ' Storage is unavailable.'));
+    if (dialog.open) $('dialog-close').focus();
   }
 
-  /* ---- the Filters drawer ---- */
-  function openFilters(trigger) { if (typeof filters.showModal !== 'function') return; filtersOpener = trigger; filters.showModal(); $('filters-open').setAttribute('aria-expanded', 'true'); $('filters-close').focus(); }
-  function closeFilters() { if (filters.open) filters.close(); }
-  filters.addEventListener('close', () => { $('filters-open').setAttribute('aria-expanded', 'false'); if (filtersOpener && filtersOpener.isConnected) filtersOpener.focus(); });
-  filters.addEventListener('cancel', e => { e.preventDefault(); closeFilters(); });
-  $('filters-open').addEventListener('click', e => openFilters(e.currentTarget));
-  ['genre', 'control', 'mode', 'list'].forEach(k => $(k).addEventListener('change', () => { state[k] = $(k).value; paintControls(); render(); }));
-  $('filters-reset').addEventListener('click', () => { reset(); $('filters-close').focus(); });
-  $('filters-form').addEventListener('submit', () => { /* method=dialog closes the drawer */ });
+  /* ---- position memory across a game visit (sessionStorage; no saves) ---- */
+  function rememberPosition() { try { sessionStorage.setItem(keys.position, JSON.stringify({url: location.pathname + location.search, y: scrollY})); } catch (_) {} }
+  function restorePosition(event) {
+    try {
+      const nav = performance.getEntriesByType('navigation')[0];
+      if (!((event && event.persisted) || (nav && nav.type === 'back_forward'))) return;
+      const p = JSON.parse(sessionStorage.getItem(keys.position) || 'null');
+      if (p && typeof p.url === 'string' && Number.isFinite(p.y) && p.y >= 0 && p.url === location.pathname + location.search) requestAnimationFrame(() => scrollTo(0, p.y));
+    } catch (_) {}
+  }
 
   /* ---- wiring ---- */
-  $('discovery-form').addEventListener('submit', e => { e.preventDefault(); state.q = query.value.slice(0, 160); render(); });
-  query.addEventListener('input', () => { state.q = query.value.slice(0, 160); render(); });
-  query.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && query.value && !dialog.open && !filters.open) {
-      e.preventDefault();
-      e.stopPropagation();
-      query.value = '';
-      state.q = '';
-      render();
-    }
+  const menu = document.querySelector('.menu');
+  const closeMenu = () => { menu.open = false; };
+  $('calm-btn').addEventListener('click', () => applyCalm(!document.documentElement.classList.contains('calm'), true));
+  $('search-jump').addEventListener('click', e => { e.preventDefault(); closeMenu(); $('all-games').scrollIntoView({block: 'start'}); query.focus({preventScroll: true}); });
+  $('pick-btn').addEventListener('click', e => { closeMenu(); openPick(e.currentTarget); });
+  $('pick-another').addEventListener('click', () => { const g = choose(); if (g) paintPick(g); });
+  $('pick-close').addEventListener('click', closePick); trapTab($('pick-dialog'), closePick);
+  $('guides-close').addEventListener('click', closeGuides); trapTab($('guides-dialog'), closeGuides);
+  $('guides-search').addEventListener('input', e => renderGuides(e.target.value));
+  $('menu-guides').addEventListener('click', e => { e.preventDefault(); closeMenu(); openGuides(menu.querySelector('summary')); });
+  $('teacher-guides').addEventListener('click', e => { e.preventDefault(); openGuides(e.currentTarget); });
+  $('menu-teacher').addEventListener('click', e => { e.preventDefault(); closeMenu(); const t = $('classroom'); t.open = true; t.scrollIntoView({block: 'start'}); t.querySelector('summary').focus({preventScroll: true}); });
+  menu.addEventListener('keydown', e => { if (e.key === 'Escape' && menu.open) { e.preventDefault(); closeMenu(); menu.querySelector('summary').focus(); } });
+  document.addEventListener('click', e => { if (menu.open && !e.target.closest('.menu')) closeMenu(); });
+  $('mood-grid').addEventListener('click', e => { const b = e.target.closest('.mood-btn'); if (b) setMood(b.dataset.mood === activeMood ? 'all' : b.dataset.mood); });
+  $('mood-back-btn').addEventListener('click', () => { setMood('all'); document.querySelector('#mood-grid .mood-btn[data-mood="all"]').focus(); });
+  $('clear-again-btn').addEventListener('click', () => {
+    // Clears the recently opened list only: Saved is the player's own choice and is unsaved with its heart.
+    recent = []; saveList('recent', []); renderAll();
+    storageNotice('List cleared. Game saves were not changed.' + (durable ? '' : ' Storage is unavailable.'));
+    $('all-games-title').focus();
   });
-  const clearBtn = $('query-clear');
-  if (clearBtn) clearBtn.addEventListener('click', () => { query.value = ''; state.q = ''; render(); query.focus(); });
-  $('search-jump').addEventListener('click', e => { e.preventDefault(); query.scrollIntoView({block: 'center'}); query.focus({preventScroll: true}); });
-  $('empty-reset').addEventListener('click', () => { reset(); $('all-games-title').focus(); });
-  $('surprise').hidden = false;
-  $('surprise').addEventListener('click', e => {
-    const eligible = catalogue.filter(matches);
-    if (!eligible.length) { $('surprise-status').textContent = 'No games match these choices. Clear a filter to try Surprise me.'; $('empty-reset').focus(); return; }
-    openInfo(eligible[Math.floor(Math.random() * eligible.length)], e.currentTarget);
-  });
-  $('clear-favourites').addEventListener('click', () => { favourites = []; saveList('favourites', []); render({url: false}); storageNotice('Favourites cleared. Game saves were not changed.' + (durable ? '' : ' Storage is unavailable.')); });
+  $('discovery-form').addEventListener('submit', e => { e.preventDefault(); renderGrid(); });
+  query.addEventListener('input', () => renderGrid());
+  query.addEventListener('keydown', e => { if (e.key === 'Escape' && query.value && !dialog.open) { e.preventDefault(); e.stopPropagation(); query.value = ''; renderGrid(); } });
+  $('query-clear').addEventListener('click', () => { query.value = ''; renderGrid(); query.focus(); });
+  $('empty-reset').addEventListener('click', () => { query.value = ''; renderGrid(); $('all-games-title').focus(); });
+  $('expand-btn').addEventListener('click', () => { expanded = !expanded; renderGrid({url: false}); });
   document.addEventListener('click', e => {
-    const collection = e.target.closest('a[data-collection]');
-    if (collection && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { e.preventDefault(); choose({q: '', mood: '', genre: '', control: '', mode: '', list: collection.dataset.collection}, true); $('all-games-title').focus({preventScroll: true}); return; }
-    const chip = e.target.closest('.chip-button, .facet-chip');
-    if (chip) {
-      const kind = chip.dataset.chip;
-      if (kind === 'genre') choose({genre: state.genre === chip.dataset.genre ? '' : chip.dataset.genre}, true);
-      else if (kind === 'control') choose({control: state.control === chip.dataset.control ? '' : chip.dataset.control}, true);
-      else if (kind === 'facet') choose({facet: state.facet === chip.dataset.facet ? '' : chip.dataset.facet}, true);
-      else choose({mood: '', genre: '', control: '', facet: ''}, false);
-      return;
-    }
-    const removeFilter = e.target.closest('[data-remove-filter]');
-    if (removeFilter) { choose({[removeFilter.dataset.removeFilter]: ''}, false); ($('active-filters').querySelector('.active-filter') || $('all-games-title')).focus(); return; }
-    if (e.target.closest('[data-clear-all]')) { reset(); $('all-games-title').focus(); return; }
-    const suggest = e.target.closest('[data-suggest-genre], [data-suggest-control]');
-    if (suggest) {
-      fields.forEach(k => { state[k] = ''; });
-      if (suggest.dataset.suggestGenre) state.genre = suggest.dataset.suggestGenre;
-      if (suggest.dataset.suggestControl) state.control = suggest.dataset.suggestControl;
-      paintControls();
-      render();
-      focusResults();
-      return;
-    }
-    const select = e.target.closest('[data-spot-select]');
-    if (select) { showSpot(Number(select.dataset.spotSelect)); return; }
-    const guide = e.target.closest('a.guide-link');
-    if (guide && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) { const id = new URL(guide.href).searchParams.get('game'); if (byId.has(id)) { e.preventDefault(); openInfo(byId.get(id), guide); } return; }
-    if (e.target.closest('[data-clear-recent]')) { changeRecent(); return; }
+    if (e.target.closest('#dialog-share')) { share(); return; }
+    if (e.target.closest('#dialog-watch')) { playPreview(); return; }
     const remove = e.target.closest('[data-remove-recent]');
     if (remove) { changeRecent(remove.dataset.removeRecent); return; }
     const fav = e.target.closest('[data-favourite]');
     if (fav && byId.has(fav.dataset.favourite)) {
       const id = fav.dataset.favourite; favourites = favourites.includes(id) ? favourites.filter(x => x !== id) : [...favourites, id];
-      saveList('favourites', favourites); render({url: false}); return;
+      saveList('favourites', favourites); renderAgain(); paintFavourites(); storageNotice();
+      if (!fav.isConnected) { const twin = document.querySelector('#game-grid [data-favourite="' + CSS.escape(id) + '"]'); (twin && twin.getClientRects().length ? twin : $('all-games-title')).focus(); }
+      return;
     }
-    if (e.target.closest('#dialog-share')) { share(); return; }
-    const link = e.target.closest('a[data-play]');
-    if (link) { const id = link.dataset.play; if (byId.has(id)) { recent = [id, ...recent.filter(x => x !== id)].slice(0, 24); saveList('recent', recent); if (dialog.open && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) closeInfo(); rememberPosition(); } return; }
+    const guide = e.target.closest('[data-guide]');
+    if (guide) { const g = byId.get(guide.dataset.guide); closeGuides(); openInfo(g, guidesOpener); return; }
     const edition = e.target.closest('[data-edition]');
     if (edition) { openInfo(byId.get(edition.dataset.edition), returnFocus); return; }
-    const info = e.target.closest('[data-info], [data-watch]');
-    if (info) { openInfo(byId.get(info.dataset.info || info.dataset.watch), info, Boolean(info.dataset.watch)); }
-  });
-  document.addEventListener('auxclick', e => { const link = e.target.closest('a[data-play]'); if (e.button === 1 && link && byId.has(link.dataset.play)) { const id = link.dataset.play; recent = [id, ...recent.filter(x => x !== id)].slice(0, 24); saveList('recent', recent); rememberPosition(); } });
-  $('dialog-watch').addEventListener('click', playPreview);
-  $('dialog-close').addEventListener('click', () => closeInfo());
-  dialog.addEventListener('cancel', e => { e.preventDefault(); closeInfo(); });
-  trapTab(dialog); trapTab(filters);
-  document.addEventListener('keydown', e => {
-    if (e.key === '/' && !dialog.open && !filters.open && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '') && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      e.preventDefault();
-      query.scrollIntoView({block: 'center'});
-      query.focus({preventScroll: true});
+    const link = e.target.closest('a[data-play]');
+    if (link && byId.has(link.dataset.play)) {
+      const id = link.dataset.play; recent = [id, ...recent.filter(x => x !== id)].slice(0, 24); saveList('recent', recent);
+      if (dialog.open && !e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) closeInfo();
+      rememberPosition();
     }
   });
-  document.querySelector('.menu').addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); e.currentTarget.open = false; e.currentTarget.querySelector('summary').focus(); } });
-  document.querySelectorAll('.menu a').forEach(a => a.addEventListener('click', () => { document.querySelector('.menu').open = false; }));
+  document.addEventListener('auxclick', e => { const link = e.target.closest('a[data-play]'); if (e.button === 1 && link && byId.has(link.dataset.play)) { const id = link.dataset.play; recent = [id, ...recent.filter(x => x !== id)].slice(0, 24); saveList('recent', recent); rememberPosition(); } });
+  $('dialog-close').addEventListener('click', () => closeInfo());
+  trapTab(dialog, closeInfo);
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && !dialog.open && !$('pick-dialog').open && !$('guides-dialog').open && !/^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault(); $('all-games').scrollIntoView({block: 'start'}); query.focus({preventScroll: true});
+    }
+  });
+  window.addEventListener('hashchange', () => { activeMood = moodFromHash(); renderMoods(); });
+  window.addEventListener('popstate', () => { if (dialog.open) closeInfo(); activeMood = moodFromHash(); renderMoods(); });
   window.addEventListener('pagehide', () => { rememberPosition(); stopMedia(); });
-  window.addEventListener('pageshow', event => { if (durable) { favourites = readList('favourites'); recent = readList('recent'); } render({url: false}); restorePosition(event); });
-  window.addEventListener('popstate', () => { if (dialog.open) closeInfo(); applyUrl(); render({url: false}); });
-  window.addEventListener('storage', e => { if (e.key === keys.favourites || e.key === keys.recent) { favourites = readList('favourites'); recent = readList('recent'); render({url: false}); } });
+  window.addEventListener('pageshow', event => { if (durable) { favourites = readList('favourites'); recent = readList('recent'); } renderAll(); restorePosition(event); });
+  window.addEventListener('storage', e => { if (e.key === keys.favourites || e.key === keys.recent) { favourites = readList('favourites'); recent = readList('recent'); renderAll(); } });
 
   /* ---- first paint ---- */
-  if (coarse()) document.querySelectorAll('[data-needs-keyboard]').forEach(chip => { chip.hidden = false; });
+  document.querySelectorAll('.js-only[hidden]').forEach(el => { el.hidden = false; });
+  if (coarse()) document.querySelectorAll('[data-needs-keyboard]').forEach(b => { b.hidden = false; });
+  initCalm();
+  const params = new URLSearchParams(location.search);
+  if (params.get('q')) query.value = params.get('q').slice(0, 100);
+  renderPick();
+  activeMood = moodFromHash(); renderMoods();
   bindImages(document);
-  const previous = browseSnapshot();
-  if (previous) {
-    try { const from = new URL(document.referrer), path = u => decodeURIComponent(u).replace(/index\.html$/, '').replace(/\/$/, ''); cameFromGame = from.origin === location.origin && games.some(g => path(g.route) === path(from.pathname)); const explicit = fields.some(k => new URLSearchParams(location.search).has(k)); if (cameFromGame && !explicit) history.replaceState({}, '', location.pathname + previous.search + location.hash); } catch (_) {}
-  }
-  applyUrl(); render({url: false}); storageNotice(); restorePosition();
-  const deepLink = new URLSearchParams(location.search).get('game');
-  if (deepLink && byId.has(deepLink)) openInfo(byId.get(deepLink), document.querySelector('#game-grid a[data-play="' + CSS.escape(deepLink) + '"]') || $('all-games-title'));
+  renderAll(); storageNotice(); restorePosition();
+  document.documentElement.dataset.playReady = '1';
+  const deepLink = params.get('game');
+  if (deepLink && byId.has(deepLink)) openInfo(byId.get(deepLink), grid.querySelector('a[data-play="' + CSS.escape(deepLink) + '"]') || $('all-games-title'));
 })();
