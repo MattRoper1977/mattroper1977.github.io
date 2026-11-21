@@ -122,6 +122,16 @@ const check = (limb, ok, detail) => {
 
 const browser = await chromium.launch();
 
+/* PLAY-D2 (21 Nov 2026): the play home's A-Z grid opens collapsed to twelve cards
+   with a "Show all" button once its script has run. A collapsed card occupies no
+   space, so it would read as missing: wait for the page to finish its first paint
+   (or for a page with no such control), then show the whole grid the way a person
+   does. A page that never settles is left as it is and judged as it is. */
+async function showWholeGrid(page) {
+  await page.waitForFunction(() => !document.querySelector('#expand-btn') || document.documentElement.dataset.playReady === '1', null, { timeout: 15000 }).catch(() => {});
+  await page.evaluate(() => { const b = document.querySelector('#expand-btn'); if (b && b.getAttribute('aria-expanded') === 'false' && b.getClientRects().length) b.click(); }).catch(() => {});
+}
+
 /* Fetch through the browser so we see exactly what a visitor's browser gets,
    including redirects, rather than what curl negotiates. */
 async function fetchBytes(url) {
@@ -231,6 +241,7 @@ g('arcade renders the new entries');
      education arcade's #allGrid/#genreSections no longer carries games.
      Both structures are accepted, and every shelf entry must have a card. */
   const BROWSE = '#allGrid, #genreSections, #game-grid';
+  await showWholeGrid(page);
   await page.evaluate(() => document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; })).catch(() => {});
   const expected = servedShelf ? servedShelf.games.length : 0;
   let rendered = -1;
@@ -312,6 +323,7 @@ g('arcade renders the new entries');
        shut <details> occupies no space, so the control would report "not found"
        for a game that is present and call itself always-red. */
     const openAll = () => page.evaluate(() => document.querySelectorAll('details.gsec').forEach((d) => { d.open = true; })).catch(() => {});
+    await showWholeGrid(page);
     await openAll();
     const cardFor = async (href) => { await openAll(); return page.evaluate((h) => {
       const grid = document.querySelector('#allGrid') || document.querySelector('#genreSections') || document.querySelector('#game-grid');

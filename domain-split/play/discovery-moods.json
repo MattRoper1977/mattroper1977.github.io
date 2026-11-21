@@ -1,0 +1,1103 @@
+{
+ "schema": 1,
+ "about": "Play front page discovery data (ruling side D2 brief, 21 Nov 2026). build.py joins this to the catalogue by route: every catalogue game needs exactly one row here and every row must be a catalogue game. Titles are a cross-check only; the page shows the catalogue title. Moods, hooks, packs, the Today pool and search words are curated here and nowhere else. A cover is any picture under /assets/play2/covers/; its bytes are pinned in covers.",
+ "all_label": "All {n}",
+ "all_icon": "<rect x=\"2.5\" y=\"2.5\" width=\"6.2\" height=\"6.2\" rx=\"1.6\"/><rect x=\"11.3\" y=\"2.5\" width=\"6.2\" height=\"6.2\" rx=\"1.6\"/><rect x=\"2.5\" y=\"11.3\" width=\"6.2\" height=\"6.2\" rx=\"1.6\"/><rect x=\"11.3\" y=\"11.3\" width=\"6.2\" height=\"6.2\" rx=\"1.6\"/>",
+ "moods": [
+  {
+   "id": "fast",
+   "label": "Move fast",
+   "icon": "<path d=\"M11.6 1.8 4.2 10.8h5.1L8.4 18.2l7.4-9h-5.1l.9-7.4Z\"/>"
+  },
+  {
+   "id": "race",
+   "label": "Race",
+   "icon": "<g fill=\"none\" stroke=\"currentColor\"><path d=\"M4 17.5V3\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M4.5 3.5h11.5v8H4.5z\" stroke-width=\"1.6\" stroke-linejoin=\"round\"/><rect x=\"5\" y=\"4\" width=\"3.5\" height=\"3.5\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"12\" y=\"4\" width=\"3.5\" height=\"3.5\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"8.5\" y=\"7.5\" width=\"3.5\" height=\"3.5\" fill=\"currentColor\" stroke=\"none\"/></g>"
+  },
+  {
+   "id": "sport",
+   "label": "Sport",
+   "icon": "<g fill=\"none\" stroke=\"currentColor\"><path d=\"M2.5 16.5V5.5h15v11\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M2.5 9.5h15M7.5 5.5v11M12.5 5.5v11\" stroke-width=\"1\" stroke-opacity=\".55\"/><circle cx=\"10\" cy=\"13.5\" r=\"3.4\" fill=\"currentColor\" stroke=\"none\"/></g>"
+  },
+  {
+   "id": "solve",
+   "label": "Solve it",
+   "icon": "<path d=\"M3 5.5A1.5 1.5 0 0 1 4.5 4h5v3.2a1.8 1.8 0 1 1 0 3.6V14h-5A1.5 1.5 0 0 1 3 12.5v-7Z\"/><path d=\"M10.8 4h4.7A1.5 1.5 0 0 1 17 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-4.7v-2.1a2.7 2.7 0 0 0 0-5.8V4Z\" opacity=\".78\"/>"
+  },
+  {
+   "id": "plan",
+   "label": "Plan a move",
+   "icon": "<g fill=\"none\" stroke=\"currentColor\"><path d=\"M6.5 6.5 13.5 10l-7 3.5\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><rect x=\"2.5\" y=\"3.5\" width=\"5\" height=\"5\" rx=\"1.4\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"12.5\" y=\"7.5\" width=\"5\" height=\"5\" rx=\"1.4\" fill=\"currentColor\" stroke=\"none\"/><rect x=\"2.5\" y=\"11.5\" width=\"5\" height=\"5\" rx=\"1.4\" fill=\"currentColor\" stroke=\"none\"/></g>"
+  },
+  {
+   "id": "explore",
+   "label": "Explore",
+   "icon": "<g fill=\"none\" stroke=\"currentColor\"><circle cx=\"10\" cy=\"10\" r=\"7.5\" stroke-width=\"1.9\"/><path d=\"m13.6 6.4-2.1 5.1-5.1 2.1 2.1-5.1 5.1-2.1Z\" fill=\"currentColor\" stroke=\"none\"/></g>"
+  },
+  {
+   "id": "chill",
+   "label": "Build & chill",
+   "icon": "<rect x=\"3.5\" y=\"11.2\" width=\"13\" height=\"6.3\" rx=\"1.8\"/><path d=\"M10 11.2C10 6.5 13 3.2 17 3c-.2 4-3 7.2-7 8.2Z\"/><path d=\"M9.6 11.2C9.6 8 7.6 5.6 4.6 5.3c.2 2.9 2.1 5.1 5 5.9Z\" opacity=\".75\"/>"
+  },
+  {
+   "id": "mates",
+   "label": "With mates",
+   "icon": "<circle cx=\"7\" cy=\"6.4\" r=\"2.7\"/><path d=\"M2.2 16.5c.3-3 2.2-4.7 4.8-4.7s4.5 1.7 4.8 4.7H2.2Z\"/><circle cx=\"13.8\" cy=\"7.2\" r=\"2.3\" opacity=\".88\"/><path d=\"M11.6 16.5h6.2c-.3-2.5-1.8-4-4-4-1 0-1.9.3-2.6.9.4.9.5 2 .4 3.1Z\" opacity=\".88\"/>"
+  }
+ ],
+ "packs": [
+  {
+   "slug": "aim-a-shot",
+   "name": "Aim a shot",
+   "routes": [
+    "/apexpool/",
+    "/apexkick/",
+    "/apexgolf/"
+   ]
+  },
+  {
+   "slug": "build-it",
+   "name": "Build it",
+   "routes": [
+    "/Lessons/Games/Block_Builder.html",
+    "/voxel/",
+    "/Lessons/Games/Wrecking_Crew.html"
+   ]
+  },
+  {
+   "slug": "beat-a-mate",
+   "name": "Beat a mate",
+   "routes": [
+    "/magnetmates/",
+    "/neonturf/",
+    "/Lessons/Games/Slipstream.html"
+   ]
+  },
+  {
+   "slug": "crack-the-case",
+   "name": "Crack the case",
+   "routes": [
+    "/offbrand/",
+    "/Lessons/Games/Static.html",
+    "/Lessons/Games/Prism.html"
+   ]
+  },
+  {
+   "slug": "one-button",
+   "name": "One button",
+   "routes": [
+    "/Lessons/Games/Axiom_Shift.html",
+    "/Lessons/Games/OneGuy.html",
+    "/Lessons/Games/Grapple.html"
+   ]
+  },
+  {
+   "slug": "chill-out",
+   "name": "Chill out",
+   "routes": [
+    "/luminahaven/",
+    "/Lessons/Games/Neon_Garden.html",
+    "/layerpress/"
+   ]
+  },
+  {
+   "slug": "big-worlds",
+   "name": "Big worlds",
+   "routes": [
+    "/emberwild/",
+    "/micro-tinkerer/",
+    "/echovault/"
+   ]
+  },
+  {
+   "slug": "speed-run",
+   "name": "Speed run",
+   "routes": [
+    "/signalheist/",
+    "/trailrunner/",
+    "/rallyvector3d/"
+   ]
+  }
+ ],
+ "today_pool": [
+  "/Lessons/Games/Prism.html",
+  "/emberwild/",
+  "/Lessons/Games/Glitch_Clash.html",
+  "/luminahaven/",
+  "/Lessons/Games/Orbital.html",
+  "/hillhound/",
+  "/apexpool/",
+  "/Lessons/Games/Block_Builder.html",
+  "/Lessons/Games/Wrecking_Crew.html",
+  "/cyberpulse/",
+  "/layerpress/",
+  "/Lessons/Games/Hold_the_Mark.html",
+  "/apexkick/",
+  "/micro-tinkerer/",
+  "/Lessons/Games/Neon_Garden.html",
+  "/Lessons/Games/Axiom_Shift.html",
+  "/hyperdraft/",
+  "/Lessons/Games/Lumins.html",
+  "/crownbadge/",
+  "/Lessons/Games/Marble.html",
+  "/signalheist/",
+  "/auroralinks/",
+  "/voxel/",
+  "/Lessons/Games/Grapple.html",
+  "/offbrand/",
+  "/rallyvector3d/",
+  "/Lessons/Games/Neon_Siege.html",
+  "/apexgolf/",
+  "/trailrunner/",
+  "/Lessons/Games/Static.html",
+  "/novasiege/",
+  "/apextennis/",
+  "/Lessons/Games/OneGuy.html",
+  "/medevac/",
+  "/Lessons/Games/Grid_Chase.html",
+  "/relicforge/"
+ ],
+ "synonyms": {
+  "pool": [
+   "snooker",
+   "cue",
+   "billiards",
+   "apexpool"
+  ],
+  "snooker": [
+   "pool",
+   "cue"
+  ],
+  "football": [
+   "footy",
+   "soccer",
+   "kick",
+   "goal",
+   "pitch",
+   "cup",
+   "touchline"
+  ],
+  "footy": [
+   "football",
+   "soccer",
+   "kick",
+   "goal",
+   "cup",
+   "touchline"
+  ],
+  "soccer": [
+   "football",
+   "footy",
+   "kick",
+   "goal"
+  ],
+  "golf": [
+   "putt",
+   "holes",
+   "links",
+   "orbital",
+   "aurora"
+  ],
+  "tennis": [
+   "racket",
+   "court",
+   "rally",
+   "serve"
+  ],
+  "cars": [
+   "car",
+   "racing",
+   "race",
+   "drift",
+   "drive",
+   "driving",
+   "rally",
+   "slipstream"
+  ],
+  "car": [
+   "cars",
+   "racing",
+   "race",
+   "drift",
+   "drive"
+  ],
+  "racing": [
+   "race",
+   "cars",
+   "drift",
+   "track",
+   "velodrome",
+   "slipstream",
+   "rally"
+  ],
+  "race": [
+   "racing",
+   "cars",
+   "drift",
+   "track",
+   "velodrome",
+   "slipstream",
+   "rally"
+  ],
+  "snake": [
+   "snakes"
+  ],
+  "maze": [
+   "labyrinth",
+   "chase",
+   "marble",
+   "hunters",
+   "vault"
+  ],
+  "puzzle": [
+   "puzzles",
+   "solve",
+   "logic",
+   "clues",
+   "mystery",
+   "mirror",
+   "laser"
+  ],
+  "quiz": [
+   "class",
+   "team",
+   "staff",
+   "cup",
+   "showdown"
+  ],
+  "class": [
+   "quiz",
+   "team",
+   "squads",
+   "staff",
+   "mates",
+   "house"
+  ],
+  "team": [
+   "class",
+   "quiz",
+   "squads",
+   "mates",
+   "3v3",
+   "together"
+  ],
+  "2 player": [
+   "2p",
+   "two player",
+   "mates",
+   "versus",
+   "together"
+  ],
+  "two player": [
+   "2p",
+   "2 player",
+   "mates",
+   "versus",
+   "together"
+  ],
+  "2p": [
+   "2 player",
+   "two player",
+   "mates",
+   "versus"
+  ],
+  "mates": [
+   "2 player",
+   "two player",
+   "2p",
+   "friends",
+   "team",
+   "class",
+   "with mates"
+  ],
+  "chill": [
+   "calm",
+   "cosy",
+   "cozy",
+   "relax",
+   "build & chill",
+   "garden",
+   "haven"
+  ],
+  "calm": [
+   "chill",
+   "cosy",
+   "cozy",
+   "relax",
+   "no timers",
+   "garden",
+   "haven"
+  ],
+  "build": [
+   "blocks",
+   "voxel",
+   "towers",
+   "craft",
+   "decorate",
+   "bridges",
+   "build & chill"
+  ],
+  "space": [
+   "planet",
+   "planets",
+   "ship",
+   "orbital",
+   "stars",
+   "vortex",
+   "nova"
+  ],
+  "shoot": [
+   "blast",
+   "waves",
+   "drones",
+   "fps",
+   "dogfight",
+   "jet"
+  ],
+  "run": [
+   "runner",
+   "dodge",
+   "jump",
+   "lanes",
+   "ghost",
+   "fast",
+   "stormbreak"
+  ],
+  "dog": [
+   "hound",
+   "sheep",
+   "bark",
+   "herd"
+  ],
+  "sheep": [
+   "dog",
+   "hound",
+   "herd",
+   "pens"
+  ],
+  "magnet": [
+   "mates",
+   "band",
+   "scrap",
+   "2p"
+  ],
+  "print": [
+   "hoodie",
+   "ink",
+   "stencil",
+   "layer press"
+  ]
+ },
+ "covers": {
+  "apex-kick.svg": {
+   "sha256": "65040c321518cb6052db7bc4c825f98d377aeaacd862b4c65c753d6d52bcf4b8",
+   "bytes": 5177
+  },
+  "apex-pool.svg": {
+   "sha256": "2b455ad38910da22380edd47c73e9a8fc2996401c51088ab518aabe7d85b2185",
+   "bytes": 4323
+  },
+  "block-builder.svg": {
+   "sha256": "76830a64297d5d85f37afdc88db9baf512c49d92be78192c426c0039ed6184af",
+   "bytes": 3777
+  },
+  "glitch-clash.svg": {
+   "sha256": "9edfde08f09a331c8779c47b5153a5f3a5faeae436899bb3950628e4a901d46f",
+   "bytes": 3712
+  },
+  "hill-hound.svg": {
+   "sha256": "273406972ba1f367d8c8c6c500bdf42f33d31c83abeb7fc4d71b08065b988d38",
+   "bytes": 5432
+  },
+  "luminahaven.svg": {
+   "sha256": "e099a6b3aa9c1b456b9e7abe133862a81c380c3f9a61343cd53caab418e1b038",
+   "bytes": 4492
+  },
+  "neon-garden.svg": {
+   "sha256": "8893648a2f98c50f77a211cc7f15ff25e97feba2f6f40398863a9ad986104e99",
+   "bytes": 3862
+  },
+  "prism.svg": {
+   "sha256": "c37f66add2624847f83090a54c5c70b8abcbe911ff9dd14e32fd8c7a348a487e",
+   "bytes": 4795
+  },
+  "rally-vector-3d.svg": {
+   "sha256": "86a8255c8961c4823ac24db8194cfdedc718d22d17ab8d7c79fc6bc547f3e52f",
+   "bytes": 3719
+  },
+  "signal-heist.svg": {
+   "sha256": "39458e01a87709bd87b38ae1608009cedb12a135c73ae863a5b6a5b7ae00ae4b",
+   "bytes": 3733
+  },
+  "stormbreak.svg": {
+   "sha256": "19fa3735154da4844bbb544e7f8500fdae9e859476fdd60a81553c473551e423",
+   "bytes": 2648
+  },
+  "wrecking-crew.svg": {
+   "sha256": "b5d9c651dd41bdc9b2d6cf8d05819026d101faa6ddcef650835d78a0279c86bf",
+   "bytes": 3704
+  }
+ },
+ "games": {
+  "/Lessons/Games/Axiom_Shift.html": {
+   "title": "Axiom Shift",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Tap the beat to jump and shift.",
+   "picture": "/assets/play/screens/game-lessons-games-axiom-shift-html.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "rhythm one button jump run beat"
+  },
+  "/Lessons/Games/Block_Builder.html": {
+   "title": "Block Builder",
+   "primary": "chill",
+   "secondary": null,
+   "hook": "Dig blocks, stack builds and craft tools.",
+   "picture": "/assets/play2/covers/block-builder.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "build craft mine voxel blocks chill"
+  },
+  "/Lessons/Games/Charcoal.html": {
+   "title": "Charcoal",
+   "primary": "explore",
+   "secondary": "solve",
+   "hook": "Follow dust trails to catch the smudger.",
+   "picture": "/assets/play/screens/game-lessons-games-charcoal-html.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "hide seek mystery studio clues"
+  },
+  "/Lessons/Games/Cup_Final.html": {
+   "title": "Cup Final",
+   "primary": "mates",
+   "secondary": "sport",
+   "hook": "Win team rounds and unlock the cup.",
+   "picture": "/assets/play/screens/game-cup-final.jpg",
+   "whole_class": true,
+   "two_player": false,
+   "words": "football footy quiz class team tournament"
+  },
+  "/Lessons/Games/Cup_Showdown.html": {
+   "title": "Cup Showdown",
+   "primary": "mates",
+   "secondary": null,
+   "hook": "Lead three class squads through football rounds.",
+   "picture": "/assets/play/screens/game-cup-showdown.jpg",
+   "whole_class": true,
+   "two_player": false,
+   "words": "football footy quiz class team squads"
+  },
+  "/Lessons/Games/Glitch_Clash.html": {
+   "title": "Glitch Clash",
+   "primary": "plan",
+   "secondary": null,
+   "hook": "Pick three cards and outsmart your rival.",
+   "picture": "/assets/play2/covers/glitch-clash.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "cards deck battle strategy"
+  },
+  "/Lessons/Games/Globe_Snake%20(1).html": {
+   "title": "Globe Snake",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Grow your snake all round a planet.",
+   "picture": "/assets/cards/globe-snake.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "snake planet space classic"
+  },
+  "/Lessons/Games/Grapple.html": {
+   "title": "Grapple",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Swing from rope hooks against the clock.",
+   "picture": "/assets/cards/grapple.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "swing rope hook run speed"
+  },
+  "/Lessons/Games/Grid_Chase.html": {
+   "title": "Grid Chase",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Outrun four hunters in a glowing maze.",
+   "picture": "/assets/cards/grid-chase.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "maze chase hunters run neon"
+  },
+  "/Lessons/Games/Hold_the_Mark.html": {
+   "title": "Hold the Mark",
+   "primary": "plan",
+   "secondary": null,
+   "hook": "Build towers and stop every enemy wave.",
+   "picture": "/assets/cards/hold-the-mark.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "tower defence strategy build"
+  },
+  "/Lessons/Games/KidsVsStaff_Showdown%20(3).html": {
+   "title": "Kids vs Staff: Showdown",
+   "primary": "mates",
+   "secondary": null,
+   "hook": "Take on staff in class quiz rounds.",
+   "picture": "/assets/cards/kids-vs-staff-showdown.webp",
+   "whole_class": true,
+   "two_player": false,
+   "words": "quiz class team staff mates"
+  },
+  "/Lessons/Games/Lumins.html": {
+   "title": "Lumins",
+   "primary": "solve",
+   "secondary": null,
+   "hook": "Build bridges and tunnels to rescue everyone.",
+   "picture": "/assets/cards/lumins.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "bridge tunnel rescue puzzle build"
+  },
+  "/Lessons/Games/Marble.html": {
+   "title": "Marble",
+   "primary": "solve",
+   "secondary": "fast",
+   "hook": "Tilt the maze and roll to victory.",
+   "picture": "/assets/cards/marble.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "maze tilt roll puzzle"
+  },
+  "/Lessons/Games/Match_Director.html": {
+   "title": "Match Director",
+   "primary": "mates",
+   "secondary": null,
+   "hook": "Host the big team quiz and score.",
+   "picture": "/assets/play/screens/game-match-director.jpg",
+   "whole_class": true,
+   "two_player": false,
+   "words": "football footy quiz class team host"
+  },
+  "/Lessons/Games/Neon_Garden.html": {
+   "title": "Neon Garden",
+   "primary": "chill",
+   "secondary": null,
+   "hook": "Plant glowing seeds with zero timers.",
+   "picture": "/assets/play2/covers/neon-garden.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "plants seeds flowers calm chill grow"
+  },
+  "/Lessons/Games/Neon_Siege.html": {
+   "title": "Neon Siege",
+   "primary": "plan",
+   "secondary": null,
+   "hook": "Power up towers to guard the core.",
+   "picture": "/assets/play/screens/game-lessons-games-neon-siege-html.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "tower defence grid strategy"
+  },
+  "/Lessons/Games/Neon_Snake_Overdrive.html": {
+   "title": "Neon Snake Overdrive",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Grow long and survive a tight grid.",
+   "picture": "/assets/play/screens/game-lessons-games-neon-snake-overdrive-html.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "snake grid classic neon"
+  },
+  "/Lessons/Games/OneGuy.html": {
+   "title": "One Guy",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Tap one button to outrun your ghost.",
+   "picture": "/assets/cards/one-guy.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "one button jump run ghost"
+  },
+  "/Lessons/Games/Orbital.html": {
+   "title": "Orbital",
+   "primary": "solve",
+   "secondary": null,
+   "hook": "Curve shots round planets into the hole.",
+   "picture": "/assets/cards/orbital.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "space golf planets puzzle gravity"
+  },
+  "/Lessons/Games/Prism.html": {
+   "title": "Prism",
+   "primary": "solve",
+   "secondary": null,
+   "hook": "Bounce coloured lasers through mirrors to targets.",
+   "picture": "/assets/play2/covers/prism.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "laser mirror light puzzle logic"
+  },
+  "/Lessons/Games/Slipstream.html": {
+   "title": "Slipstream",
+   "primary": "race",
+   "secondary": "mates",
+   "hook": "Draft behind rivals and slingshot past them.",
+   "picture": "/assets/play/screens/game-lessons-games-slipstream-html.jpg",
+   "whole_class": false,
+   "two_player": true,
+   "words": "cars racing race drift 2 player two player mates"
+  },
+  "/Lessons/Games/Slipstream_GP.html": {
+   "title": "Slipstream GP",
+   "primary": "race",
+   "secondary": null,
+   "hook": "Beat eight racing rivals to top spot.",
+   "picture": "/assets/play/screens/game-lessons-games-slipstream-gp-html.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "cars racing race rivals"
+  },
+  "/Lessons/Games/Static.html": {
+   "title": "Static",
+   "primary": "solve",
+   "secondary": null,
+   "hook": "Link the clues and name the culprit.",
+   "picture": "/assets/cards/static.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "detective clues mystery puzzle"
+  },
+  "/Lessons/Games/The_Last_Lighthouse_v1_1_The_Archipelago_Update_FINAL.html": {
+   "title": "The Last Lighthouse",
+   "primary": "plan",
+   "secondary": null,
+   "hook": "Shine safe paths for ships in storms.",
+   "picture": "/assets/play/screens/game-lessons-games-the-last-lighthouse-v1-1-the-archipelago-update-final-html.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "ships sea storm light rescue"
+  },
+  "/Lessons/Games/Trekkers_Trail_Runner_Tees_Coast.html": {
+   "title": "Trekkers Trail Runner — Tees Coast",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Dodge coastal hazards and tune rescue rings.",
+   "picture": "/assets/play/screens/game-lessons-games-trekkers-trail-runner-tees-coast-html.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "run coast trail dodge"
+  },
+  "/Lessons/Games/Vortex.html": {
+   "title": "Vortex",
+   "primary": "fast",
+   "secondary": "race",
+   "hook": "Boost through spinning tunnels at top speed.",
+   "picture": "/assets/cards/vortex.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "space tunnel speed racing boost"
+  },
+  "/Lessons/Games/Wrecking_Crew.html": {
+   "title": "Wrecking Crew",
+   "primary": "solve",
+   "secondary": null,
+   "hook": "Place charges to drop towers on target.",
+   "picture": "/assets/play2/covers/wrecking-crew.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "demolition tower blast puzzle smash"
+  },
+  "/apexcurl/": {
+   "title": "Apex Curl",
+   "primary": "sport",
+   "secondary": "solve",
+   "hook": "Slide and sweep stones onto the target.",
+   "picture": "/assets/cards/apex-curl.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "curling ice stones sweep target"
+  },
+  "/apexgolf/": {
+   "title": "Apex Golf",
+   "primary": "sport",
+   "secondary": "chill",
+   "hook": "Read wind and slope across nine holes.",
+   "picture": "/assets/cards/apex-golf.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "golf holes wind swing"
+  },
+  "/apexkick/": {
+   "title": "Apex Kick",
+   "primary": "sport",
+   "secondary": "mates",
+   "hook": "Curl free kicks past the diving keeper.",
+   "picture": "/assets/play2/covers/apex-kick.svg",
+   "whole_class": false,
+   "two_player": true,
+   "words": "football footy free kick goal 2 player two player mates"
+  },
+  "/apexpool/": {
+   "title": "Apex Pool",
+   "primary": "sport",
+   "secondary": "solve",
+   "hook": "Add spin and clear the pool table.",
+   "picture": "/assets/play2/covers/apex-pool.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "pool snooker cue balls table"
+  },
+  "/apexrally/": {
+   "title": "Apex Rally",
+   "primary": "sport",
+   "secondary": "fast",
+   "hook": "Read the bounce and smash winners back.",
+   "picture": "/assets/cards/apex-rally.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "tennis court bounce racket smash"
+  },
+  "/apextennis/": {
+   "title": "Apex Tennis",
+   "primary": "sport",
+   "secondary": "plan",
+   "hook": "Plan your shots and win the rally.",
+   "picture": "/assets/cards/apex-tennis.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "tennis court racket serve rally"
+  },
+  "/apexvelodrome/": {
+   "title": "Apex Velodrome",
+   "primary": "race",
+   "secondary": "mates",
+   "hook": "Save your energy, then sprint the track.",
+   "picture": "/assets/cards/apex-velodrome.svg",
+   "whole_class": false,
+   "two_player": true,
+   "words": "bike cycling track racing race 2 player two player mates"
+  },
+  "/auroralinks/": {
+   "title": "Aurora Links",
+   "primary": "sport",
+   "secondary": "mates",
+   "hook": "Play nine golf holes under northern lights.",
+   "picture": "/assets/cards/aurora-links-3d.svg",
+   "whole_class": false,
+   "two_player": true,
+   "words": "golf northern lights calm chill 2 player two player"
+  },
+  "/biopunkhive/": {
+   "title": "Biopunk Hive",
+   "primary": "plan",
+   "secondary": null,
+   "hook": "Tap in rhythm to grow your hive.",
+   "picture": "/assets/cards/biopunk-hive.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "tap idle hive rhythm lab"
+  },
+  "/crownbadge/": {
+   "title": "Frontier Watch",
+   "primary": "plan",
+   "secondary": null,
+   "hook": "Send officers out before trouble spreads.",
+   "picture": "/assets/cards/crown-badge.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "police patrol strategy map"
+  },
+  "/cyberpulse/": {
+   "title": "Blackout Pulse",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Dodge through the dark and parry attacks.",
+   "picture": "/assets/play/screens/game-cyberpulse.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "shoot neon cyber run parry"
+  },
+  "/echovault/": {
+   "title": "Echo Vault — Sound Is Your Light",
+   "primary": "explore",
+   "secondary": "solve",
+   "hook": "Make noise to see inside dark vaults.",
+   "picture": "/assets/cards/echo-vault.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "sonar stealth dark maze sound"
+  },
+  "/emberwild/": {
+   "title": "Emberwild",
+   "primary": "explore",
+   "secondary": "chill",
+   "hook": "Find wild creatures and hidden valley paths.",
+   "picture": "/assets/cards/emberwild.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "creatures valley adventure world"
+  },
+  "/fracture/": {
+   "title": "Fracture Engine",
+   "primary": "explore",
+   "secondary": "fast",
+   "hook": "Fight, forge upgrades and mend broken realms.",
+   "picture": "/assets/cards/fracture-engine.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "rpg sword forge fight world"
+  },
+  "/hillhound/": {
+   "title": "Hill Hound",
+   "primary": "solve",
+   "secondary": "chill",
+   "hook": "Bark and herd sheep into matching pens.",
+   "picture": "/assets/play2/covers/hill-hound.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "dog sheep herd farm calm chill"
+  },
+  "/housegames/": {
+   "title": "House Games",
+   "primary": "mates",
+   "secondary": "sport",
+   "hook": "Track scores and crown the winning house.",
+   "picture": "/assets/cards/house-games.svg",
+   "whole_class": true,
+   "two_player": false,
+   "words": "class team sport score board"
+  },
+  "/hyperdraft/": {
+   "title": "Hyperdraft",
+   "primary": "race",
+   "secondary": null,
+   "hook": "Ride the slipstream and boost past rivals.",
+   "picture": "/assets/play/screens/game-hyperdraft.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "cars racing race boost draft"
+  },
+  "/layerpress/": {
+   "title": "Layer Press",
+   "primary": "solve",
+   "secondary": "chill",
+   "hook": "Mask, roll ink, peel crisp hoodie prints.",
+   "picture": "/assets/cards/layer-press.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "print hoodie ink stencil calm chill puzzle"
+  },
+  "/luminahaven/": {
+   "title": "Lumina Haven",
+   "primary": "chill",
+   "secondary": null,
+   "hook": "Decorate a cosy room and grow plants.",
+   "picture": "/assets/play2/covers/luminahaven.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "room decorate cat plants calm chill build"
+  },
+  "/magnetmates/": {
+   "title": "Magnet Mates",
+   "primary": "mates",
+   "secondary": "fast",
+   "hook": "Stretch a magnet band and bounce scrap.",
+   "picture": "/assets/cards/magnet-mates.svg",
+   "whole_class": false,
+   "two_player": true,
+   "words": "magnet 2 player two player mates coop"
+  },
+  "/medevac/": {
+   "title": "Medevac Frontier",
+   "primary": "fast",
+   "secondary": "explore",
+   "hook": "Fly canyon rescues and land under pressure.",
+   "picture": "/assets/play/screens/game-medevac.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "fly plane canyon rescue land"
+  },
+  "/micro-tinkerer/": {
+   "title": "Micro-Tinkerer",
+   "primary": "explore",
+   "secondary": null,
+   "hook": "Sneak round a giant room, dodge light.",
+   "picture": "/assets/cards/micro-tinkerer.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "tiny hide seek stealth room"
+  },
+  "/neonbreach/": {
+   "title": "Neon Breach",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Blast drone waves and stack wild upgrades.",
+   "picture": "/assets/cards/neon-breach.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "shoot fps drones waves arena"
+  },
+  "/neonmeridian/": {
+   "title": "Neon Meridian",
+   "primary": "chill",
+   "secondary": "race",
+   "hook": "Cruise a bright city at your pace.",
+   "picture": "/assets/cards/neon-meridian.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "cars driving city cruise chill race"
+  },
+  "/neonsync/": {
+   "title": "Neon Sync",
+   "primary": "plan",
+   "secondary": "fast",
+   "hook": "Team up 3v3 to hold the zone.",
+   "picture": "/assets/cards/neon-sync.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "team 3v3 arena zone"
+  },
+  "/neonturf/": {
+   "title": "Neon Turf",
+   "primary": "sport",
+   "secondary": "mates",
+   "hook": "Smash goals in rocket-powered hover cars.",
+   "picture": "/assets/cards/neon-turf-overdrive.svg",
+   "whole_class": false,
+   "two_player": true,
+   "words": "football footy cars hover rocket 2 player two player mates"
+  },
+  "/novasiege/": {
+   "title": "Nova Siege",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Blast endless waves and upgrade your ship.",
+   "picture": "/assets/play/media/novasiege.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "space shoot ship waves"
+  },
+  "/offbrand/": {
+   "title": "Off-Brand: After Hours",
+   "primary": "solve",
+   "secondary": "explore",
+   "hook": "Follow clues and catch the secret saboteur.",
+   "picture": "/assets/play/media/offbrand.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "mystery detective clue puzzle stealth"
+  },
+  "/ouroboros/": {
+   "title": "Ouroboros",
+   "primary": "explore",
+   "secondary": "plan",
+   "hook": "Flank clockwork foes in tactical party battles.",
+   "picture": "/assets/play/screens/game-ouroboros-chronos-unbound.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "rpg battle party clockwork"
+  },
+  "/rallyvector3d/": {
+   "title": "Rally Vector 3D",
+   "primary": "race",
+   "secondary": null,
+   "hook": "Drift tarmac, snow and gravel rally stages.",
+   "picture": "/assets/play2/covers/rally-vector-3d.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "cars racing race drift rally"
+  },
+  "/relicforge/": {
+   "title": "Relic Forge: Crownfall",
+   "primary": "explore",
+   "secondary": "fast",
+   "hook": "Smash robot parts off and rebuild yourself.",
+   "picture": "/assets/cards/relicforge.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "robot shoot smash upgrade"
+  },
+  "/signalheist/": {
+   "title": "Signal Heist",
+   "primary": "fast",
+   "secondary": "explore",
+   "hook": "Sneak past guards, grab loot, escape fast.",
+   "picture": "/assets/play2/covers/signal-heist.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "stealth sneak loot run lasers"
+  },
+  "/skybreak/": {
+   "title": "Skybreak Vector",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Fly low under radar in jet dogfights.",
+   "picture": "/assets/cards/skybreak-vector.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "jet plane fly shoot dogfight"
+  },
+  "/titanforge/": {
+   "title": "Titan Forge",
+   "primary": "fast",
+   "secondary": "sport",
+   "hook": "Nail your lift timing to power up.",
+   "picture": "/assets/cards/titan-forge.svg",
+   "whole_class": false,
+   "two_player": true,
+   "words": "gym lift rhythm versus"
+  },
+  "/touchline/": {
+   "title": "Touchline Dynasty",
+   "primary": "plan",
+   "secondary": "sport",
+   "hook": "Sign players, pick tactics, win the league.",
+   "picture": "/assets/cards/touchline-dynasty.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "football footy manager team tactics"
+  },
+  "/townlife/": {
+   "title": "Town Life",
+   "primary": "chill",
+   "secondary": "explore",
+   "hook": "Try jobs, drive cars, decorate your home.",
+   "picture": "/assets/play/screens/game-townlife.jpg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "cars jobs build home chill town"
+  },
+  "/trailrunner/": {
+   "title": "Stormbreak",
+   "primary": "fast",
+   "secondary": null,
+   "hook": "Switch lanes fast and dodge the storm.",
+   "picture": "/assets/play2/covers/stormbreak.svg",
+   "whole_class": false,
+   "two_player": false,
+   "words": "run tunnel lanes speed dodge"
+  },
+  "/voxel/": {
+   "title": "Voxel Frontier: Beaconfall",
+   "primary": "chill",
+   "secondary": "explore",
+   "hook": "Shape block worlds, fly free, light beacons.",
+   "picture": "/assets/cards/voxel-frontier.webp",
+   "whole_class": false,
+   "two_player": false,
+   "words": "build blocks fly world chill"
+  },
+  "/worldstage/": {
+   "title": "Global Games: World Stage",
+   "primary": "sport",
+   "secondary": "mates",
+   "hook": "Sprint, jump and throw for gold medals.",
+   "picture": "/assets/cards/global-games.svg",
+   "whole_class": false,
+   "two_player": true,
+   "words": "track field medals stadium sprint jump throw sport class team"
+  }
+ }
+}

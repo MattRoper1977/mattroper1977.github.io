@@ -61,9 +61,10 @@ jobs:
           python domain-split/play/prepare.py --lessons .sources/Lessons --output .play-review/output
           node domain-split/check_game_saves.cjs
           node --check domain-split/play/play.js
-          # TX play shelf navigation v1: card hrefs on disk, every manifest game once,
-          # spotlight == featured flag, no invented category. --self-test plants one
-          # defect per limb and requires each to go red.
+          # PLAY-D2 (was TX shelf navigation v1): card, activity, pack and pool hrefs on disk;
+          # every manifest game once with one Play link; activities once in the Teacher corner;
+          # no staff item on the page; packs/pool == committed data; no invented mood, counts
+          # derived. --self-test plants one defect per limb and requires each to go red.
           python domain-split/play/check_shelf_navigation.py --output .play-review/output --self-test
           node domain-split/play/serve.cjs .play-review/output/games 4173 > .play-review/server.log 2>&1 &
       - name: Capture fresh gameplay through ordinary player inputs

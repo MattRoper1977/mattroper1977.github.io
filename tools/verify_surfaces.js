@@ -26,6 +26,9 @@
  * static .game-card articles in #game-grid (no genre accordions), so each limb
  * below accepts the play structure beside the old one.
  *
+ * PLAY-D2 (21 Nov 2026): the rail became one Updated ribbon per updated row on
+ * its grid card, carrying the same data-release id, so S1 reads it unchanged.
+ *
  * J92 (R6, F-new-release-occupants): the three authored New Release boxes of
  * the 12 Aug homepage stopped being served on 6 Sep (#268 gave / and /main/ to
  * the play shelf) and S1 read `served occupants: []` against three ruled names
@@ -273,8 +276,9 @@ function launchOpts() {
     // The play home carries its cards as static markup, so the manifest
     // strip alone cannot drop a card there: strip the victim's card from the
     // served HTML as well. Same predicate, same expectation (0 after).
-    const strippedHtml = gamesHtml.replace(/<article class="game-card[^"]*" data-card="game-neon-breach">[\s\S]*?<\/article>/, '')
-      .replace(/<article class="game-card[^"]*"[^>]*>(?:(?!<\/article>)[\s\S])*?href="\/neonbreach\/"[\s\S]*?<\/article>/, '');
+    // PLAY-D2 cards carry more classes before game-card and more attributes after data-card.
+    const strippedHtml = gamesHtml.replace(/<article class="(?:[^"]*\s)?game-card[^"]*" data-card="game-neon-breach"[^>]*>[\s\S]*?<\/article>/, '')
+      .replace(/<article class="(?:[^"]*\s)?game-card[^"]*"[^>]*>(?:(?!<\/article>)[\s\S])*?href="\/neonbreach\/"[\s\S]*?<\/article>/, '');
     const srv = http.createServer((req, res) => {
       const p = req.url.split('?')[0];
       if (p === '/Games/games.json') {

@@ -40,6 +40,9 @@ async function verify(){
   }
   try{
    await page.goto(url,{waitUntil:'load'});await ready();
+   // PLAY-D2 (21 Nov): the drawer and its selects are retired; the page's URL state is the
+   // search (?q=, replaced not pushed) and the mood (#mood=, one entry per press). Same claims.
+   if(await page.locator('#filters-open').count()===0&&await page.locator('#mood-grid').count()===1)return await d2(page,errors,width);
    const atRest=await shown();assert(atRest>1,'Published shelf did not render');assert.equal(new URL(page.url()).search,'');
    await openDrawer();
    const choices=await page.locator('#filters-form select').evaluateAll(selects=>selects.flatMap(s=>Array.from(s.options).filter(o=>o.value).map(o=>({field:s.name,value:o.value,label:o.textContent.trim()}))));
@@ -62,6 +65,27 @@ async function verify(){
    assert.deepEqual(errors,[]);await page.screenshot({path:path.join(out,'filters-'+width+'.png')});
    return {width,atRest,choice,subset,drawer:true,deepLink:true,search:true,unknownFallback:true,foreignParameters:true,replaceHistory:true,clear:true,errors};
   }finally{await context.close();}
+ }
+ async function d2(page,errors,width){
+  await page.waitForFunction(()=>document.documentElement.dataset.playReady==='1');
+  const shown=()=>page.locator('#game-grid [data-card]:not([hidden])').count(),params=async()=>new URL(await page.evaluate(()=>location.href)).searchParams;
+  const total=await page.locator('#game-grid [data-card]').count(),atRest=await shown();assert(atRest>1&&total>=atRest,'Published page did not render');assert.equal(new URL(page.url()).search,'');
+  await page.locator('#query').fill('neon');assert.equal((await params()).get('q'),'neon','U2: changing a filter must write its stable value to the URL');
+  const subset=await shown();assert(subset>0&&subset<total,'Search must change actual card membership');
+  assert.equal(await page.locator('#result-count').innerText(),subset+' of '+total+' games','The visible count must name the result');
+  await page.goto(url+'?q=neon');await page.waitForFunction(()=>document.documentElement.dataset.playReady==='1');assert.equal(await page.locator('#query').inputValue(),'neon');assert.equal(await shown(),subset,'Deep links must restore their value');
+  await page.goto(url+'?q=mbm-no-such-game');await page.waitForFunction(()=>document.documentElement.dataset.playReady==='1');assert.equal(await shown(),0);assert(await page.locator('#empty-state').isVisible(),'An unmatched deep link must say so');
+  const moods=await page.locator('#mood-grid .mood-btn[data-mood]').evaluateAll(b=>b.map(x=>x.dataset.mood).filter(m=>m!=='all'));assert(moods.length>=2,'The mood controls are missing');
+  await page.goto(url+'#mood='+moods[1]);await page.waitForFunction(()=>document.documentElement.dataset.playReady==='1');assert(await page.locator('#mood-results').isVisible(),'#mood= deep links must open their mood');assert.equal(await page.locator('#mood-grid .mood-btn[data-mood="'+moods[1]+'"]').getAttribute('aria-pressed'),'true','Deep links must track their value, not always restore one facet');
+  await page.goto(url+'#mood=not-a-real-option-hc3');await page.waitForFunction(()=>document.documentElement.dataset.playReady==='1');assert(await page.locator('#mood-results').isHidden(),'An unknown mood must fall back to the whole page');assert.equal(await shown(),atRest);
+  await page.goto(url+'?q=neon&hc3_keep=one');await page.waitForFunction(()=>document.documentElement.dataset.playReady==='1');assert.equal(await page.locator('#query').inputValue(),'neon');
+  const before=await page.evaluate(()=>history.length);await page.locator('#query').fill('neo');await page.locator('#query').fill('neon');
+  assert.equal((await params()).get('hc3_keep'),'one');assert.equal(await page.evaluate(()=>history.length),before,'Typing must replace history');
+  await page.locator('#query').fill('');assert.equal((await params()).get('q'),null);assert.equal((await params()).get('hc3_keep'),'one');
+  await page.locator('#mood-grid .mood-btn[data-mood="'+moods[0]+'"]').click();assert.equal(new URL(await page.evaluate(()=>location.href)).hash,'#mood='+moods[0]);await page.goBack();assert(await page.locator('#mood-results').isHidden(),'Back must leave the mood');
+  await page.goto(url);await page.waitForFunction(()=>document.documentElement.dataset.playReady==='1');await page.locator('#query').fill('neon');await page.locator('#query').fill('');assert.equal(new URL(await page.evaluate(()=>location.href)).search,'');
+  assert.deepEqual(errors,[]);await page.screenshot({path:path.join(out,'filters-'+width+'.png')});
+  return {width,shape:'d2',atRest,total,subset,deepLink:true,moodDeepLink:true,search:true,unknownFallback:true,foreignParameters:true,replaceHistory:true,clear:true,errors};
  }
  try{
   results.push(await scenario(390));

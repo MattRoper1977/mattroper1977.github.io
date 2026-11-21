@@ -333,6 +333,66 @@ NODATA_URL="$(serve "$WORK/play-nodata")"
 expect_red "no #play-data on the shelf" "shelf-dataset-readable" \
   "$(run_cat "$WORK/served/games.json" "$WORK/served/worldstage.html" "$NODATA_URL/games/" "$NODATA_URL/data/domain-catalogue.json")"
 
+# ---- 13-14 PLAY-D2: the front page shape, controlled ---------------------------
+# A dataset carrying Pick-a-game packs and moods marks the D2 page: one card per
+# catalogue game (a series is NOT collapsed), the classroom activities listed in
+# the Teacher corner rather than as cards, no staff row on the page. Expected
+# cards = the games-group count. Built from the same fixture, nothing typed.
+# Baseline green, then: one card dropped must red arcade-renders-shelf, and the
+# series rule leaking back (a non-lead edition riding on its lead card) must too.
+echo "== play-shelf derivation (PLAY-D2): baseline must be green =="
+cp -r "$WORK/play" "$WORK/play-d2"
+python3 - "$WORK/play-d2/games/index.html" <<'PY'
+import json,re,sys,html
+p=sys.argv[1]; s=open(p,encoding='utf-8').read()
+d=json.loads(re.search(r'<script id="play-data" type="application/json">(.*?)</script>',s,re.S).group(1))
+d['packs']=[]; d['moods']=[]
+games=[r for r in d['games'] if r['group']=='games']; acts=[r for r in d['games'] if r['group']=='activities']
+d['games']=games+acts
+card=lambda r:'<article class="card card-sm game-card" data-card="%s" data-games="%s"><a class="card-link" href="%s" data-play="%s">%s</a></article>'%(r['id'],r['id'],html.escape(r['route']),r['id'],html.escape(r['title']))
+teacher='<details id="classroom"><summary>Teacher corner</summary><ul>%s</ul></details>'%''.join('<li data-activity="%s"><a href="%s" data-play="%s">%s</a></li>'%(r['id'],html.escape(r['route']),r['id'],html.escape(r['title'])) for r in acts)
+page=('<!doctype html><html><head><meta charset="utf-8"><title>play-shelf D2 fixture</title>'
+      '<style>.game-card{display:block;min-height:40px;border:1px solid #000;margin:4px}</style></head><body>'
+      '<p id="result-count" role="status">%d games</p><div id="game-grid">%s</div>%s'
+      '<script id="play-data" type="application/json">%s</script></body></html>')%(len(games),''.join(card(r) for r in games),teacher,json.dumps(d).replace('<','\\u003c'))
+open(p,'w',encoding='utf-8').write(page)
+print('        D2 fixture: %d catalogue games, %d cards, %d Teacher-corner activities'%(len(games),len(games),len(acts)))
+PY
+D2_URL="$(serve "$WORK/play-d2")"
+out="$(run_cat "$WORK/served/games.json" "$WORK/served/worldstage.html" "$D2_URL/games/" "$D2_URL/data/domain-catalogue.json")"
+if grep -q "limbs pass" <<<"$out" && ! grep -q "FAILING LIMBS" <<<"$out" && grep -q "PASS  arcade-renders-shelf" <<<"$out"; then
+  echo "  ok    play-shelf D2 baseline green"
+  grep -E 'arcade-renders-shelf|arcade-countline' <<<"$out" | sed 's/^/       /'
+else
+  echo "  BROKEN play-shelf D2 baseline is not green - the controls below are meaningless"
+  echo "$out" | tail -8 | sed 's/^/         /'
+  fails=$((fails+1))
+fi
+cp -r "$WORK/play-d2" "$WORK/play-d2-drop"
+python3 - "$WORK/play-d2-drop/games/index.html" <<'PY'
+import re,sys
+p=sys.argv[1]; s=open(p,encoding='utf-8').read()
+s2=re.sub(r'<article class="card card-sm game-card"[^>]*>.*?</article>','',s,count=1,flags=re.S)
+assert s2!=s
+open(p,'w',encoding='utf-8').write(s2)
+PY
+D2DROP_URL="$(serve "$WORK/play-d2-drop")"
+expect_red "PLAY-D2: one catalogue card dropped" "arcade-renders-shelf" \
+  "$(run_cat "$WORK/served/games.json" "$WORK/served/worldstage.html" "$D2DROP_URL/games/" "$D2DROP_URL/data/domain-catalogue.json")"
+cp -r "$WORK/play-d2" "$WORK/play-d2-collapse"
+python3 - "$WORK/play-d2-collapse/games/index.html" <<'PY'
+import json,re,sys
+p=sys.argv[1]; s=open(p,encoding='utf-8').read()
+d=json.loads(re.search(r'<script id="play-data" type="application/json">(.*?)</script>',s,re.S).group(1))
+second=d['series']['Pair'][1]
+s2=re.sub(r'<article class="card card-sm game-card" data-card="%s"[^>]*>.*?</article>'%re.escape(second),'',s,count=1,flags=re.S)
+assert s2!=s
+open(p,'w',encoding='utf-8').write(s2)
+PY
+D2COLLAPSE_URL="$(serve "$WORK/play-d2-collapse")"
+expect_red "PLAY-D2: a series edition collapsed onto its lead" "arcade-renders-shelf" \
+  "$(run_cat "$WORK/served/games.json" "$WORK/served/worldstage.html" "$D2COLLAPSE_URL/games/" "$D2COLLAPSE_URL/data/domain-catalogue.json")"
+
 echo
 if [ "$fails" -eq 0 ]; then
   echo "SELF-TEST PASS — every limb proven able to exit non-zero"

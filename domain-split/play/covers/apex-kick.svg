@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <defs>
+    <linearGradient id="ak-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2B5298"/>
+      <stop offset="100%" stop-color="#6098E8"/>
+    </linearGradient>
+    <linearGradient id="ak-grass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#15803D"/>
+    </linearGradient>
+    <linearGradient id="ak-arc" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FEF08A" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0.95"/>
+    </linearGradient>
+  </defs>
+  <!-- Stadium twilight sky + floodlight beams -->
+  <rect width="640" height="175" fill="url(#ak-sky)"/>
+  <polygon points="75,0 240,175 140,175" fill="#E0F2FE" fill-opacity="0.18"/>
+  <polygon points="565,0 400,175 500,175" fill="#E0F2FE" fill-opacity="0.18"/>
+  <circle cx="80" cy="24" r="14" fill="#FEF9C3"/>
+  <circle cx="560" cy="24" r="14" fill="#FEF9C3"/>
+  <!-- Stadium crowd tier silhouette -->
+  <rect x="0" y="128" width="640" height="44" fill="#1E3A6D"/>
+  <rect x="0" y="156" width="640" height="16" fill="#3B82F6"/>
+  <!-- Lush striped football pitch -->
+  <rect x="0" y="172" width="640" height="188" fill="url(#ak-grass)"/>
+  <polygon points="105,172 205,172 155,360 15,360" fill="#4ADE80" fill-opacity="0.28"/>
+  <polygon points="300,172 400,172 435,360 280,360" fill="#4ADE80" fill-opacity="0.28"/>
+  <polygon points="495,172 595,172 640,295 555,360" fill="#4ADE80" fill-opacity="0.28"/>
+  <!-- Penalty box markings -->
+  <path d="M95,212 H545 M155,212 L80,360 M485,212 L560,360" stroke="#F8FAFC" stroke-opacity="0.55" stroke-width="3.5" fill="none"/>
+  <!-- Goal net & crisp white frame -->
+  <g>
+    <rect x="155" y="70" width="330" height="118" fill="#0F172A" fill-opacity="0.24"/>
+    <g stroke="#E2E8F0" stroke-opacity="0.45" stroke-width="1.6">
+      <path d="M185,70 V188 M215,70 V188 M245,70 V188 M275,70 V188 M305,70 V188 M335,70 V188 M365,70 V188 M395,70 V188 M425,70 V188 M455,70 V188"/>
+      <path d="M155,95 H485 M155,120 H485 M155,145 H485 M155,170 H485"/>
+    </g>
+    <polyline points="155,190 155,70 485,70 485,190" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linejoin="round"/>
+  </g>
+  <!-- Top-bins glowing target ring -->
+  <circle cx="445" cy="105" r="24" fill="#FDE047" fill-opacity="0.34" stroke="#FEF08A" stroke-width="4"/>
+  <!-- Diving goalkeeper -->
+  <g transform="translate(362,148) rotate(-24)">
+    <rect x="-34" y="-12" width="54" height="24" rx="10" fill="#38BDF8" stroke="#E0F2FE" stroke-width="2.5"/>
+    <circle cx="28" cy="0" r="11" fill="#FDBA74"/>
+    <path d="M22,-10 L54,-18 M22,10 L52,6" stroke="#38BDF8" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="56" cy="-19" r="7" fill="#FEF08A"/>
+    <circle cx="54" cy="6" r="7" fill="#FEF08A"/>
+    <path d="M-32,-5 L-62,-10 M-32,6 L-60,12" stroke="#1E293B" stroke-width="9" stroke-linecap="round"/>
+  </g>
+  <!-- Free-kick defender wall (3 players) -->
+  <g fill="#DC2626" stroke="#FEE2E2" stroke-width="2">
+    <g transform="translate(215,186)">
+      <circle cx="0" cy="-26" r="10" fill="#FDE68A" stroke="none"/>
+      <rect x="-12" y="-14" width="24" height="38" rx="7"/>
+      <rect x="-10" y="24" width="8" height="26" rx="4" fill="#1E293B" stroke="none"/>
+      <rect x="2" y="24" width="8" height="26" rx="4" fill="#1E293B" stroke="none"/>
+    </g>
+    <g transform="translate(248,186)">
+      <circle cx="0" cy="-26" r="10" fill="#FDBA74" stroke="none"/>
+      <rect x="-12" y="-14" width="24" height="38" rx="7"/>
+      <rect x="-10" y="24" width="8" height="26" rx="4" fill="#1E293B" stroke="none"/>
+      <rect x="2" y="24" width="8" height="26" rx="4" fill="#1E293B" stroke="none"/>
+    </g>
+    <g transform="translate(281,186)">
+      <circle cx="0" cy="-26" r="10" fill="#FDE68A" stroke="none"/>
+      <rect x="-12" y="-14" width="24" height="38" rx="7"/>
+      <rect x="-10" y="24" width="8" height="26" rx="4" fill="#1E293B" stroke="none"/>
+      <rect x="2" y="24" width="8" height="26" rx="4" fill="#1E293B" stroke="none"/>
+    </g>
+  </g>
+  <!-- Sweeping curl trajectory ribbon -->
+  <path d="M185,295 C140,185 265,62 442,104" fill="none" stroke="url(#ak-arc)" stroke-width="11" stroke-linecap="round"/>
+  <path d="M185,295 C140,185 265,62 442,104" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-dasharray="14 10" stroke-linecap="round"/>
+  <!-- Big hero football mid-curve -->
+  <g transform="translate(188,288)">
+    <ellipse cx="6" cy="36" rx="34" ry="11" fill="#0F4D26" fill-opacity="0.45"/>
+    <circle r="34" fill="#FFFFFF" stroke="#1E293B" stroke-width="3"/>
+    <polygon points="0,-13 12,-4 8,11 -8,11 -12,-4" fill="#1E293B"/>
+    <path d="M0,-13 V-33 M12,-4 L31,-11 M8,11 L22,26 M-8,11 L-22,26 M-12,-4 L-31,-11" stroke="#1E293B" stroke-width="3"/>
+    <polygon points="-6,-33 6,-33 0,-24" fill="#1E293B"/>
+    <polygon points="26,-21 33,-9 22,-10" fill="#1E293B"/>
+    <polygon points="-26,-21 -33,-9 -22,-10" fill="#1E293B"/>
+  </g>
+</svg>

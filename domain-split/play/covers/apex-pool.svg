@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <defs>
+    <linearGradient id="ap-felt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2AAE76"/>
+      <stop offset="100%" stop-color="#177A52"/>
+    </linearGradient>
+    <linearGradient id="ap-rail" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#A1623B"/>
+      <stop offset="100%" stop-color="#6B3D22"/>
+    </linearGradient>
+    <linearGradient id="ap-cue" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="45%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#FEF3C7"/>
+    </linearGradient>
+  </defs>
+  <!-- Table rails -->
+  <rect width="640" height="360" fill="url(#ap-rail)"/>
+  <!-- Inner cushion & bright tournament felt -->
+  <rect x="26" y="26" width="588" height="308" rx="18" fill="#136544" stroke="#FBBF24" stroke-width="4"/>
+  <rect x="38" y="38" width="564" height="284" rx="12" fill="url(#ap-felt)"/>
+  <!-- Subtle baulk line and spot -->
+  <line x1="175" y1="38" x2="175" y2="322" stroke="#A7F3D0" stroke-opacity="0.3" stroke-width="2.5"/>
+  <circle cx="445" cy="180" r="5" fill="#A7F3D0" fill-opacity="0.45"/>
+  <!-- Corner & side pockets -->
+  <circle cx="42" cy="42" r="26" fill="#0F172A" stroke="#F59E0B" stroke-width="4"/>
+  <circle cx="598" cy="42" r="30" fill="#0F172A" stroke="#FBBF24" stroke-width="5"/>
+  <circle cx="598" cy="318" r="26" fill="#0F172A" stroke="#F59E0B" stroke-width="4"/>
+  <circle cx="42" cy="318" r="26" fill="#0F172A" stroke="#F59E0B" stroke-width="4"/>
+  <!-- Target pocket glow ring -->
+  <circle cx="598" cy="42" r="42" fill="none" stroke="#FDE047" stroke-width="3" stroke-dasharray="7 6" stroke-opacity="0.85"/>
+  <!-- Aim prediction lines + called leave circle -->
+  <line x1="258" y1="224" x2="438" y2="132" stroke="#F8FAFC" stroke-width="4" stroke-dasharray="10 8" stroke-linecap="round"/>
+  <line x1="468" y1="116" x2="582" y2="54" stroke="#FDE047" stroke-width="4.5" stroke-dasharray="10 7" stroke-linecap="round"/>
+  <line x1="438" y1="132" x2="486" y2="236" stroke="#67E8F9" stroke-width="3.5" stroke-dasharray="7 7" stroke-linecap="round"/>
+  <circle cx="490" cy="244" r="22" fill="#67E8F9" fill-opacity="0.2" stroke="#67E8F9" stroke-width="3"/>
+  <!-- Secondary colourful object balls -->
+  <g transform="translate(362,262)">
+    <ellipse cx="4" cy="10" rx="22" ry="18" fill="#0B3B28" fill-opacity="0.45"/>
+    <circle r="23" fill="#F59E0B" stroke="#FEF3C7" stroke-width="2"/>
+    <circle cx="-7" cy="-8" r="7" fill="#FEF3C7" fill-opacity="0.7"/>
+  </g>
+  <g transform="translate(514,198)">
+    <ellipse cx="4" cy="10" rx="22" ry="18" fill="#0B3B28" fill-opacity="0.45"/>
+    <circle r="23" fill="#EF4444" stroke="#FECACA" stroke-width="2"/>
+    <rect x="-21" y="-7" width="42" height="14" rx="7" fill="#FEF2F2" fill-opacity="0.85"/>
+    <circle cx="-7" cy="-8" r="6" fill="#FFFFFF" fill-opacity="0.65"/>
+  </g>
+  <g transform="translate(298,108)">
+    <ellipse cx="4" cy="10" rx="21" ry="17" fill="#0B3B28" fill-opacity="0.45"/>
+    <circle r="22" fill="#3B82F6" stroke="#DBEAFE" stroke-width="2"/>
+    <circle cx="-7" cy="-7" r="6.5" fill="#EFF6FF" fill-opacity="0.72"/>
+  </g>
+  <!-- Hero target black ball heading for pocket -->
+  <g transform="translate(464,118)">
+    <ellipse cx="5" cy="12" rx="26" ry="21" fill="#0B3B28" fill-opacity="0.5"/>
+    <circle r="28" fill="#1E293B" stroke="#94A3B8" stroke-width="2.5"/>
+    <circle cx="2" cy="1" r="11" fill="#F8FAFC"/>
+    <circle cx="-10" cy="-10" r="7" fill="#FFFFFF" fill-opacity="0.45"/>
+  </g>
+  <!-- Hero white cue ball -->
+  <g transform="translate(242,232)">
+    <ellipse cx="5" cy="12" rx="26" ry="21" fill="#0B3B28" fill-opacity="0.5"/>
+    <circle r="28" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="2"/>
+    <circle cx="8" cy="8" r="5" fill="#EF4444"/>
+    <circle cx="-9" cy="-9" r="8" fill="#FFFFFF"/>
+  </g>
+  <!-- Pool cue stick angled right behind cue ball -->
+  <g transform="translate(206,251) rotate(-27)">
+    <polygon points="-240,-9 0,-4 0,4 -240,9" fill="url(#ap-cue)"/>
+    <rect x="-10" y="-4.5" width="7" height="9" fill="#F8FAFC"/>
+    <rect x="-3" y="-4.5" width="5" height="9" rx="2" fill="#38BDF8"/>
+  </g>
+</svg>
