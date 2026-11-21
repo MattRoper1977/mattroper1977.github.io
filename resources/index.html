@@ -229,7 +229,7 @@ function wordsMatch(text,q){const words=q.split(/\s+/).filter(Boolean);if(!words
 function matches(r,q){return !q||wordsMatch(hay([r.title,displayTitle(r),r.id,r.file,r.desc,r.description,r.subject,r.family,r.halfTerm,r.unit,...(r.keywords||[]),...(r.tags||[])]),q);}
 function render(){
   const p=params();const q=(p.get('q')||'').toLowerCase().trim(),sub=p.get('subject')||'',pw=(p.get('pathway')||'').toUpperCase(),unit=p.get('unit')||'';
-  $('#rxSearch').value=p.get('q')||'';$('#rxSubs').value=sub;$('#rxPath').value=PATHWAYS.includes(pw)?pw:'';$('#rxUnit').value=unit;
+  if($('#rxSearch').value.trim()!==(p.get('q')||''))$('#rxSearch').value=p.get('q')||'';$('#rxSubs').value=sub;$('#rxPath').value=PATHWAYS.includes(pw)?pw:'';$('#rxUnit').value=unit;
   const keys=S.keys.filter(k=>(!sub||k.card===sub)&&(!pw||k.tier===pw)&&(!unit||k.unit===unit)&&(!q||k.rows.some(r=>matches(r,q))||matches({title:`${nameOf(k.card)} ${k.tier||''} ${k.halfTerm} ${k.unit||''}`},q)));
   $('#unitGrid').innerHTML=keys.map(unitCard).join('');
   $('#rxCount').textContent=COPY.unitPacks(keys.length);

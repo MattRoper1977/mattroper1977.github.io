@@ -193,7 +193,7 @@
       if (qInput && !qInput.value) qInput.value = query.get('q') || '';
       form.addEventListener('submit', event => { event.preventDefault(); limit = limitStep; syncPickButtons(); render(); });
       form.addEventListener('input', () => { limit = limitStep; syncPickButtons(); render(); });
-      form.addEventListener('change', () => { limit = limitStep; syncPickButtons(); render(); });
+      form.addEventListener('change', event => { if (event.target === qInput) return; limit = limitStep; syncPickButtons(); render(); });
       document.getElementById(page + '-more').addEventListener('click', () => {
         const n = document.getElementById(page + '-results').children.length;
         limit += limitStep; render();
