@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <defs>
+    <linearGradient id="gs-space" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#27467C"/>
+      <stop offset="55%" stop-color="#37629E"/>
+      <stop offset="100%" stop-color="#284A80"/>
+    </linearGradient>
+    <radialGradient id="gs-planet" cx="0.38" cy="0.34" r="0.65">
+      <stop offset="0%" stop-color="#67E8F9"/>
+      <stop offset="52%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#1E3A8A"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#gs-space)"/>
+  <!-- Starry space sparkles -->
+  <g fill="#FEF9C3">
+    <circle cx="84" cy="64" r="4"/><circle cx="146" cy="292" r="3.5"/><circle cx="542" cy="72" r="4.5"/>
+    <circle cx="568" cy="264" r="3.5"/><circle cx="116" cy="154" r="3"/><circle cx="508" cy="316" r="3"/>
+  </g>
+  <!-- Orbital halo ring behind planet -->
+  <ellipse cx="320" cy="186" rx="236" ry="58" transform="rotate(-16 320 186)" fill="none" stroke="#99F6E4" stroke-width="4.5" stroke-dasharray="16 12" stroke-opacity="0.68"/>
+  <!-- Big Hero 3D Spherical Planet Globe -->
+  <g transform="translate(320,186)">
+    <circle r="156" fill="#67E8F9" fill-opacity="0.22"/>
+    <circle r="138" fill="url(#gs-planet)" stroke="#BAE6FD" stroke-width="5"/>
+    <!-- Spherical latitude/longitude wireframe arcs -->
+    <g fill="none" stroke="#E0F2FE" stroke-opacity="0.34" stroke-width="2.2">
+      <ellipse rx="138" ry="44"/><ellipse rx="138" ry="96"/>
+      <ellipse rx="48" ry="138"/><ellipse rx="98" ry="138"/>
+    </g>
+    <!-- Predicted dotted great-circle trajectory ribbon -->
+    <path d="M-26,-56 C24,-96 96,-72 108,-18" fill="none" stroke="#FEF08A" stroke-width="6" stroke-dasharray="10 10" stroke-linecap="round"/>
+    <!-- Glowing Golden Target Energy Orb on planet right -->
+    <g transform="translate(102,-24)">
+      <circle r="30" fill="#FEF08A" fill-opacity="0.45"/>
+      <circle r="16" fill="#FACC15" stroke="#FFFFFF" stroke-width="4"/>
+      <circle cx="-4" cy="-5" r="5" fill="#FFFFFF"/>
+    </g>
+    <!-- Secondary Magenta Orb lower left -->
+    <circle cx="-84" cy="72" r="11" fill="#F472B6" stroke="#FFFFFF" stroke-width="3"/>
+    <!-- Hero Segmented Neon Emerald Snake curving all round the globe! -->
+    <g stroke="#ECFDF5" stroke-width="3">
+      <circle cx="106" cy="64" r="11" fill="#10B981"/>
+      <circle cx="80" cy="88" r="13" fill="#10B981"/>
+      <circle cx="44" cy="100" r="15" fill="#22C55E"/>
+      <circle cx="2" cy="96" r="17" fill="#22C55E"/>
+      <circle cx="-40" cy="80" r="19" fill="#34D399"/>
+      <circle cx="-74" cy="48" r="20" fill="#34D399"/>
+      <circle cx="-86" cy="4" r="22" fill="#4ADE80"/>
+      <circle cx="-70" cy="-38" r="23" fill="#4ADE80"/>
+    </g>
+    <!-- Expressive Snake Head lunging along globe curve -->
+    <g transform="translate(-32,-62) rotate(-26)">
+      <ellipse rx="30" ry="24" fill="#4ADE80" stroke="#FFFFFF" stroke-width="4"/>
+      <circle cx="10" cy="-9" r="6" fill="#FFFFFF"/>
+      <circle cx="12" cy="-9" r="3" fill="#0F172A"/>
+      <circle cx="10" cy="9" r="6" fill="#FFFFFF"/>
+      <circle cx="12" cy="9" r="3" fill="#0F172A"/>
+      <polyline points="28,0 44,-6 36,0 44,6" fill="none" stroke="#FB7185" stroke-width="3.5" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

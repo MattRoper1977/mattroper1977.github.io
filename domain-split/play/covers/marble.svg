@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <defs>
+    <linearGradient id="mb-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3566B0"/>
+      <stop offset="65%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#BAE6FD"/>
+    </linearGradient>
+    <radialGradient id="mb-sphere" cx="0.34" cy="0.3" r="0.68">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="36%" stop-color="#7DD3FC"/>
+      <stop offset="76%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#1E3A8A"/>
+    </radialGradient>
+  </defs>
+  <!-- Bright high-altitude skyway clouds -->
+  <rect width="640" height="360" fill="url(#mb-sky)"/>
+  <g fill="#FFFFFF" fill-opacity="0.58">
+    <ellipse cx="110" cy="88" rx="76" ry="24"/><ellipse cx="152" cy="78" rx="48" ry="20"/>
+    <ellipse cx="536" cy="74" rx="80" ry="24"/><ellipse cx="496" cy="64" rx="46" ry="18"/>
+  </g>
+  <!-- Tilted Isometric Floating Neon Sky-Maze Board -->
+  <g transform="translate(320,204) rotate(9)">
+    <!-- 3D Board thickness edge -->
+    <polygon points="-244,24 12,-96 248,-2 0,126" fill="#1E3A8A"/>
+    <polygon points="-244,4 12,-116 248,-22 0,106" fill="#3B5BA5" stroke="#E0F2FE" stroke-width="5" stroke-linejoin="round"/>
+    <!-- Cyan Ice Track lane -->
+    <polygon points="-188,8 8,-84 62,-62 -134,30" fill="#7DD3FC" fill-opacity="0.82"/>
+    <!-- Amber Boost Pad Chevrons on track -->
+    <polygon points="-28,-46 18,-68 50,-54 4,-32" fill="#F59E0B" stroke="#FEF9C3" stroke-width="3"/>
+    <polyline points="-8,-44 16,-55 24,-42" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Raised maze bumper walls -->
+    <polygon points="-148,46 -18,-16 4,-6 -126,56" fill="#6366F1" stroke="#E0E7FF" stroke-width="3.5"/>
+    <polygon points="34,-36 160,16 138,26 12,-26" fill="#6366F1" stroke="#E0E7FF" stroke-width="3.5"/>
+    <!-- Glowing Emerald Goal Ring Hole on right corner -->
+    <g transform="translate(148,-10)">
+      <ellipse rx="42" ry="24" fill="#34D399" fill-opacity="0.45" stroke="#A7F3D0" stroke-width="5"/>
+      <ellipse rx="24" ry="14" fill="#0F172A" stroke="#FEF08A" stroke-width="4"/>
+    </g>
+    <!-- Bonus floating gem -->
+    <polygon points="74,-52 88,-36 74,-20 60,-36" fill="#FDE047" stroke="#FFFFFF" stroke-width="3"/>
+    <!-- Motion roll arc toward goal -->
+    <path d="M-84,-6 Q32,-54 134,-12" fill="none" stroke="#FEF9C3" stroke-width="6" stroke-dasharray="12 9" stroke-linecap="round"/>
+    <!-- Hero Glossy Chrome-Cyan 3D Marble rolling down slope -->
+    <g transform="translate(-82,-12)">
+      <ellipse cx="8" cy="36" rx="34" ry="14" fill="#1E293B" fill-opacity="0.42"/>
+      <circle r="38" fill="url(#mb-sphere)" stroke="#FFFFFF" stroke-width="3.5"/>
+      <ellipse cx="-12" cy="-14" rx="13" ry="8" transform="rotate(-28 -12 -14)" fill="#FFFFFF" fill-opacity="0.88"/>
+      <circle cx="14" cy="12" r="5" fill="#BAE6FD" fill-opacity="0.72"/>
+    </g>
+  </g>
+  <!-- Crisp curved golden tilt arrows showing board tilting! -->
+  <g fill="none" stroke="#FEF08A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M74,142 A68,68 0 0 1 110,96"/><polyline points="96,94 112,96 108,112"/>
+    <path d="M564,234 A68,68 0 0 1 524,282"/><polyline points="540,284 522,282 528,266"/>
+  </g>
+</svg>
