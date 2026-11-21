@@ -372,9 +372,9 @@
       background:#030a10; text-align:center; color:var(--hud2); font-size:18px;
     }
     #unsupported { z-index:80; }
+    body.touch-active #touch.playing { display:block; }
     @media (pointer:coarse), (max-width: 900px) {
       #mouse-lock { display:none; }
-      #touch.playing { display:block; }
       #status {
         width:1px;
         height:1px;
@@ -391,9 +391,7 @@
       .airframe-card { min-height:72px; }
       h1 { font-size:clamp(42px,13vw,72px); }
     }
-    @media (pointer:coarse) and (orientation: portrait) and (max-width: 900px) {
-      .landscape-note.show { display:grid; }
-    }
+    /* Portrait lock removed: playable portrait layout styled below */
     @media (max-height: 540px) {
       .panel { padding:18px 24px; }
       .brief { margin-top:12px; line-height:1.45; }
@@ -409,6 +407,46 @@
       *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
     }
   </style>
+<style id="b3-sb-upgrade">
+/* Batch 03 layout, portrait playability, Addendum 2 Rules A/B/C, >=44px controls, >=14px text */
+.overlay{padding:max(64px,env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) max(18px,env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))!important;overflow-y:auto!important;align-items:safe center!important}
+.panel{max-height:calc(100dvh - 86px)!important;overflow-y:auto!important;box-sizing:border-box}
+#top-controls{top:max(8px,env(safe-area-inset-top,0px))!important;right:max(8px,env(safe-area-inset-right,0px))!important}
+#top-controls[hidden],.overlay[hidden]{display:none!important}
+/* Enforce >= 14px text */
+.metric span,.loadout-title,.airframe-card span,.airframe-card em,.pod-copy strong,.pod-copy span,.pod-copy em,.pod-action,.medal-ledger,.signal-stack label,.signal-stack textarea,.link-status,#status,.touch-btn,.settings,.sb-chk{font-size:14px!important}
+/* Enforce >= 44x44px targets including radios, checkboxes, throttle */
+button,.icon-button,.pod-action,.touch-btn,select{min-height:44px!important;min-width:44px!important}
+.airframe-option input{inset:0!important;width:100%!important;height:100%!important;margin:0!important;opacity:0!important;pointer-events:auto!important;cursor:pointer!important}
+.sb-chk{position:relative;display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:6px 14px 6px 40px;border:1px solid rgba(113,246,210,.25);border-radius:6px;background:rgba(2,13,21,.62);cursor:pointer}
+.sb-chk input{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;opacity:0!important;cursor:pointer!important}
+.sb-box{position:absolute;left:12px;width:20px;height:20px;border:2px solid var(--hud);border-radius:4px;background:#031019;display:grid;place-items:center;pointer-events:none}
+.sb-chk input:checked+.sb-box{background:var(--hud)}
+.sb-chk input:checked+.sb-box::after{content:"✓";color:var(--ink);font:900 14px/1 system-ui,sans-serif}
+.sb-chk input:focus-visible+.sb-box{outline:3px solid #fff;outline-offset:2px}
+body.high-contrast{filter:contrast(1.18)}
+.throttle-wrap{width:52px!important;min-width:52px!important;height:126px!important}
+#touch-throttle{width:104px!important;height:44px!important;min-width:44px!important;min-height:44px!important;margin:0!important;cursor:pointer}
+/* Playable Portrait Phone Flight Deck (<= 900px portrait) */
+@media (orientation:portrait) and (max-width:900px){
+  body.touch-active #touch.playing::before{content:"";position:fixed;left:0;right:0;bottom:0;height:228px;background:linear-gradient(180deg,rgba(3,12,20,.68),rgba(2,8,14,.94));border-top:1px solid rgba(113,246,210,.32);z-index:-1;pointer-events:none}
+  .stick{left:8px!important;bottom:48px!important;width:118px!important;height:118px!important}
+  .throttle-wrap{left:132px!important;bottom:48px!important;width:46px!important;height:124px!important}
+  .combat-buttons{right:10px!important;bottom:18px!important;grid-template-columns:repeat(3,56px)!important;gap:7px!important}
+  .touch-btn{width:56px!important;height:48px!important;border-radius:12px!important}
+  .touch-btn.fire{transform:none!important}
+  #status{bottom:232px!important;left:10px!important;width:auto!important;height:auto!important;overflow:visible!important;clip-path:none!important;white-space:normal!important;max-width:calc(100vw - 20px)}
+}
+/* Compact Phone Landscape (e.g. 839x412) */
+@media (orientation:landscape) and (max-height:520px){
+  .stick{left:12px!important;bottom:14px!important;width:120px!important;height:120px!important}
+  .throttle-wrap{left:140px!important;bottom:14px!important;height:120px!important}
+  .combat-buttons{right:12px!important;bottom:14px!important;grid-template-columns:repeat(4,58px)!important;gap:7px!important}
+  .touch-btn{width:58px!important;height:48px!important;border-radius:12px!important}
+  .touch-btn.fire{transform:none!important}
+}
+</style>
+<script>(function(){function chk(){var h=document.getElementById('mbmexit-home');document.body.classList.toggle('mbm-has-home',!!(h&&getComputedStyle(h).display!=='none'));}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',chk);else chk();new MutationObserver(chk).observe(document.documentElement,{childList:true,subtree:true,attributes:true});})();</script>
 </head>
 <body>
 <!-- MBM-MAKER-SPLASH:BEGIN generated by tools/render_maker_splash.py, do not edit by hand -->
@@ -530,12 +568,13 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       </div>
       <p id="medal-ledger" class="medal-ledger">DECORATIONS // NONE YET</p>
       <div class="settings">
-        <label><input id="assist" type="checkbox" checked> Flight assist</label>
-        <label><input id="sound" type="checkbox" checked> Sound</label>
-        <label><input id="mouse-aim-toggle" type="checkbox" checked> Mouse flight director</label>
-        <label><input id="haptics-toggle" type="checkbox" checked> Haptics</label>
-        <label><input id="contrast" type="checkbox"> High-contrast HUD</label>
-        <label><input id="cinematic-toggle" type="checkbox" checked> Kill cameras</label>
+        <label class="sb-chk"><input id="assist" type="checkbox" checked><span class="sb-box" aria-hidden="true"></span> Flight assist</label>
+        <label class="sb-chk"><input id="sound" type="checkbox" checked><span class="sb-box" aria-hidden="true"></span> Sound</label>
+        <label class="sb-chk"><input id="mouse-aim-toggle" type="checkbox" checked><span class="sb-box" aria-hidden="true"></span> Mouse flight director</label>
+        <label class="sb-chk"><input id="haptics-toggle" type="checkbox" checked><span class="sb-box" aria-hidden="true"></span> Haptics</label>
+        <label class="sb-chk"><input id="contrast" type="checkbox"><span class="sb-box" aria-hidden="true"></span> High-contrast HUD</label>
+        <label class="sb-chk"><input id="cinematic-toggle" type="checkbox" checked><span class="sb-box" aria-hidden="true"></span> Kill cameras</label>
+        <label class="sb-chk"><input id="calm-flight" type="checkbox"><span class="sb-box" aria-hidden="true"></span> Calm flight</label>
       </div>
       <div class="actions">
         <button id="launch" class="primary" type="button">Launch mission</button>
@@ -567,7 +606,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     </section>
   </main>
 
-  <section id="local-link" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="local-link-title">
+  <section id="local-link" class="overlay" hidden role="dialog" aria-labelledby="local-link-title">
     <div class="panel">
       <p class="eyebrow">Local Link // No Cloud Relay</p>
       <h2 id="local-link-title">Phone HOTAS</h2>
@@ -590,7 +629,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     </div>
   </section>
 
-  <section id="controller-mode" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="controller-title">
+  <section id="controller-mode" class="overlay" hidden role="dialog" aria-labelledby="controller-title">
     <div class="panel">
       <p class="eyebrow">Vanguard Remote MFD</p>
       <h2 id="controller-title">Phone HOTAS</h2>
@@ -619,7 +658,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     </div>
   </section>
 
-  <section id="pause" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="pause-title">
+  <section id="pause" class="overlay" hidden role="dialog" aria-labelledby="pause-title">
     <div class="panel">
       <p class="eyebrow">Simulation held</p>
       <h2 id="pause-title">Paused</h2>
@@ -632,7 +671,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     </div>
   </section>
 
-  <section id="debrief" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="debrief-title">
+  <section id="debrief" class="overlay" hidden role="dialog" aria-labelledby="debrief-title">
     <div class="panel">
       <p id="result" class="result">MISSION COMPLETE</p>
       <h2 id="debrief-title">Debrief</h2>
@@ -671,6 +710,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       <button id="touch-missile" class="touch-btn" type="button" aria-label="Launch missile">MSL</button>
       <button id="touch-special" class="touch-btn" type="button" aria-label="Fire equipped special weapon">SPEC</button>
       <button id="touch-cobra" class="touch-btn" type="button" aria-label="Attempt post-stall Cobra maneuver">COB</button>
+      <button id="touch-camera" class="touch-btn" type="button" aria-label="Cycle camera view">CAM</button>
     </div>
   </div>
   <div id="landscape-note" class="landscape-note"><div><strong>ROTATE TO LANDSCAPE</strong><br><br>Skybreak Vector uses a wide tactical cockpit.</div></div>
@@ -1165,8 +1205,15 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   var mouseAim={enabled:true,captured:false,screenX:0,screenY:0,deadband:.04,cmdPitch:0,cmdRoll:0,cmdYaw:0,manualOverrideUntil:0};
   var remoteControls={connected:false,pitch:0,roll:0,yaw:0,throttle:.78,gun:false,lastAxisSeq:-1,lastActionSeq:-1,lastPacketAt:-Infinity};
 
+  function defaultSettings() {
+    return {assist:true,sound:true,mouseAim:true,haptics:true,contrast:false,cinematic:true,calm:false};
+  }
   function defaultProfile() {
-    return {v:4,bestScore:0,bestRank:"D",bestTimeMs:null,lifetimeScore:0,sorties:0,wins:0,xp:0,credits:0,medals:[],ownedPods:["standard"],selectedPod:"standard",selectedAirframe:"vanguard",selectedLivery:"standard",unlockedLiveries:["standard"]};
+    return {v:4,bestScore:0,bestRank:"D",bestTimeMs:null,lifetimeScore:0,sorties:0,wins:0,xp:0,credits:0,medals:[],ownedPods:["standard"],selectedPod:"standard",selectedAirframe:"vanguard",selectedLivery:"standard",unlockedLiveries:["standard"],settings:defaultSettings()};
+  }
+  function isCalmFlight() {
+    var cb=document.getElementById("calm-flight");
+    return !!(reducedMotion.matches || (cb && cb.checked));
   }
   function storedNumber(value,lo,hi) { var n=Number(value);return Number.isFinite(n)?clamp(n,lo,hi):lo; }
   function loadProfile() {
@@ -1189,6 +1236,10 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
         p.ownedPods=Array.isArray(saved.ownedPods)?saved.ownedPods.filter(function(id,index,list){return !!ARMORY[id]&&list.indexOf(id)===index;}):["standard"];
         if(p.ownedPods.indexOf("standard")<0)p.ownedPods.unshift("standard");
         p.selectedPod=ARMORY[saved.selectedPod]&&p.ownedPods.indexOf(saved.selectedPod)>=0?saved.selectedPod:"standard";
+        if(saved.settings&&typeof saved.settings==="object"){
+          var ds=defaultSettings();
+          Object.keys(ds).forEach(function(k){p.settings[k]=typeof saved.settings[k]==="boolean"?saved.settings[k]:ds[k];});
+        }
       }
     } catch(e) {}
     try {var legacy=Number(localStorage.getItem("skybreak_vector_best_v1")||0);if(Number.isFinite(legacy)&&legacy>=0)p.bestScore=Math.max(p.bestScore,Math.floor(legacy));} catch(e) {}
@@ -1210,6 +1261,11 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     var select=document.getElementById("livery");
     Array.prototype.forEach.call(select.options,function(opt){var unlocked=profile.unlockedLiveries.indexOf(opt.value)>=0;opt.disabled=!unlocked;opt.textContent=LIVERIES[opt.value].name+(unlocked?"":" — unlock at "+LIVERIES[opt.value].threshold.toLocaleString());});
     select.value=profile.unlockedLiveries.indexOf(profile.selectedLivery)>=0?profile.selectedLivery:"standard";
+    var st=profile.settings||(profile.settings=defaultSettings());
+    var map=[["assist","assist"],["sound","sound"],["mouse-aim-toggle","mouseAim"],["haptics-toggle","haptics"],["contrast","contrast"],["cinematic-toggle","cinematic"],["calm-flight","calm"]];
+    map.forEach(function(pair){var el=document.getElementById(pair[0]);if(el)el.checked=!!st[pair[1]];});
+    document.body.classList.toggle("high-contrast",!!st.contrast);
+    document.body.classList.toggle("calm-flight",!!st.calm);
     refreshArmoryUI();
   }
   function purchasePod(id) {
@@ -1322,16 +1378,26 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     profile.selectedAirframe=selectedAirframeId;profile.selectedLivery=selectedLiveryId;profile.selectedPod=selectedPodId;saveProfile();
     resetGame();
     mode="playing"; menu.hidden=true; pausePanel.hidden=true; debrief.hidden=true; topControls.hidden=false;startLoop();
-    touchLayer.classList.add("playing"); landscapeNote.classList.add("show");
+    touchLayer.classList.add("playing"); landscapeNote.classList.remove("show");
+    syncSkyModalInert();
     document.getElementById("touch-throttle").value=Math.round(player.throttle*100);
     audio.setEnabled(document.getElementById("sound").checked); audio.start();
     mouseAim.enabled=document.getElementById("mouse-aim-toggle").checked;haptics.enabled=document.getElementById("haptics-toggle").checked;
     lastFrame=performance.now(); announce("CLEARED HOT // WEAPONS FREE");
     radioSay("EYEBALL ACTUAL","Vanguard-1, enter below the radar floor. Three scouts must not reach the fleet.",5);
-    if(portraitQuery.matches)togglePause(true);
+  }
+  var _pauseOpener=null,_localLinkOpener=null;
+  function syncSkyModalInert() {
+    var modalOpen=!menu.hidden||!pausePanel.hidden||!debrief.hidden||!localLinkPanel.hidden||!controllerPanel.hidden||!unsupported.hidden;
+    if(glCanvas)glCanvas.inert=modalOpen;
+    if(touchLayer)touchLayer.inert=modalOpen||mode!=="playing";
+    if(topControls)topControls.inert=modalOpen||mode!=="playing";
+    if(menu)menu.inert=!localLinkPanel.hidden||!controllerPanel.hidden||!unsupported.hidden;
   }
   function showBriefing() {
+    _pauseOpener=null;
     mode="briefing"; menu.hidden=false; pausePanel.hidden=true; debrief.hidden=true; topControls.hidden=true;
+    syncSkyModalInert();
     touchLayer.classList.remove("playing"); landscapeNote.classList.remove("show"); releaseMouseAim();neutralInputs(); audio.stopEngine();haptics.stop();
     announce("MISSION BRIEFING");
     if(!loopActive)paintOnce();
@@ -1340,12 +1406,20 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   function togglePause(force) {
     if(mode!=="playing"&&mode!=="paused") return;
     var pause=force===undefined?mode==="playing":force;
+    if(pause&&mode==="playing"){
+      var ae=document.activeElement;
+      _pauseOpener=(ae&&ae!==document.body&&ae!==document.documentElement&&(!ae.closest||!ae.closest("#pause")))?ae:document.getElementById("pause-button");
+    }
+    var resumeRet=!pause?_pauseOpener:null;
+    if(!pause)_pauseOpener=null;
     mode=pause?"paused":"playing"; pausePanel.hidden=!pause;topControls.hidden=pause;
-    touchLayer.classList.toggle("playing",!pause);if(pause)releaseMouseAim();neutralInputs();resetSonicTracking();sonicResetFrames=Math.max(sonicResetFrames,2);
+    touchLayer.classList.toggle("playing",!pause);syncSkyModalInert();
+    if(pause)releaseMouseAim();neutralInputs();resetSonicTracking();sonicResetFrames=Math.max(sonicResetFrames,2);
     if(!pause) { lastFrame=performance.now(); audio.start(); startLoop(); }
     else {audio.stopEngine();haptics.stop();}
     announce(pause?"SIMULATION PAUSED":"SIMULATION RESUMED");
     if(pause)requestAnimationFrame(function(){document.getElementById("resume").focus();});
+    else if(resumeRet&&resumeRet.isConnected&&!resumeRet.disabled&&(!resumeRet.closest||!resumeRet.closest("[inert],[hidden]")))requestAnimationFrame(function(){try{resumeRet.focus();}catch(_){}});
   }
   function endMission(win, reason) {
     if(mode==="debrief"||stats.finalized) return;
@@ -1382,7 +1456,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     var unlocks=[];Object.keys(LIVERIES).forEach(function(id){if(profile.bestScore>=LIVERIES[id].threshold&&profile.unlockedLiveries.indexOf(id)<0){profile.unlockedLiveries.push(id);unlocks.push(LIVERIES[id].name);}});saveProfile();refreshLoadoutUI();
     var awardText=[];if(stats.gunslingerKills)awardText.push("GUNSLINGER ×"+stats.gunslingerKills);if(stats.closeShaves)awardText.push("CLOSE SHAVE ×"+stats.closeShaves);if(win&&stats.damage===0)awardText.push("CLEAN INTERCEPT");if(stats.medalsEarned.length)awardText.push("MEDALS: "+stats.medalsEarned.map(function(id){return MEDALS[id].name;}).join(", "));
     document.getElementById("best").textContent=(stats.score>oldBest?"NEW PERSONAL BEST // ":"BEST SCORE // ")+profile.bestScore.toLocaleString()+(awardText.length?" // "+awardText.join(" // "):"")+(unlocks.length?" // UNLOCKED: "+unlocks.join(", "):"")+" // S: UNDER 03:30, NO MISSILE HITS, ACE INDEX 85+";
-    debrief.hidden=false;announce(win?"NEPTUNE SHROUD SECURED":"MISSION TERMINATED");
+    debrief.hidden=false;syncSkyModalInert();announce(win?"NEPTUNE SHROUD SECURED":"MISSION TERMINATED");
     requestAnimationFrame(function(){document.getElementById("restart").focus();});
   }
 
@@ -1395,11 +1469,11 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       this.lastGlobal=now;this.last[kind]=now;this.pulseCount++;
       var pads=navigator.getGamepads?navigator.getGamepads():[],act=null;
       for(var i=0;i<(pads?pads.length:0);i++){var gp=pads[i];if(!gp)continue;act=gp.vibrationActuator||(gp.hapticActuators&&gp.hapticActuators[0]);if(act)break;}
-      try {if(act&&act.playEffect){var effect=act.playEffect("dual-rumble",{startDelay:0,duration:durationMs,weakMagnitude:weak,strongMagnitude:strong});if(effect&&effect.catch)effect.catch(function(){});}else if(act&&act.pulse){var pulse=act.pulse(Math.max(weak,strong),durationMs);if(pulse&&pulse.catch)pulse.catch(function(){});}else if("vibrate" in navigator)navigator.vibrate(durationMs);} catch(e) {}
+      try {if(act&&act.playEffect){var effect=act.playEffect("dual-rumble",{startDelay:0,duration:durationMs,weakMagnitude:weak,strongMagnitude:strong});if(effect&&effect.catch)effect.catch(function(){});}else if(act&&act.pulse){var pulse=act.pulse(Math.max(weak,strong),durationMs);if(pulse&&pulse.catch)pulse.catch(function(){});}else if("vibrate" in navigator&&(!navigator.userActivation||navigator.userActivation.hasBeenActive))navigator.vibrate(durationMs);} catch(e) {}
       return true;
     },
     update:function(){if(!this.enabled||mode!=="playing"||!player||!player.alive)return;if(player.stall)this.pulse("stall",.62,.08,72,180);else if(player.g>7){var force=clamp((player.g-7)/2.5,.1,.8);this.pulse("g",force*.32,force*.55,48,220);}},
-    stop:function(){try {if("vibrate" in navigator)navigator.vibrate(0);var pads=navigator.getGamepads?navigator.getGamepads():[];for(var i=0;i<(pads?pads.length:0);i++){var gp=pads[i],act=gp&&(gp.vibrationActuator||(gp.hapticActuators&&gp.hapticActuators[0]));if(act&&act.reset){var result=act.reset();if(result&&result.catch)result.catch(function(){});}}} catch(e) {}}
+    stop:function(){try {if("vibrate" in navigator&&(!navigator.userActivation||navigator.userActivation.hasBeenActive))navigator.vibrate(0);var pads=navigator.getGamepads?navigator.getGamepads():[];for(var i=0;i<(pads?pads.length:0);i++){var gp=pads[i],act=gp&&(gp.vibrationActuator||(gp.hapticActuators&&gp.hapticActuators[0]));if(act&&act.reset){var result=act.reset();if(result&&result.catch)result.catch(function(){});}}} catch(e) {}}
   };
 
   var audio={
@@ -1426,7 +1500,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       }
     },
     silenceCiws:function(duration){if(!this.ctx||!this.ciwsGain)return;var t=this.ctx.currentTime,p=this.ciwsGain.gain;if(p.cancelAndHoldAtTime)p.cancelAndHoldAtTime(t);else p.cancelScheduledValues(t);p.setValueAtTime(Math.max(.0001,p.value||0),t);p.exponentialRampToValueAtTime(.0001,t+(duration||.025));},
-    stopEngine:function(){this.stopGun();this.silenceCiws(.025);if(this.engineGain){var t=this.ctx.currentTime;this.engineGain.gain.setTargetAtTime(0,t,.06);this.whineGain.gain.setTargetAtTime(0,t,.06);this.windGain.gain.setTargetAtTime(0,t,.06);}},
+    stopEngine:function(){this.stopGun();this.silenceCiws(.025);if(this.engineGain){var t=this.ctx.currentTime;this.engineGain.gain.setTargetAtTime(0,t,.06);this.whineGain.gain.setTargetAtTime(0,t,.06);this.windGain.gain.setTargetAtTime(0,t,.06);}if(this.ctx&&this.ctx.state==='running'&&mode!=='playing'){try{var sr=this.ctx.suspend();if(sr&&sr.catch)sr.catch(function(){});}catch(_){}}},
     startGun:function(){
       if(!this.ctx||!this.enabled||this.vulcan.active)return;var now=this.ctx.currentTime,v=this.vulcan;v.active=true;v.generation++;
       v.osc=this.ctx.createOscillator();v.osc.type="square";v.osc.frequency.setValueAtTime(98,now);
@@ -1498,7 +1572,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     if(!player||outroTimer>0||player.cobraCooldown>0||player.cobraTime>0)return;
     var agl=player.pos.y-terrainHeight(player.pos.x+worldOffset.x,player.pos.z+worldOffset.z);
     if(player.speed<72||player.speed>103||agl<220||Math.abs(player.aoa)>.48){announce(agl<220?"COBRA INHIBIT // LOW ALT":"COBRA INHIBIT // 140–200 KTS");return;}
-    player.cobraTime=1.35;player.cobraCooldown=7;player.cobraPhase=0;stats.lastCobraTick=simTick;cameraShake=reducedMotion.matches?0:.16;haptics.pulse("cobra",.72,.62,180,300);
+    player.cobraTime=1.35;player.cobraCooldown=7;player.cobraPhase=0;stats.lastCobraTick=simTick;cameraShake=isCalmFlight()?0:.16;haptics.pulse("cobra",.72,.62,180,300);
     announce("POST-STALL // COBRA");radioSay("VANGUARD-1","Limiter override. Post-stall maneuver.",3,"#ffc65a");
   }
   function updatePlayer(dt) {
@@ -1535,6 +1609,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     var highSpeed=mix(1,.55,smooth01((player.speed-260)/230));
     var authority=clamp(player.speed/125,.24,1.12)*(player.stall ? .46 : 1)*highSpeed;
     var pitchInput=input.pitch;
+    if(isCalmFlight()){pitchInput*=.72;var cAgl=player.pos.y-terrainHeight(player.pos.x+worldOffset.x,player.pos.z+worldOffset.z);if(cAgl<140&&pitchInput<0)pitchInput*=.45;}
     if(pitchInput>0)pitchInput*=clamp((9.2-player.g)/1.7,0,1);
     if(pitchInput<0)pitchInput*=clamp((player.g+3.6)/1.2,0,1);
     var pitchTarget=pitchInput*cfg.pitchRate*authority;
@@ -1837,7 +1912,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     entity.sonicLastRel=rel;
   }
   function triggerKillCam(e) {
-    if(reducedMotion.matches||cinematic.active||!document.getElementById("cinematic-toggle").checked)return;
+    if(isCalmFlight()||cinematic.active||!document.getElementById("cinematic-toggle").checked)return;
     cinematic.active=true;cinematic.timer=cinematic.duration;cinematic.angle=0;vcopy(cinematic.target,e.pos);resetSonicTracking();sonicResetFrames=Math.max(sonicResetFrames,1);
   }
   function awardKill(e,weapon) {
@@ -1858,7 +1933,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     if(weapon==="gun"){stats.hits++;stats.hitPoints+=18;stats.score+=18;audio.hit();if(e.type==="JAMMER"&&!e.jamDisabled){e.jamDamage+=amount;if(e.jamDamage>=24){e.jamDisabled=true;radioSay("VANGUARD-1","ECM source suppressed. Radar picture is clean.",4);announce("ECM SOURCE SUPPRESSED");}else{e.state="EVADE";e.stateTime=0;}}}
     if(e.health<=0) {
       e.alive=false;awardKill(e,weapon);
-      spawnExplosion(e.pos,1);spawnExplosionShockwave(e.pos,95,.7,null);audio.boom();cameraShake=reducedMotion.matches?0:.35;
+      spawnExplosion(e.pos,1);spawnExplosionShockwave(e.pos,95,.7,null);audio.boom();cameraShake=isCalmFlight()?0:.35;
       triggerKillCam(e);
       announce(e.type==="ACE"?"STRIDER ZERO // SPLASH":"SPLASH "+stats.kills+" // AIR TARGET DOWN");
       radioSay(stats.kills===1?"ROOK-2":"EYEBALL ACTUAL",stats.kills===1?"Direct hit! Scratch one bandit. Watch your six.":"Splash confirmed. Keep the pressure on.",stats.kills===1?4:2);
@@ -1871,7 +1946,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     pendingFlak=pendingFlak.filter(function(f){return f.sourceId!==ship.id;});
     for(var i=0;i<surfaceTargets.length;i++)if(surfaceTargets[i].parentId===ship.id)surfaceTargets[i].alive=false;
     for(var n=0;n<5;n++){var p=V(ship.pos.x+fxrange(-18,18),ship.pos.y+fxrange(4,18),ship.pos.z+fxrange(-34,34));spawnExplosion(p,.85+fxrange(0,.5));}
-    spawnExplosionShockwave(ship.pos,150,1,WORLD_UP);audio.boom();cameraShake=reducedMotion.matches?0:.55;triggerKillCam(ship);announce("CG-48 TIKAL // DESTROYED");radioSay("EYEBALL ACTUAL","Cruiser combat systems are offline. New high-energy contact inbound.",7);schedulePhase(3,360);
+    spawnExplosionShockwave(ship.pos,150,1,WORLD_UP);audio.boom();cameraShake=isCalmFlight()?0:.55;triggerKillCam(ship);announce("CG-48 TIKAL // DESTROYED");radioSay("EYEBALL ACTUAL","Cruiser combat systems are offline. New high-energy contact inbound.",7);schedulePhase(3,360);
   }
   function damageSurfaceTarget(t,amount,weapon) {
     if(!t.alive||!t.damageable)return;t.health-=amount;t.flash=.14;t.weaponMask|=weapon==="gun"?1:weapon==="missile"?2:weapon==="rocket"?4:8;
@@ -1888,7 +1963,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   function damageTarget(target,amount,weapon) {if(!target||!target.alive)return;if(target.isSurface)damageSurfaceTarget(target,amount,weapon);else damageEnemy(target,amount,weapon);}
   function damagePlayer(amount,source) {
     if(!player.alive||mode!=="playing"||outroTimer>0)return;
-    player.health-=amount;stats.damage+=amount;if(source==="missile")stats.missileHitsTaken++;cameraShake=reducedMotion.matches?0:.28;audio.tone(74,.18,"sawtooth",.12);haptics.pulse("hit",.82,.92,230,250);
+    player.health-=amount;stats.damage+=amount;if(source==="missile")stats.missileHitsTaken++;cameraShake=isCalmFlight()?0:.28;audio.tone(74,.18,"sawtooth",.12);haptics.pulse("hit",.82,.92,230,250);
     announce("AIRFRAME HIT // "+Math.max(0,Math.round(player.health))+"%");
     if(player.health<=0){player.alive=false;spawnExplosion(player.pos,1.5);spawnExplosionShockwave(player.pos,110,.8,null);audio.boom();endMission(false,"AIRFRAME LOST");}
   }
@@ -2066,7 +2141,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     }
     vlerp(cameraEye,cameraEye,desired,smooth);
     vcopy(cameraRenderEye,cameraEye);
-    if(cameraShake>0&&!reducedMotion.matches) {
+    if(cameraShake>0&&!isCalmFlight()) {
       cameraRenderEye.x+=Math.sin(simTime*97)*cameraShake;cameraRenderEye.y+=Math.sin(simTime*83.2)*cameraShake*.7;cameraShake*=Math.exp(-dt*6);
     }
     var viewDelta=vsub(V(),center,cameraEye);if(vlen2(viewDelta)<.01)vcopy(viewDelta,b.forward);cameraForward=vnorm(cameraForward,viewDelta);
@@ -2208,7 +2283,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     var words=text.split(" "),lines=[],line="";for(var i=0;i<words.length;i++){var next=line?line+" "+words[i]:words[i];if(next.length>maxChars&&line){lines.push(line);line=words[i];}else line=next;}if(line)lines.push(line);return lines.slice(0,3);
   }
   function drawRadioHUD() {
-    if(!radioCurrent)return;var full=radioCurrent.text,shown=reducedMotion.matches||radioCurrent.priority>=5?full:full.slice(0,Math.floor(radioClock*52)),w=Math.min(620,hudWidth-32),x=(hudWidth-w)/2,y=coarsePointer.matches?88:hudHeight-150,lines=wrapRadio(shown,Math.max(28,Math.floor((w-28)/8.2)));
+    if(!radioCurrent)return;var touchR=document.body.classList.contains("touch-active"),portR=touchR&&hudHeight>hudWidth,landR=touchR&&!portR,full=radioCurrent.text,shown=reducedMotion.matches||radioCurrent.priority>=5?full:full.slice(0,Math.floor(radioClock*52)),w=landR?Math.min(270,Math.max(190,hudWidth-520)):Math.min(620,hudWidth-24),x=landR?194:(hudWidth-w)/2,y=portR?152:(landR?Math.max(118,hudHeight-104):hudHeight-150),lines=wrapRadio(shown,Math.max(22,Math.floor((w-24)/8.2)));
     hctx.save();hctx.fillStyle="rgba(2,13,21,.82)";hctx.fillRect(x,y,w,48+lines.length*18);hctx.strokeStyle=radioCurrent.color;hctx.strokeRect(x+.5,y+.5,w-1,47+lines.length*18);drawText("UHF // "+radioCurrent.speaker,x+14,y+20,"left",radioCurrent.color,12);for(var i=0;i<lines.length;i++)drawText(lines[i],x+14,y+43+i*18,"left","#eafff9",13);hctx.restore();
   }
   function missionObjectiveText() {
@@ -2239,23 +2314,29 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       if(fpp&&fpp.x>-20&&fpp.x<hudWidth+20&&fpp.y>-20&&fpp.y<hudHeight+20){hctx.beginPath();hctx.arc(fpp.x,fpp.y,8,0,Math.PI*2);hline(fpp.x-18,fpp.y,fpp.x-8,fpp.y);hline(fpp.x+8,fpp.y,fpp.x+18,fpp.y);hline(fpp.x,fpp.y-15,fpp.x,fpp.y-8);hctx.stroke();}
     }
 
+    var touchUI=document.body.classList.contains("touch-active"),narrowHud=hudWidth<620,portTouch=touchUI&&hudHeight>hudWidth,landTouch=touchUI&&hudHeight<=hudWidth;
     var heading=(Math.atan2(b.forward.x,-b.forward.z)*180/Math.PI+360)%360;
-    drawText(String(Math.round(heading)).padStart(3,"0"),cx,34,"center",hudColor(),16);
-    hctx.beginPath();hline(cx-115,44,cx+115,44);hline(cx,40,cx,50);hctx.stroke();
-    drawText("SPD",32,hudHeight*.42,"left",hudColor(.65),12);drawText(String(Math.round(player.speed*1.94384)).padStart(3,"0"),32,hudHeight*.42+22,"left",hudColor(),22);
-    drawText("KTS",32,hudHeight*.42+39,"left",hudColor(.65),12);drawText("THR "+Math.round(player.throttle*100)+"%",32,hudHeight*.42+62,"left",hudColor(),14);
-    drawText("ALT",hudWidth-32,hudHeight*.42,"right",hudColor(.65),12);drawText(String(Math.round(player.pos.y*3.28084)).padStart(5,"0"),hudWidth-32,hudHeight*.42+22,"right",hudColor(),22);
+    var hdY=narrowHud?78:34,sideY=portTouch?hudHeight*.36:(landTouch?74:hudHeight*.42),sidePad=narrowHud||landTouch?14:32;
+    drawText(String(Math.round(heading)).padStart(3,"0"),cx,hdY,"center",hudColor(),16);
+    hctx.beginPath();hline(cx-95,hdY+10,cx+95,hdY+10);hline(cx,hdY+6,cx,hdY+16);hctx.stroke();
+    drawText("SPD",sidePad,sideY,"left",hudColor(.65),12);drawText(String(Math.round(player.speed*1.94384)).padStart(3,"0"),sidePad,sideY+22,"left",hudColor(),22);
+    drawText("KTS",sidePad,sideY+39,"left",hudColor(.65),12);drawText("THR "+Math.round(player.throttle*100)+"%",sidePad,sideY+62,"left",hudColor(),14);
+    drawText("ALT",hudWidth-sidePad,sideY,"right",hudColor(.65),12);drawText(String(Math.round(player.pos.y*3.28084)).padStart(5,"0"),hudWidth-sidePad,sideY+22,"right",hudColor(),22);
     var hudAgl=Math.max(0,player.pos.y-terrainHeight(player.pos.x+worldOffset.x,player.pos.z+worldOffset.z));
-    drawText("FT",hudWidth-32,hudHeight*.42+39,"right",hudColor(.65),12);drawText("G "+player.g.toFixed(1)+" // AGL "+Math.round(hudAgl)+"m",hudWidth-32,hudHeight*.42+62,"right",hudColor(),14);
-    drawText("GUN "+player.ammo,30,hudHeight-70,"left",player.ammo<80?"#ffc65a":hudColor(),14);
-    drawText("MSL "+player.missileAmmo,30,hudHeight-48,"left",player.missileAmmo<2?"#ffc65a":hudColor(),14);
-    drawText("CM  "+player.flareAmmo,30,hudHeight-26,"left",player.flareAmmo<2?"#ffc65a":hudColor(),14);
-    drawText(player.podId==="hydra"?"HYDRA "+player.rocketAmmo:"POD "+player.podId.toUpperCase(),30,hudHeight-92,"left",player.podId==="hydra"&&player.rocketAmmo<4?"#ffc65a":hudColor(.82),12);
-    drawText("AIRFRAME "+Math.max(0,Math.round(player.health))+"%",hudWidth-30,hudHeight-26,"right",player.health<35?"#ff5b5b":hudColor(),14);
+    drawText("FT",hudWidth-sidePad,sideY+39,"right",hudColor(.65),12);drawText("G "+player.g.toFixed(1)+" // AGL "+Math.round(hudAgl)+"m",hudWidth-sidePad,sideY+62,"right",hudColor(),14);
+    var weapBottom=portTouch?hudHeight-256:(landTouch?262:(touchUI?hudHeight-168:hudHeight-44));
+    var weapX=portTouch?16:(landTouch?16:30);
+    drawText("GUN "+player.ammo,weapX,weapBottom-70,"left",player.ammo<80?"#ffc65a":hudColor(),14);
+    drawText("MSL "+player.missileAmmo,weapX,weapBottom-48,"left",player.missileAmmo<2?"#ffc65a":hudColor(),14);
+    drawText("CM  "+player.flareAmmo,weapX,weapBottom-26,"left",player.flareAmmo<2?"#ffc65a":hudColor(),14);
+    drawText(player.podId==="hydra"?"HYDRA "+player.rocketAmmo:"POD "+player.podId.toUpperCase(),weapX,weapBottom-92,"left",player.podId==="hydra"&&player.rocketAmmo<4?"#ffc65a":hudColor(.82),12);
+    var afX=(portTouch||landTouch||touchUI)?hudWidth-16:hudWidth-30,afY=portTouch?hudHeight-256:(landTouch?258:(touchUI?hudHeight-156:hudHeight-26));
+    drawText("AIRFRAME "+Math.max(0,Math.round(player.health))+"%",afX,afY,"right",player.health<35?"#ff5b5b":hudColor(),14);
 
     var remainTime=Math.max(0,MISSION_LIMIT-missionTime),mins=Math.floor(remainTime/60),secs=Math.floor(remainTime%60);
-    drawText("NEPTUNE SHROUD // "+missionObjectiveText()+" // "+String(mins).padStart(2,"0")+":"+String(secs).padStart(2,"0"),cx,68,"center",hudColor(.85),14);
-    if(mission.phase===1){var exposure=clamp(mission.hardDeckTicks/600,0,1),deckColor=hudAgl>120?"#ff5b5b":"#ffc65a";drawText("RADAR FLOOR 120m // "+(hudAgl>120?"EXPOSURE "+Math.ceil((600-mission.hardDeckTicks)/120)+"s":"MASKED"),cx,112,"center",deckColor,13);}
+    var bannerText=(narrowHud?"": "NEPTUNE SHROUD // ")+missionObjectiveText()+" // "+String(mins).padStart(2,"0")+":"+String(secs).padStart(2,"0");
+    hctx.save();hctx.textAlign="center";hctx.fillStyle=hudColor(.85);hctx.font="700 "+(narrowHud?12:14)+"px ui-monospace, SFMono-Regular, Menlo, monospace";hctx.fillText(bannerText,cx,narrowHud?108:68,hudWidth-24);hctx.restore();
+    if(mission.phase===1){var exposure=clamp(mission.hardDeckTicks/600,0,1),deckColor=hudAgl>120?"#ff5b5b":"#ffc65a";drawText("RADAR FLOOR 120m // "+(hudAgl>120?"EXPOSURE "+Math.ceil((600-mission.hardDeckTicks)/120)+"s":"MASKED"),cx,narrowHud?128:112,"center",deckColor,13);}
     if(pendingFlak.length){var nextFlak=pendingFlak[0];for(var pf=1;pf<pendingFlak.length;pf++)if(pendingFlak[pf].detonateTick<nextFlak.detonateTick)nextFlak=pendingFlak[pf];drawText("FLAK BURST // "+Math.max(0,(nextFlak.detonateTick-simTick)/120).toFixed(1),cx,134,"center","#ff8c72",15);}
     if(stats.comboCount>0&&simTime<=stats.comboExpiresAt){var mult=comboMultiplier(stats.comboCount);drawText(stats.comboCount===1?"CHAIN ARMED":"CHAIN "+mult.toFixed(1)+"× // "+Math.max(0,stats.comboExpiresAt-simTime).toFixed(1),cx,90,"center","#ffc65a",14);}
     if(jamStrength>.12)drawText("ECM "+Math.round(jamStrength*100)+"% // LOCK DEGRADED",cx,mission.phase===1?158:112,"center","#ff9c72",13);
@@ -2293,7 +2374,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     if(mode==="paused"){hctx.fillStyle="rgba(0,0,0,.22)";hctx.fillRect(0,0,hudWidth,hudHeight);}
   }
   function drawRadar(b) {
-    var r=76,x=hudWidth-r-28,y=hudHeight-r-42,rangeM=9000;
+    var touchUI2=document.body.classList.contains('touch-active'),port2=hudHeight>hudWidth,land2=touchUI2&&!port2,r=port2?50:(land2?40:(touchUI2?54:76)),x=port2?(hudWidth-r-14):(land2?(hudWidth-r-14):(hudWidth-r-(touchUI2?24:28))),y=port2?(hudHeight-306-r):(land2?196:(touchUI2?(hudHeight-176-r):(hudHeight-r-42))),rangeM=9000;
     hctx.strokeStyle=hudColor(.55);hctx.lineWidth=1;hctx.beginPath();hctx.arc(x,y,r,0,Math.PI*2);hctx.arc(x,y,r*.5,0,Math.PI*2);hline(x-r,y,x+r,y);hline(x,y-r,x,y+r);hctx.stroke();
     drawText("RDR 9",x,y-r-9,"center",hudColor(.7),12);
     for(var i=0;i<enemies.length;i++){var e=enemies[i];if(!e.alive)continue;var rel=vsub(V(),e.pos,player.pos),side=vdot(rel,b.right),front=vdot(rel,b.forward),rx=clamp(side/rangeM,-1,1)*r,ry=-clamp(front/rangeM,-1,1)*r;
@@ -2379,11 +2460,34 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     document.addEventListener("pointerlockchange",function(){setMouseCapture(document.pointerLockElement===glCanvas);});
     window.addEventListener("mousemove",function(e){if(!mouseAim.captured)return;mouseAim.screenX=clamp(mouseAim.screenX+(Number(e.movementX)||0)/Math.max(320,hudWidth)*1.7,-.84,.84);mouseAim.screenY=clamp(mouseAim.screenY+(Number(e.movementY)||0)/Math.max(240,hudHeight)*1.7,-.84,.84);});
     window.addEventListener("keydown",function(e){
-      if(e.code==="Tab")return;
+      if(e.code==="Tab"){
+        var activeOv=[localLinkPanel,controllerPanel,pausePanel,debrief,menu].find(function(ov){return ov&&!ov.hidden;});
+        if(activeOv){
+          var isVis=function(el){
+            if(!el||!el.isConnected||el.disabled||(el.closest&&el.closest("[inert],[hidden]")))return false;
+            var cs=getComputedStyle(el),r=el.getBoundingClientRect();
+            return cs.display!=="none"&&cs.visibility!=="hidden"&&r.width>0&&r.height>0;
+          };
+          var exits=Array.prototype.slice.call(document.querySelectorAll("#mbmexit-back,#mbmexit-home")).filter(isVis);
+          var els=Array.prototype.slice.call(activeOv.querySelectorAll("button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),summary")).filter(isVis);
+          var ring=exits.concat(els);
+          if(ring.length){
+            e.preventDefault();
+            var idx=ring.indexOf(document.activeElement);
+            ring[e.shiftKey?(idx<=0?ring.length-1:idx-1):(idx===-1||idx>=ring.length-1?0:idx+1)].focus();
+          }
+        }
+        return;
+      }
+      if(e.code==="Escape"&&!e.repeat&&!localLinkPanel.hidden){
+        e.preventDefault();
+        document.getElementById("close-local-link").click();
+        return;
+      }
       var interactive=e.target&&e.target.closest&&e.target.closest("button, a, input, select, textarea, summary");
       if(interactive&&e.code!=="Escape")return;
       var gameKeys=["KeyW","KeyS","KeyA","KeyD","KeyQ","KeyE","KeyR","KeyF","Space","ShiftLeft","ControlLeft","KeyM","KeyB","KeyC","KeyX","KeyV","KeyP","Escape"];
-      if((e.code==="Escape"||e.code==="KeyP")&&!e.repeat){togglePause();return;}
+      if((e.code==="Escape"||e.code==="KeyP")&&!e.repeat){if(!localLinkPanel.hidden||!controllerPanel.hidden)return;togglePause();return;}
       if(mode!=="playing")return;
       if(gameKeys.indexOf(e.code)>=0)e.preventDefault();
       keys.add(e.code);
@@ -2396,11 +2500,11 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     });
     window.addEventListener("keyup",function(e){keys.delete(e.code);});
     window.addEventListener("blur",function(){releaseMouseAim();neutralInputs();if(mode==="playing")togglePause(true);});
-    document.addEventListener("visibilitychange",function(){if(document.hidden){releaseMouseAim();if(mode==="playing")togglePause(true);}neutralInputs();});
+    document.addEventListener("visibilitychange",function(){if(document.hidden){releaseMouseAim();if(mode==="playing")togglePause(true);if(audio.ctx&&audio.ctx.state==="running"){try{audio.ctx.suspend().catch(function(){});}catch(_){}}}neutralInputs();});
     glCanvas.addEventListener("webglcontextlost",function(e){e.preventDefault();releaseMouseAim();glLost=true;if(mode==="playing")togglePause(true);announce("GRAPHICS CONTEXT PAUSED");});
     glCanvas.addEventListener("webglcontextrestored",function(){if(initRenderer())announce("GRAPHICS CONTEXT RESTORED");else announce("GRAPHICS RESTORE FAILED");});
     reducedMotion.addEventListener&&reducedMotion.addEventListener("change",function(){cameraShake=0;shockwaves=[];if(cinematic.active){cinematic.active=false;sonicResetFrames=Math.max(sonicResetFrames,2);}flightFx.shockAge=99;angularAccel=V();cameraFov=(cameraMode===1?54:cameraMode===2?62:60)*DEG;});
-    portraitQuery.addEventListener&&portraitQuery.addEventListener("change",function(e){if(e.matches&&mode==="playing")togglePause(true);});
+    function syncTouchClass(forceTouch){if(forceTouch)document.body.classList.add("touch-active");else document.body.classList.toggle("touch-active",!!coarsePointer.matches);}syncTouchClass(false);document.addEventListener("pointerdown",function(e){if(e.pointerType==="touch"||e.pointerType==="pen")syncTouchClass(true);},{capture:true,passive:true});
     document.getElementById("launch").addEventListener("click",startGame);
     document.getElementById("resume").addEventListener("click",function(){togglePause(false);});
     document.getElementById("restart-pause").addEventListener("click",startGame);
@@ -2412,15 +2516,34 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     glCanvas.addEventListener("dblclick",function(){requestMouseAim();});
     document.getElementById("fullscreen").addEventListener("click",function(){if(!document.fullscreenElement){document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}else{document.exitFullscreen&&document.exitFullscreen();}});
     document.getElementById("touch-throttle").addEventListener("input",function(e){input.throttleSetpoint=Number(e.target.value)/100;});
-    document.getElementById("sound").addEventListener("change",function(e){audio.setEnabled(e.target.checked);if(e.target.checked&&mode==="playing")audio.start();});
-    document.getElementById("mouse-aim-toggle").addEventListener("change",function(e){mouseAim.enabled=e.target.checked;if(!mouseAim.enabled)releaseMouseAim();});
-    document.getElementById("haptics-toggle").addEventListener("change",function(e){haptics.enabled=e.target.checked;if(!haptics.enabled)haptics.stop();});
+    function saveUiSettings(){
+      profile.settings={
+        assist:!!document.getElementById("assist").checked,
+        sound:!!document.getElementById("sound").checked,
+        mouseAim:!!document.getElementById("mouse-aim-toggle").checked,
+        haptics:!!document.getElementById("haptics-toggle").checked,
+        contrast:!!document.getElementById("contrast").checked,
+        cinematic:!!document.getElementById("cinematic-toggle").checked,
+        calm:!!document.getElementById("calm-flight").checked
+      };
+      document.body.classList.toggle("high-contrast",profile.settings.contrast);
+      document.body.classList.toggle("calm-flight",profile.settings.calm);
+      saveProfile();
+    }
+    document.getElementById("assist").addEventListener("change",saveUiSettings);
+    document.getElementById("sound").addEventListener("change",function(e){audio.setEnabled(e.target.checked);if(e.target.checked&&mode==="playing")audio.start();saveUiSettings();});
+    document.getElementById("mouse-aim-toggle").addEventListener("change",function(e){mouseAim.enabled=e.target.checked;if(!mouseAim.enabled)releaseMouseAim();saveUiSettings();});
+    document.getElementById("haptics-toggle").addEventListener("change",function(e){haptics.enabled=e.target.checked;if(!haptics.enabled)haptics.stop();saveUiSettings();});
+    document.getElementById("contrast").addEventListener("change",saveUiSettings);
+    document.getElementById("cinematic-toggle").addEventListener("change",saveUiSettings);
+    document.getElementById("calm-flight").addEventListener("change",saveUiSettings);
     document.getElementById("pod-grid").addEventListener("click",function(e){var button=e.target.closest&&e.target.closest("[data-pod-action]");if(!button)return;var id=button.getAttribute("data-pod-action");if(profile.ownedPods.indexOf(id)>=0)equipPod(id);else purchasePod(id);});
     bindPress("touch-target",function(){pending.target=true;});
     bindPress("touch-missile",function(){pending.missile=true;});
     bindPress("touch-special",function(){pending.special=true;});
     bindPress("touch-flare",function(){pending.flare=true;});
     bindPress("touch-cobra",function(){pending.cobra=true;});
+    bindPress("touch-camera",function(){pending.camera=true;});
     var fire=document.getElementById("touch-fire");
     fire.addEventListener("pointerdown",function(e){e.preventDefault();fire.setPointerCapture&&fire.setPointerCapture(e.pointerId);fire.classList.add("active");});
     function fireOff(){fire.classList.remove("active");}
@@ -2435,8 +2558,8 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     function stickOff(e){if(touchStick.id===e.pointerId){touchStick.id=null;touchStick.x=touchStick.y=0;nub.style.transform="translate(0,0)";}}
     stick.addEventListener("pointerup",stickOff);stick.addEventListener("pointercancel",stickOff);stick.addEventListener("lostpointercapture",stickOff);
 
-    document.getElementById("open-local-link").addEventListener("click",function(){localLinkPanel.hidden=false;menu.inert=true;var url=getControllerUrl(),message=window.location.protocol==="file:"?"HOSTED OR LAN HTTP PAGE REQUIRED":url;document.getElementById("controller-url").textContent=message;var ok=window.location.protocol!=="file:"&&drawControllerQr(document.getElementById("qr-canvas"),url);if(!ok)document.getElementById("host-link-status").textContent=window.location.protocol==="file:"?"A PHONE CANNOT REACH A DESKTOP FILE URL":"CONTROLLER URL TOO LONG FOR LOCAL QR";requestAnimationFrame(function(){document.getElementById("create-host-offer").focus();});});
-    document.getElementById("close-local-link").addEventListener("click",function(){localLinkPanel.hidden=true;menu.inert=false;document.getElementById("open-local-link").focus();});
+    document.getElementById("open-local-link").addEventListener("click",function(){_localLinkOpener=document.activeElement;localLinkPanel.hidden=false;syncSkyModalInert();var url=getControllerUrl(),message=window.location.protocol==="file:"?"HOSTED OR LAN HTTP PAGE REQUIRED":url;document.getElementById("controller-url").textContent=message;var ok=window.location.protocol!=="file:"&&drawControllerQr(document.getElementById("qr-canvas"),url);if(!ok)document.getElementById("host-link-status").textContent=window.location.protocol==="file:"?"A PHONE CANNOT REACH A DESKTOP FILE URL":"CONTROLLER URL TOO LONG FOR LOCAL QR";requestAnimationFrame(function(){document.getElementById("create-host-offer").focus();});});
+    document.getElementById("close-local-link").addEventListener("click",function(){localLinkPanel.hidden=true;syncSkyModalInert();var op=_localLinkOpener;_localLinkOpener=null;if(op&&op.isConnected)op.focus();else document.getElementById("open-local-link").focus();});
     document.getElementById("create-host-offer").addEventListener("click",function(){localLink.hostOffer();});
     document.getElementById("copy-host-offer").addEventListener("click",function(){copySignal(document.getElementById("host-offer").value,"host-link-status");});
     document.getElementById("apply-host-answer").addEventListener("click",function(){localLink.applyAnswer(document.getElementById("host-answer").value);});
