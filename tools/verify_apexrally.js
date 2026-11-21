@@ -42,9 +42,15 @@ const html = fs.readFileSync(FILE, 'utf8');
 const bytes = Buffer.byteLength(html);
 const sha = crypto.createHash('sha256').update(html).digest('hex');
 
-/* The delivered artifact, pinned. Immutable historical fact, not a HEAD state. */
-const DELIVERED_SHA256 = 'c34226418ff016f1fae62ffadf14e15053935550d65e311e493d48c7b84cef04';
-const DELIVERED_BYTES = 50832;
+/* The delivered artifact, pinned. Immutable historical fact, not a HEAD state.
+ * Moved 2026-11-21 for the games upgrade batch 01 rebuild (ruling thread: the
+ * provenance pin moves to the newly gated bytes in the same PR, permitted edits
+ * re-derived). The upgraded file carries E1 x2, E2 x3 lines, E3, E4 x1 and E5 x1
+ * exactly as before; reversing them gives the pin below. The previous delivered
+ * artifact (c3422641..., 50832 bytes) stays recorded in
+ * reports/close/2026-08-05-apexrally-landing.md. */
+const DELIVERED_SHA256 = '32a15f404d0d0ae437c8bac94519e2752c6d807e66d69e405d0a1dd097524621';
+const DELIVERED_BYTES = 57603;
 
 /* The two permitted edits, as reversible rules. */
 const E1 = { name: 'storage key rename', from: "'mbm_apexrally_v1'", to: "'apexRally.v1'", expect: 2 };

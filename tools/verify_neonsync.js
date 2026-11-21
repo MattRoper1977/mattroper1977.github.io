@@ -25,7 +25,10 @@ const GAME = process.env.NS_GAME_FILE || path.join(ROOT, 'neonsync', 'index.html
  * user-scalable=no so the page can be pinch-zoomed. Same rule - the file moved
  * deliberately, the pin moves with it in the same commit.
  * Previous: d743938906c54e607309c6ad1a5574911f08773e26465f8306bd122cc1acd0ed */
-const GAME_SHA = '59754ff7e8bccc31897ce1e5df94405670630b2fc36a096c658de14f49916950';
+/* Moved again 2026-11-21 for the games upgrade batch 04 fix (ruling thread: the
+ * pin moves to the newly gated bytes in the same PR as the file). Same rule.
+ * Previous: 59754ff7e8bccc31897ce1e5df94405670630b2fc36a096c658de14f49916950 */
+const GAME_SHA = 'c3592613099223ac1325d942758fc92cf8ebce3f8b72a4e536dcc75933da9018';
 const BASE_SHA = 'c645e6f3f56a5884c23656dc82be49bc20e333ebc379ea098341886327832602';
 const BASE_BYTES = 56658;
 const html = fs.readFileSync(GAME, 'utf8');
