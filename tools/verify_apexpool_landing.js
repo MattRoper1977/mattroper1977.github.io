@@ -29,8 +29,17 @@ const FILE = supplied || path.join(__dirname, '..', 'apexpool', 'index.html');
  * Verified before moving rather than re-pinned on sight: 8432492^ hashes to the
  * OLD pin exactly, and the whole delta is the generated exit block.
  * Previous: 4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad (88751 B) */
-const EXPECTED_BYTES = 190141;
-const EXPECTED_SHA256 = '62e6aae3aa66382a138993c87b90eb64057545aa312b732fc69698fcdd854dbd';
+const EXPECTED_BYTES = 194212;
+const EXPECTED_SHA256 = 'fd90b16cc0fe3e9d4306ed84b62bd8a3b50fd030e0c105b268814ddd2db4870e';
+/* 21 Nov 2026: moved from 62e6aae3aa66382a138993c87b90eb64057545aa312b732fc69698fcdd854dbd
+ * (190141 B) for catalogue batch 05 plus its landscape fix (ruling thread gates, 21 Nov): touch
+ * Aim/Call mode so a touch drag aims without firing, procedural sound with suspend on hide, 44px
+ * icon targets and 14px text, top-left clearance for the exit controls, Tab in pause reaching the
+ * exit and home controls with focus returned on resume; then the call status and pocket chooser
+ * kept clear of the control deck (call status capped at calc(100% - 558px - var(--safeR)) in
+ * landscape, phone call status 230 to 236px and phone chooser 234 to 275px above the deck).
+ * The AP:CORE rules block and the inline-exit region are byte-identical; head URLs are in
+ * source form. */
 /* 20 Nov 2026 (later): moved from 7152eca3d62b291e427dd05cc885c659c741f0383eb5dfb2c3d5678612f85bf2
  * (106823 B) for the owner's 3D table (pool 3D v3): a WebGL1 view of the same game. The
  * AP:CORE rules block is byte-identical to r3, as are the shared inline-exit region, the
@@ -107,7 +116,11 @@ head('Authorised accessibility delta');
 ok('small-buttons-44px', /\.btn\.small\{min-height:44px;/.test(html) && !/\.btn\.small\{min-height:40px;/.test(html));
 ok('pocket-buttons-44px', /\.pocket-grid button\{min-height:44px;/.test(html) && !/\.pocket-grid button\{min-height:38px;/.test(html));
 ok('base-buttons-remain-46px', /\.btn\{min-height:46px;/.test(html));
-ok('chooser-padding-and-offset-unchanged', /#pocketChooser\{position:absolute;inset:auto 8px calc\(198px \+ var\(--safeB\)\) 8px;padding:10px;/.test(html));
+/* 21 Nov 2026: re-pinned to the exact new literal (ruling (b), ruling thread): batch 05 lifts the
+ * chooser from 198px to 214px above the deck so its 44px pocket buttons clear the controls. Still
+ * one exact string; the no-overlap proof lives in verify_apexpool_landing_browser.js (839x412). */
+ok('chooser-padding-and-offset-unchanged', /#pocketChooser\{position:absolute;inset:auto 8px calc\(214px \+ var\(--safeB\)\) 8px;padding:10px;/.test(html));
+ok('landscape-call-status-capped-clear-of-deck', /#callStatus\{bottom:10px;left:10px;max-width:calc\(100% - 558px - var\(--safeR\)\)\}/.test(html));
 const mins = [...html.matchAll(/([^{}]+)\{[^{}]*min-height:(\d+)px/g)]
   .map((m) => ({ selector: m[1].trim().split(/\n/).pop(), px: Number(m[2]) }))
   .filter((x) => /button|\.btn|\.mode-card/.test(x.selector));

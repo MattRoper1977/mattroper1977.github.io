@@ -120,6 +120,52 @@ async function assertTargets(page, label) {
     ok('zero-external-runtime-requests', external.length === 0, external.join(' | ') || 'none');
     await context.close();
 
+    // 21 Nov 2026 (ruling thread, Apex Pool landscape fix): at 839x412 the call status once sat
+    // under the control deck (1592 px2). Both overlays must now clear the deck, measured, with a
+    // negative control so the detector is seen to fire.
+    head('839×412 call status and chooser clear the control deck');
+    const wide = await browser.newContext({ viewport: { width: 839, height: 412 }, deviceScaleFactor: 1, hasTouch: true });
+    const wpage = await wide.newPage();
+    const werrors = [];
+    captureErrors(wpage, werrors);
+    await wpage.goto(BASE + '/apexpool/', { waitUntil: 'load' });
+    await wpage.waitForFunction(() => window.__AP_DEBUG && document.querySelector('.wordmark'));
+    await wpage.waitForTimeout(1300);
+    await wpage.evaluate(() => window.__AP_DEBUG.start('classic'));
+    await wpage.waitForFunction(() => !document.getElementById('hud').classList.contains('hidden'));
+    await wpage.evaluate(() => {
+      document.getElementById('rotateHint').style.display = 'none';
+      document.getElementById('screens').innerHTML = '';
+      const chooser = document.getElementById('pocketChooser');
+      chooser.classList.remove('hidden');
+      document.getElementById('pocketGrid').innerHTML = Array.from({ length: 6 }, (_, i) => `<button aria-label="Pocket ${i + 1}">${i + 1}</button>`).join('');
+      const status = document.getElementById('callStatus');
+      status.classList.remove('hidden');
+      status.style.display = '';
+      if (!status.textContent.trim()) status.textContent = 'Call: 8 ball, top-right pocket';
+    });
+    await wpage.waitForTimeout(300);
+    const overlap = () => wpage.evaluate(() => {
+      const r = (id) => document.getElementById(id).getBoundingClientRect();
+      const x = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      const s = r('callStatus'), c = r('pocketChooser'), d = r('controls');
+      return { callXdeck: x(s, d), chooserXdeck: x(c, d), callW: s.width, deckW: d.width };
+    });
+    const wl = await overlap();
+    console.log('  DATA  839x412 ' + JSON.stringify(wl));
+    ok('overlays-measured-at-839x412', wl.callW > 0 && wl.deckW > 0);
+    ok('call-status-clears-deck-839x412', wl.callXdeck === 0, wl.callXdeck.toFixed(1) + ' px2');
+    ok('chooser-clears-deck-839x412', wl.chooserXdeck === 0, wl.chooserXdeck.toFixed(1) + ' px2');
+    await wpage.evaluate(() => {
+      const d = document.getElementById('controls').getBoundingClientRect();
+      const s = document.getElementById('callStatus');
+      s.style.setProperty('left', d.left + 'px', 'important');
+      s.style.setProperty('max-width', 'none', 'important');
+    });
+    ok('overlap-detector-negative-control', (await overlap()).callXdeck > 0);
+    ok('zero-errors-839x412', werrors.length === 0, werrors.join(' | ') || 'none');
+    await wide.close();
+
     head('Sibling storage byte identity');
     const storageContext = await browser.newContext({ viewport: { width: 1000, height: 700 } });
     const storagePage = await storageContext.newPage();
