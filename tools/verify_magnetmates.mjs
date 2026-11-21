@@ -43,7 +43,7 @@ const PREFIX = 'mbm_magnetmates_';
 const ESTATE_KEYS = new Set(['mbm_audience_view']);
 const RAW_BUDGET = 409600;
 const VIEWPORTS = [[390, 844], [768, 1024], [1366, 768]];
-const PILL_VIEWPORTS = [[768, 1024], [1280, 720], [1366, 768], [1920, 1080]];
+const PILL_VIEWPORTS = [[768, 1024], [960, 540], [1024, 768], [1280, 720], [1366, 768], [1920, 1080]];
 const FLOOR = 44;
 
 function loadChromium() {
@@ -174,6 +174,24 @@ const pillInk = page => page.evaluate(() => {
   return { exitOverRow, underExit: exitBand > 0 ? ink(0, exitBand) : 0, underBar: ink(barBand, cr.width), between: ink(exitBand, barBand), exitRight: Math.round(ex.right), barLeft: Math.round(hb.left) };
 });
 
+// The portrait arena's DOM top bar: shown or not, where its bottom sits against the canvas top,
+// which of its visible buttons meet the exit controls or fall under the floor, and the state
+// of the canvas-side bar it replaces.
+const mobileHud = page => page.evaluate(floor => {
+  const mh = document.getElementById('mobileHud'); const hb = document.getElementById('hudBar');
+  const cr = document.getElementById('gameCanvas').getBoundingClientRect();
+  const ms = mh ? getComputedStyle(mh) : null; const mr = mh ? mh.getBoundingClientRect() : null;
+  const shown = !!mh && ms.display !== 'none' && ms.visibility !== 'hidden' && mr.width > 0 && mr.height > 0 && !mh.classList.contains('hidden');
+  const exits = ['mbmexit-back', 'mbmexit-home'].map(id => document.getElementById(id)).filter(Boolean).map(e => e.getBoundingClientRect());
+  const meets = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+  const btns = mh ? [...mh.querySelectorAll('button,a[href],input,select,[role=button]')].filter(e => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; }) : [];
+  const hs = hb ? getComputedStyle(hb) : null;
+  return { shown, bottom: mr ? Math.round(mr.bottom * 10) / 10 : null, canvasTop: Math.round(cr.top * 10) / 10,
+    overExit: btns.filter(e => exits.some(x => meets(e.getBoundingClientRect(), x))).map(e => e.id || e.className),
+    small: btns.filter(e => { const r = e.getBoundingClientRect(); return r.width < floor || r.height < floor; }).map(e => `${e.id || e.className} ${Math.round(e.getBoundingClientRect().width)}x${Math.round(e.getBoundingClientRect().height)}`),
+    hudHidden: !hb || (hs.visibility === 'hidden' && hs.pointerEvents === 'none'), hudVis: hs ? hs.visibility : 'absent', hudPe: hs ? hs.pointerEvents : 'absent' };
+}, FLOOR);
+
 async function browserGates(browser, origin, g) {
   // MMG6a/b + MMG1d + MMG2b: boot, flip sound twice (a write), start a shift, play keys, pause.
   {
@@ -237,14 +255,25 @@ async function browserGates(browser, origin, g) {
 
   // MMG3c: the canvas pills clear the exit and the button bar. At phone width the
   // game's own bar spans the whole HUD row, so the check runs where the row has room.
+  // Portrait arena (21 Nov 2026, ruling thread): where the game shows its DOM top bar
+  // #mobileHud and hides #hudBar, the pills live in that DOM bar and not in the canvas,
+  // so the evidence is the DOM bar's own layout; every other viewport keeps the
+  // canvas-ink check unchanged.
   for (const [w, h] of PILL_VIEWPORTS) {
     const { ctx, page } = await boot(browser, origin, { viewport: { width: w, height: h } });
     await page.click('#btnPlay');
     await page.waitForTimeout(700);
-    const p = await pillInk(page);
-    g.gate(`MMG3c@${w}`, 'the score, streak and timer pills clear the exit and the button bar',
-      p.underExit === 0 && p.underBar === 0 && p.between >= 500,
-      `exit over row ${p.exitOverRow} (right ${p.exitRight}), bar left ${p.barLeft}; ink under exit ${p.underExit}, under bar ${p.underBar}, between ${p.between}`);
+    const m = await mobileHud(page);
+    if (m.shown) {
+      g.gate(`MMG3c@${w}`, 'portrait arena: the DOM top bar sits above the canvas, clears the exit, keeps 44 px buttons, and the canvas-side bar is hidden and inert',
+        m.bottom <= m.canvasTop + 0.5 && m.overExit.length === 0 && m.small.length === 0 && m.hudHidden,
+        `#mobileHud bottom ${m.bottom}, canvas top ${m.canvasTop}; buttons over the exit ${m.overExit.join(', ') || 'none'}; under 44 px ${m.small.join(', ') || 'none'}; #hudBar visibility ${m.hudVis}, pointer-events ${m.hudPe}`);
+    } else {
+      const p = await pillInk(page);
+      g.gate(`MMG3c@${w}`, 'the score, streak and timer pills clear the exit and the button bar',
+        p.underExit === 0 && p.underBar === 0 && p.between >= 500,
+        `exit over row ${p.exitOverRow} (right ${p.exitRight}), bar left ${p.barLeft}; ink under exit ${p.underExit}, under bar ${p.underBar}, between ${p.between}`);
+    }
     await ctx.close();
   }
 
@@ -282,7 +311,8 @@ async function selftest(html, browser) {
     { gate: 'MMG3a', why: 'hand-edit one byte of the exit region', mutate: s => s.replace(region, region.replace('width:44px', 'width:43px')) },
     { gate: 'MMG3b@390', why: 'shrink the exit control', mutate: s => s.replace('</head>', '<style>#mbmexit-back{width:30px!important;height:30px!important;min-width:0!important;min-height:0!important}</style>\n</head>') },
     { gate: 'MMG3c@1366', why: 'drop the pill fit that clears the exit', mutate: s => s.replace('    ctx.translate(fit.x, 32);\n    ctx.scale(fit.s, fit.s);\n    ctx.translate(-14, -32);\n', '') },
-    { gate: 'MMG3c@768', why: 'let the pills run under the button bar', mutate: s => s.replace('    const s = Math.max(0.5, Math.min(1, (end - start) / 726));', '    const s = 1;') },
+    { gate: 'MMG3c@960', why: 'let the pills run under the button bar', mutate: s => s.replace('    const s = Math.max(0.5, Math.min(1, (end - start) / 726));', '    const s = 1;') },
+    { gate: 'MMG3c@768', why: 'push the portrait top bar down over the canvas', mutate: s => s.replace('</head>', '<style>#mobileHud{position:fixed!important;top:120px!important}</style>\n</head>') },
     { gate: 'MMG4@768', why: 'shrink the Play button below 44 px', mutate: s => s.replace('</head>', '<style>#btnPlay{min-width:0!important;min-height:0!important;width:30px!important;height:30px!important;padding:0!important;overflow:hidden!important}</style>\n</head>') },
     { gate: 'MMG5', why: 'ignore the reduced-motion preference', mutate: s => s.replace('!!(reduceMotionMQ && reduceMotionMQ.matches)', 'false') },
     { gate: 'MMG6a', why: 'throw at boot', mutate: s => s.replace('const memStore = Object.create(null);', 'const memStore = Object.create(null);\n  throw new Error("boom");') },
