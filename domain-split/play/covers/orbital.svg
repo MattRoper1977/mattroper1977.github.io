@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <defs>
+    <linearGradient id="or-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#283C7A"/>
+      <stop offset="55%" stop-color="#434C9A"/>
+      <stop offset="100%" stop-color="#294882"/>
+    </linearGradient>
+    <radialGradient id="or-planet" cx="0.35" cy="0.35" r="0.65">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="50%" stop-color="#FB923C"/>
+      <stop offset="100%" stop-color="#E11D48"/>
+    </radialGradient>
+    <radialGradient id="or-goal" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="45%" stop-color="#34D399" stop-opacity="0.88"/>
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#or-bg)"/>
+  <!-- Crisp starfield -->
+  <g fill="#E0F2FE">
+    <circle cx="72" cy="58" r="3.5"/><circle cx="196" cy="44" r="3"/><circle cx="446" cy="48" r="4"/>
+    <circle cx="578" cy="84" r="3.5"/><circle cx="92" cy="310" r="3"/><circle cx="548" cy="306" r="4"/>
+    <circle cx="242" cy="316" r="2.5"/><circle cx="412" cy="298" r="3"/>
+  </g>
+  <!-- Big Planet Gravity Well Rings in centre -->
+  <g transform="translate(322,192)">
+    <circle r="144" fill="none" stroke="#67E8F9" stroke-width="3" stroke-dasharray="12 12" stroke-opacity="0.45"/>
+    <circle r="108" fill="#67E8F9" fill-opacity="0.14" stroke="#67E8F9" stroke-width="3.5" stroke-opacity="0.72"/>
+    <circle r="68" fill="url(#or-planet)" stroke="#FEF9C3" stroke-width="4.5"/>
+    <!-- Decorative tilted planetary ring -->
+    <ellipse rx="98" ry="22" transform="rotate(-18)" fill="none" stroke="#FDE68A" stroke-width="7" stroke-opacity="0.88"/>
+  </g>
+  <!-- Smaller violet moon gravity well lower-left -->
+  <g transform="translate(216,288)">
+    <circle r="48" fill="none" stroke="#C084FC" stroke-width="2.5" stroke-dasharray="8 8" stroke-opacity="0.6"/>
+    <circle r="24" fill="#A855F7" stroke="#F3E8FF" stroke-width="3.5"/>
+  </g>
+  <!-- Glowing swirling Emerald-Cyan Wormhole Goal (Hole!) on right -->
+  <g transform="translate(524,142)">
+    <circle r="62" fill="url(#or-goal)"/>
+    <circle r="38" fill="#1E3A8A" stroke="#6EE7B7" stroke-width="6"/>
+    <circle r="24" fill="none" stroke="#FEF08A" stroke-width="4" stroke-dasharray="12 8"/>
+    <circle r="11" fill="#FFFFFF"/>
+  </g>
+  <!-- Graceful Gravitational Slingshot Curved Dotted Shot Path -->
+  <path d="M114,218 C132,76 322,44 410,126 C442,156 476,158 514,144" fill="none" stroke="#67E8F9" stroke-width="14" stroke-linecap="round" stroke-opacity="0.35"/>
+  <path d="M114,218 C132,76 322,44 410,126 C442,156 476,158 514,144" fill="none" stroke="#FFFFFF" stroke-width="5.5" stroke-dasharray="14 11" stroke-linecap="round"/>
+  <!-- Collectible Gold Star right along the slingshot arc -->
+  <g transform="translate(262,82)">
+    <circle r="28" fill="#FEF08A" fill-opacity="0.36"/>
+    <polygon points="0,-20 6,-6 21,-6 9,3 14,18 0,9 -14,18 -9,3 -21,-6 -6,-6" fill="#FDE047" stroke="#FFFFFF" stroke-width="3"/>
+  </g>
+  <!-- Hero Launching White-Cyan Space Golf Probe -->
+  <g transform="translate(118,214) rotate(-68)">
+    <circle r="34" fill="#38BDF8" fill-opacity="0.34"/>
+    <polygon points="-32,-10 -66,0 -32,10" fill="#FDE047"/>
+    <circle r="22" fill="#F8FAFC" stroke="#38BDF8" stroke-width="5"/>
+    <circle cx="6" cy="0" r="8" fill="#0EA5E9"/>
+  </g>
+</svg>

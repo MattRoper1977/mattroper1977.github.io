@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <defs>
+    <linearGradient id="cb-map" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D7CBA8"/>
+      <stop offset="55%" stop-color="#C6BA94"/>
+      <stop offset="100%" stop-color="#A8B89E"/>
+    </linearGradient>
+    <linearGradient id="cb-shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#1E3A8A"/>
+    </linearGradient>
+    <radialGradient id="cb-alert" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#FB7185" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#EF4444" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Bright parchment frontier command map -->
+  <rect width="640" height="360" fill="url(#cb-map)"/>
+  <!-- Coastal river & sage frontier district shading -->
+  <path d="M0,252 Q140,222 250,278 T540,290 L640,264 V360 H0 Z" fill="#60A5FA" fill-opacity="0.58"/>
+  <path d="M0,268 Q140,238 250,294 T540,306 L640,280" fill="none" stroke="#E0F2FE" stroke-width="5" stroke-opacity="0.65"/>
+  <!-- Topographic contour lines -->
+  <g fill="none" stroke="#8A7E5E" stroke-opacity="0.38" stroke-width="2.5">
+    <path d="M40,86 Q160,34 290,78 T560,64"/>
+    <path d="M18,148 Q180,96 340,140 T610,124"/>
+    <path d="M52,210 Q210,168 380,208 T600,192"/>
+  </g>
+  <!-- Frontier dispatch road network -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M126,112 L252,188 L478,136" stroke="#785A32" stroke-width="11"/>
+    <path d="M126,112 L252,188 L478,136" stroke="#FDE68A" stroke-width="4.5" stroke-dasharray="10 10"/>
+    <path d="M252,188 L372,272 L478,136" stroke="#785A32" stroke-width="9"/>
+    <path d="M252,188 L372,272 L478,136" stroke="#FEF3C7" stroke-width="3.5" stroke-dasharray="8 9"/>
+  </g>
+  <!-- Calm secured emerald outposts -->
+  <g transform="translate(126,112)">
+    <circle r="30" fill="#10B981" fill-opacity="0.3" stroke="#059669" stroke-width="4"/>
+    <polygon points="0,-16 15,-7 15,10 0,18 -15,10 -15,-7" fill="#34D399" stroke="#ECFDF5" stroke-width="3"/>
+  </g>
+  <g transform="translate(372,272)">
+    <circle r="28" fill="#10B981" fill-opacity="0.3" stroke="#059669" stroke-width="4"/>
+    <polygon points="0,-15 14,-6 14,9 0,16 -14,9 -14,-6" fill="#34D399" stroke="#ECFDF5" stroke-width="3"/>
+  </g>
+  <!-- Urgent crimson frontier incident flare on right (goal/threat) -->
+  <g transform="translate(486,134)">
+    <circle r="86" fill="url(#cb-alert)"/>
+    <circle r="60" fill="none" stroke="#EF4444" stroke-width="4.5" stroke-dasharray="12 8"/>
+    <circle r="36" fill="#EF4444" stroke="#FFF1F2" stroke-width="5"/>
+    <polygon points="0,-20 6,4 -6,4" fill="#FFFFFF"/>
+    <circle cx="0" cy="14" r="5" fill="#FFFFFF"/>
+  </g>
+  <!-- Sweeping cyan dispatch arrow from badge to incident -->
+  <path d="M298,178 Q376,122 436,134" fill="none" stroke="#0284C7" stroke-width="14" stroke-linecap="round"/>
+  <path d="M298,178 Q376,122 436,134" fill="none" stroke="#E0F2FE" stroke-width="5" stroke-linecap="round"/>
+  <polygon points="444,135 418,118 422,150" fill="#E0F2FE" stroke="#0284C7" stroke-width="3"/>
+  <!-- Big hero Crown & Badge Officer Shield Token -->
+  <g transform="translate(232,190)">
+    <ellipse cx="6" cy="82" rx="64" ry="18" fill="#475569" fill-opacity="0.35"/>
+    <!-- Golden Crown atop shield -->
+    <polygon points="-44,-66 -54,-104 -20,-84 0,-112 20,-84 54,-104 44,-66" fill="#FBBF24" stroke="#FEF9C3" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="-54" cy="-106" r="6" fill="#FEF08A"/>
+    <circle cx="0" cy="-114" r="7" fill="#FEF08A"/>
+    <circle cx="54" cy="-106" r="6" fill="#FEF08A"/>
+    <!-- Shield body -->
+    <path d="M-64,-62 H64 V8 C64,48 0,76 0,76 C0,76 -64,48 -64,8 Z" fill="url(#cb-shield)" stroke="#FBBF24" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M-46,-46 H46 V4 C46,34 0,56 0,56 C0,56 -46,34 -46,4 Z" fill="none" stroke="#93C5FD" stroke-width="3"/>
+    <!-- Bright 6-point officer star badge -->
+    <polygon points="0,-32 10,-10 34,-10 15,6 22,30 0,16 -22,30 -15,6 -34,-10 -10,-10" fill="#FDE047" stroke="#FEF9C3" stroke-width="3"/>
+  </g>
+</svg>

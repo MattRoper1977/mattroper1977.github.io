@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <defs>
+    <linearGradient id="as-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2D437C"/>
+      <stop offset="55%" stop-color="#445496"/>
+      <stop offset="100%" stop-color="#2D4B82"/>
+    </linearGradient>
+    <radialGradient id="as-gate" cx="0.55" cy="0.5" r="0.42">
+      <stop offset="0%" stop-color="#FDE047" stop-opacity="0.62"/>
+      <stop offset="100%" stop-color="#2D437C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#as-bg)"/>
+  <rect width="640" height="360" fill="url(#as-gate)"/>
+  <!-- Visible vertical musical beat-pulse grid lines -->
+  <g stroke="#B9E6CD" stroke-opacity="0.34" stroke-width="3">
+    <line x1="96" y1="68" x2="96" y2="292"/>
+    <line x1="192" y1="68" x2="192" y2="292"/>
+    <line x1="288" y1="68" x2="288" y2="292"/>
+    <line x1="384" y1="68" x2="384" y2="292"/>
+    <line x1="480" y1="68" x2="480" y2="292"/>
+    <line x1="576" y1="68" x2="576" y2="292"/>
+  </g>
+  <!-- Top ceiling track & bottom floor track -->
+  <rect x="0" y="0" width="640" height="68" fill="#1E3160"/>
+  <rect x="0" y="64" width="640" height="10" fill="#B9E6CD"/>
+  <rect x="0" y="292" width="640" height="68" fill="#1E3160"/>
+  <rect x="0" y="286" width="640" height="10" fill="#B9E6CD"/>
+  <!-- Coral hazard spikes on floor & ceiling -->
+  <g fill="#FB7185" stroke="#FFF1F2" stroke-width="3" stroke-linejoin="round">
+    <!-- Floor spikes -->
+    <polygon points="224,286 248,238 272,286"/>
+    <polygon points="272,286 296,238 320,286"/>
+    <polygon points="468,286 492,240 516,286"/>
+    <!-- Ceiling spikes -->
+    <polygon points="122,74 146,120 170,74"/>
+    <polygon points="498,74 522,120 546,74"/>
+    <polygon points="546,74 570,120 594,74"/>
+  </g>
+  <!-- Glowing Amber Shift Gate (Gravity Flip Portal) in center -->
+  <g transform="translate(358,180)">
+    <rect x="-14" y="-102" width="28" height="204" rx="14" fill="#F59E0B" fill-opacity="0.34" stroke="#FDE047" stroke-width="6"/>
+    <line x1="0" y1="-92" x2="0" y2="92" stroke="#FFFFFF" stroke-width="5" stroke-dasharray="14 10" stroke-linecap="round"/>
+    <!-- Up/Down shift chevrons -->
+    <polyline points="-22,-42 0,-64 22,-42" fill="none" stroke="#FEF9C3" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="-22,42 0,64 22,42" fill="none" stroke="#FEF9C3" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Sweeping dotted gravity-flip S-curve trajectory -->
+  <path d="M90,254 L182,254 C252,254 274,180 358,136 C418,104 456,108 552,196" fill="none" stroke="#67E8F9" stroke-width="14" stroke-linecap="round" stroke-opacity="0.4"/>
+  <path d="M90,254 L182,254 C252,254 274,180 358,136 C418,104 456,108 552,196" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-dasharray="12 10" stroke-linecap="round"/>
+  <!-- Trailing ghost Bastion square on floor -->
+  <rect x="132" y="232" width="44" height="44" rx="9" fill="#6EE7B7" fill-opacity="0.45" stroke="#B9E6CD" stroke-width="3"/>
+  <!-- Hero Mid-Flip Radiant Mint-Gold Geometric Runner -->
+  <g transform="translate(310,162) rotate(-22)">
+    <circle r="54" fill="#6EE7B7" fill-opacity="0.32"/>
+    <rect x="-32" y="-32" width="64" height="64" rx="14" fill="#34D399" stroke="#FFFFFF" stroke-width="5"/>
+    <circle r="18" fill="#FEF08A" stroke="#0F766E" stroke-width="4"/>
+    <circle r="7" fill="#FFFFFF"/>
+  </g>
+  <!-- Luminous Goal Aperture diamond on far right -->
+  <g transform="translate(556,196)">
+    <circle r="34" fill="#67E8F9" fill-opacity="0.34" stroke="#E0F2FE" stroke-width="4"/>
+    <polygon points="0,-20 18,0 0,20 -18,0" fill="#FEF08A"/>
+  </g>
+</svg>
