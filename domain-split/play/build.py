@@ -684,8 +684,9 @@ def by_id_of(rows):
     return {r['id']: r for r in rows}
 
 def updated_text(row):
-    """J92 R6 kept: every row the catalogue marks updated says so on its one grid card."""
-    return 'Updated ' + date_label(row['updated']['date']) if row.get('updated') else ''
+    """J92 R6 kept: every row the catalogue marks updated says so on its one grid card.
+    Ruling 21 Nov: the ribbon and its spoken label carry no date or version text."""
+    return 'Updated' if row.get('updated') else ''
 
 def card_media(row, d, eager, moods):
     load = 'loading="eager"' if eager else 'loading="lazy" decoding="async"'
@@ -694,7 +695,7 @@ def card_media(row, d, eager, moods):
     return ('<span class="card-media thumb"><img src="' + esc(d['picture']) + '" alt="" width="640" height="360" ' + load + '>'
             '<span class="thumb-title" aria-hidden="true">' + esc(shown_title(row)) + '</span>'
             '<span class="mood-chip" aria-hidden="true">' + icon_svg(mood) + '<span>' + esc(moods[mood]['label']) + '</span></span>'
-            + ('<span class="upd-ribbon" data-release="' + esc(row['id']) + '" title="' + esc(updated) + '" aria-hidden="true">Updated</span>' if updated else '')
+            + ('<span class="upd-ribbon" data-release="' + esc(row['id']) + '" aria-hidden="true">' + esc(updated) + '</span>' if updated else '')
             + ('<span class="kb-badge" data-needs-keyboard hidden>' + KEYS_ICON + '<span>Needs keyboard</span></span>' if d['keysOnly'] else '') + '</span>')
 
 def game_card(row, d, eager, moods):

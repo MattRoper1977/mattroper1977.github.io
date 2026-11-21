@@ -130,7 +130,7 @@
   function renderAgain() {
     const rec = recent.map(id => byId.get(id)).filter(g => g && g.group === 'games').slice(0, 3), fav = favourites.map(id => byId.get(id)).filter(g => g && g.group === 'games');
     $('again-section').hidden = !rec.length && !fav.length;
-    $('recent-block').hidden = !rec.length; paint($('recent-grid'), rec.map(g => cardHTML(g, 'sm')).join(''));
+    $('recent-block').hidden = !rec.length; $('clear-again-btn').hidden = !rec.length; paint($('recent-grid'), rec.map(g => cardHTML(g, 'sm')).join(''));
     $('saved-block').hidden = !fav.length; paint($('saved-grid'), fav.map(g => cardHTML(g, 'sm')).join(''));
   }
 
@@ -328,7 +328,8 @@
   $('mood-grid').addEventListener('click', e => { const b = e.target.closest('.mood-btn'); if (b) setMood(b.dataset.mood === activeMood ? 'all' : b.dataset.mood); });
   $('mood-back-btn').addEventListener('click', () => { setMood('all'); document.querySelector('#mood-grid .mood-btn[data-mood="all"]').focus(); });
   $('clear-again-btn').addEventListener('click', () => {
-    recent = []; favourites = []; saveList('recent', []); saveList('favourites', []); renderAll();
+    // Clears the recently opened list only: Saved is the player's own choice and is unsaved with its heart.
+    recent = []; saveList('recent', []); renderAll();
     storageNotice('List cleared. Game saves were not changed.' + (durable ? '' : ' Storage is unavailable.'));
     $('all-games-title').focus();
   });
