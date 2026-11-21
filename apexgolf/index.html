@@ -36,48 +36,56 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 #noScript .baseline{max-width:34rem;text-align:center;border:1px solid var(--line);border-radius:18px;padding:26px;background:var(--panel)}
 #noScript h1{margin:.2rem 0;color:var(--accent-2);font-size:clamp(2rem,10vw,4.4rem)}
 #app{position:fixed;inset:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:var(--ink)}
-#topHud{min-height:54px;padding:calc(7px + var(--safe-t)) calc(10px + var(--safe-r)) 7px calc(10px + var(--safe-l));display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);background:rgba(17,22,41,.96);z-index:5}
-.brand{font-weight:950;letter-spacing:-.035em;white-space:nowrap}.brand span{color:var(--accent-2)}
-.hudGroup{display:flex;align-items:center;gap:7px;margin-left:auto;font-size:12px;font-variant-numeric:tabular-nums;min-width:0}
-.hudChip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 10px;white-space:nowrap}.hudChip b{color:var(--gold)}
+#topHud{min-height:56px;padding:calc(7px + var(--safe-t)) calc(10px + var(--safe-r)) 7px calc(64px + var(--safe-l));display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line);background:rgba(17,22,41,.96);z-index:5;flex-wrap:wrap}
+body:has(#mbmexit-home) #topHud{padding-left:calc(112px + var(--safe-l))}
+.brand{font-weight:950;letter-spacing:-.035em;white-space:nowrap;font-size:15px}.brand span{color:var(--accent-2)}
+.hudGroup{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:14px;font-variant-numeric:tabular-nums;min-width:0;flex-wrap:wrap}
+.hudChip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 10px;white-space:nowrap;font-size:14px}.hudChip b{color:var(--gold)}
+.hudToggle{padding:8px 10px;font-size:14px}
+.hudToggle[aria-pressed="true"]{background:var(--accent);border-color:var(--accent-2);color:#fff}
 #stage{position:relative;min-height:0;overflow:hidden}
 #courseCanvas{display:block;width:100%;height:100%;touch-action:none;background:#163820;outline:none}
 #screenHost{position:absolute;inset:0;z-index:12;pointer-events:none;display:flex;align-items:center;justify-content:center;padding:clamp(10px,3vw,28px)}
 .screen{width:min(620px,100%);max-height:100%;overflow:auto;border:1px solid rgba(184,167,255,.38);border-radius:20px;background:rgba(17,22,41,.96);box-shadow:0 16px 60px rgba(0,0,0,.46);pointer-events:auto;padding:clamp(18px,4vw,30px)}
-.screen h1,.screen h2{margin:.1em 0 .35em;line-height:.95;letter-spacing:-.04em}.screen p{line-height:1.55;color:var(--muted)}
-.screen .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:var(--gold);font-weight:900}
+.screen h1,.screen h2{margin:.1em 0 .35em;line-height:.95;letter-spacing:-.04em}.screen p{line-height:1.55;color:var(--muted);font-size:14px}
+.screen .eyebrow{font-size:14px;text-transform:uppercase;letter-spacing:.14em;color:var(--gold);font-weight:900}
 .screen .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.screen .actions>*{flex:1 1 150px}
 .screen--title{text-align:center}.screen--title h1{font-size:clamp(3rem,14vw,6.5rem)}.screen--title h1 span{display:block;color:var(--accent-2)}
-.screen--title .thesis{font-size:clamp(1rem,3.5vw,1.3rem);color:var(--cream);font-weight:750}.screen--title .seedline{font-size:12px;color:var(--muted)}
+.screen--title .thesis{font-size:clamp(1rem,3.5vw,1.3rem);color:var(--cream);font-weight:750}.screen--title .seedline{font-size:14px;color:var(--muted)}
 .screen--read{border-left:6px solid var(--accent)}.screen--read h2{font-size:clamp(1.7rem,7vw,3rem)}
-.screen--read .readGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}.screen--read .fact{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--panel)}.screen--read .fact span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}.screen--read .fact b{display:block;font-size:18px;color:var(--cream);margin-top:3px}
+.screen--read .readGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}.screen--read .fact{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--panel)}.screen--read .fact span{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}.screen--read .fact b{display:block;font-size:18px;color:var(--cream);margin-top:3px}
 .screen--read label{display:block;font-weight:800;margin:14px 0 6px}.screen--read input[type=number]{width:100%;min-height:48px;border-radius:11px;border:1px solid var(--line);background:#0e1428;color:var(--cream);padding:10px 13px;font-size:18px}
 .screen--result{text-align:center;border-top:6px solid var(--gold)}.screen--result .ratingBig{font-size:clamp(3.2rem,15vw,6.5rem);font-weight:950;color:var(--gold);line-height:1}.screen--result .ratingName{font-weight:900;text-transform:uppercase;letter-spacing:.12em}
-.screen--scorecard{width:min(760px,100%)}.screen--scorecard table{width:100%;border-collapse:collapse;font-size:13px}.screen--scorecard th,.screen--scorecard td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}.screen--scorecard th:first-child,.screen--scorecard td:first-child{text-align:left}.screen--scorecard tfoot{font-weight:900;color:var(--gold)}
+.screen--scorecard{width:min(760px,100%)}.screen--scorecard table{width:100%;border-collapse:collapse;font-size:14px}.screen--scorecard th,.screen--scorecard td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right}.screen--scorecard th:first-child,.screen--scorecard td:first-child{text-align:left}.screen--scorecard tfoot{font-weight:900;color:var(--gold)}
 .screen--error{border:2px solid var(--bad)}
-#playControls{z-index:7;padding:8px calc(10px + var(--safe-r)) calc(8px + var(--safe-b)) calc(10px + var(--safe-l));border-top:1px solid var(--line);background:rgba(17,22,41,.98);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center}
-#clubGroup{display:grid;grid-template-columns:repeat(4,minmax(48px,1fr));gap:7px}.club{background:var(--panel-2);border:1px solid var(--line);padding:7px 5px;font-size:12px}.club[aria-pressed=true]{background:var(--accent);border-color:var(--accent-2)}
-#aimReadout{font-size:12px;min-width:118px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}.aimStrong{display:block;color:var(--cream);font-weight:900;font-size:14px}
-#legend{position:absolute;left:10px;bottom:10px;z-index:6;display:flex;gap:5px;flex-wrap:wrap;max-width:min(72vw,680px);pointer-events:none}.legendItem{font-size:10px;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 8px;background:rgba(17,22,41,.82);color:#fff}.legendItem::before{content:"";display:inline-block;width:11px;height:8px;margin-right:5px;border:1px solid rgba(255,255,255,.45)}.legendItem[data-terrain=rough]::before{background:repeating-linear-gradient(90deg,#1f5b31 0 2px,#163f25 2px 5px)}.legendItem[data-terrain=fairway]::before{background:repeating-linear-gradient(45deg,#4c9a57 0 3px,#68ad68 3px 6px)}.legendItem[data-terrain=green]::before{background:repeating-radial-gradient(circle,#75bd73 0 1px,#579e5b 1px 4px)}.legendItem[data-terrain=sand]::before{background:repeating-linear-gradient(0deg,#d8bf78 0 1px,#bfa45d 1px 4px)}.legendItem[data-terrain=water]::before{background:repeating-linear-gradient(-45deg,#2e83b8 0 2px,#195c8d 2px 6px)}
-#toast{position:absolute;left:50%;top:16px;z-index:30;transform:translateX(-50%);max-width:min(90vw,520px);padding:10px 16px;border-radius:999px;background:#0b1020;border:1px solid var(--line);opacity:0;pointer-events:none;transition:opacity .25s;color:var(--cream);text-align:center;font-size:13px}#toast.show{opacity:1}
+#playControls{z-index:7;padding:8px calc(10px + var(--safe-r)) calc(8px + var(--safe-b)) calc(10px + var(--safe-l));border-top:1px solid var(--line);background:rgba(17,22,41,.98);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+#clubGroup{display:grid;grid-template-columns:repeat(5,minmax(44px,1fr));gap:6px}.club{background:var(--panel-2);border:1px solid var(--line);padding:7px 4px;font-size:13px}.club[aria-pressed=true]{background:var(--accent);border-color:var(--accent-2)}
+#shotDeck{grid-column:1/-1;display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
+#shotDeck input[type=range]{flex:1;min-width:80px;min-height:44px;height:44px;accent-color:var(--gold)}
+#hitShotBtn{background:var(--good);color:#061a0e;font-weight:900;padding:10px 16px;white-space:nowrap}
+#aimReadout{font-size:14px;min-width:118px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}.aimStrong{display:block;color:var(--cream);font-weight:900;font-size:14px}
+#legend{position:absolute;left:10px;bottom:10px;z-index:6;display:flex;gap:5px;flex-wrap:wrap;max-width:min(72vw,680px);pointer-events:none}.legendItem{font-size:13px;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 8px;background:rgba(17,22,41,.86);color:#fff}.legendItem::before{content:"";display:inline-block;width:11px;height:8px;margin-right:5px;border:1px solid rgba(255,255,255,.45)}.legendItem[data-terrain=rough]::before{background:repeating-linear-gradient(90deg,#1f5b31 0 2px,#163f25 2px 5px)}.legendItem[data-terrain=fairway]::before{background:repeating-linear-gradient(45deg,#4c9a57 0 3px,#68ad68 3px 6px)}.legendItem[data-terrain=green]::before{background:repeating-radial-gradient(circle,#75bd73 0 1px,#579e5b 1px 4px)}.legendItem[data-terrain=sand]::before{background:repeating-linear-gradient(0deg,#d8bf78 0 1px,#bfa45d 1px 4px)}.legendItem[data-terrain=water]::before{background:repeating-linear-gradient(-45deg,#2e83b8 0 2px,#195c8d 2px 6px)}
+#toast{position:absolute;left:50%;top:16px;z-index:30;transform:translateX(-50%);max-width:min(90vw,520px);padding:10px 16px;border-radius:999px;background:#0b1020;border:1px solid var(--line);opacity:0;pointer-events:none;transition:opacity .25s;color:var(--cream);text-align:center;font-size:14px}#toast.show{opacity:1}
 #mbmSplash{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:17px;opacity:1;transition:opacity .3s linear;touch-action:manipulation}
 #mbmSplash.out{opacity:0;pointer-events:none}.splashWord{font-size:clamp(23px,6.5vw,42px);font-weight:900}.splashRule{width:min(58vw,300px);height:4px;background:var(--accent);border-radius:999px;transform:scaleX(0);transform-origin:left;animation:splashSweep .7s ease-out .08s forwards}@keyframes splashSweep{to{transform:scaleX(1)}}
-#warningBar{position:absolute;right:10px;top:10px;z-index:7;max-width:min(72vw,440px);background:#3a2028;border:1px solid var(--bad);padding:8px 11px;border-radius:10px;font-size:12px}
+#warningBar{position:absolute;right:10px;top:10px;z-index:7;max-width:min(72vw,440px);background:#3a2028;border:1px solid var(--bad);padding:8px 11px;border-radius:10px;font-size:14px}
 @keyframes softPulse{0%,100%{opacity:.76}50%{opacity:1}}
 .callHint{animation:softPulse 2.4s ease-in-out infinite}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}.splashRule{animation:none;transform:scaleX(1)}.callHint{animation:none}}
-@media (max-width:680px){#topHud{min-height:50px}.hudChip:nth-of-type(3){display:none}.brand{font-size:13px}.hudGroup{gap:4px}.hudChip{padding:5px 7px;font-size:10px}#playControls{grid-template-columns:1fr}#aimReadout{text-align:center;min-width:0}.screen--read .readGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.screen{padding:18px}.legendItem{font-size:9px}}
-.screen--read{margin-top:auto;max-height:min(52vh,var(--readCap,52vh))}@media (min-width:700px) and (min-aspect-ratio:6/5){.screen--read{margin-top:0;margin-left:auto;max-height:min(94vh,var(--readCap,94vh))}}
-@media (max-height:520px){#topHud{display:none}#legend{display:none}.screen{max-height:94vh;padding:14px}.screen p{margin:.5em 0}.screen--title h1{font-size:3rem}.screen--read .readGrid{margin:7px 0}.screen--read .fact{padding:7px}}
+@media (max-width:680px){#topHud{min-height:54px;flex-wrap:nowrap;padding:calc(5px + var(--safe-t)) calc(8px + var(--safe-r)) 5px calc(62px + var(--safe-l))}body:has(#mbmexit-home) #topHud{padding-left:calc(112px + var(--safe-l))}.hudChip:nth-of-type(3){display:none}.brand{font-size:13px}.hudGroup{gap:4px;flex-wrap:nowrap}.hudChip{padding:4px 6px;font-size:12px}.hudToggle{padding:6px 8px;font-size:12px}#playControls{grid-template-columns:1fr}#aimReadout{text-align:center;min-width:0}.screen--read .readGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.screen{padding:16px}.legendItem{font-size:12px}}
+@media (max-width:540px){#topHud .brand{display:none}#topHud .hudChip{padding:4px 5px;font-size:11px}#topHud .hudToggle{padding:6px 6px;font-size:11px}}
+@media (max-width:420px){body:has(#mbmexit-home) #topHud .hudChip:nth-of-type(2){display:none}}
+.screen--read{margin-top:auto;max-height:min(52vh,var(--readCap,52vh))}@media (min-width:700px) and (min-aspect-ratio:6/5){.screen--read{margin-top:0;margin-left:auto;max-height:min(94vh,var(--readCap,94vh))}}@media (min-width:700px) and (max-width:960px) and (min-aspect-ratio:6/5){.screen--read{width:min(400px,48vw)}}
+@media (max-height:520px){#topHud{min-height:48px;padding:3px calc(8px + var(--safe-r)) 3px calc(62px + var(--safe-l));flex-wrap:nowrap}body:has(#mbmexit-home) #topHud{padding-left:calc(112px + var(--safe-l))}.brand{font-size:13px}.hudChip{padding:4px 7px;font-size:12px}.hudToggle{padding:6px 8px;font-size:12px}#legend{display:none}#playControls{padding:4px calc(8px + var(--safe-r)) calc(4px + var(--safe-b)) calc(8px + var(--safe-l));gap:4px;max-width:100%}#clubGroup .club{min-height:44px;padding:4px 3px;font-size:12px}#shotDeck{gap:4px}#shotDeck button,#shotDeck input[type=range]{min-height:44px;height:44px}#aimReadout{font-size:12px;min-width:96px}#screenHost{padding:8px}.screen{max-height:calc(100dvh - 64px);padding:12px}.screen p{margin:.4em 0}.screen--title h1{font-size:2.4rem}.screen--read .readGrid{margin:6px 0}.screen--read .fact{padding:6px}}
 
 /* ===== V6 ASCENSION PRESENTATION LAYER — AG physics remains sealed ===== */
 body.v6-calm *,body.v6-calm *::before,body.v6-calm *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
 #v6GolfAdvisory{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
-#v6GolfBrand{position:absolute;z-index:11;left:calc(70px + env(safe-area-inset-left,0px));top:calc(9px + env(safe-area-inset-top,0px));padding:5px 9px;border:1px solid #85f0d655;border-radius:999px;background:#071326dc;color:#85f0d6;font:900 9px/1.15 system-ui;letter-spacing:.12em;pointer-events:none;box-shadow:0 4px 16px #0008}
+#v6GolfBrand{position:absolute;z-index:11;right:calc(10px + env(safe-area-inset-right,0px));left:auto;top:calc(9px + env(safe-area-inset-top,0px));padding:5px 9px;border:1px solid #85f0d655;border-radius:999px;background:#071326dc;color:#85f0d6;font:900 11px/1.15 system-ui;letter-spacing:.1em;pointer-events:none;box-shadow:0 4px 16px #0008}
 #v6GolfBrand b{color:#ffd36b}
-#v6LieStatus{position:absolute;z-index:9;left:calc(10px + env(safe-area-inset-left,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));max-width:min(78vw,340px);padding:7px 10px;border:1px solid #d8f6ee42;border-radius:10px;background:#071326df;color:#d8f6ee;font:800 10px/1.3 system-ui;pointer-events:none;opacity:0;transition:opacity .15s}
+#v6LieStatus{position:absolute;z-index:9;left:calc(10px + env(safe-area-inset-left,0px));bottom:calc(44px + env(safe-area-inset-bottom,0px));max-width:min(78vw,420px);padding:7px 10px;border:1px solid #d8f6ee42;border-radius:10px;background:#071326df;color:#d8f6ee;font:800 13px/1.3 system-ui;pointer-events:none;opacity:0;transition:opacity .15s}
 #v6LieStatus.on{opacity:1}
-#v6GolfClutch{position:absolute;z-index:12;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:none;padding:7px 13px;border:1px solid #ffd36b;border-radius:999px;background:#13223ff0;color:#fff4be;font:900 10px/1 system-ui;letter-spacing:.14em;pointer-events:none;box-shadow:0 0 24px #ffd36b66}
+#v6GolfClutch{position:absolute;z-index:12;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:none;padding:7px 13px;border:1px solid #ffd36b;border-radius:999px;background:#13223ff0;color:#fff4be;font:900 13px/1 system-ui;letter-spacing:.12em;pointer-events:none;box-shadow:0 0 24px #ffd36b66}
 #v6GolfClutch.on{display:block;animation:v6PuttPulse .5s ease-in-out infinite alternate}
 @keyframes v6PuttPulse{to{transform:translateX(-50%) scale(1.05);box-shadow:0 0 34px #ffd36b99}}
 #v6GolfFly{position:absolute;inset:0;z-index:40;display:none;overflow:hidden;background:#03100bd4;isolation:isolate}
@@ -92,11 +100,13 @@ body.v6-calm *,body.v6-calm *::before,body.v6-calm *::after{animation-duration:.
 .v6-putt-clutch #stage{animation:v6GolfShake .34s ease-out}@keyframes v6GolfShake{0%,100%{transform:none}30%{transform:translate(3px,-2px) scale(1.006)}60%{transform:translate(-2px,1px) scale(1.008)}}
 .screen[role="dialog"]:focus{outline:none}
 @media (orientation:portrait){
-  #stage{padding-bottom:calc(118px + env(safe-area-inset-bottom,0px))}
-  #playControls{position:fixed;left:0;right:0;bottom:0;width:100%;min-height:110px;padding:8px calc(10px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) calc(10px + env(safe-area-inset-left,0px));background:linear-gradient(180deg,#07132655,#050d18fa 24%);border-top:1px solid #85f0d63b;border-radius:18px 18px 0 0;box-shadow:0 -12px 34px #0008;z-index:20}
-  #v6LieStatus{bottom:calc(120px + env(safe-area-inset-bottom,0px))}#v6GolfBrand{left:calc(10px + env(safe-area-inset-left,0px));top:calc(61px + env(safe-area-inset-top,0px))}
+  #stage{padding-bottom:calc(168px + env(safe-area-inset-bottom,0px))}
+  #playControls{position:fixed;left:0;right:0;bottom:0;width:100%;min-height:158px;padding:8px calc(10px + env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) calc(10px + env(safe-area-inset-left,0px));background:linear-gradient(180deg,#07132655,#050d18fa 20%);border-top:1px solid #85f0d63b;border-radius:18px 18px 0 0;box-shadow:0 -12px 34px #0008;z-index:20}
+  #legend{bottom:calc(170px + env(safe-area-inset-bottom,0px))}
+  #v6LieStatus{bottom:calc(228px + env(safe-area-inset-bottom,0px))}
+  #v6GolfBrand{display:none}
 }
-@media (orientation:landscape){#playControls{max-width:620px;margin:0 auto}#v6GolfBrand{left:calc(118px + env(safe-area-inset-left,0px))}}
+@media (orientation:landscape){#playControls{max-width:740px;margin:0 auto}#v6GolfBrand{display:none}}
 @media (pointer:coarse){button,input,select{min-width:44px;min-height:44px}.club{min-height:48px}}
 @media (prefers-reduced-motion:reduce){#v6GolfFly::before,#v6GolfFly::after,.v6GolfStar,#v6GolfClutch.on,.v6-putt-clutch #stage{animation:none!important}.v6GolfStar{display:none}}
 </style>
@@ -114,6 +124,8 @@ body.v6-calm *,body.v6-calm *::before,body.v6-calm *::after{animation-duration:.
       <div class="hudChip">Hole <b id="hudHole">1 / 9</b></div>
       <div class="hudChip">Strokes <b id="hudStrokes">0</b></div>
       <div class="hudChip">To par <b id="hudPar">E</b></div>
+      <button id="calmBtn" class="secondary hudToggle" type="button" aria-pressed="false" aria-label="Toggle Calm mode">Calm</button>
+      <button id="muteBtn" class="secondary hudToggle" type="button" aria-pressed="false" aria-label="Toggle audio mute">🔊</button>
       <button id="pauseBtn" class="ghost" type="button" aria-label="Open menu">☰</button>
     </div>
   </header>
@@ -138,8 +150,15 @@ body.v6-calm *,body.v6-calm *::before,body.v6-calm *::after{animation-duration:.
       <button class="club" type="button" data-club="1" aria-pressed="false">90 m</button>
       <button class="club" type="button" data-club="2" aria-pressed="false">140 m</button>
       <button class="club" type="button" data-club="3" aria-pressed="false">200 m</button>
+      <button class="club" type="button" data-club="4" aria-pressed="false">Putter</button>
     </div>
-    <div id="aimReadout"><span class="aimStrong">Pull back to aim</span><span>Keys 1–4 · arrows · Enter</span></div>
+    <div id="aimReadout"><span class="aimStrong">Pull back to aim</span><span>Drag anywhere or use controls</span></div>
+    <div id="shotDeck" aria-label="Aim and power controls">
+      <button id="aimLeftBtn" class="secondary" type="button" aria-label="Aim left">◀</button>
+      <button id="aimRightBtn" class="secondary" type="button" aria-label="Aim right">▶</button>
+      <input id="powerRange" type="range" min="8" max="100" value="64" aria-label="Shot power percentage">
+      <button id="hitShotBtn" type="button">Hit Shot</button>
+    </div>
   </footer>
   <div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 </div>
@@ -225,7 +244,8 @@ var CLUBS = [
   { id: '45',  label: '45 m',  carry: 45,  speed: 24, loft: 38, air: 0.82, roll: 0.40 },
   { id: '90',  label: '90 m',  carry: 90,  speed: 34, loft: 31, air: 0.68, roll: 0.58 },
   { id: '140', label: '140 m', carry: 140, speed: 43, loft: 25, air: 0.56, roll: 0.78 },
-  { id: '200', label: '200 m', carry: 200, speed: 52, loft: 20, air: 0.46, roll: 0.96 }
+  { id: '200', label: '200 m', carry: 200, speed: 52, loft: 20, air: 0.46, roll: 0.96 },
+  { id: 'putt', label: 'Putter', carry: 18, speed: 12, loft: 0, air: 0.00, roll: 0.72 }
 ];
 var PHYSICS_FORCES = ['gravity','wind','slope','terrainDrag','cup','boundaries','trees','bumpers','water'];
 var FORCE_RENDERERS = {
@@ -371,7 +391,7 @@ function stepBall(ball,hole,dt){
   dt=finite(dt,DT);ball.lastRestitution=null;ball.penaltyEvent=false;ball.elapsed+=dt;if(ball.cupCooldown>0)ball.cupCooldown-=dt;
   var prev={x:ball.x,y:ball.y,z:ball.z},airborne=ball.z>0||Math.abs(ball.vz)>0.001;
   if(airborne){
-    var club=CLUBS[clamp(Math.round(ball.club||0),0,3)],windK=club.air*0.38;
+    var club=CLUBS[clamp(Math.round(ball.club||0),0,CLUBS.length-1)],windK=club.air*0.38;
     ball.vx+=(hole.wind.x-ball.vx*0.06)*windK*dt;ball.vy+=(hole.wind.y-ball.vy*0.06)*windK*dt;ball.vz-=G*dt;
     ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;ball.z+=ball.vz*dt;
     if(ball.z<=0){
@@ -383,7 +403,7 @@ function stepBall(ball,hole,dt){
     }
   }else{
     var p0={x:ball.x,y:ball.y},s=slopeAcceleration(hole,ball);ball.vx+=s.x*dt;ball.vy+=s.y*dt;
-    var tr=terrainAt(hole,ball),drag=TERRAIN[tr].drag,clubRoll=CLUBS[clamp(Math.round(ball.club||0),0,3)].roll;
+    var tr=terrainAt(hole,ball),drag=TERRAIN[tr].drag,clubRoll=CLUBS[clamp(Math.round(ball.club||0),0,CLUBS.length-1)].roll;
     var damp=Math.exp(-drag*dt/(0.55+clubRoll));ball.vx*=damp;ball.vy*=damp;
     ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;
     var p1={x:ball.x,y:ball.y};
@@ -526,27 +546,45 @@ var Store={
   write:function(which,value){try{localStorage.setItem(STORAGE_KEYS[which],JSON.stringify(value));return true;}catch(e){return false;}},
   bytes:function(which){try{return localStorage.getItem(STORAGE_KEYS[which])||null;}catch(e){return null;}}
 };
+function readSettings(){return Store.read('settings',{calm:false,mute:false});}
+function writeSettings(s){Store.write('settings',s);applySettingsUI(s);}
+function applySettingsUI(s){
+  s=s||readSettings();
+  var osRed=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var isCalm=!!s.calm||osRed;
+  window.__AG_CALM=isCalm; window.__AG_MUTE=!!s.mute;
+  document.body.classList.toggle('v6-calm',isCalm);
+  var cb=$('calmBtn'), mb=$('muteBtn');
+  if(cb){cb.setAttribute('aria-pressed',String(!!s.calm));cb.textContent='Calm';}
+  if(mb){mb.setAttribute('aria-pressed',String(!!s.mute));mb.textContent=s.mute?'🔇':'🔊';mb.setAttribute('aria-label',s.mute?'Unmute audio':'Mute audio');}
+}
 function progress(){return Store.read('progress',{bestRound:0,bestHole:0,rounds:0});}
-function saveProgress(roundRating){var p=progress();p.bestRound=Math.max(p.bestRound||0,roundRating||0);p.rounds=(p.rounds||0)+1;Store.write('progress',p);}
+function saveProgress(roundRating,holeRating){
+  var p=progress();
+  if(typeof roundRating==='number'){p.bestRound=Math.max(p.bestRound||0,roundRating||0);p.rounds=(p.rounds||0)+1;}
+  if(typeof holeRating==='number'){p.bestHole=Math.max(p.bestHole||0,holeRating||0);}
+  Store.write('progress',p);
+}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-function renderTitleMarkup(mode){var title=AG.gameTitle(),parts=title.split(/\s+/),lead=parts.shift()||title,tail=parts.join(' ');return '<section class="screen screen--title" data-mode="'+esc(mode)+'" data-rendered-title="'+esc(title)+'"><div class="eyebrow">Read it · call it · play it</div><h1>'+esc(lead.toUpperCase())+'<span>'+esc(tail.toUpperCase())+'</span></h1><p class="thesis">The best score is not always the best read. Call how many strokes you will need, then prove how well you know your own game.</p><p>Nine seeded holes. Honest wind, visible slope, four carry distances, no hidden force fields.</p><p class="seedline">Course seed <b>'+state.seed+'</b> · '+(mode==='fallback'?'Canvas 2D is unavailable on this device.':'works offline')+'</p><div class="actions">'+(mode==='fallback'?'<a href="/games/" class="buttonLink"><button type="button">Back to the arcade</button></a>':'<button type="button" id="startBtn">Read hole 1</button><button type="button" id="shareBtn" class="secondary">Copy hole link</button>')+'</div></section>';}
-function showTitle(){state.phase='title';$('playControls').classList.add('hidden');$('screenHost').innerHTML=renderTitleMarkup('title');$('startBtn').onclick=startRound;$('shareBtn').onclick=copyLink;updateHud();}
+function renderTitleMarkup(mode){var title=AG.gameTitle(),parts=title.split(/\s+/),lead=parts.shift()||title,tail=parts.join(' ');return '<section class="screen screen--title" data-mode="'+esc(mode)+'" data-rendered-title="'+esc(title)+'"><div class="eyebrow">Read it · call it · play it</div><h1>'+esc(lead.toUpperCase())+'<span>'+esc(tail.toUpperCase())+'</span></h1><p class="thesis">The best score is not always the best read. Call how many strokes you will need, then prove how well you know your own game.</p><p>Nine seeded holes. Honest wind, visible slope, five clubs including Putter, no hidden force fields.</p><p class="seedline">Course seed <b>'+state.seed+'</b> · '+(mode==='fallback'?'Canvas 2D is unavailable on this device.':'works offline')+'</p><div class="actions">'+(mode==='fallback'?'<a href="/games/" class="buttonLink"><button type="button">Back to the arcade</button></a>':'<button type="button" id="startBtn">Read hole 1</button><button type="button" id="shareBtn" class="secondary">Copy hole link</button>')+'</div></section>';}
+function showTitle(){state.phase='title';state.paused=false;state.lastHoleResult=null;$('playControls').classList.add('hidden');$('screenHost').innerHTML=renderTitleMarkup('title');$('startBtn').onclick=startRound;$('shareBtn').onclick=copyLink;updateHud();}
 function noCanvasFallback(){state.phase='fallback';$('app').classList.remove('hidden');$('screenHost').innerHTML=renderTitleMarkup('fallback');$('courseCanvas').classList.add('hidden');$('playControls').classList.add('hidden');}
 function showWarning(msg){var el=$('warningBar');if(!msg){el.classList.add('hidden');el.textContent='';return;}el.textContent=msg;el.classList.remove('hidden');}
 function readFacts(){var h=state.hole,w=h.wind.speed;return '<div class="readGrid"><div class="fact"><span>Par</span><b>'+h.par+'</b></div><div class="fact"><span>Length</span><b>'+h.length+' m</b></div><div class="fact"><span>Wind</span><b>'+w.toFixed(1)+' m/s</b></div><div class="fact"><span>Slope</span><b>'+h.slope.strength.toFixed(1)+'</b></div><div class="fact"><span>Water</span><b>'+(h.water.length?'Yes':'No')+'</b></div><div class="fact"><span>Bumpers</span><b>'+h.bumpers.length+'</b></div></div>';}
 function showRead(first){state.phase=first?'read-call':'read-next';$('playControls').classList.add('hidden');var h=state.hole;var call=first?'<label for="callInput">Call your stroke count (1–20)</label><input id="callInput" type="number" inputmode="numeric" min="1" max="20" value="'+AG.clamp(h.par,1,20)+'" aria-describedby="callHelp"><p id="callHelp" class="callHint">An exact call earns the strongest rating. Calls above par + 3 are capped at 60, even when exact.</p>':'';var status=first?'Study the complete hole before making your call.':'The ball is at rest. Read the whole hole again before stroke '+(state.strokes+1)+'.';$('screenHost').innerHTML='<section class="screen screen--read"><div class="eyebrow">Hole '+(state.holeIndex+1)+' of 9</div><h2>'+esc(h.name)+'</h2><p>'+status+'</p>'+readFacts()+call+'<div class="actions"><button type="button" id="playStrokeBtn">'+(first?'Lock call & play':'Play next stroke')+'</button><button type="button" id="copyReadBtn" class="secondary">Copy hole link</button></div></section>';syncReadInset();$('copyReadBtn').onclick=copyLink;$('playStrokeBtn').onclick=function(){if(first){var n=Number($('callInput').value);if(!isFinite(n)||n<1||n>20){toast('Choose a call from 1 to 20.');$('callInput').focus();return;}state.called=Math.round(n);}beginAim();};renderNow();}
-function beginAim(){state.phase='aim';$('screenHost').innerHTML='';AG.Render.setBottomInset(0);AG.Render.setRightInset(0);$('playControls').classList.remove('hidden');$('courseCanvas').focus();updateAimReadout();renderNow();announce('Stroke '+(state.strokes+1)+'. Choose a carry distance, pull back from the ball and release.');}
-function finishHole(){var actual=state.strokes+state.penalties,rating=AG.callRating(state.called,actual,state.hole.par),toPar=actual-state.hole.par;state.rows.push({hole:state.holeIndex+1,name:state.hole.name,par:state.hole.par,called:state.called,strokes:state.strokes,penalties:state.penalties,actual:actual,toPar:toPar,rating:rating});state.roundToPar+=toPar;state.phase='hole-result';$('playControls').classList.add('hidden');var msg=AG.ratingAnnouncement(state.called,actual,state.hole.par);announce(msg);$('screenHost').innerHTML='<section class="screen screen--result"><div class="eyebrow">Hole complete · '+AG.signedScore(toPar)+'</div><div class="ratingBig">'+rating+'</div><div class="ratingName">'+AG.RATING_NAME+'</div><p>You called <b>'+state.called+'</b> and took <b>'+actual+'</b> including '+state.penalties+' '+(state.penalties===1?'penalty':'penalties')+'.</p><div class="actions"><button type="button" id="nextHoleBtn">'+(state.holeIndex===8?'View scorecard':'Read next hole')+'</button></div></section>';$('nextHoleBtn').onclick=function(){if(state.holeIndex===8)showScorecard();else{state.holeIndex++;startHole();}};updateHud();}
-function showScorecard(){state.phase='scorecard';var rr=AG.roundCallRating(state.rows),total=0,par=0,body='';for(var i=0;i<state.rows.length;i++){var r=state.rows[i];total+=r.actual;par+=r.par;body+='<tr><td>'+r.hole+'. '+esc(r.name)+'</td><td>'+r.par+'</td><td>'+r.called+'</td><td>'+r.actual+'</td><td>'+AG.signedScore(r.toPar)+'</td><td>'+r.rating+'</td></tr>';}saveProgress(rr);$('screenHost').innerHTML='<section class="screen screen--scorecard"><div class="eyebrow">Nine-hole scorecard</div><h2>Round '+AG.signedScore(total-par)+'</h2><p>Round '+AG.RATING_NAME+': <b>'+rr+' / 100</b></p><table><thead><tr><th>Hole</th><th>Par</th><th>Call</th><th>Took</th><th>±</th><th>Read</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><td>Total</td><td>'+par+'</td><td>—</td><td>'+total+'</td><td>'+AG.signedScore(total-par)+'</td><td>'+rr+'</td></tr></tfoot></table><div class="actions"><button type="button" id="againBtn">New seeded round</button><button type="button" id="homeBtn" class="secondary">Home</button></div></section>';$('againBtn').onclick=function(){state.seed=(Math.imul(state.seed,1664525)+1013904223)>>>0;history.replaceState(null,'',AG.formatHash(state.seed));startRound();};$('homeBtn').onclick=showTitle;announce('Round complete. '+AG.RATING_NAME+' '+rr+' out of 100.');}
+function beginAim(){state.phase='aim';$('screenHost').innerHTML='';AG.Render.setBottomInset(0);AG.Render.setRightInset(0);$('playControls').classList.remove('hidden');$('courseCanvas').focus();updateAimReadout();renderNow();announce('Stroke '+(state.strokes+1)+'. Choose a club, drag anywhere to aim or use the shot controls.');}
+function renderHoleResult(){var r=state.lastHoleResult;if(!r)return;state.phase='hole-result';$('playControls').classList.add('hidden');$('screenHost').innerHTML='<section class="screen screen--result"><div class="eyebrow">Hole complete · '+AG.signedScore(r.toPar)+'</div><div class="ratingBig">'+r.rating+'</div><div class="ratingName">'+AG.RATING_NAME+'</div><p>You called <b>'+r.called+'</b> and took <b>'+r.actual+'</b> including '+r.penalties+' '+(r.penalties===1?'penalty':'penalties')+'.</p><div class="actions"><button type="button" id="nextHoleBtn">'+(state.holeIndex===8?'View scorecard':'Read next hole')+'</button></div></section>';$('nextHoleBtn').onclick=function(){if(state.holeIndex===8)showScorecard();else{state.holeIndex++;startHole();}};updateHud();}
+function finishHole(){var actual=state.strokes+state.penalties,rating=AG.callRating(state.called,actual,state.hole.par),toPar=actual-state.hole.par;var row={hole:state.holeIndex+1,name:state.hole.name,par:state.hole.par,called:state.called,strokes:state.strokes,penalties:state.penalties,actual:actual,toPar:toPar,rating:rating};state.rows.push(row);state.lastHoleResult=row;state.roundToPar+=toPar;saveProgress(undefined,rating);var msg=AG.ratingAnnouncement(state.called,actual,state.hole.par);announce(msg);renderHoleResult();}
+function showScorecard(){state.phase='scorecard';state.lastHoleResult=null;var rr=AG.roundCallRating(state.rows),total=0,par=0,body='';for(var i=0;i<state.rows.length;i++){var r=state.rows[i];total+=r.actual;par+=r.par;body+='<tr><td>'+r.hole+'. '+esc(r.name)+'</td><td>'+r.par+'</td><td>'+r.called+'</td><td>'+r.actual+'</td><td>'+AG.signedScore(r.toPar)+'</td><td>'+r.rating+'</td></tr>';}saveProgress(rr);$('screenHost').innerHTML='<section class="screen screen--scorecard"><div class="eyebrow">Nine-hole scorecard</div><h2>Round '+AG.signedScore(total-par)+'</h2><p>Round '+AG.RATING_NAME+': <b>'+rr+' / 100</b></p><table><thead><tr><th>Hole</th><th>Par</th><th>Call</th><th>Took</th><th>±</th><th>Read</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><td>Total</td><td>'+par+'</td><td>—</td><td>'+total+'</td><td>'+AG.signedScore(total-par)+'</td><td>'+rr+'</td></tr></tfoot></table><div class="actions"><button type="button" id="againBtn">New seeded round</button><button type="button" id="homeBtn" class="secondary">Home</button></div></section>';$('againBtn').onclick=function(){state.seed=(Math.imul(state.seed,1664525)+1013904223)>>>0;history.replaceState(null,'',AG.formatHash(state.seed));startRound();};$('homeBtn').onclick=showTitle;announce('Round complete. '+AG.RATING_NAME+' '+rr+' out of 100.');updateHud();}
 function startRound(){state.course=AG.generateCourse(state.seed);state.holeIndex=0;state.rows=[];state.roundToPar=0;startHole();}
 function startHole(){state.hole=state.course.holes[state.holeIndex];state.ball=AG.makeBall(state.hole);state.prevBall=null;state.strokes=0;state.penalties=0;state.called=state.hole.par;state.club=state.hole.length<90?0:(state.hole.length<145?1:(state.hole.length<190?2:3));state.aim={angle:Math.atan2(state.hole.cup.y-state.ball.y,state.hole.cup.x-state.ball.x),power:.64};setClub(state.club);showRead(true);updateHud();}
-function setClub(i){state.club=AG.clamp(Math.round(i),0,3);Array.prototype.forEach.call(document.querySelectorAll('.club'),function(b){b.setAttribute('aria-pressed',Number(b.dataset.club)===state.club?'true':'false');});updateAimReadout();}
-function updateAimReadout(){var c=AG.CLUBS[state.club],p=Math.round(state.aim.power*100);$('aimReadout').innerHTML='<span class="aimStrong">'+c.label+' · '+p+'%</span><span>Keys 1–4 · arrows · Enter</span>';}
+function setClub(i){state.club=AG.clamp(Math.round(i),0,AG.CLUBS.length-1);Array.prototype.forEach.call(document.querySelectorAll('.club'),function(b){b.setAttribute('aria-pressed',Number(b.dataset.club)===state.club?'true':'false');});updateAimReadout();}
+function updateAimReadout(){var c=AG.CLUBS[state.club]||AG.CLUBS[0],p=Math.round(state.aim.power*100);$('aimReadout').innerHTML='<span class="aimStrong">'+c.label+' · '+p+'%</span><span>Drag or use controls · Keys 1–5</span>';var pr=$('powerRange');if(pr&&document.activeElement!==pr)pr.value=String(p);}
 function playKeyboardStroke(){if(state.phase!=='aim'||state.ball.moving)return;strike(state.aim.angle,state.aim.power);}
 function strike(angle,power){if(state.phase!=='aim'||state.ball.moving)return;state.strokes++;state.prevBall=AG.cloneBall(state.ball);AG.launch(state.ball,state.hole,angle,power,state.club);state.phase='moving';$('playControls').classList.add('hidden');announce('Stroke '+state.strokes+' played.');updateHud();}
-function afterRest(){if(state.ball.penaltyEvent){state.penalties++;toast('Water: one penalty stroke. Ball dropped at the last safe position.');state.ball.penaltyEvent=false;}if(state.ball.sunk){finishHole();return;}if(state.ball.cupRejected){toast('Too quick for the cup — lip-out.');state.ball.cupRejected=false;}showRead(false);updateHud();}
+function afterRest(){if(state.ball.penaltyEvent){state.penalties++;toast('Water: one penalty stroke. Ball dropped at the last safe position.');state.ball.penaltyEvent=false;}if(state.ball.sunk){finishHole();return;}if(state.ball.cupRejected){toast('Too quick for the cup — lip-out.');state.ball.cupRejected=false;}var dx=state.hole.cup.x-state.ball.x,dy=state.hole.cup.y-state.ball.y,rem=AG.hypot2(dx,dy);state.aim.angle=Math.atan2(dy,dx);if(AG.terrainAt(state.hole,state.ball)==='green'||rem<20){setClub(4);state.aim.power=AG.clamp(rem/18,.22,.92);}else{state.aim.power=AG.clamp(rem/(AG.CLUBS[state.club].carry||90),.25,.88);}showRead(false);updateHud();}
 function update(dt){if(state.paused||!state.ball||state.phase!=='moving')return;var was=state.ball.moving;state.prevBall=AG.cloneBall(state.ball);AG.stepBall(state.ball,state.hole,dt);if(was&&!state.ball.moving)afterRest();}
-function updateHud(){if(!$('hudHole'))return;$('hudHole').textContent=(state.holeIndex+1)+' / 9';$('hudStrokes').textContent=String((state.strokes||0)+(state.penalties||0));$('hudPar').textContent=AG.signedScore(state.roundToPar||0);}
+function updateHud(){if(!$('hudHole'))return;$('hudHole').textContent=(state.holeIndex+1)+' / 9';$('hudStrokes').textContent=String((state.strokes||0)+(state.penalties||0));$('hudPar').textContent=AG.signedScore(state.roundToPar||0);var pb=$('pauseBtn');if(pb)pb.disabled=(state.phase==='title'||state.phase==='scorecard');}
 /* AGX-1 A-3: keep the renderer's bottom inset equal to the height the docked
    read panel actually occupies, so the hole is fit above it. Measured, not
    assumed, so it survives any change to the panel's content. Zero in every
@@ -559,15 +597,15 @@ function syncReadInset(){
     not the defect's. */
  var el=reading?$('screenHost').querySelector('.screen--read'):null;
  if(!el){AG.Render.setBottomInset(0);if(AG.Render.setRightInset)AG.Render.setRightInset(0);return;}
- var stage=$('stage').getBoundingClientRect(),pr=el.getBoundingClientRect();
+ var cv=$('courseCanvas'),cr=(cv||$('stage')).getBoundingClientRect(),pr=el.getBoundingClientRect();
  /* Which axis the panel docked on is a CSS decision, so read it back from
     the rendered box rather than duplicating the breakpoint in JS — two
     copies of one truth is how this estate breaks things. A side dock
     leaves a tall band and keeps the hole large on wide screens; a bottom
     dock would shrink it to about 28% of canvas width there. */
- var side=pr.left-stage.left>Math.max(24,stage.width*0.12);
- if(side){AG.Render.setRightInset(Math.max(0,stage.right-pr.left)+10);AG.Render.setBottomInset(0);}
- else{AG.Render.setBottomInset(Math.max(0,stage.bottom-pr.top)+10);AG.Render.setRightInset(0);}
+ var side=pr.left-cr.left>Math.max(24,cr.width*0.12);
+ if(side){AG.Render.setRightInset(Math.max(0,cr.right-pr.left)+10);AG.Render.setBottomInset(0);}
+ else{AG.Render.setBottomInset(Math.max(0,cr.bottom-pr.top)+10);AG.Render.setRightInset(0);}
 }
 function renderNow(){if(!state.hole)return;var shown=state.ball;if(state.phase==='moving'&&state.ball&&state.prevBall){var a=AG.clamp(state.accumulator/AG.DT,0,1);shown=AG.cloneBall(state.ball);shown.x=AG.lerp(state.prevBall.x,state.ball.x,a);shown.y=AG.lerp(state.prevBall.y,state.ball.y,a);shown.z=AG.lerp(state.prevBall.z,state.ball.z,a);}state.renderEvidence=AG.Render.render(state.hole,shown,state.aim,state.phase);}
 function loop(now){var sec=now/1000;if(!state.lastFrame)state.lastFrame=sec;var frame=Math.min(AG.MAX_FRAME_DELTA,Math.max(0,sec-state.lastFrame));state.lastFrame=sec;state.accumulator+=frame;var n=0;while(state.accumulator>=AG.DT&&n<AG.MAX_SUBSTEPS){update(AG.DT);state.accumulator-=AG.DT;n++;}renderNow();requestAnimationFrame(loop);}
@@ -575,13 +613,46 @@ function announce(msg){var el=$('live');el.textContent='';setTimeout(function(){
 function toast(msg){var el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.classList.remove('show');},2200);}
 function copyLink(){var url=location.origin+location.pathname+AG.formatHash(state.seed);function done(){toast('Hole link copied: '+AG.formatHash(state.seed));}if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(url).then(done,function(){fallbackCopy(url);});else fallbackCopy(url);}
 function fallbackCopy(text){var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);toast('Hole link ready: '+AG.formatHash(state.seed));}
-function input(){var cv=$('courseCanvas');Array.prototype.forEach.call(document.querySelectorAll('.club'),function(b){b.onclick=function(){setClub(Number(b.dataset.club));};});
-  function down(e){if(state.phase!=='aim'||state.ball.moving)return;var p=AG.Render.pointer(e),wp=AG.Render.C(p),d=AG.hypot2(wp.x-state.ball.x,wp.y-state.ball.y);if(d>Math.max(8,AG.BALL_RADIUS*5))return;state.drag={id:e.pointerId,start:p,now:p};if(cv.setPointerCapture)try{cv.setPointerCapture(e.pointerId);}catch(x){}e.preventDefault();}
-  function move(e){if(!state.drag||e.pointerId!==state.drag.id)return;state.drag.now=AG.Render.pointer(e);var b=AG.Render.W(state.ball),dx=b.x-state.drag.now.x,dy=b.y-state.drag.now.y;state.aim.angle=Math.atan2(dy,dx);state.aim.power=AG.clamp(AG.hypot2(dx,dy)/180,.08,1);updateAimReadout();e.preventDefault();}
-  function up(e){if(!state.drag||e.pointerId!==state.drag.id)return;move(e);var drag=state.drag;state.drag=null;var dist=AG.hypot2(drag.now.x-drag.start.x,drag.now.y-drag.start.y);if(dist>=18)strike(state.aim.angle,state.aim.power);else toast('Pull back a little further to play.');e.preventDefault();}
+function input(){var cv=$('courseCanvas'),pauseReturn=null,prevPhase=null;
+  Array.prototype.forEach.call(document.querySelectorAll('.club'),function(b){b.onclick=function(){setClub(Number(b.dataset.club));};});
+  function toggleCalm(){var s=readSettings();s.calm=!s.calm;writeSettings(s);}
+  function toggleMute(){var s=readSettings();s.mute=!s.mute;writeSettings(s);}
+  if($('calmBtn'))$('calmBtn').onclick=toggleCalm;
+  if($('muteBtn'))$('muteBtn').onclick=toggleMute;
+  if($('aimLeftBtn'))$('aimLeftBtn').onclick=function(){if(state.phase==='aim'){state.aim.angle-=.075;updateAimReadout();}};
+  if($('aimRightBtn'))$('aimRightBtn').onclick=function(){if(state.phase==='aim'){state.aim.angle+=.075;updateAimReadout();}};
+  if($('powerRange'))$('powerRange').oninput=function(){if(state.phase==='aim'){state.aim.power=AG.clamp(Number(this.value)/100,.08,1);updateAimReadout();}};
+  if($('hitShotBtn'))$('hitShotBtn').onclick=playKeyboardStroke;
+  function down(e){if(state.phase!=='aim'||state.ball.moving)return;var p=AG.Render.pointer(e),b=AG.Render.W(state.ball),dpr=Math.min(window.devicePixelRatio||1,2),nearBall=AG.hypot2(p.x-b.x,p.y-b.y)<=Math.max(28*dpr,AG.BALL_RADIUS*5*dpr);state.drag={id:e.pointerId,start:p,now:p,anchor:nearBall?b:p};if(cv.setPointerCapture)try{cv.setPointerCapture(e.pointerId);}catch(x){}e.preventDefault();}
+  function move(e){if(!state.drag||e.pointerId!==state.drag.id)return;state.drag.now=AG.Render.pointer(e);var anc=state.drag.anchor||state.drag.start,dx=anc.x-state.drag.now.x,dy=anc.y-state.drag.now.y;if(AG.hypot2(dx,dy)>4){state.aim.angle=Math.atan2(dy,dx);state.aim.power=AG.clamp(AG.hypot2(dx,dy)/180,.08,1);updateAimReadout();}e.preventDefault();}
+  function up(e){if(!state.drag||e.pointerId!==state.drag.id)return;move(e);var drag=state.drag;state.drag=null;var dist=AG.hypot2(drag.now.x-drag.start.x,drag.now.y-drag.start.y);if(dist>=18)strike(state.aim.angle,state.aim.power);else toast('Pull back further or tap Hit Shot.');e.preventDefault();}
   cv.addEventListener('pointerdown',down,{passive:false});cv.addEventListener('pointermove',move,{passive:false});cv.addEventListener('pointerup',up,{passive:false});cv.addEventListener('pointercancel',function(e){if(state.drag&&e.pointerId===state.drag.id)state.drag=null;},{passive:false});cv.addEventListener('contextmenu',function(e){e.preventDefault();});
-  window.addEventListener('keydown',function(e){if(state.phase==='aim'){if(e.key>='1'&&e.key<='4'){setClub(Number(e.key)-1);e.preventDefault();}else if(e.key==='ArrowLeft'){state.aim.angle-=.045;e.preventDefault();}else if(e.key==='ArrowRight'){state.aim.angle+=.045;e.preventDefault();}else if(e.key==='ArrowUp'){state.aim.power=AG.clamp(state.aim.power+.04,.08,1);updateAimReadout();e.preventDefault();}else if(e.key==='ArrowDown'){state.aim.power=AG.clamp(state.aim.power-.04,.08,1);updateAimReadout();e.preventDefault();}else if(e.key==='Enter'||e.key===' '){playKeyboardStroke();e.preventDefault();}}else if(e.key==='Escape'&&state.phase!=='title'){showTitle();e.preventDefault();}});
-  $('pauseBtn').onclick=function(){if(state.phase==='title')return;state.paused=true;$('screenHost').innerHTML='<section class="screen screen--read"><div class="eyebrow">Menu</div><h2>Round paused</h2><div class="actions"><button type="button" id="resumeBtn">Resume</button><button type="button" id="quitBtn" class="secondary">Home</button></div></section>';$('resumeBtn').onclick=function(){state.paused=false;$('screenHost').innerHTML='';if(state.phase==='read-call'||state.phase==='read-next')showRead(state.phase==='read-call');};$('quitBtn').onclick=function(){state.paused=false;showTitle();};};
+  function resumePause(){
+    if(!state.paused)return;
+    state.paused=false;
+    var p=prevPhase||state.phase; prevPhase=null;
+    $('screenHost').innerHTML='';
+    [$('courseCanvas'),$('topHud'),$('playControls')].forEach(function(x){if(x)x.removeAttribute('inert');});
+    if(p==='read-call'||p==='read-next')showRead(p==='read-call');
+    else if(p==='hole-result')renderHoleResult();
+    else if(p==='aim'){$('playControls').classList.remove('hidden');}
+    var ret=pauseReturn; pauseReturn=null;
+    if(!ret||!ret.isConnected||!(ret.getClientRects&&ret.getClientRects().length>0))ret=$('pauseBtn');
+    if(ret&&ret.isConnected&&ret.focus)try{ret.focus({preventScroll:true});}catch(_){ret.focus();}
+  }
+  function openPause(){
+    if(state.phase==='title'||state.phase==='scorecard'||state.paused)return;
+    prevPhase=state.phase; pauseReturn=document.activeElement; state.paused=true;
+    var s=readSettings();
+    $('screenHost').innerHTML='<section class="screen screen--read"><div class="eyebrow">Menu</div><h2>Round paused</h2><div class="actions"><button type="button" id="resumeBtn">Resume</button><button type="button" id="pauseCalmBtn" class="secondary" aria-pressed="'+String(!!s.calm)+'">Calm: '+(s.calm?'On':'Off')+'</button><button type="button" id="pauseMuteBtn" class="secondary" aria-pressed="'+String(!!s.mute)+'">Audio: '+(s.mute?'Muted':'On')+'</button><button type="button" id="quitBtn" class="secondary">Home</button></div></section>';
+    $('resumeBtn').onclick=resumePause;
+    $('pauseCalmBtn').onclick=function(){toggleCalm();var ns=readSettings();this.setAttribute('aria-pressed',String(!!ns.calm));this.textContent='Calm: '+(ns.calm?'On':'Off');};
+    $('pauseMuteBtn').onclick=function(){toggleMute();var ns=readSettings();this.setAttribute('aria-pressed',String(!!ns.mute));this.textContent='Audio: '+(ns.mute?'Muted':'On');};
+    $('quitBtn').onclick=function(){state.paused=false;prevPhase=null;showTitle();};
+  }
+  window.addEventListener('keydown',function(e){if(e.key==='Escape'){if(state.paused){resumePause();e.preventDefault();return;}if(state.phase!=='title'&&state.phase!=='scorecard'){openPause();e.preventDefault();return;}}if(state.phase==='aim'&&!state.paused){if(e.key>='1'&&e.key<='5'){setClub(Number(e.key)-1);e.preventDefault();}else if(e.key==='ArrowLeft'){state.aim.angle-=.045;e.preventDefault();}else if(e.key==='ArrowRight'){state.aim.angle+=.045;e.preventDefault();}else if(e.key==='ArrowUp'){state.aim.power=AG.clamp(state.aim.power+.04,.08,1);updateAimReadout();e.preventDefault();}else if(e.key==='ArrowDown'){state.aim.power=AG.clamp(state.aim.power-.04,.08,1);updateAimReadout();e.preventDefault();}else if(e.key==='Enter'||e.key===' '){playKeyboardStroke();e.preventDefault();}}});
+  $('pauseBtn').onclick=openPause;
+  applySettingsUI();
 }
 function dismissSplash(){var el=$('mbmSplash'),done=false,ev=['pointerdown','click','keydown'];function go(){if(done)return;done=true;for(var i=0;i<ev.length;i++)document.removeEventListener(ev[i],go,true);el.classList.add('out');setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},330);}for(var i=0;i<ev.length;i++)document.addEventListener(ev[i],go,true);setTimeout(go,1100);}
 function boot(){var parsed=AG.parseHash(location.hash);state.seed=parsed.seed;state.warning=parsed.warning;state.shared=!!location.hash;$('noScript').classList.add('hidden');$('app').classList.remove('hidden');dismissSplash();var cv=$('courseCanvas');if(!cv.getContext||!AG.Render.install(cv)){noCanvasFallback();return;}patternsReady=true;showWarning(state.warning);input();showTitle();window.addEventListener('resize',function(){AG.Render.resize();syncReadInset();renderNow();});requestAnimationFrame(loop);if(new URLSearchParams(location.search).get('contract')==='1')setTimeout(function(){AG.BrowserContract.run();},60);}
@@ -674,7 +745,7 @@ migrate();
 
 var MasterBus={ctx:null,compressor:null,gain:null};
 function getAudio(){if(!MasterBus.ctx){try{var A=window.AudioContext||window.webkitAudioContext;if(!A)return MasterBus;var c=MasterBus.ctx=new A(),comp=MasterBus.compressor=c.createDynamicsCompressor(),gain=MasterBus.gain=c.createGain();comp.threshold.setValueAtTime(-18,c.currentTime);comp.knee.setValueAtTime(12,c.currentTime);comp.ratio.setValueAtTime(8,c.currentTime);comp.attack.setValueAtTime(.003,c.currentTime);comp.release.setValueAtTime(.15,c.currentTime);gain.gain.value=.78;comp.connect(gain);gain.connect(c.destination);}catch(e){}}if(MasterBus.ctx&&MasterBus.ctx.state==='suspended')MasterBus.ctx.resume().catch(function(){});return MasterBus;}
-function tone(f,d,v,delay){var b=getAudio();if(!b.ctx||!b.compressor)return;try{var t=b.ctx.currentTime+(delay||0),o=b.ctx.createOscillator(),g=b.ctx.createGain();o.type='triangle';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v||.024,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(b.compressor);o.start(t);o.stop(t+d+.03);}catch(e){}}
+function tone(f,d,v,delay){if(window.__AG_MUTE)return;var b=getAudio();if(!b.ctx||!b.compressor)return;try{var t=b.ctx.currentTime+(delay||0),o=b.ctx.createOscillator(),g=b.ctx.createGain();o.type='triangle';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v||.024,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(b.compressor);o.start(t);o.stop(t+d+.03);}catch(e){}}
 ['pointerdown','keydown','touchstart'].forEach(function(n){addEventListener(n,getAudio,{passive:true});});
 
 var course=document.getElementById('courseCanvas'),overlay=document.getElementById('v6GolfAdvisory'),ox=overlay.getContext('2d'),stage=document.getElementById('stage');
@@ -686,18 +757,34 @@ function world(p){return AG.Render.W(p);}
 function intent(state){var ball=state.ball,h=state.hole,club=AG.CLUBS[state.club],lieKey=AG.terrainAt(h,ball),lie=AG.TERRAIN[lieKey]||AG.TERRAIN.rough,dx=h.cup.x-ball.x,dy=h.cup.y-ball.y,remaining=Math.hypot(dx,dy),best=0,err=1e9;AG.CLUBS.forEach(function(c,i){var e=Math.abs(c.carry*lie.launch-remaining);if(e<err){err=e;best=i;}});return{lie:lie,lieKey:lieKey,club:club,best:best,remaining:remaining};}
 function forecast(state){var h=state.hole,b=state.ball,a=state.aim.angle,p=state.aim.power,I=intent(state),carry=I.club.carry*p*I.lie.launch,air=I.club.air,wx=h.wind.x*air*(1.3+carry/95),wy=h.wind.y*air*(1.3+carry/95),land={x:AG.clamp(b.x+Math.cos(a)*carry+wx,2,h.world.w-2),y:AG.clamp(b.y+Math.sin(a)*carry+wy,2,h.world.h-2)},slope=(Math.hypot(land.x-h.slope.cx,land.y-h.slope.cy)<=h.slope.radius)?h.slope:{x:0,y:0,strength:0},roll=I.club.roll*(6+carry*.08)/Math.max(.45,I.lie.drag||1),end={x:AG.clamp(land.x+Math.cos(a)*roll+slope.x*slope.strength*4,1,h.world.w-1),y:AG.clamp(land.y+Math.sin(a)*roll+slope.y*slope.strength*4,1,h.world.h-1)},spread=2.2+h.wind.speed*.82+(1-p)*3.5+(I.lie.label==='Rough'?1.7:0);return{intent:I,carry:carry,land:land,end:end,spread:spread,windAngle:Math.atan2(h.wind.y,h.wind.x),slope:slope};}
 function arrow(a,b,col,dash){ox.save();ox.strokeStyle=col;ox.fillStyle=col;ox.lineWidth=2;if(dash)ox.setLineDash([7,6]);ox.beginPath();ox.moveTo(a.x,a.y);ox.lineTo(b.x,b.y);ox.stroke();ox.setLineDash([]);var an=Math.atan2(b.y-a.y,b.x-a.x);ox.beginPath();ox.moveTo(b.x,b.y);ox.lineTo(b.x-Math.cos(an-.55)*10,b.y-Math.sin(an-.55)*10);ox.lineTo(b.x-Math.cos(an+.55)*10,b.y-Math.sin(an+.55)*10);ox.closePath();ox.fill();ox.restore();}
-function drawPreview(){syncOverlay();ox.clearRect(0,0,overlay.width,overlay.height);var state=AG.App&&AG.App.state;if(state&&lastPhase==='aim'&&state.phase==='moving'&&lastClutchAim)clutch();if(!state||state.phase!=='aim'||!state.ball||!state.hole){lieStatus.classList.remove('on');clutchBadge.classList.remove('on');lastPhase=state&&state.phase||'';requestAnimationFrame(drawPreview);return;}var f=forecast(state),bs=world(state.ball),ls=world(f.land),es=world(f.end),scale=Math.max(1,Math.hypot(world({x:1,y:0}).x-world({x:0,y:0}).x,world({x:1,y:0}).y-world({x:0,y:0}).y));arrow(bs,ls,'#f7f4e8cc',true);arrow(ls,es,'#85f0d6dd',false);ox.save();ox.translate(ls.x,ls.y);ox.rotate(f.windAngle);ox.strokeStyle='#ffd36bdd';ox.lineWidth=2;ox.setLineDash([5,4]);ox.beginPath();ox.ellipse(0,0,f.spread*scale*1.55,f.spread*scale*.82,0,0,Math.PI*2);ox.stroke();ox.setLineDash([]);ox.fillStyle='#111629dd';ox.fillRect(-61,-35,122,18);ox.fillStyle='#fff4be';ox.font='900 10px system-ui';ox.textAlign='center';ox.fillText('LANDING ±'+f.spread.toFixed(1)+' m',0,-22);ox.restore();var rec=AG.CLUBS[f.intent.best],lie=f.intent.lie.label||f.intent.lieKey||'Lie';lieStatus.textContent=lie.toUpperCase()+' · '+f.intent.club.label+' SELECTED · '+(f.intent.best===state.club?'GOOD FIT':'CONSIDER '+rec.label)+' · advisory carry '+Math.round(f.carry)+' m';lieStatus.classList.add('on');var putt=f.intent.remaining<18&&state.club===0;clutchBadge.classList.toggle('on',putt);lastClutchAim=putt;lastPhase=state.phase;requestAnimationFrame(drawPreview);}
-function clutch(){if(calm)return;document.body.classList.remove('v6-putt-clutch');void document.body.offsetWidth;document.body.classList.add('v6-putt-clutch');tone(120,.34,.05);tone(880,.46,.019,.05);if(navigator.vibrate)try{navigator.vibrate([22,30,14]);}catch(e){}setTimeout(function(){document.body.classList.remove('v6-putt-clutch');},450);}
+var previewRaf=0;
+function drawPreview(){
+  if(document.hidden){previewRaf=0;return;}
+  if(overlay.width!==course.width||overlay.height!==course.height)syncOverlay();
+  ox.clearRect(0,0,overlay.width,overlay.height);
+  var state=AG.App&&AG.App.state;
+  if(state&&state.phase==='read-call'&&state.holeIndex===0&&!flyShown)openFly();
+  if(state&&lastPhase==='aim'&&state.phase==='moving'&&lastClutchAim)clutch();
+  if(!state||state.phase!=='aim'||!state.ball||!state.hole){lieStatus.classList.remove('on');clutchBadge.classList.remove('on');lastPhase=state&&state.phase||'';previewRaf=requestAnimationFrame(drawPreview);return;}
+  var f=forecast(state),bs=world(state.ball),ls=world(f.land),es=world(f.end),scale=Math.max(1,Math.hypot(world({x:1,y:0}).x-world({x:0,y:0}).x,world({x:1,y:0}).y-world({x:0,y:0}).y));
+  arrow(bs,ls,'#f7f4e8cc',true);arrow(ls,es,'#85f0d6dd',false);
+  ox.save();ox.translate(ls.x,ls.y);ox.rotate(f.windAngle);ox.strokeStyle='#ffd36bdd';ox.lineWidth=2;ox.setLineDash([5,4]);ox.beginPath();ox.ellipse(0,0,f.spread*scale*1.55,f.spread*scale*.82,0,0,Math.PI*2);ox.stroke();ox.setLineDash([]);ox.restore();
+  ox.save();ox.translate(ls.x,ls.y);ox.fillStyle='#111629dd';ox.fillRect(-66,-38,132,20);ox.fillStyle='#fff4be';ox.font='900 12px system-ui';ox.textAlign='center';ox.fillText('LANDING ±'+f.spread.toFixed(1)+' m',0,-24);ox.restore();
+  var rec=AG.CLUBS[f.intent.best]||AG.CLUBS[0],lie=f.intent.lie.label||f.intent.lieKey||'Lie';
+  lieStatus.textContent=lie.toUpperCase()+' · '+f.intent.club.label+' SELECTED · '+(f.intent.best===state.club?'GOOD FIT':'CONSIDER '+rec.label)+' · advisory carry '+Math.round(f.carry)+' m';
+  lieStatus.classList.add('on');var putt=f.intent.remaining<18&&(state.club===0||state.club===4);clutchBadge.classList.toggle('on',putt);lastClutchAim=putt;lastPhase=state.phase;
+  previewRaf=requestAnimationFrame(drawPreview);
+}
+function clutch(){if(window.__AG_CALM||calm)return;document.body.classList.remove('v6-putt-clutch');void document.body.offsetWidth;document.body.classList.add('v6-putt-clutch');tone(120,.34,.05);tone(880,.46,.019,.05);if(navigator.vibrate)try{navigator.vibrate([22,30,14]);}catch(e){}setTimeout(function(){document.body.classList.remove('v6-putt-clutch');},450);}
 
 function inertBackground(on){[document.getElementById('topHud'),course,document.getElementById('screenHost'),document.getElementById('playControls')].forEach(function(el){if(!el)return;if(on)el.setAttribute('inert','');else el.removeAttribute('inert');});}
 function closeFly(){if(!fly.classList.contains('on'))return;clearTimeout(flyTimer);fly.classList.remove('on');fly.setAttribute('aria-hidden','true');inertBackground(false);if(lastFocus&&lastFocus.focus)lastFocus.focus();else course.focus();tone(660,.15,.02);}
-function openFly(){if(flyShown)return;flyShown=true;lastFocus=document.activeElement;fly.removeAttribute('aria-hidden');fly.classList.add('on');inertBackground(true);skip.focus();tone(164,.44,.035);tone(329.6,.55,.018,.07);tone(493.9,.55,.013,.13);flyTimer=setTimeout(closeFly,2150);}
+function openFly(){if(flyShown||window.__AG_CALM)return;flyShown=true;lastFocus=document.activeElement;fly.removeAttribute('aria-hidden');fly.classList.add('on');inertBackground(true);skip.focus();tone(164,.44,.035);tone(329.6,.55,.018,.07);tone(493.9,.55,.013,.13);flyTimer=setTimeout(closeFly,2150);}
 skip.addEventListener('click',closeFly);fly.addEventListener('keydown',function(e){if(e.key==='Escape'||e.key==='Enter'||e.key===' '){e.preventDefault();closeFly();}});
-function launchAscent(){if(calm)return;ascent.innerHTML='';for(var i=0;i<13;i++){var s=document.createElement('i');s.className='v6GolfStar';s.style.left=(46+Math.random()*8)+'%';s.style.top=(66+Math.random()*12)+'%';s.style.setProperty('--dx',(-210+Math.random()*420)+'px');s.style.setProperty('--dy',(Math.random()*110)+'px');s.style.animationDelay=(i*65)+'ms';ascent.appendChild(s);}tone(523,.28,.025);tone(659,.34,.02,.08);tone(784,.4,.016,.16);setTimeout(function(){ascent.innerHTML='';},2050);}
+function launchAscent(){if(window.__AG_CALM||calm)return;ascent.innerHTML='';for(var i=0;i<13;i++){var s=document.createElement('i');s.className='v6GolfStar';s.style.left=(46+Math.random()*8)+'%';s.style.top=(66+Math.random()*12)+'%';s.style.setProperty('--dx',(-210+Math.random()*420)+'px');s.style.setProperty('--dy',(Math.random()*110)+'px');s.style.animationDelay=(i*65)+'ms';ascent.appendChild(s);}tone(523,.28,.025);tone(659,.34,.02,.08);tone(784,.4,.016,.16);setTimeout(function(){ascent.innerHTML='';},2050);}
 function upgradeScreen(){var host=document.getElementById('screenHost'),screen=host.querySelector('.screen'),state=AG.App&&AG.App.state;if(!screen){if(!fly.classList.contains('on'))[course,document.getElementById('topHud'),document.getElementById('playControls')].forEach(function(x){if(x)x.removeAttribute('inert');});return;}var modal=!!(state&&state.paused);screen.setAttribute('role',modal?'dialog':'region');if(modal){screen.setAttribute('aria-modal','true');screen.setAttribute('aria-label','Apex Golf paused');screen.tabIndex=-1;[course,document.getElementById('topHud'),document.getElementById('playControls')].forEach(function(x){if(x)x.setAttribute('inert','');});setTimeout(function(){var f=screen.querySelector('button,input,select,[href]');(f||screen).focus();},0);}else{screen.removeAttribute('aria-modal');[course,document.getElementById('topHud'),document.getElementById('playControls')].forEach(function(x){if(x)x.removeAttribute('inert');});}if(screen.classList.contains('screen--scorecard')&&!scorecardSeen){scorecardSeen=true;launchAscent();}}
 new MutationObserver(upgradeScreen).observe(document.getElementById('screenHost'),{childList:true,subtree:true});
-document.addEventListener('visibilitychange',function(){var s=AG.App&&AG.App.state;if(!s)return;if(document.hidden&&!s.paused){s.v6VisibilityPaused=true;s.paused=true;}else if(!document.hidden&&s.v6VisibilityPaused){s.v6VisibilityPaused=false;s.paused=false;s.lastFrame=performance.now()/1000;}});
-setInterval(function(){var s=AG.App&&AG.App.state;if(s&&s.phase==='read-call'&&s.holeIndex===0&&!flyShown)openFly();},120);
+document.addEventListener('visibilitychange',function(){var s=AG.App&&AG.App.state;if(!s)return;if(document.hidden){if(!s.paused){s.v6VisibilityPaused=true;s.paused=true;}if(MasterBus.ctx&&MasterBus.ctx.state==='running')MasterBus.ctx.suspend().catch(function(){});}else{if(s.v6VisibilityPaused){s.v6VisibilityPaused=false;s.paused=false;s.lastFrame=performance.now()/1000;}if(!previewRaf)previewRaf=requestAnimationFrame(drawPreview);}});
 addEventListener('resize',syncOverlay,{passive:true});
 
 window.__MBM_V6_RELEASE__={version:VERSION,gameId:GAME_ID,edition:'AAA Ascension',madeBy:'Made by Matt',offline:true,
@@ -705,7 +792,7 @@ window.__MBM_V6_RELEASE__={version:VERSION,gameId:GAME_ID,edition:'AAA Ascension
   authority:{tickHz:240,source:'AG.DT',advisoryOnly:true,legacyStorage:legacyKeys.slice()},profile:{key:PROFILE_KEY,schema:6,migration:migration},audio:MasterBus,
   selfTest:function(){var s=AG.App&&AG.App.state,checks={marker:VERSION==='6.0.0',core:!!(window.AG&&AG.DT===1/240),interpolation:!!(s&&Object.prototype.hasOwnProperty.call(s,'prevBall')),legacyUntouched:migration.legacyUntouched,profile:migration.profileReady,offline:document.querySelectorAll('script[src],link[rel="stylesheet"]').length===0,advisory:!!overlay,targets:Array.prototype.every.call(document.querySelectorAll('#v6GolfFly button'),function(b){var r=b.getBoundingClientRect();return !fly.classList.contains('on')||(r.width>=44&&r.height>=44);})};return{ok:Object.keys(checks).every(function(k){return checks[k];}),gameId:GAME_ID,version:VERSION,checks:checks};}
 };
-syncOverlay();requestAnimationFrame(drawPreview);
+syncOverlay();previewRaf=requestAnimationFrame(drawPreview);
 })();
 </script>
 <!-- MBM-INLINE-EXIT:BEGIN generated by tools/render_inline_exit.py, do not edit by hand -->
