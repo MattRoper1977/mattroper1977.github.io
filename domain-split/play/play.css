@@ -816,5 +816,13 @@ body[data-page=games] .mbm-usage.usage-compact button[data-usage-choice="allow"]
   font-size: 11px; font-weight: 800; letter-spacing: 0.02em;
 }
 .card-sm .upd-ribbon { font-size: 10.5px; padding: 2px 6px; }
-/* On the narrowest phones an updated card keeps its mood icon but drops the mood word, so the two never touch. */
-@media (max-width: 430px) { .game-card .card-media:has(.upd-ribbon) .mood-chip > span { display: none; } }
+/* Grid cards: chip and ribbon sit in one wrapping row, so whatever the card width or the
+   reader's font, the ribbon moves to its own line rather than touching the chip. Text is
+   never shrunk or hidden to make room. */
+.media-tags {
+  position: absolute; left: 6px; right: 6px; top: 6px; z-index: 2;
+  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 4px;
+  pointer-events: none;
+}
+.media-tags .mood-chip, .media-tags .upd-ribbon { position: static; max-width: 100%; }
+.media-tags .upd-ribbon { margin-left: auto; }

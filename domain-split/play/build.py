@@ -694,8 +694,10 @@ def card_media(row, d, eager, moods):
     updated = updated_text(row)
     return ('<span class="card-media thumb"><img src="' + esc(d['picture']) + '" alt="" width="640" height="360" ' + load + '>'
             '<span class="thumb-title" aria-hidden="true">' + esc(shown_title(row)) + '</span>'
-            '<span class="mood-chip" aria-hidden="true">' + icon_svg(mood) + '<span>' + esc(moods[mood]['label']) + '</span></span>'
-            + ('<span class="upd-ribbon" data-release="' + esc(row['id']) + '" aria-hidden="true">' + esc(updated) + '</span>' if updated else '')
+            # Mood chip and Updated ribbon share one wrapping row: when both do not fit (narrow
+            # card, wide fallback font) the ribbon drops to its own line instead of colliding.
+            '<span class="media-tags"><span class="mood-chip" aria-hidden="true">' + icon_svg(mood) + '<span>' + esc(moods[mood]['label']) + '</span></span>'
+            + ('<span class="upd-ribbon" data-release="' + esc(row['id']) + '" aria-hidden="true">' + esc(updated) + '</span>' if updated else '') + '</span>'
             + ('<span class="kb-badge" data-needs-keyboard hidden>' + KEYS_ICON + '<span>Needs keyboard</span></span>' if d['keysOnly'] else '') + '</span>')
 
 def game_card(row, d, eager, moods):
