@@ -154,6 +154,83 @@
     color: #E3FFF3;
   }
 
+  /* Off-screen Edge Indicators (color + pattern shape + directional arrow) */
+  #edgeIndicators {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 6;
+  }
+
+  .edge-ind {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 800;
+    border: 2px solid rgba(255, 255, 255, 0.92);
+    box-shadow: 0 5px 14px rgba(7, 17, 14, 0.45);
+    white-space: nowrap;
+    line-height: 1;
+  }
+
+  .edge-ind.striped {
+    background: var(--stripe-bg);
+    color: var(--stripe-fg);
+  }
+
+  .edge-ind.spotted {
+    background: var(--spot-bg);
+    color: var(--spot-fg);
+  }
+
+  .edge-ind.is-pen {
+    border-radius: 10px;
+    border-color: #F4B942;
+    box-shadow: 0 0 0 2px rgba(244, 185, 66, 0.4), 0 5px 14px rgba(7, 17, 14, 0.5);
+  }
+
+  .edge-ind .pat-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+  }
+
+  .edge-arrow {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 auto;
+    display: block;
+  }
+
+  .edge-pen-tag {
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+  }
+
+  .edge-count {
+    font-size: 14px;
+    font-weight: 900;
+  }
+
+  .edge-ram-mark {
+    display: inline-flex;
+    align-items: center;
+    color: #FFD166;
+    font-size: 14px;
+    font-weight: 900;
+  }
+
+  .sound-mute-slash { display: none; }
+  .hud-btn[aria-pressed="false"] .sound-mute-slash { display: block; }
+  .hud-btn[aria-pressed="false"] .sound-wave-path { opacity: 0.2; }
+
   /* Buttons, Range Sliders & Focus Rings */
   button {
     font-family: var(--font);
@@ -241,6 +318,7 @@
     cursor: pointer;
     margin: 0;
     border-radius: 12px;
+    touch-action: none;
   }
 
   input[type="range"]::-webkit-slider-runnable-track {
@@ -433,7 +511,7 @@
     box-shadow: 0 8px 22px rgba(9, 19, 16, 0.30);
   }
 
-  /* Interactive First-Play Onboarding Guide Banner */
+  /* Interactive First-Play Onboarding Guide Banner (rounded card, never a squashed circle) */
   #guideBanner {
     position: absolute;
     top: 72px;
@@ -443,9 +521,10 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    max-width: min(560px, calc(100vw - 32px));
+    width: max-content;
+    max-width: min(560px, calc(100vw - 24px));
     padding: 8px 10px 8px 14px;
-    border-radius: var(--radius-pill);
+    border-radius: 18px;
     background: rgba(16, 33, 28, 0.96);
     border: 2px solid var(--accent);
     box-shadow: 0 12px 30px rgba(8, 18, 15, 0.45);
@@ -469,23 +548,27 @@
     border-radius: var(--radius-pill);
     background: var(--accent);
     color: var(--accent-dark);
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 800;
     white-space: nowrap;
+    flex: 0 0 auto;
   }
 
   .guide-text {
     font-size: 16px;
     font-weight: 700;
     color: #FFFDF7;
+    line-height: 1.3;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .guide-skip {
     min-height: 44px;
-    min-width: 82px;
+    min-width: 72px;
     padding: 6px 14px;
-    border-radius: var(--radius-pill);
-    font-size: 16px;
+    border-radius: 12px;
+    font-size: 15px;
     background: rgba(248, 246, 238, 0.12);
     flex: 0 0 auto;
   }
@@ -656,7 +739,10 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     transform: translateY(0) scale(1);
     transition: transform 220ms var(--ease-ui);
   }
@@ -676,13 +762,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
   .brand-row {
     display: flex;
     align-items: center;
     gap: 14px;
+    min-width: 0;
   }
 
   .logo-badge {
@@ -723,8 +811,8 @@
   .header-badges {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: nowrap;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 
   .site-tag {
@@ -1130,6 +1218,13 @@
     border: 0;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    button, .overlay, .panel, #hud, #guideBanner, .hud-pill, .world-badge, .res-star {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+
   /* Compact adjustments for 1280x720 so zero overflow ever occurs */
   @media (max-height: 750px) {
     .panel { padding: 16px 20px; gap: 11px; }
@@ -1143,10 +1238,217 @@
 
   @media (max-width: 980px) {
     .hint-bar { display: none; }
+    .hud-bottom { justify-content: flex-end; }
     .course-grid { grid-template-columns: repeat(3, 1fr); }
     .steps-grid { grid-template-columns: 1fr; }
     .bandana-grid { grid-template-columns: repeat(2, 1fr); }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* Landscape phones & medium widths (664x390, 839x412) */
+  @media (max-width: 880px) {
+    #hud { padding: 10px 10px; }
+    .hud-btn span { display: none; }
+    .hud-btn { padding: 8px; min-width: 44px; min-height: 44px; }
+    .hud-pill { min-height: 42px; padding: 6px 10px; font-size: 15px; gap: 6px; }
+    .hud-group { gap: 6px; }
+    .hud-top { gap: 6px; }
+    .action-btn { min-height: 46px; min-width: 96px; padding: 8px 12px; font-size: 15px; }
+  }
+
+  @media (max-height: 520px) and (min-width: 480px) {
+    .overlay {
+      padding: 10px 12px 10px calc(58px + env(safe-area-inset-left, 0px));
+    }
+    body:has(#mbmexit-home) .overlay {
+      padding-left: calc(108px + env(safe-area-inset-left, 0px));
+    }
+    .panel, .panel.medium, .panel.compact {
+      width: 100%;
+      max-height: 100%;
+      padding: 12px 16px;
+      gap: 9px;
+      border-radius: 16px;
+    }
+    .logo-badge { width: 46px; height: 46px; border-radius: 12px; }
+    .logo-badge svg { width: 30px; height: 30px; }
+    h1 { font-size: 26px; }
+    h2 { font-size: 21px; }
+    .tagline, .site-tag, .target-strip, .course-name, .course-meta, .step-desc, .controls-strip, .stat-label { font-size: 14px; }
+    button { min-height: 44px; min-width: 44px; padding: 8px 12px; font-size: 14px; }
+    .btn-primary { min-height: 46px; font-size: 16px; padding: 8px 18px; }
+    .course-card { min-height: 92px; padding: 8px 10px; gap: 4px; }
+    .steps-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .step-art { height: 74px; }
+    .medal-badge { width: 58px; height: 58px; }
+    .stat-val { font-size: 18px; }
+    #guideBanner { top: 60px; padding: 6px 10px; border-radius: 14px; }
+    .guide-step-pill, .guide-text, .guide-skip { font-size: 14px; }
+  }
+
+  @media (max-height: 520px) and (min-width: 720px) {
+    .course-grid { grid-template-columns: repeat(5, 1fr); gap: 7px; }
+    .course-card { min-height: 88px; padding: 8px; }
+  }
+
+  /* Portrait phones & narrow screens (360x740, 390x664, 412x839) */
+  @media (max-width: 640px) {
+    #hud { padding: calc(8px + env(safe-area-inset-top, 0px)) 8px calc(10px + env(safe-area-inset-bottom, 0px)); }
+    .hud-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 6px;
+      padding-left: 0;
+      align-items: center;
+    }
+    body:has(#mbmexit-home) .hud-top { padding-left: 0; }
+    .hud-flocks, .hud-stats { display: contents; }
+    .hud-controls {
+      grid-row: 1;
+      grid-column: 3;
+      justify-self: end;
+      gap: 6px;
+    }
+    #hudTimer {
+      grid-row: 1;
+      grid-column: 1 / 3;
+      justify-self: start;
+      margin-left: calc(50px + env(safe-area-inset-left, 0px));
+      min-height: 42px;
+      padding: 5px 10px;
+      font-size: 15px;
+    }
+    body:has(#mbmexit-home) #hudTimer {
+      margin-left: calc(100px + env(safe-area-inset-left, 0px));
+    }
+    #hudStriped {
+      grid-row: 2;
+      grid-column: 1;
+      width: 100%;
+      justify-content: center;
+      min-height: 36px;
+      padding: 4px 8px;
+      font-size: 15px;
+    }
+    #hudSpotted {
+      grid-row: 2;
+      grid-column: 2;
+      width: 100%;
+      justify-content: center;
+      min-height: 36px;
+      padding: 4px 8px;
+      font-size: 15px;
+    }
+    #hudScore {
+      grid-row: 2;
+      grid-column: 3;
+      width: 100%;
+      justify-content: center;
+      min-height: 36px;
+      padding: 4px 8px;
+      font-size: 15px;
+    }
+    .hud-pill .pat-icon, .hud-pill .btn-icon { width: 18px; height: 18px; }
+
+    #guideBanner {
+      top: calc(100px + env(safe-area-inset-top, 0px));
+      width: calc(100vw - 16px);
+      max-width: 440px;
+      padding: 8px 10px;
+      gap: 8px;
+      border-radius: 16px;
+    }
+    .guide-step-pill { font-size: 14px; padding: 3px 8px; }
+    .guide-text { font-size: 14px; line-height: 1.3; }
+    .guide-skip { font-size: 14px; min-height: 44px; min-width: 62px; padding: 6px 10px; }
+
+    .hud-bottom { justify-content: center; }
+    .action-bar {
+      width: 100%;
+      max-width: 396px;
+      justify-content: center;
+      gap: 8px;
+    }
+    .action-btn {
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 48px;
+      padding: 8px 6px;
+      font-size: 14px;
+      gap: 5px;
+      border-radius: 14px;
+    }
+    .action-btn .btn-icon { width: 19px; height: 19px; }
+
+    .world-badge {
+      padding: 4px 9px;
+      font-size: 14px;
+      gap: 5px;
+    }
+    .world-badge .pat-icon { width: 17px; height: 17px; }
+    .world-toast { font-size: 14px; padding: 5px 10px; }
+
+    /* Portrait Overlays: clear top-left exit button(s), full-width scrollable cards */
+    .overlay {
+      padding: calc(58px + env(safe-area-inset-top, 0px)) 10px calc(12px + env(safe-area-inset-bottom, 0px));
+    }
+    .panel, .panel.medium, .panel.compact {
+      width: 100%;
+      max-height: 100%;
+      padding: 14px 14px;
+      gap: 10px;
+      border-radius: 18px;
+    }
+    .logo-badge { width: 48px; height: 48px; border-radius: 14px; }
+    .logo-badge svg { width: 32px; height: 32px; }
+    h1 { font-size: 27px; }
+    h2 { font-size: 19px; }
+    .tagline { font-size: 14px; }
+    .site-tag { font-size: 14px; padding: 5px 10px; }
+    .header-badges { width: 100%; justify-content: flex-start; }
+
+    .course-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .course-card { min-height: 92px; padding: 9px 10px; gap: 4px; }
+    .course-card:nth-child(5) { grid-column: 1 / -1; min-height: 68px; flex-direction: row; align-items: center; flex-wrap: wrap; }
+    .course-card:nth-child(5) .course-head-row { width: auto; gap: 8px; }
+    .course-card:nth-child(5) .course-meta { margin-left: auto; }
+    .course-num { width: 24px; height: 24px; font-size: 14px; }
+    .course-name { font-size: 15px; }
+    .course-meta { font-size: 14px; }
+
+    .target-strip { font-size: 14px; padding: 8px 12px; gap: 6px; }
+    .row-actions { flex-direction: column; align-items: stretch; gap: 8px; }
+    .row-group { width: 100%; gap: 8px; }
+    .row-group button { flex: 1 1 calc(50% - 4px); min-height: 46px; padding: 8px 10px; font-size: 14px; }
+    #btnPlay, #btnPlayAgain { flex: 1 1 100%; min-height: 50px; font-size: 17px; }
+    button { min-height: 44px; min-width: 44px; font-size: 14px; padding: 8px 12px; }
+
+    /* Settings full-width sliders with percentage aligned on row 1 */
+    .slider-row {
+      grid-template-columns: 1fr auto;
+      row-gap: 2px;
+      padding: 8px 12px;
+    }
+    .slider-label { font-size: 15px; grid-row: 1; grid-column: 1; }
+    .slider-val { font-size: 15px; grid-row: 1; grid-column: 2; }
+    input[type="range"] { grid-row: 2; grid-column: 1 / -1; }
+    .settings-toggles { grid-template-columns: 1fr; gap: 8px; }
+    .pause-stack { gap: 8px; }
+    .pause-stack button { padding: 8px 10px; min-height: 46px; }
+
+    /* Trophy Barn & How to Play & Results */
+    .bandana-grid { grid-template-columns: 1fr; gap: 8px; }
+    .bandana-card { min-height: 64px; padding: 8px 10px; }
+    .bandana-name, .bandana-sub { font-size: 14px; }
+    .step-card { padding: 12px; gap: 8px; }
+    .step-num, .step-desc, .controls-strip, .key-chip { font-size: 14px; }
+    .results-hero { padding: 12px; gap: 12px; }
+    .medal-badge { width: 58px; height: 58px; }
+    .medal-badge svg { width: 34px; height: 34px; }
+    .new-best-pill { font-size: 14px; padding: 3px 10px; margin-left: 4px; }
+    .stat-label { font-size: 14px; }
+    .stat-val { font-size: 19px; }
   }
 </style>
 </head>
@@ -1154,6 +1456,7 @@
 <div id="app" data-screen="title">
   <canvas id="glCanvas" tabindex="-1" aria-label="Hill Hound 3D meadow"></canvas>
   <div id="worldBadges" aria-hidden="true"></div>
+  <div id="edgeIndicators" aria-hidden="true"></div>
   <div id="liveStatus" class="sr-only" aria-live="polite"></div>
 
   <!-- Interactive First-Play Onboarding Guide Banner -->
@@ -1165,8 +1468,8 @@
 
   <!-- In-Game HUD -->
   <div id="hud" class="is-hidden">
-    <div class="hud-top">
-      <div class="hud-group">
+    <div class="hud-top" id="hudTop">
+      <div class="hud-group hud-flocks">
         <div class="hud-pill striped-pill" id="hudStriped">
           <svg class="pat-icon" viewBox="0 0 24 24" aria-hidden="true">
             <rect width="24" height="24" rx="5" fill="#F9F5E8"/>
@@ -1188,7 +1491,7 @@
         </div>
       </div>
 
-      <div class="hud-group">
+      <div class="hud-group hud-stats">
         <div class="hud-pill" id="hudTimer">
           <svg class="btn-icon" id="hudTimerIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2"/><path d="M9 2h6"/>
@@ -1203,10 +1506,13 @@
         </div>
       </div>
 
-      <div class="hud-group">
+      <div class="hud-group hud-controls">
         <button type="button" class="hud-btn" id="btnHudSound" aria-label="Toggle sound" aria-pressed="true">
           <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.8 5.2a9.5 9.5 0 0 1 0 13.6"/>
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path class="sound-wave-path" d="M15.5 8.5a5 5 0 0 1 0 7"/>
+            <path class="sound-wave-path" d="M18.8 5.2a9.5 9.5 0 0 1 0 13.6"/>
+            <path class="sound-mute-slash" d="M4 4l16 16" stroke="#FF7A66" stroke-width="2.6"/>
           </svg>
           <span id="lblHudSound">Sound</span>
         </button>
@@ -1219,7 +1525,7 @@
       </div>
     </div>
 
-    <div class="hud-bottom">
+    <div class="hud-bottom" id="hudBottom">
       <div class="hint-bar" id="hintBar">
         <span class="key-chip">WASD</span>
         <span>/ Cursor: Move</span>
@@ -1525,8 +1831,8 @@
         </div>
       </div>
 
-      <div class="controls-strip">
-        <span><span class="key-chip">WASD</span> / <span class="key-chip">Arrows</span> / Cursor: Move</span>
+      <div class="controls-strip" id="howControlsStrip">
+        <span><span class="key-chip">WASD</span> / <span class="key-chip">Arrows</span> / Drag / Cursor: Move</span>
         <span><span class="key-chip">Shift</span> Stalk</span>
         <span><span class="key-chip">Space</span> / Click: Bark</span>
         <span><span class="key-chip">R</span> Whistle</span>
@@ -2526,6 +2832,7 @@
         uniform vec3 uSunCol;
         uniform vec3 uFogCol;
         uniform vec3 uSunDir;
+        uniform float uFogStart;
         void main() {
           vec3 n = normalize(vNorm);
           float ndl = max(dot(n, normalize(uSunDir)), 0.0);
@@ -2535,7 +2842,7 @@
           vec3 lit = vCol * uTint * (skyFill * 0.72 + sunLight + 0.09);
           vec3 base = mix(lit, vCol * uTint, uUnlit);
           float dist = length(uCamPos - vWorldPos);
-          float fog = clamp((dist - 58.0) / 88.0, 0.0, 0.80);
+          float fog = clamp((dist - uFogStart) / 88.0, 0.0, 0.80);
           vec3 finalCol = mix(base, uFogCol, fog * (1.0 - uUnlit * 0.6));
           gl_FragColor = vec4(finalCol, uAlpha);
         }
@@ -2566,7 +2873,8 @@
         uTint: gl.getUniformLocation(this.mainProg, 'uTint'),
         uSunCol: gl.getUniformLocation(this.mainProg, 'uSunCol'),
         uFogCol: gl.getUniformLocation(this.mainProg, 'uFogCol'),
-        uSunDir: gl.getUniformLocation(this.mainProg, 'uSunDir')
+        uSunDir: gl.getUniformLocation(this.mainProg, 'uSunDir'),
+        uFogStart: gl.getUniformLocation(this.mainProg, 'uFogStart')
       };
 
       this.identity = M4.create();
@@ -2615,7 +2923,7 @@
       gl.viewport(0, 0, w, h);
     }
 
-    beginFrame(vp, camPos, isSunset) {
+    beginFrame(vp, camPos, isSunset, fogStart = 58.0) {
       const gl = this.gl;
       if (!gl) return;
       gl.enable(gl.DEPTH_TEST);
@@ -2658,6 +2966,7 @@
       gl.uniform1f(this.loc.uAlpha, 1.0);
       gl.uniform1f(this.loc.uUnlit, 0.0);
       gl.uniform3f(this.loc.uTint, 1, 1, 1);
+      gl.uniform1f(this.loc.uFogStart, fogStart);
       gl.enableVertexAttribArray(this.loc.aPos);
       gl.enableVertexAttribArray(this.loc.aNorm);
       gl.enableVertexAttribArray(this.loc.aCol);
@@ -3160,8 +3469,8 @@
     const water = new MeshBuilder();
     const allWalls = makePerimeterAndPenWalls().concat(course.extraWalls);
 
-    const xMin = -76, xMax = 76, zMin = -64, zMax = 54;
-    const nx = 76, nz = 68;
+    const xMin = -80, xMax = 80, zMin = -80, zMax = 74;
+    const nx = 78, nz = 76;
     const dx = (xMax - xMin) / nx, dz = (zMax - zMin) / nz;
 
     function terrainColor(x, z, h, seed) {
@@ -3454,9 +3763,12 @@
       this.inputMode = 'keyboard';
       this.mouseWorld = null;
       this.mouseActive = false;
+      this.touchTarget = null;
+      this.touchDragging = false;
       this.stalkToggled = false;
       this.touchVec = { x: 0, z: 0, active: false };
       this.ignoreSpaceUntilUp = false;
+      this.fogStart = 58.0;
 
       this.flowPos = { x: 0, z: 6 };
       this.flowAngle = 0;
@@ -3517,6 +3829,8 @@
       this.stalkToggled = false;
       this.mouseActive = false;
       this.mouseWorld = null;
+      this.touchTarget = null;
+      this.touchDragging = false;
       this.camTarget.x = 0;
       this.camTarget.z = isPreview ? -0.5 : 2.5;
       this.guideDistMoved = 0;
@@ -3655,7 +3969,12 @@
     }
 
     addToast(x, z, text, kind = 'normal', life = 1.2) {
-      if (kind === 'ram' && this.toasts.some(t => t.kind === 'ram' && t.text === text)) return;
+      if (kind === 'ram') {
+        if (text === 'Ram Moving!') {
+          this.toasts = this.toasts.filter(t => !(t.kind === 'ram' && t.text === 'Bark to move Ram!'));
+        }
+        if (this.toasts.some(t => t.kind === 'ram' && t.text === text)) return;
+      }
       this.toasts.push({ x, z, text, kind, age: 0, life });
     }
 
@@ -3786,11 +4105,25 @@
 
       if (ix !== 0 || iz !== 0) {
         this.inputMode = 'keyboard';
+        this.touchTarget = null;
+        this.touchDragging = false;
         const len = Math.hypot(ix, iz);
         ix /= len; iz /= len;
       } else if (this.touchVec.active) {
         this.inputMode = 'touch';
         ix = this.touchVec.x; iz = this.touchVec.z;
+      } else if (this.inputMode === 'touch-drag' && this.touchTarget) {
+        const dx = this.touchTarget.x - dog.x;
+        const dz = this.touchTarget.z - dog.z;
+        const d = Math.hypot(dx, dz);
+        if (d > 0.85) {
+          const strength = clamp((d - 0.55) / 2.4, 0.28, 1.0);
+          ix = (dx / d) * strength;
+          iz = (dz / d) * strength;
+        } else if (!this.touchDragging) {
+          // Arrived at quick-tap destination
+          this.touchTarget = null;
+        }
       } else if (this.inputMode === 'mouse' && this.mouseActive && this.mouseWorld) {
         const dx = this.mouseWorld.x - dog.x;
         const dz = this.mouseWorld.z - dog.z;
@@ -4216,42 +4549,82 @@
     }
 
     updateCamera(dt, isPreview) {
+      const rect = canvas.getBoundingClientRect();
+      const cw = rect.width || window.innerWidth;
+      const ch = Math.max(1, rect.height || window.innerHeight);
+      // Real canvas aspect ratio (no 0.5 clamp!) so projection & screenToGround match 1:1
+      const aspect = Math.max(0.1, cw / ch);
+
+      // Landscape (aspect >= 1.30) keeps exact original 40deg camera unchanged.
+      // Portrait / narrow viewports adapt vertical FOV + raise/pull back + track dog closely.
+      const pAmt = clamp((1.30 - aspect) / (1.30 - 0.48), 0, 1);
+
       let desiredX = 0;
       let desiredZ = isPreview ? -1.5 : 1.0;
 
       if (isPreview) {
         if (!calmMode) {
-          desiredX = Math.sin(this.titlePhase * 0.28) * 1.4;
+          desiredX = Math.sin(this.titlePhase * 0.28) * lerp(1.4, 0.8, pAmt);
           desiredZ = -1.5 + Math.cos(this.titlePhase * 0.22) * 0.6;
         }
       } else {
         let fx = 0, fz = 0, fc = 0;
+        let nearX = 0, nearZ = 0, nearW = 0;
         for (const s of this.sheep) {
-          if (!s.penned) { fx += s.x; fz += s.z; fc++; }
+          if (!s.penned) {
+            fx += s.x; fz += s.z; fc++;
+            const dd = Math.hypot(s.x - this.dog.x, s.z - this.dog.z);
+            if (dd < 16) {
+              const w = 1 - dd / 16;
+              nearX += s.x * w; nearZ += s.z * w; nearW += w;
+            }
+          }
         }
         if (fc > 0) { fx /= fc; fz /= fc; }
         else { fx = 0; fz = -4; }
-        desiredX = clamp(this.dog.x * 0.24 + fx * 0.14, -5.8, 5.8);
-        desiredZ = clamp(this.dog.z * 0.20 + fz * 0.14, -3.5, 4.5);
+        const refX = nearW > 0.1 ? lerp(fx, nearX / nearW, 0.55) : fx;
+        const refZ = nearW > 0.1 ? lerp(fz, nearZ / nearW, 0.45) : fz;
+
+        const dogWeightX = lerp(0.24, 0.54, pAmt);
+        const flockWeightX = lerp(0.14, 0.16, pAmt);
+        const maxCamX = lerp(5.8, 12.2, pAmt);
+        const dogWeightZ = lerp(0.20, 0.22, pAmt);
+        const flockWeightZ = lerp(0.14, 0.14, pAmt);
+
+        desiredX = clamp(this.dog.x * dogWeightX + refX * flockWeightX, -maxCamX, maxCamX);
+        desiredZ = clamp(this.dog.z * dogWeightZ + refZ * flockWeightZ, lerp(-3.5, -4.5, pAmt), lerp(4.5, 5.0, pAmt));
       }
 
-      const damp = 1 - Math.exp(-3.0 * dt);
+      const damp = 1 - Math.exp(-lerp(3.0, 4.4, pAmt) * dt);
       this.camTarget.x = lerp(this.camTarget.x, desiredX, damp);
       this.camTarget.z = lerp(this.camTarget.z, desiredZ, damp);
 
-      this.camPos[0] = this.camTarget.x;
-      this.camPos[1] = 32.5;
-      this.camPos[2] = this.camTarget.z + 34.5;
+      const camY = lerp(32.5, 62.0, pAmt);
+      const camZOff = lerp(34.5, 44.5, pAmt);
+      const lookZOff = lerp(-1.5, -2.5, pAmt);
 
-      const aspect = Math.max(0.5, (canvas.clientWidth || window.innerWidth) / Math.max(1, canvas.clientHeight || window.innerHeight));
-      M4.perspective(this.projMat, (40 * Math.PI) / 180, aspect, 1.0, 220.0);
-      M4.lookAt(this.viewMat, this.camPos[0], this.camPos[1], this.camPos[2], this.camTarget.x, 0.5, this.camTarget.z - 1.5, 0, 1, 0);
+      this.camPos[0] = this.camTarget.x;
+      this.camPos[1] = camY;
+      this.camPos[2] = this.camTarget.z + camZOff;
+
+      // Minimum horizontal FOV coverage on narrow screens, capped at 58deg vertical FOV to avoid fisheye
+      const baseFovY = (40 * Math.PI) / 180;
+      const targetFovX = (56 * Math.PI) / 180;
+      const neededFovY = 2 * Math.atan(Math.tan(targetFovX * 0.5) / aspect);
+      const fovy = pAmt > 0.001 ? clamp(neededFovY, baseFovY, (58 * Math.PI) / 180) : baseFovY;
+
+      const camDist = Math.hypot(camY - 0.5, camZOff - lookZOff);
+      this.fogStart = Math.max(58.0, camDist + 11.0);
+
+      M4.perspective(this.projMat, fovy, aspect, 1.0, 260.0);
+      M4.lookAt(this.viewMat, this.camPos[0], this.camPos[1], this.camPos[2], this.camTarget.x, 0.5, this.camTarget.z + lookZOff, 0, 1, 0);
       M4.multiply(this.vpMat, this.projMat, this.viewMat);
       M4.invert(this.invVpMat, this.vpMat);
     }
 
     screenToGround(clientX, clientY) {
       const rect = canvas.getBoundingClientRect();
+      if (!rect.width || !rect.height) return null;
       const nx = ((clientX - rect.left) / rect.width) * 2 - 1;
       const ny = 1 - ((clientY - rect.top) / rect.height) * 2;
       const inv = this.invVpMat;
@@ -4265,11 +4638,18 @@
       const p0 = unproject(-1), p1 = unproject(1);
       const dy = p1[1] - p0[1];
       if (Math.abs(dy) < 1e-5) return null;
-      const t = (0.4 - p0[1]) / dy;
-      if (t < 0) return null;
+      let targetY = 0.4;
+      let gx = 0, gz = 0;
+      for (let iter = 0; iter < 3; iter++) {
+        const t = (targetY - p0[1]) / dy;
+        if (t < 0) return null;
+        gx = p0[0] + (p1[0] - p0[0]) * t;
+        gz = p0[2] + (p1[2] - p0[2]) * t;
+        targetY = getSurfaceHeight(this.course, clamp(gx, -29, 29), clamp(gz, -21, 21.5));
+      }
       return {
-        x: clamp(p0[0] + (p1[0] - p0[0]) * t, -29, 29),
-        z: clamp(p0[2] + (p1[2] - p0[2]) * t, -21, 21.5)
+        x: clamp(gx, -29, 29),
+        z: clamp(gz, -21, 21.5)
       };
     }
 
@@ -4356,7 +4736,7 @@
       if (!r || !r.gl) return;
       r.resize();
       const useSunset = this.course.sunset || (goldenHourMode && isGoldenHourUnlocked());
-      r.beginFrame(this.vpMat, this.camPos, useSunset);
+      r.beginFrame(this.vpMat, this.camPos, useSunset, this.fogStart);
 
       // 1. Static landscape
       r.setTransparentMode(false);
@@ -4438,6 +4818,13 @@
         r.draw(this.meshes.ring, mat, 0.58, 1.0, [0.98, 0.96, 0.85]);
       }
 
+      if (this.screen === 'PLAYING' && this.inputMode === 'touch-drag' && this.touchTarget) {
+        const ty = getSurfaceHeight(this.course, this.touchTarget.x, this.touchTarget.z);
+        const rad = this.touchDragging ? 1.35 : 1.05;
+        M4.trs(mat, this.touchTarget.x, ty + 0.11, this.touchTarget.z, 0, 0, rad, 1, rad);
+        r.draw(this.meshes.ring, mat, this.touchDragging ? 0.72 : 0.48, 1.0, [0.99, 0.94, 0.72]);
+      }
+
       if (this.screen === 'PLAYING' && this.flowVisible) {
         const fy = getSurfaceHeight(this.course, this.flowPos.x, this.flowPos.z);
         M4.trs(mat, this.flowPos.x, fy + 0.12, this.flowPos.z, -this.flowAngle, 0, 1.25, 1, 1.25);
@@ -4457,12 +4844,38 @@
 
     updateWorldOverlayBadges() {
       const container = dom.worldBadges;
+      const edgeBox = dom.edgeIndicators;
       if (this.screen !== 'PLAYING' && this.screen !== 'PAUSED') {
         container.style.display = 'none';
+        if (edgeBox) edgeBox.style.display = 'none';
         return;
       }
       container.style.display = '';
-      const w = window.innerWidth, h = window.innerHeight;
+      if (edgeBox) edgeBox.style.display = '';
+
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width || window.innerWidth;
+      const h = rect.height || window.innerHeight;
+
+      // Measure live HUD top/bottom bounds so world badges & edge indicators never collide with HUD!
+      let safeTop = 76;
+      if (dom.hudTop) {
+        const tr = dom.hudTop.getBoundingClientRect();
+        if (tr.height > 0) safeTop = Math.max(safeTop, tr.bottom + 8);
+      }
+      if (dom.guideBanner && !dom.guideBanner.classList.contains('is-hidden')) {
+        const gr = dom.guideBanner.getBoundingClientRect();
+        if (gr.height > 0) safeTop = Math.max(safeTop, gr.bottom + 8);
+      }
+      let safeBottom = h - 78;
+      if (dom.hudBottom) {
+        const br = dom.hudBottom.getBoundingClientRect();
+        if (br.height > 0) safeBottom = Math.min(safeBottom, br.top - 10);
+      }
+      if (safeBottom < safeTop + 60) safeBottom = safeTop + 60;
+
+      const STRIPED_SVG = '<svg class="pat-icon" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#F9F5E8"/><rect x="2" y="3" width="20" height="4" rx="1.5" fill="#1E2E54"/><rect x="2" y="10" width="20" height="4" rx="1.5" fill="#1E2E54"/><rect x="2" y="17" width="20" height="4" rx="1.5" fill="#1E2E54"/></svg>';
+      const SPOTTED_SVG = '<svg class="pat-icon" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#FFF0D1"/><circle cx="7.5" cy="7.5" r="3.4" fill="#612046"/><circle cx="16.5" cy="7.5" r="3.4" fill="#612046"/><circle cx="7.5" cy="16.5" r="3.4" fill="#612046"/><circle cx="16.5" cy="16.5" r="3.4" fill="#612046"/></svg>';
 
       if (!this.penBadgeEls) {
         const mkBadge = (cls, svg) => {
@@ -4473,19 +4886,42 @@
           return el;
         };
         this.penBadgeEls = {
-          striped: mkBadge('striped', '<svg class="pat-icon" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#F9F5E8"/><rect x="2" y="3" width="20" height="4" rx="1.5" fill="#1E2E54"/><rect x="2" y="10" width="20" height="4" rx="1.5" fill="#1E2E54"/><rect x="2" y="17" width="20" height="4" rx="1.5" fill="#1E2E54"/></svg>'),
-          spotted: mkBadge('spotted', '<svg class="pat-icon" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#FFF0D1"/><circle cx="7.5" cy="7.5" r="3.4" fill="#612046"/><circle cx="16.5" cy="7.5" r="3.4" fill="#612046"/><circle cx="7.5" cy="16.5" r="3.4" fill="#612046"/><circle cx="16.5" cy="16.5" r="3.4" fill="#612046"/></svg>')
+          striped: mkBadge('striped', STRIPED_SVG),
+          spotted: mkBadge('spotted', SPOTTED_SVG)
         };
         this.toastPool = [];
+        this.edgePool = [];
       }
+
+      const offscreenTargets = [];
+
+      const projectRaw = (wx, wy, wz) => {
+        const vp = this.vpMat;
+        const cx = vp[0]*wx + vp[4]*wy + vp[8]*wz + vp[12];
+        const cy = vp[1]*wx + vp[5]*wy + vp[9]*wz + vp[13];
+        const cw = vp[3]*wx + vp[7]*wy + vp[11]*wz + vp[15];
+        if (cw <= 0.1) {
+          return { x: w * 0.5 - cx * 100, y: h * 0.5 + cy * 100, behind: true };
+        }
+        return { x: (cx / cw * 0.5 + 0.5) * w, y: (0.5 - cy / cw * 0.5) * h, behind: false };
+      };
 
       const posPen = (el, pen, count, total, popTimer) => {
         const y = this.course.heightFn(pen.cx, pen.zMax) + 4.4;
-        const p = M4.project(this.vpMat, pen.cx, y, pen.zMax, w, h);
-        if (!p) { el.style.display = 'none'; return; }
+        const p = projectRaw(pen.cx, y, pen.zMax);
+        const penMid = projectRaw(pen.cx, this.course.heightFn(pen.cx, pen.cz) + 1.0, pen.cz);
+        const onScreen = !penMid.behind && penMid.x >= 10 && penMid.x <= w - 10 && penMid.y >= safeTop - 26 && penMid.y <= safeBottom + 20;
+        if (!onScreen) {
+          el.style.display = 'none';
+          if (count < total) {
+            offscreenTargets.push({ kind: 'pen', pattern: pen.pattern, x: penMid.x, y: penMid.y, behind: penMid.behind, isRam: false });
+          }
+          return;
+        }
         el.style.display = 'inline-flex';
-        el.style.left = clamp(p.x, 76, w - 76).toFixed(1) + 'px';
-        el.style.top = clamp(p.y, 78, h - 80).toFixed(1) + 'px';
+        const padX = Math.min(68, w * 0.18);
+        el.style.left = clamp(p.x, padX, w - padX).toFixed(1) + 'px';
+        el.style.top = clamp(p.y, safeTop + 34, safeBottom - 10).toFixed(1) + 'px';
         el.lastChild.textContent = count + '/' + total;
         el.classList.toggle('complete', total > 0 && count >= total);
         el.classList.toggle('pop', popTimer > 0);
@@ -4494,12 +4930,117 @@
       posPen(this.penBadgeEls.striped, PENS.striped, this.stripedPenned, this.stripedTotal, this.badgePopTimers.striped);
       posPen(this.penBadgeEls.spotted, PENS.spotted, this.spottedPenned, this.spottedTotal, this.badgePopTimers.spotted);
 
+      // Collect any unpenned sheep outside the visible play viewport
+      for (const s of this.sheep) {
+        if (s.penned) continue;
+        const sy = getSurfaceHeight(this.course, s.x, s.z) + 1.1;
+        const p = projectRaw(s.x, sy, s.z);
+        const out = p.behind || p.x < 8 || p.x > w - 8 || p.y < safeTop - 8 || p.y > safeBottom + 10;
+        if (out) {
+          offscreenTargets.push({ kind: 'sheep', pattern: s.pattern, x: p.x, y: p.y, behind: p.behind, isRam: s.isRam });
+        }
+      }
+
+      // Compute edge-clamped indicator badges & cluster nearby same-pattern off-screen sheep
+      if (edgeBox) {
+        const cx = w * 0.5, cy = (safeTop + safeBottom) * 0.5;
+        const padX = 8, padY = 8;
+        const minX = padX, maxX = w - padX;
+        const minY = safeTop + padY, maxY = safeBottom - padY;
+        const halfW = Math.max(20, (maxX - minX) * 0.5);
+        const halfH = Math.max(20, (maxY - minY) * 0.5);
+        const items = [];
+
+        for (const t of offscreenTargets) {
+          let dx = t.x - cx, dy = t.y - cy;
+          const d = Math.hypot(dx, dy) || 1;
+          dx /= d; dy /= d;
+          const sx = Math.abs(dx) > 1e-4 ? halfW / Math.abs(dx) : 1e9;
+          const sy = Math.abs(dy) > 1e-4 ? halfH / Math.abs(dy) : 1e9;
+          const onVertEdge = sx <= sy;
+          const scale = onVertEdge ? sx : sy;
+          const ex = clamp(cx + dx * scale, minX, maxX);
+          const ey = clamp(cy + dy * scale, minY + 18, maxY - 18);
+          const edge = onVertEdge ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'bottom' : 'top');
+          const angle = Math.atan2(dy, dx);
+
+          if (t.kind === 'sheep') {
+            const existing = items.find(it => it.kind === 'sheep' && it.pattern === t.pattern && it.edge === edge && Math.hypot(it.ex - ex, it.ey - ey) < 58);
+            if (existing) {
+              existing.count++;
+              if (t.isRam) existing.hasRam = true;
+              continue;
+            }
+          }
+          items.push({ kind: t.kind, pattern: t.pattern, edge, ex, ey, angle, count: 1, hasRam: !!t.isRam });
+        }
+
+        // Prevent edge badges from stacking directly on top of each other
+        for (let i = 0; i < items.length; i++) {
+          for (let j = i + 1; j < items.length; j++) {
+            if (items[i].edge === items[j].edge) {
+              if (items[i].edge === 'left' || items[i].edge === 'right') {
+                const dy = items[j].ey - items[i].ey;
+                if (Math.abs(dy) < 38) {
+                  items[j].ey = clamp(items[i].ey + (dy >= 0 ? 40 : -40), minY + 18, maxY - 18);
+                }
+              } else {
+                const dx = items[j].ex - items[i].ex;
+                if (Math.abs(dx) < 88) {
+                  items[j].ex = clamp(items[i].ex + (dx >= 0 ? 90 : -90), minX + 48, maxX - 48);
+                }
+              }
+            }
+          }
+        }
+
+        while (this.edgePool.length < items.length) {
+          const el = document.createElement('div');
+          el.className = 'edge-ind';
+          edgeBox.appendChild(el);
+          this.edgePool.push(el);
+        }
+        for (let i = 0; i < this.edgePool.length; i++) {
+          const el = this.edgePool[i];
+          if (i >= items.length) { el.style.display = 'none'; continue; }
+          const it = items[i];
+          el.style.display = 'inline-flex';
+          el.className = 'edge-ind ' + it.pattern + (it.kind === 'pen' ? ' is-pen' : '');
+          if (it.edge === 'right') {
+            el.style.left = (w - padX) + 'px';
+            el.style.top = it.ey.toFixed(1) + 'px';
+            el.style.transform = 'translate(-100%, -50%)';
+          } else if (it.edge === 'left') {
+            el.style.left = padX + 'px';
+            el.style.top = it.ey.toFixed(1) + 'px';
+            el.style.transform = 'translate(0%, -50%)';
+          } else if (it.edge === 'top') {
+            el.style.left = clamp(it.ex, 52, w - 52).toFixed(1) + 'px';
+            el.style.top = (safeTop + padY).toFixed(1) + 'px';
+            el.style.transform = 'translate(-50%, 0%)';
+          } else {
+            el.style.left = clamp(it.ex, 52, w - 52).toFixed(1) + 'px';
+            el.style.top = (safeBottom - padY).toFixed(1) + 'px';
+            el.style.transform = 'translate(-50%, -100%)';
+          }
+          const deg = (it.angle * 180 / Math.PI).toFixed(1);
+          const patSvg = it.pattern === 'striped' ? STRIPED_SVG : SPOTTED_SVG;
+          const arrowSvg = `<svg class="edge-arrow" viewBox="0 0 24 24" style="transform:rotate(${deg}deg)"><path d="M5 12h12M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+          const label = it.kind === 'pen'
+            ? '<span class="edge-pen-tag">PEN</span>'
+            : ((it.hasRam ? '<span class="edge-ram-mark" title="Ram">▲</span>' : '') + (it.count > 1 ? `<span class="edge-count">×${it.count}</span>` : ''));
+          const arrowOnLeft = it.edge === 'left';
+          el.innerHTML = arrowOnLeft ? (arrowSvg + patSvg + label) : (patSvg + label + arrowSvg);
+        }
+      }
+
       while (this.toastPool.length < this.toasts.length) {
         const tEl = document.createElement('div');
         tEl.className = 'world-toast';
         container.appendChild(tEl);
         this.toastPool.push(tEl);
       }
+      const placedToasts = [];
       for (let i = 0; i < this.toastPool.length; i++) {
         const tEl = this.toastPool[i];
         if (i >= this.toasts.length) { tEl.style.display = 'none'; continue; }
@@ -4507,11 +5048,20 @@
         const y = getSurfaceHeight(this.course, t.x, t.z) + 2.4 + (t.age / t.life) * 1.4;
         const p = M4.project(this.vpMat, t.x, y, t.z, w, h);
         if (!p) { tEl.style.display = 'none'; continue; }
+        const padT = Math.min(86, w * 0.24);
+        const tx = clamp(p.x, padT, w - padT);
+        let ty = clamp(p.y, safeTop + 34, safeBottom - 10);
+        for (const pt of placedToasts) {
+          if (Math.abs(pt.x - tx) < 130 && Math.abs(pt.y - ty) < 36) {
+            ty = clamp(pt.y - 38, safeTop + 34, safeBottom - 10);
+          }
+        }
+        placedToasts.push({ x: tx, y: ty });
         tEl.style.display = 'inline-flex';
         tEl.className = 'world-toast' + (t.kind === 'mismatch' ? ' mismatch' : t.kind === 'ram' ? ' ram' : t.kind === 'streak' ? ' streak' : '');
         tEl.textContent = t.text;
-        tEl.style.left = clamp(p.x, 90, w - 90).toFixed(1) + 'px';
-        tEl.style.top = clamp(p.y, 82, h - 84).toFixed(1) + 'px';
+        tEl.style.left = tx.toFixed(1) + 'px';
+        tEl.style.top = ty.toFixed(1) + 'px';
         tEl.style.opacity = String(clamp(1 - Math.max(0, (t.age / t.life) - 0.65) / 0.35, 0, 1));
       }
     }
@@ -4524,6 +5074,7 @@
   const dom = {
     app: document.getElementById('app'),
     worldBadges: document.getElementById('worldBadges'),
+    edgeIndicators: document.getElementById('edgeIndicators'),
     liveStatus: document.getElementById('liveStatus'),
     logoScarfPath: document.getElementById('logoScarfPath'),
 
@@ -4533,6 +5084,9 @@
     btnGuideSkip: document.getElementById('btnGuideSkip'),
 
     hud: document.getElementById('hud'),
+    hudTop: document.getElementById('hudTop'),
+    hudBottom: document.getElementById('hudBottom'),
+    howControlsStrip: document.getElementById('howControlsStrip'),
     hudStriped: document.getElementById('hudStriped'),
     hudSpotted: document.getElementById('hudSpotted'),
     hudScore: document.getElementById('hudScore'),
@@ -4669,13 +5223,45 @@
   game.loadCourse(0, true);
   game.refreshBandanaMesh();
 
+  // Touch device detection (used for touch-friendly onboarding prompts & direct finger-drag)
+  let touchModeOn = !!(
+    (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+    ('ontouchstart' in window && navigator.maxTouchPoints > 0)
+  );
+
+  function updateHowControlsCopy() {
+    if (!dom.howControlsStrip) return;
+    if (touchModeOn) {
+      dom.howControlsStrip.innerHTML =
+        '<span><span class="key-chip">Drag</span> on hill: Move</span>' +
+        '<span><span class="key-chip">Tap Stalk</span> Creep</span>' +
+        '<span><span class="key-chip">Tap Bark</span> Wake Rams</span>' +
+        '<span><span class="key-chip">Tap Whistle</span> Regroup</span>';
+    }
+  }
+
   // Interactive First-Play Onboarding UI
-  const GUIDE_PROMPTS = {
+  const GUIDE_PROMPTS_DESKTOP = {
     1: { step: '1/4', text: 'Move behind sheep (WASD / Arrows / Cursor)!' },
     2: { step: '2/4', text: 'Press Space or click Bark to wake rams!' },
     3: { step: '3/4', text: 'Hold Shift or tap Stalk for narrow gates!' },
     4: { step: '4/4', text: 'Sort Stripes left (≡), Spots right (●) — R regroups!' }
   };
+
+  const GUIDE_PROMPTS_TOUCH = {
+    1: { step: '1/4', text: 'Drag on the hill to move behind sheep!' },
+    2: { step: '2/4', text: 'Tap Bark below to wake horned rams!' },
+    3: { step: '3/4', text: 'Tap Stalk for calm guiding through gates!' },
+    4: { step: '4/4', text: 'Stripes left (≡), Spots right (●) — tap Whistle to regroup!' }
+  };
+
+  function positionGuideBanner() {
+    if (!dom.guideBanner || !dom.hudTop) return;
+    const tr = dom.hudTop.getBoundingClientRect();
+    if (tr.height > 0) {
+      dom.guideBanner.style.top = Math.round(tr.bottom + 8) + 'px';
+    }
+  }
 
   function syncGuideUI() {
     const active = game.screen === 'PLAYING' && game.guideStep >= 1 && game.guideStep <= 4;
@@ -4686,9 +5272,11 @@
     dom.btnStalk.classList.toggle('guide-highlight', active && game.guideStep === 3);
     dom.btnWhistle.classList.toggle('guide-highlight', active && game.guideStep === 4);
     if (active) {
-      const p = GUIDE_PROMPTS[game.guideStep];
+      const prompts = touchModeOn ? GUIDE_PROMPTS_TOUCH : GUIDE_PROMPTS_DESKTOP;
+      const p = prompts[game.guideStep];
       dom.guideStepPill.textContent = p.step;
       dom.guideText.textContent = p.text;
+      positionGuideBanner();
     }
   }
 
@@ -5202,22 +5790,43 @@
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') syncActionButtons();
   });
 
-  // Mouse / Trackpad Steering & Click-to-Bark
+  // Mouse / Trackpad Steering & Direct Touch Finger-Drag Steering (Pointer Events)
   let lastMouseX = 0, lastMouseY = 0;
-  canvas.addEventListener('pointermove', (e) => {
-    if (e.pointerType === 'touch' || game.screen !== 'PLAYING') return;
-    if (Math.hypot(e.clientX - lastMouseX, e.clientY - lastMouseY) > 6 || game.inputMode === 'mouse') {
-      lastMouseX = e.clientX; lastMouseY = e.clientY;
-      game.inputMode = 'mouse';
-      game.mouseActive = true;
-      game.mouseWorld = game.screenToGround(e.clientX, e.clientY);
+  let activeTouchPointerId = null;
+  let touchStartX = 0, touchStartY = 0, touchStartTime = 0, touchMoved = false;
+
+  function enableTouchMode() {
+    if (!touchModeOn) {
+      touchModeOn = true;
+      updateHowControlsCopy();
+      syncGuideUI();
     }
-  });
-  canvas.addEventListener('pointerleave', () => { game.mouseActive = false; });
+    dom.hintBar.style.display = 'none';
+    dom.touchPad.classList.remove('visible');
+  }
+
   canvas.addEventListener('pointerdown', (e) => {
     document.body.classList.remove('kbd-nav');
     Sound.ensureCtx();
-    if (e.pointerType === 'touch') { enableTouchMode(); return; }
+    if (e.pointerType === 'touch') {
+      enableTouchMode();
+      if (game.screen !== 'PLAYING') return;
+      e.preventDefault();
+      if (document.activeElement && document.activeElement !== canvas) document.activeElement.blur();
+      activeTouchPointerId = e.pointerId;
+      touchStartX = e.clientX;
+      touchStartY = e.clientY;
+      touchStartTime = performance.now();
+      touchMoved = false;
+      try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+      const pt = game.screenToGround(e.clientX, e.clientY);
+      if (pt) {
+        game.inputMode = 'touch-drag';
+        game.touchTarget = pt;
+        game.touchDragging = true;
+      }
+      return;
+    }
     if (game.screen !== 'PLAYING') return;
     if (e.button === 2) { game.toggleStalk(); return; }
     if (e.button === 0) {
@@ -5226,45 +5835,49 @@
       game.triggerBark();
     }
   });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch') {
+      if (game.screen !== 'PLAYING' || e.pointerId !== activeTouchPointerId) return;
+      e.preventDefault();
+      if (Math.hypot(e.clientX - touchStartX, e.clientY - touchStartY) > 12) touchMoved = true;
+      const pt = game.screenToGround(e.clientX, e.clientY);
+      if (pt) {
+        game.inputMode = 'touch-drag';
+        game.touchTarget = pt;
+        game.touchDragging = true;
+      }
+      return;
+    }
+    if (game.screen !== 'PLAYING') return;
+    if (Math.hypot(e.clientX - lastMouseX, e.clientY - lastMouseY) > 6 || game.inputMode === 'mouse') {
+      lastMouseX = e.clientX; lastMouseY = e.clientY;
+      game.inputMode = 'mouse';
+      game.mouseActive = true;
+      game.mouseWorld = game.screenToGround(e.clientX, e.clientY);
+    }
+  });
+
+  function endCanvasTouch(e) {
+    if (e.pointerType !== 'touch' || e.pointerId !== activeTouchPointerId) return;
+    activeTouchPointerId = null;
+    game.touchDragging = false;
+    const elapsed = performance.now() - touchStartTime;
+    // If finger dragged or held, stop smoothly where guided; if quick tap, let hound trot to tap spot
+    if (touchMoved || elapsed > 220) {
+      game.touchTarget = null;
+    }
+  }
+  canvas.addEventListener('pointerup', endCanvasTouch);
+  canvas.addEventListener('pointercancel', endCanvasTouch);
+  canvas.addEventListener('pointerleave', () => { game.mouseActive = false; });
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  // Touch Thumb Pad
-  let touchModeOn = false, activePadPointerId = null;
-  function enableTouchMode() {
-    if (touchModeOn) return;
-    touchModeOn = true;
-    dom.touchPad.classList.add('visible');
-    dom.hintBar.style.display = 'none';
-  }
-  function updateTouchKnob(clientX, clientY) {
-    const rect = dom.touchPad.getBoundingClientRect();
-    const cx = rect.left + rect.width * 0.5, cy = rect.top + rect.height * 0.5;
-    const maxR = rect.width * 0.38;
-    let dx = clientX - cx, dy = clientY - cy;
-    const d = Math.hypot(dx, dy);
-    if (d > maxR) { dx = (dx / d) * maxR; dy = (dy / d) * maxR; }
-    dom.touchKnob.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
-    game.touchVec.active = d > 6;
-    game.touchVec.x = dx / maxR;
-    game.touchVec.z = dy / maxR;
-  }
-  dom.touchPad.addEventListener('pointerdown', (e) => {
-    e.stopPropagation(); Sound.ensureCtx();
-    activePadPointerId = e.pointerId;
-    dom.touchPad.setPointerCapture(e.pointerId);
-    updateTouchKnob(e.clientX, e.clientY);
-  });
-  dom.touchPad.addEventListener('pointermove', (e) => {
-    if (e.pointerId === activePadPointerId) updateTouchKnob(e.clientX, e.clientY);
-  });
-  function endTouchPad(e) {
-    if (e.pointerId !== activePadPointerId) return;
-    activePadPointerId = null;
-    game.touchVec.active = false; game.touchVec.x = 0; game.touchVec.z = 0;
-    dom.touchKnob.style.transform = 'translate(0px, 0px)';
-  }
-  dom.touchPad.addEventListener('pointerup', endTouchPad);
-  dom.touchPad.addEventListener('pointercancel', endTouchPad);
+  // Prevent browser pinch/scroll gesture ONLY when touch begins on the play canvas
+  canvas.addEventListener('touchstart', (e) => {
+    enableTouchMode();
+    if (game.screen === 'PLAYING') e.preventDefault();
+  }, { passive: false });
 
   // Clean Tab Visibility Pause & Recovery (zero dt jump, audio suspends & resumes cleanly)
   let lastTs = performance.now();
@@ -5272,6 +5885,9 @@
     if (document.hidden) {
       Sound.suspend();
       for (const k in game.keys) game.keys[k] = false;
+      activeTouchPointerId = null;
+      game.touchDragging = false;
+      game.touchTarget = null;
       if (game.screen === 'PLAYING') setScreen('PAUSED');
     } else {
       lastTs = performance.now();
@@ -5279,9 +5895,17 @@
     }
   });
 
-  window.addEventListener('resize', () => renderer.resize());
+  window.addEventListener('resize', () => {
+    renderer.resize();
+    positionGuideBanner();
+  });
+  window.addEventListener('orientationchange', () => setTimeout(() => {
+    renderer.resize();
+    positionGuideBanner();
+  }, 60));
 
   // Boot UI & 60fps loop
+  updateHowControlsCopy();
   renderCourseCards();
   syncSettingsUI();
   setScreen('TITLE');

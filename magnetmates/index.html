@@ -41,7 +41,6 @@
     line-height: 1.3;
     user-select: none;
     -webkit-user-select: none;
-    touch-action: none;
   }
 
   #viewport {
@@ -54,6 +53,26 @@
     background: radial-gradient(circle at 50% 35%, #16243d 0%, #070b15 100%);
   }
 
+  #playShell {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  #stageWrap {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
   #stage {
     position: relative;
     width: min(100vw, calc(100vh * 16 / 9));
@@ -63,6 +82,7 @@
     overflow: hidden;
     background: #0f172a;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.78);
+    touch-action: none;
   }
 
   #gameCanvas {
@@ -70,6 +90,246 @@
     width: 100%;
     height: 100%;
     outline: none;
+    touch-action: none;
+  }
+
+  /* Mobile Full-Viewport Play Shell (Portrait & Short Landscape Phones) */
+  body.mobile-play-layout #playShell {
+    justify-content: stretch;
+  }
+
+  body.mobile-play-layout #stageWrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    width: 100%;
+  }
+
+  body.mobile-play-layout #stage {
+    max-width: 100%;
+    max-height: 100%;
+    box-shadow: none;
+  }
+
+  body.mobile-play-layout.portrait-layout #stage {
+    width: 100%;
+    height: 100%;
+  }
+
+  body.mobile-play-layout:not(.portrait-layout) #stage {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Mobile Top Gameplay HUD Bar (sits cleanly above canvas, clears top-left exit buttons) */
+  #mobileHud {
+    flex: 0 0 auto;
+    width: 100%;
+    background: #0c1425;
+    border-bottom: 2px solid #334155;
+    padding: calc(6px + env(safe-area-inset-top, 0px)) 8px 6px calc(58px + env(safe-area-inset-left, 0px));
+    z-index: 18;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  body:not(.portrait-layout):has(#mbmexit-home) #mobileHud {
+    padding-left: calc(108px + env(safe-area-inset-left, 0px));
+  }
+
+  #mobileHud.hidden {
+    display: none;
+  }
+
+  .mhud-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mhud-pills {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex-wrap: nowrap;
+  }
+
+  .mhud-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 36px;
+    padding: 4px 9px;
+    border-radius: 10px;
+    background: #162238;
+    border: 1.5px solid #475569;
+    font-size: 14px;
+    font-weight: 800;
+    color: #f8fafc;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mhud-pill.score-pill {
+    border-color: #38bdf8;
+    font-size: 15px;
+  }
+
+  .mhud-pill.streak-pill.hot {
+    background: #3b240b;
+    border-color: #fbbf24;
+    color: #fde047;
+  }
+
+  .mhud-pill.timer-pill.urgent {
+    border-color: #fde047;
+    color: #fde047;
+  }
+
+  .mhud-pill.wave-pill {
+    background: #0f172a;
+    border-color: rgba(56, 189, 248, 0.45);
+    color: #7dd3fc;
+  }
+
+  .mhud-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .mhud-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #162238;
+    border: 2px solid rgba(148, 163, 184, 0.45);
+    gap: 4px;
+  }
+
+  .mhud-btn .btn-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mhud-row-2 {
+    display: none;
+  }
+
+  /* Portrait 2-row Mobile HUD: Row 1 clears exit button(s), Row 2 uses full 360px width */
+  body.portrait-layout #mobileHud {
+    padding: calc(6px + env(safe-area-inset-top, 0px)) 8px 6px 8px;
+  }
+
+  body.portrait-layout #mobileHud .mhud-row-1 {
+    padding-left: calc(50px + env(safe-area-inset-left, 0px));
+  }
+
+  body.portrait-layout:has(#mbmexit-home) #mobileHud .mhud-row-1 {
+    padding-left: calc(98px + env(safe-area-inset-left, 0px));
+  }
+
+  @media (max-width: 400px) {
+    body.portrait-layout:has(#mbmexit-home) #mobileHud .mhud-lbl {
+      display: none;
+    }
+    body.portrait-layout:has(#mbmexit-home) #mobileHud .mhud-actions {
+      gap: 4px;
+    }
+  }
+
+  body.portrait-layout #mobileHud .mhud-hide-p-row1 {
+    display: none;
+  }
+
+  body.portrait-layout #mobileHud .mhud-row-2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+  }
+
+  body.portrait-layout #mobileHud .mhud-row-2 .mhud-pill {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 32px;
+    padding: 3px 6px;
+    font-size: 14px;
+  }
+
+  /* Portrait Bottom Touch Dock (sits cleanly BELOW canvas) */
+  #mobileDock {
+    flex: 0 0 auto;
+    width: 100%;
+    background: #0c1425;
+    border-top: 2px solid #334155;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    z-index: 18;
+    touch-action: none;
+  }
+
+  #mobileDock.hidden {
+    display: none;
+  }
+
+  .dock-mag-btn {
+    flex: 1 1 0;
+    min-height: 48px;
+    min-width: 44px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 800;
+    background: #162238;
+    border: 2px solid var(--cyan);
+    color: #e0f2fe;
+    touch-action: none;
+  }
+
+  .dock-mag-btn.p2 {
+    border-color: var(--orange);
+    color: #ffedd5;
+  }
+
+  .dock-mag-btn.held {
+    background: rgba(34, 211, 238, 0.38);
+    border-color: #ffffff;
+  }
+
+  .dock-mag-btn.p2.held {
+    background: rgba(251, 146, 60, 0.38);
+    border-color: #ffffff;
+  }
+
+  .dock-hint {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.2;
+    flex: 1.15 1 0;
+  }
+
+  #mobileDock.solo-mode .dock-mag-btn.p2 {
+    display: none;
+  }
+
+  #mobileDock:not(.solo-mode) .dock-hint {
+    display: none;
   }
 
   /* Buttons & Interactive Controls (>= 48x48 px, clear focus ring, smooth transitions) */
@@ -120,10 +380,19 @@
   body.calm-mode .overlay,
   body.calm-mode .card,
   body.calm-mode #hudBar,
+  body.calm-mode #mobileHud,
+  body.calm-mode #mobileDock,
   body.calm-mode #onboardBanner,
   body.calm-mode .star-svg {
     transition: none !important;
     animation: none !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button, .overlay, .card, #hudBar, #mobileHud, #mobileDock, #onboardBanner, .star-svg {
+      transition: none !important;
+      animation: none !important;
+    }
   }
 
   body.calm-mode button:hover:not(:disabled),
@@ -292,31 +561,37 @@
     flex-shrink: 0;
   }
 
-  /* Touch Twin Thumb Magnet Pads */
+  /* Touch Twin Thumb Magnet Pads (Landscape/Desktop touch) */
   #touchPads {
     position: absolute;
     left: 12px;
     right: 12px;
-    bottom: 12px;
+    bottom: 10px;
     display: none;
     justify-content: space-between;
     pointer-events: none;
     z-index: 14;
+    touch-action: none;
   }
 
   #touchPads.active {
     display: flex;
   }
 
+  body.portrait-layout #touchPads.active {
+    display: none;
+  }
+
   .touch-mag-btn {
     pointer-events: auto;
-    min-width: 118px;
-    min-height: 58px;
-    border-radius: 16px;
-    font-size: 16px;
+    min-width: 112px;
+    min-height: 48px;
+    border-radius: 14px;
+    font-size: 15px;
     background: rgba(13, 21, 38, 0.86);
     border: 2px solid var(--cyan);
     color: #e0f2fe;
+    touch-action: none;
   }
 
   .touch-mag-btn.p2 {
@@ -334,15 +609,15 @@
     border-color: #ffffff;
   }
 
-  /* Animated Overlay Screens (180-220ms fade + slide, zero instant pop) */
+  /* Animated Overlay Screens (sized to FULL viewport, never trapped in 16:9 #stage) */
   .overlay {
-    position: absolute;
+    position: fixed;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 14px;
-    background: rgba(7, 12, 24, 0.64);
+    background: rgba(7, 12, 24, 0.70);
     z-index: 25;
     opacity: 1;
     visibility: visible;
@@ -362,8 +637,11 @@
     border-radius: 22px;
     padding: 18px 24px;
     width: min(94%, 790px);
-    max-height: calc(100% - 10px);
-    overflow: hidden;
+    max-height: calc(100% - 8px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -740,6 +1018,7 @@
     background: transparent;
     cursor: pointer;
     margin: 0;
+    touch-action: none;
   }
 
   input[type="range"].vol-slider::-webkit-slider-runnable-track {
@@ -1018,12 +1297,319 @@
     white-space: nowrap;
     border: 0;
   }
+
+  /* Mobile Onboarding Banner Placement */
+  body.mobile-play-layout #onboardBanner {
+    top: 10px;
+    max-width: calc(100% - 16px);
+    width: min(560px, calc(100% - 16px));
+    padding: 8px 10px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+
+  body.mobile-play-layout.portrait-layout #onboardBanner {
+    top: 15.5%;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 8px 12px;
+    gap: 6px 10px;
+  }
+
+  body.mobile-play-layout.portrait-layout .ob-step-pill {
+    order: 1;
+  }
+
+  body.mobile-play-layout.portrait-layout .ob-skip-btn {
+    order: 2;
+  }
+
+  body.mobile-play-layout.portrait-layout .ob-text {
+    order: 3;
+    flex: 1 0 100%;
+    text-align: left;
+  }
+
+  body.mobile-play-layout .ob-step-pill {
+    font-size: 14px;
+    padding: 3px 8px;
+  }
+
+  body.mobile-play-layout .ob-text {
+    font-size: 14px;
+    line-height: 1.25;
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+
+  body.mobile-play-layout .ob-skip-btn {
+    min-height: 44px;
+    min-width: 68px;
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+
+  /* Responsive Landscape Phones (e.g. 664x390, 839x412) */
+  @media (max-height: 520px) and (min-width: 480px) {
+    .overlay {
+      padding: 10px 12px 10px calc(58px + env(safe-area-inset-left, 0px));
+    }
+    body:has(#mbmexit-home) .overlay {
+      padding-left: calc(108px + env(safe-area-inset-left, 0px));
+    }
+    .card, .card.wide, .card.compact {
+      width: 100%;
+      max-height: 100%;
+      padding: 12px 16px;
+      gap: 8px;
+      border-radius: 16px;
+    }
+    .game-title { font-size: clamp(24px, 4.2vw, 34px); }
+    .tagline { font-size: 14px; margin-top: -2px; }
+    .section-heading { font-size: 20px; }
+    .btn-primary, .btn-accent { min-height: 46px; font-size: 16px; padding: 8px 16px; }
+    button { min-height: 44px; min-width: 44px; font-size: 14px; padding: 6px 12px; }
+    .mode-card { min-height: 58px; padding: 8px 10px; }
+    .mode-title { font-size: 15px; }
+    .mode-sub { font-size: 14px; }
+    .stages-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stage-tile { min-height: 126px; padding: 8px 8px; gap: 4px; }
+    .stage-num, .stage-twist, .stage-meta { font-size: 14px; }
+    .stage-name { font-size: 15px; }
+    .stage-stars-display { font-size: 18px; }
+    .stage-detail-bar { font-size: 14px; padding: 8px 12px; }
+    .step-art { height: 86px; }
+    .step-title { font-size: 15px; }
+    .step-desc { font-size: 14px; }
+    .controls-bar { font-size: 14px; gap: 6px; padding: 6px 10px; }
+    .star-svg { width: 42px; height: 42px; }
+    .final-score-num { font-size: 34px; }
+    .res-stat-label { font-size: 14px; }
+    .res-stat-val { font-size: 18px; }
+    .touch-mag-btn { min-width: 96px; min-height: 46px; padding: 6px 10px; font-size: 14px; }
+    #mobileHud { padding-top: 4px; padding-bottom: 4px; }
+  }
+
+  @media (max-width: 760px) and (max-height: 520px) {
+    .mhud-lbl { display: none; }
+    .mhud-pill { padding: 3px 7px; font-size: 14px; }
+  }
+
+  /* Responsive Portrait Phones & Narrow Screens (360x740, 390x664, 412x839) */
+  @media (max-width: 680px) and (orientation: portrait), (max-width: 520px) {
+    .overlay {
+      padding: calc(58px + env(safe-area-inset-top, 0px)) 10px calc(12px + env(safe-area-inset-bottom, 0px));
+    }
+    .card, .card.wide, .card.compact {
+      width: 100%;
+      max-width: 520px;
+      max-height: 100%;
+      padding: 14px 14px;
+      gap: 10px;
+      border-radius: 18px;
+    }
+    .brand-row { gap: 10px; }
+    .brand-row svg { width: 42px; height: 42px; flex-shrink: 0; }
+    .game-title { font-size: clamp(23px, 7vw, 34px); }
+    .tagline { font-size: 14px; margin: 0; }
+    .section-heading { font-size: 20px; text-align: center; justify-content: center; }
+
+    .stage-ribbon {
+      padding: 8px 12px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .stage-ribbon-info { font-size: 15px; gap: 8px; }
+    .stage-ribbon-badge { font-size: 14px; padding: 2px 8px; }
+    .stage-ribbon-stars { font-size: 18px; }
+
+    .mode-grid {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .mode-card {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      text-align: left;
+      min-height: 52px;
+      padding: 8px 12px;
+      gap: 8px;
+    }
+    .mode-title { font-size: 15px; flex-shrink: 0; }
+    .mode-sub { font-size: 14px; text-align: right; }
+
+    .btn-row { gap: 8px; }
+    .btn-primary, .btn-accent {
+      flex: 1 1 140px;
+      min-height: 48px;
+      font-size: 16px;
+      padding: 10px 14px;
+    }
+    button {
+      min-height: 44px;
+      min-width: 44px;
+      font-size: 14px;
+      padding: 8px 10px;
+    }
+    #screenTitle .btn-row:nth-of-type(2) button {
+      flex: 1 1 calc(50% - 6px);
+    }
+
+    .stats-strip {
+      width: 100%;
+      gap: 8px 14px;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+
+    /* Portrait Bay Select: clean readable horizontal cards */
+    .stages-grid {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .stage-tile {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      grid-template-rows: auto auto;
+      align-items: center;
+      text-align: left;
+      column-gap: 10px;
+      row-gap: 2px;
+      min-height: 64px;
+      padding: 10px 12px;
+    }
+    .stage-num { grid-column: 1; grid-row: 1; font-size: 14px; padding: 2px 8px; }
+    .stage-name { grid-column: 2; grid-row: 1; font-size: 16px; }
+    .stage-stars-display { grid-column: 3; grid-row: 1; font-size: 17px; letter-spacing: 1px; text-align: right; }
+    .stage-twist { grid-column: 1 / 3; grid-row: 2; font-size: 14px; }
+    .stage-meta { grid-column: 3; grid-row: 2; font-size: 14px; text-align: right; }
+
+    .stage-detail-bar {
+      font-size: 14px;
+      padding: 8px 12px;
+      gap: 6px;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    /* Collection */
+    .coll-columns { grid-template-columns: 1fr; gap: 10px; }
+    .scrap-grid { grid-template-columns: repeat(2, 1fr); }
+    .scrap-name, .scrap-count, .skin-status { font-size: 14px; }
+    .coll-subhead { font-size: 16px; }
+
+    /* Settings: full-width sliders with percentage aligned on row 1 */
+    .slider-row {
+      grid-template-columns: 1fr auto;
+      row-gap: 2px;
+      padding: 8px 12px;
+    }
+    .slider-label { font-size: 15px; grid-row: 1; grid-column: 1; }
+    .slider-val { font-size: 15px; grid-row: 1; grid-column: 2; }
+    input[type="range"].vol-slider { grid-row: 2; grid-column: 1 / -1; }
+
+    /* Keep bottom action row easy to reach inside tall scrollable cards */
+    .card.wide > .btn-row:last-child {
+      position: sticky;
+      bottom: -14px;
+      padding: 10px 0 4px;
+      background: linear-gradient(180deg, rgba(13, 21, 38, 0) 0%, rgba(13, 21, 38, 0.96) 24%);
+      z-index: 2;
+    }
+
+    /* How to Play */
+    .steps-grid { grid-template-columns: 1fr; gap: 10px; }
+    .step-art { height: auto; aspect-ratio: 280 / 148; max-height: 132px; }
+    .step-title { font-size: 16px; }
+    .step-desc { font-size: 14px; }
+    .controls-bar { font-size: 14px; gap: 6px; padding: 8px 10px; }
+
+    /* Pause */
+    .pause-grid { gap: 8px; }
+    .pause-grid button { min-height: 46px; font-size: 14px; padding: 8px 8px; }
+
+    /* Results */
+    .star-svg { width: 46px; height: 46px; }
+    .medal-badge { font-size: 15px; padding: 5px 14px; }
+    .final-score-num { font-size: 38px; }
+    .unlock-banner { font-size: 14px; padding: 6px 12px; }
+    .results-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .res-stat-label { font-size: 14px; }
+    .res-stat-val { font-size: 20px; }
+
+    .mhud-lbl { font-size: 14px; }
+  }
 </style>
 </head>
 <body>
 <div id="viewport">
-  <div id="stage">
-    <canvas id="gameCanvas" tabindex="-1" aria-label="Magnet Mates game arena"></canvas>
+  <div id="playShell">
+    <!-- Compact Mobile Gameplay HUD (shown on portrait & short landscape phones) -->
+    <header id="mobileHud" class="hidden" role="toolbar" aria-label="Game status and controls" aria-hidden="true">
+      <div class="mhud-row mhud-row-1">
+        <div class="mhud-pills">
+          <span class="mhud-pill score-pill mhud-hide-p-row1" aria-label="Score">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2 15,9 22,9.5 16.8,14 18.5,21 12,17.2 5.5,21 7.2,14 2,9.5 9,9" fill="#fbbf24"/></svg>
+            <span id="mHudScore1">0</span>
+          </span>
+          <span class="mhud-pill streak-pill mhud-hide-p-row1" id="mHudStreakPill1" aria-label="Streak">
+            <span id="mHudStreak1">x0</span>
+          </span>
+          <span class="mhud-pill timer-pill" id="mHudTimerPill" aria-label="Time left">
+            <span id="mHudTimer">2:30</span>
+          </span>
+          <span class="mhud-pill wave-pill mhud-hide-p-row1" id="mHudWavePill1">
+            <span id="mHudWave1">B1 · W1</span>
+          </span>
+        </div>
+        <div class="mhud-actions">
+          <button id="btnMHudAi" type="button" class="mhud-btn btn-toggle ai-btn" aria-pressed="false" aria-label="Toggle AI Mate" title="Toggle AI Mate">
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="4" y="6" width="16" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2.2"/>
+              <circle cx="9.5" cy="12" r="1.6" fill="currentColor"/>
+              <circle cx="14.5" cy="12" r="1.6" fill="currentColor"/>
+              <path d="M12 6V2.5M9.5 2.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span id="lblMHudAi" class="mhud-lbl">2P</span>
+          </button>
+          <button id="btnMHudCalm" type="button" class="mhud-btn btn-toggle calm-btn mhud-hide-p-row1" aria-pressed="false" aria-label="Toggle Calm Mode" title="Toggle Calm Mode">
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button id="btnMHudSound" type="button" class="mhud-btn btn-toggle" aria-pressed="true" aria-label="Toggle Sound" title="Toggle Sound">
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 9.5h4.2L13.5 5v14l-5.3-4.5H4Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+              <path class="sound-waves" d="M16.8 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path class="sound-mute-slash" d="M4 4l16 16" stroke="#f87171" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button id="btnMHudPause" type="button" class="mhud-btn" aria-label="Pause" title="Pause">
+            <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="6" y="5" width="4.5" height="14" rx="1.5" fill="currentColor"/>
+              <rect x="13.5" y="5" width="4.5" height="14" rx="1.5" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="mhud-row mhud-row-2">
+        <span class="mhud-pill score-pill" aria-label="Score">
+          <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2 15,9 22,9.5 16.8,14 18.5,21 12,17.2 5.5,21 7.2,14 2,9.5 9,9" fill="#fbbf24"/></svg>
+          <span id="mHudScore2">0</span>
+        </span>
+        <span class="mhud-pill streak-pill" id="mHudStreakPill2" aria-label="Streak">
+          <span id="mHudStreak2">STREAK x0</span>
+        </span>
+        <span class="mhud-pill wave-pill" id="mHudWavePill2">
+          <span id="mHudWave2">BAY 01 · W1</span>
+        </span>
+      </div>
+    </header>
+
+    <div id="stageWrap">
+      <div id="stage">
+        <canvas id="gameCanvas" tabindex="-1" aria-label="Magnet Mates game arena"></canvas>
 
     <!-- In-Game Accessible HUD Controls -->
     <div id="hudBar" class="hidden" role="toolbar" aria-label="Game controls" aria-hidden="true">
@@ -1087,6 +1673,26 @@
         <span>P2 Hold</span>
       </button>
     </div>
+      </div>
+    </div>
+
+    <!-- Portrait Bottom Touch Dock (keeps fingers off the arena, >= 48px targets) -->
+    <div id="mobileDock" class="hidden" aria-label="Touch magnet controls" aria-hidden="true">
+      <button id="btnDockMag1" type="button" class="dock-mag-btn p1">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 4v8a6 6 0 0 0 12 0V4h-3.5v8a2.5 2.5 0 0 1-5 0V4Z" fill="none" stroke="currentColor" stroke-width="2.2"/>
+        </svg>
+        <span id="lblDockMag1">Hold Magnet</span>
+      </button>
+      <span id="dockHint" class="dock-hint">Drag pod • Pinch to Snap!</span>
+      <button id="btnDockMag2" type="button" class="dock-mag-btn p2">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 4v8a6 6 0 0 0 12 0V4h-3.5v8a2.5 2.5 0 0 1-5 0V4Z" fill="none" stroke="currentColor" stroke-width="2.2"/>
+        </svg>
+        <span>P2 Hold</span>
+      </button>
+    </div>
+  </div>
 
     <!-- TITLE SCREEN -->
     <section id="screenTitle" class="overlay" aria-label="Title screen">
@@ -1121,7 +1727,7 @@
               </svg>
               2P DUO
             </span>
-            <span class="mode-sub">WASD + Arrows (1 Keyboard)</span>
+            <span id="lblMode2PSub" class="mode-sub">WASD + Arrows (1 Keyboard)</span>
           </button>
           <button id="btnMode1P" type="button" class="mode-card solo" aria-pressed="false">
             <span class="mode-title">
@@ -1135,7 +1741,7 @@
               </svg>
               1P + AI MATE
             </span>
-            <span class="mode-sub">Solo + Smart Bot Partner</span>
+            <span id="lblMode1PSub" class="mode-sub">Solo + Smart Bot Partner</span>
           </button>
         </div>
 
@@ -1576,7 +2182,6 @@
     </section>
 
     <div id="srAnnounce" class="sr-only" aria-live="polite"></div>
-  </div>
 </div>
 
 <script>
@@ -1632,16 +2237,40 @@
   }
 
   /* =========================================================================
-     2. STAGES, UNLOCKS, SKINS & ACCESSIBLE DEFINITIONS
+     2. STAGES, UNLOCKS, SKINS & ADAPTIVE ARENA LAYOUT
      ========================================================================= */
-  const W = 1280;
-  const H = 720;
-  const HUD_H = 64;
-  const FLOOR_Y = 668;
-  const ARENA_MIN_X = 166;
-  const ARENA_MAX_X = 1114;
-  const ARENA_MIN_Y = 232;
-  const ARENA_MAX_Y = 628;
+  let W = 1280;
+  let H = 720;
+  let HUD_H = 64;
+  let FLOOR_Y = 668;
+  let ARENA_MIN_X = 166;
+  let ARENA_MAX_X = 1114;
+  let ARENA_MIN_Y = 232;
+  let ARENA_MAX_Y = 628;
+
+  const layout = {
+    mobile: false,
+    portrait: false,
+    tetherMin: 74,
+    tetherMax: 475,
+    idealSpan: 250,
+    idealSpanHeld: 205,
+    idealSpanSafe: 230,
+    restY: 495,
+    p1RestX: 460,
+    p2RestX: 820,
+    gravScale: 1.0,
+    launchScale: 1.0,
+    speedScale: 1.0,
+    fontScale: 1.0,
+    coilRange: 96,
+    dropLanes: [255, 345, 445, 835, 935, 1025],
+    railL: { x: 195, w: 230 },
+    railR: { x: 855, w: 230 },
+    coilTrack: { x: 424, w: 432 },
+    obDropX: [410, 370, 360],
+    firstDropX: 355
+  };
 
   const STAGES = [
     {
@@ -2084,13 +2713,37 @@
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d', { alpha: false });
   const stageEl = document.getElementById('stage');
+  const stageWrap = document.getElementById('stageWrap');
   const hudBar = document.getElementById('hudBar');
+  const mobileHud = document.getElementById('mobileHud');
+  const mobileDock = document.getElementById('mobileDock');
   const onboardBanner = document.getElementById('onboardBanner');
   const obStepPill = document.getElementById('obStepPill');
   const obPromptText = document.getElementById('obPromptText');
   const btnObSkip = document.getElementById('btnObSkip');
   const touchPads = document.getElementById('touchPads');
   const srAnnounce = document.getElementById('srAnnounce');
+
+  // Mobile HUD & Dock refs
+  const mHudScore1 = document.getElementById('mHudScore1');
+  const mHudScore2 = document.getElementById('mHudScore2');
+  const mHudStreakPill1 = document.getElementById('mHudStreakPill1');
+  const mHudStreakPill2 = document.getElementById('mHudStreakPill2');
+  const mHudStreak1 = document.getElementById('mHudStreak1');
+  const mHudStreak2 = document.getElementById('mHudStreak2');
+  const mHudTimerPill = document.getElementById('mHudTimerPill');
+  const mHudTimer = document.getElementById('mHudTimer');
+  const mHudWave1 = document.getElementById('mHudWave1');
+  const mHudWave2 = document.getElementById('mHudWave2');
+  const btnMHudAi = document.getElementById('btnMHudAi');
+  const lblMHudAi = document.getElementById('lblMHudAi');
+  const btnMHudCalm = document.getElementById('btnMHudCalm');
+  const btnMHudSound = document.getElementById('btnMHudSound');
+  const btnMHudPause = document.getElementById('btnMHudPause');
+  const btnDockMag1 = document.getElementById('btnDockMag1');
+  const lblDockMag1 = document.getElementById('lblDockMag1');
+  const btnDockMag2 = document.getElementById('btnDockMag2');
+  const lblMode2PSub = document.getElementById('lblMode2PSub');
 
   const screens = {
     title:      document.getElementById('screenTitle'),
@@ -2202,6 +2855,11 @@
      5. PERSISTENT CAREER PROGRESS & APP STATE
      ========================================================================= */
   const reduceMotionMQ = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const coarsePointerMQ = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
+  const initialTouch = !!(
+    (coarsePointerMQ && coarsePointerMQ.matches) ||
+    ('ontouchstart' in window && navigator.maxTouchPoints > 0)
+  );
   const savedCalm = safeGet('calm', '');
   const initialCalm = savedCalm === '' ? !!(reduceMotionMQ && reduceMotionMQ.matches) : savedCalm === '1';
 
@@ -2213,9 +2871,9 @@
   const app = {
     mode: 'title',
     prevMode: 'title',
-    aiMate: false,
+    aiMate: initialTouch,
     calmMode: initialCalm,
-    touchDetected: false,
+    touchDetected: initialTouch,
     onboarded: safeGet('onboarded', '0') === '1',
     onboarding: false,
     obStep: 0, // 0, 1, 2
@@ -2318,6 +2976,7 @@
   const touches = {
     p1Id: null, p1X: 420, p1Y: 470,
     p2Id: null, p2X: 860, p2Y: 470,
+    canvasMagId: null,
     mag1: false, mag2: false
   };
 
@@ -2433,8 +3092,159 @@
   }
 
   /* =========================================================================
-     8. RESET, INTERACTIVE ONBOARDING & WAVE DIRECTOR
+     8. ADAPTIVE LAYOUT, RESET, INTERACTIVE ONBOARDING & WAVE DIRECTOR
      ========================================================================= */
+  function applyArenaLayout(isMobile, isPortrait, stageCssW, stageCssH) {
+    const oldW = W, oldH = H, oldHud = HUD_H, oldFloor = FLOOR_Y;
+    const oldPlayH = Math.max(1, oldFloor - oldHud);
+
+    layout.mobile = !!isMobile;
+    layout.portrait = !!(isMobile && isPortrait);
+
+    if (!layout.mobile) {
+      // Exact classic desktop 1280x720 geometry (100% unchanged!)
+      W = 1280;
+      H = 720;
+      HUD_H = 64;
+      FLOOR_Y = 668;
+      ARENA_MIN_X = 166;
+      ARENA_MAX_X = 1114;
+      ARENA_MIN_Y = 232;
+      ARENA_MAX_Y = 628;
+
+      layout.tetherMin = 74;
+      layout.tetherMax = 475;
+      layout.idealSpan = 250;
+      layout.idealSpanHeld = 205;
+      layout.idealSpanSafe = 230;
+      layout.restY = 495;
+      layout.p1RestX = 460;
+      layout.p2RestX = 820;
+      layout.gravScale = 1.0;
+      layout.launchScale = 1.0;
+      layout.speedScale = 1.0;
+      layout.fontScale = 1.0;
+      layout.coilRange = 96;
+      layout.dropLanes = [255, 345, 445, 835, 935, 1025];
+      layout.railL = { x: 195, w: 230 };
+      layout.railR = { x: 855, w: 230 };
+      layout.coilTrack = { x: 424, w: 432 };
+      layout.obDropX = [410, 370, 360];
+      layout.firstDropX = 355;
+
+      Object.assign(CHUTES[0], { x: 0, y: 286, w: 142, h: 184, mouthX: 138, mouthY: 378, aimX: 90, aimY: 378 });
+      Object.assign(CHUTES[1], { x: W - 142, y: 286, w: 142, h: 184, mouthX: W - 138, mouthY: 378, aimX: W - 90, aimY: 378 });
+      Object.assign(CHUTES[2], { x: 530, y: HUD_H + 2, w: 220, h: 112, mouthX: 640, mouthY: HUD_H + 110, aimX: 640, aimY: HUD_H + 84, baseX: 530 });
+      Object.assign(CHUTES[3], { x: 0, y: HUD_H + 18, w: 146, h: 144, mouthX: 142, mouthY: HUD_H + 102, aimX: 94, aimY: HUD_H + 92 });
+      Object.assign(CHUTES[4], { x: W - 146, y: HUD_H + 18, w: 146, h: 144, mouthX: W - 142, mouthY: HUD_H + 102, aimX: W - 94, aimY: HUD_H + 92 });
+      BUMPERS[0].x = 24; BUMPERS[0].y = 558; BUMPERS[0].r = 30;
+      BUMPERS[1].x = W - 24; BUMPERS[1].y = 558; BUMPERS[1].r = 30;
+    } else if (!layout.portrait) {
+      // Landscape phone: top HUD sits in DOM above canvas, so canvas is pure 1280x656 arena!
+      W = 1280;
+      H = 656;
+      HUD_H = 0;
+      FLOOR_Y = 608;
+      ARENA_MIN_X = 166;
+      ARENA_MAX_X = 1114;
+      ARENA_MIN_Y = 172;
+      ARENA_MAX_Y = 568;
+
+      layout.tetherMin = 74;
+      layout.tetherMax = 475;
+      layout.idealSpan = 250;
+      layout.idealSpanHeld = 205;
+      layout.idealSpanSafe = 230;
+      layout.restY = 435;
+      layout.p1RestX = 460;
+      layout.p2RestX = 820;
+      layout.gravScale = 1.0;
+      layout.launchScale = 1.0;
+      layout.speedScale = 1.0;
+      layout.fontScale = 1.15;
+      layout.coilRange = 96;
+      layout.dropLanes = [255, 345, 445, 835, 935, 1025];
+      layout.railL = { x: 195, w: 230 };
+      layout.railR = { x: 855, w: 230 };
+      layout.coilTrack = { x: 424, w: 432 };
+      layout.obDropX = [410, 370, 360];
+      layout.firstDropX = 355;
+
+      Object.assign(CHUTES[0], { x: 0, y: 222, w: 142, h: 184, mouthX: 138, mouthY: 314, aimX: 90, aimY: 314 });
+      Object.assign(CHUTES[1], { x: W - 142, y: 222, w: 142, h: 184, mouthX: W - 138, mouthY: 314, aimX: W - 90, aimY: 314 });
+      Object.assign(CHUTES[2], { x: 530, y: 2, w: 220, h: 112, mouthX: 640, mouthY: 110, aimX: 640, aimY: 84, baseX: 530 });
+      Object.assign(CHUTES[3], { x: 0, y: 18, w: 146, h: 144, mouthX: 142, mouthY: 102, aimX: 94, aimY: 92 });
+      Object.assign(CHUTES[4], { x: W - 146, y: 18, w: 146, h: 144, mouthX: W - 142, mouthY: 102, aimX: W - 94, aimY: 92 });
+      BUMPERS[0].x = 24; BUMPERS[0].y = 496; BUMPERS[0].r = 30;
+      BUMPERS[1].x = W - 24; BUMPERS[1].y = 496; BUMPERS[1].r = 30;
+    } else {
+      // True Portrait Foundry Arena filling the full phone play area!
+      const ratio = stageCssW > 10 ? (stageCssH / stageCssW) : 1.55;
+      W = 720;
+      H = clamp(Math.round(720 * ratio), 820, 1240);
+      HUD_H = 0;
+      FLOOR_Y = H - 44;
+      ARENA_MIN_X = 128;
+      ARENA_MAX_X = W - 128;
+      ARENA_MIN_Y = Math.round(H * 0.27);
+      ARENA_MAX_Y = FLOOR_Y - 46;
+
+      const vSpan = FLOOR_Y - 108;
+      const vRatio = vSpan / 500;
+      layout.tetherMin = 66;
+      layout.tetherMax = 355;
+      layout.idealSpan = 200;
+      layout.idealSpanHeld = 168;
+      layout.idealSpanSafe = 185;
+      layout.restY = Math.round(FLOOR_Y - Math.min(220, vSpan * 0.24));
+      layout.p1RestX = 248;
+      layout.p2RestX = 472;
+      layout.gravScale = clamp(vRatio * 0.62, 0.96, 1.24);
+      layout.launchScale = clamp(Math.sqrt(vRatio * 0.96), 1.05, 1.40);
+      layout.speedScale = 0.88;
+      layout.fontScale = 1.46;
+      layout.coilRange = 62;
+      layout.dropLanes = [152, 192, 224, 496, 528, 568];
+      layout.railL = { x: 126, w: 122 };
+      layout.railR = { x: W - 248, w: 122 };
+      layout.coilTrack = { x: 204, w: 312 };
+      layout.obDropX = [202, 198, 204];
+      layout.firstDropX = 200;
+
+      const sideY = Math.round(H * 0.34);
+      const sideH = 172;
+      Object.assign(CHUTES[0], { x: 0, y: sideY, w: 112, h: sideH, mouthX: 108, mouthY: sideY + sideH * 0.5, aimX: 66, aimY: sideY + sideH * 0.5 });
+      Object.assign(CHUTES[1], { x: W - 112, y: sideY, w: 112, h: sideH, mouthX: W - 108, mouthY: sideY + sideH * 0.5, aimX: W - 66, aimY: sideY + sideH * 0.5 });
+      Object.assign(CHUTES[2], { x: 268, y: 4, w: 184, h: 98, mouthX: 360, mouthY: 98, aimX: 360, aimY: 74, baseX: 268 });
+      Object.assign(CHUTES[3], { x: 0, y: 24, w: 114, h: 132, mouthX: 110, mouthY: 96, aimX: 66, aimY: 88 });
+      Object.assign(CHUTES[4], { x: W - 114, y: 24, w: 114, h: 132, mouthX: W - 110, mouthY: 96, aimX: W - 66, aimY: 88 });
+      BUMPERS[0].x = 22; BUMPERS[0].y = FLOOR_Y - 122; BUMPERS[0].r = 28;
+      BUMPERS[1].x = W - 22; BUMPERS[1].y = FLOOR_Y - 122; BUMPERS[1].r = 28;
+    }
+
+    // Remap active entities cleanly if viewport resized or rotated mid-game
+    if (oldW !== W || oldH !== H || oldHud !== HUD_H) {
+      const newPlayH = Math.max(1, FLOOR_Y - HUD_H);
+      const mapX = (x) => clamp((x / Math.max(1, oldW)) * W, 28, W - 28);
+      const mapY = (y) => clamp(HUD_H + ((y - oldHud) / oldPlayH) * newPlayH, HUD_H + 24, FLOOR_Y - 24);
+      world.p1.x = clamp(mapX(world.p1.x), ARENA_MIN_X, ARENA_MAX_X);
+      world.p1.y = clamp(mapY(world.p1.y), ARENA_MIN_Y, ARENA_MAX_Y);
+      world.p2.x = clamp(mapX(world.p2.x), ARENA_MIN_X, ARENA_MAX_X);
+      world.p2.y = clamp(mapY(world.p2.y), ARENA_MIN_Y, ARENA_MAX_Y);
+      for (const it of world.items) {
+        it.x = mapX(it.x);
+        it.y = mapY(it.y);
+      }
+      for (const tg of world.telegraphs) {
+        tg.x = clamp(mapX(tg.x), ARENA_MIN_X + 18, ARENA_MAX_X - 18);
+      }
+      for (const m of ambientMotes) {
+        m.x = (m.x / Math.max(1, oldW)) * W;
+        m.y = HUD_H + ((m.y - oldHud) / oldPlayH) * newPlayH;
+      }
+    }
+  }
+
   function resetChutesForStage(st) {
     app.coilMovePhase = 0;
     CHUTES[2].x = CHUTES[2].baseX;
@@ -2451,10 +3261,11 @@
 
   function resetArena(isAttract, runOnboarding) {
     const st = getActiveStage();
-    world.p1 = createPod(1, 460, 495);
-    world.p2 = createPod(2, 820, 495);
-    world.band.dist = 360;
-    world.band.prevDist = 360;
+    world.p1 = createPod(1, layout.p1RestX, layout.restY);
+    world.p2 = createPod(2, layout.p2RestX, layout.restY);
+    const startDist = Math.abs(layout.p2RestX - layout.p1RestX);
+    world.band.dist = startDist;
+    world.band.prevDist = startDist;
     world.band.closingRate = 0;
     world.band.sag = 0;
     world.band.sagVel = 0;
@@ -2471,6 +3282,9 @@
     world.spawnTimer = isAttract ? 0.5 : 0.7;
     pointer.magToggle = false;
     pointer.down = false;
+    touches.p1Id = null;
+    touches.p2Id = null;
+    touches.canvasMagId = null;
     touches.mag1 = false;
     touches.mag2 = false;
 
@@ -2507,11 +3321,11 @@
         app.onboarding = false;
         app.waveBanner = `${st.code} — ${st.name.toUpperCase()}`;
         app.waveBannerTimer = 2.4;
-        queueDrop('standard', 'star', 355);
+        queueDrop('standard', 'star', layout.firstDropX);
       }
     } else {
       app.onboarding = false;
-      queueDrop('standard', 'star', 360);
+      queueDrop('standard', 'star', layout.firstDropX);
     }
   }
 
@@ -2525,11 +3339,17 @@
     onboardBanner.classList.remove('hidden');
     onboardBanner.setAttribute('aria-hidden', 'false');
     if ('inert' in onboardBanner) onboardBanner.inert = false;
-    const prompts = [
-      { pill: 'WARM-UP 1/3', text: 'Move pods under the Star shadow to catch & bounce it!' },
-      { pill: 'WARM-UP 2/3', text: 'Tilt band left (or hold Space/Click) to aim into the STAR chute!' },
-      { pill: 'WARM-UP 3/3', text: 'Snap pods closer mid-bounce to rocket into the 2x HIGH chute!' }
-    ];
+    const prompts = app.touchDetected
+      ? [
+          { pill: 'WARM-UP 1/3', text: 'Drag pod under the Star shadow to catch & bounce!' },
+          { pill: 'WARM-UP 2/3', text: 'Tilt band left (or hold Magnet) to aim into STAR!' },
+          { pill: 'WARM-UP 3/3', text: 'Pull pods closer mid-bounce to rocket into 2x HIGH!' }
+        ]
+      : [
+          { pill: 'WARM-UP 1/3', text: 'Move pods under the Star shadow to catch & bounce it!' },
+          { pill: 'WARM-UP 2/3', text: 'Tilt band left (or hold Space/Click) to aim into the STAR chute!' },
+          { pill: 'WARM-UP 3/3', text: 'Snap pods closer mid-bounce to rocket into the 2x HIGH chute!' }
+        ];
     const p = prompts[clamp(app.obStep, 0, 2)];
     obStepPill.textContent = p.pill;
     obPromptText.textContent = p.text;
@@ -2538,7 +3358,7 @@
   function advanceOnboardingStep(callout) {
     if (!app.onboarding || app.obSuccessTimer > 0) return;
     sound.starDing(app.obStep);
-    addPopup(W * 0.5, 290, callout, '#4ade80', true);
+    addPopup(W * 0.5, Math.round(H * 0.42), callout, '#4ade80', true);
     app.obSuccessTimer = 1.1;
   }
 
@@ -2565,7 +3385,7 @@
     app.waveBanner = skipped ? `${st.code} — ${st.name.toUpperCase()}` : `WARM-UP COMPLETE! ${st.code} GO!`;
     app.waveBannerTimer = 2.4;
     if (!skipped) sound.waveUp();
-    queueDrop('standard', 'star', 355);
+    queueDrop('standard', 'star', layout.firstDropX);
     announce(`${st.name} shift started.`);
   }
 
@@ -2578,11 +3398,13 @@
   }
 
   function pickDropX() {
-    const lanes = [255, 345, 445, 835, 935, 1025];
-    const free = lanes.filter(lx => !world.telegraphs.some(t => Math.abs(t.x - lx) < 85));
+    const lanes = layout.dropLanes;
+    const minSep = layout.portrait ? 54 : 85;
+    const jitter = layout.portrait ? 20 : 34;
+    const free = lanes.filter(lx => !world.telegraphs.some(t => Math.abs(t.x - lx) < minSep));
     const pool = free.length ? free : lanes;
     const base = pool[Math.floor(Math.random() * pool.length)];
-    return base + (Math.random() - 0.5) * 34;
+    return clamp(base + (Math.random() - 0.5) * jitter, ARENA_MIN_X + 16, ARENA_MAX_X - 16);
   }
 
   function queueDrop(forcedKind, forcedType, forcedX) {
@@ -2674,10 +3496,11 @@
     if (world.band.heldItem) return { isTelegraph: false, obj: world.band.heldItem };
     let best = null;
     let bestScore = -1e9;
+    const highCutY = HUD_H + (FLOOR_Y - HUD_H) * 0.42;
     for (const it of world.items) {
       if (it.floorTimer > 0) continue;
-      if (it.vy < -260 && it.y < 320) continue;
-      const timeToBand = it.vy > 20 ? Math.max(0.05, (490 - it.y) / it.vy) : 1.5;
+      if (it.vy < -260 && it.y < highCutY) continue;
+      const timeToBand = it.vy > 20 ? Math.max(0.05, (layout.restY - it.y) / it.vy) : 1.5;
       let sc = 500 - timeToBand * 180 + it.y * 0.45;
       if (it.kind === 'safe') sc += 75;
       if (it.kind === 'spark' || it.kind === 'prism') sc += 70;
@@ -2707,18 +3530,24 @@
 
   function computeAiControls(pod, mate, dt, isAttractP1) {
     const pick = chooseTargetForAI();
-    const maxSpeed = app.calmMode ? 430 : 550;
-    let goalX = isAttractP1 ? 470 : 810;
-    let goalY = 495;
+    const maxSpeed = (app.calmMode ? 430 : 550) * layout.speedScale;
+    let goalX = isAttractP1 ? layout.p1RestX : layout.p2RestX;
+    let goalY = layout.restY;
     let wantMag = false;
+    const minSpan = layout.portrait ? 115 : 155;
+    const nudgeSpan = layout.portrait ? 150 : 195;
+    const maxSpan = layout.portrait ? 260 : 340;
+    const clampSpan = layout.portrait ? 240 : 310;
+    const minTargetY = ARENA_MIN_Y + 95;
+    const maxTargetY = ARENA_MAX_Y - 56;
 
     if (pick) {
       const obj = pick.obj;
       const targetX = pick.isTelegraph
         ? obj.x
-        : clamp(obj.x + obj.vx * clamp((485 - obj.y) / Math.max(140, obj.vy + 180), 0, 0.55), 210, W - 210);
-      const targetY = pick.isTelegraph ? 495 : clamp(obj.y + 42, 340, 560);
-      const idealSpan = world.band.heldItem ? 205 : (obj.kind === 'safe' ? 230 : 250);
+        : clamp(obj.x + obj.vx * clamp((layout.restY - 10 - obj.y) / Math.max(140, obj.vy + 180), 0, 0.55), ARENA_MIN_X + 24, ARENA_MAX_X - 24);
+      const targetY = pick.isTelegraph ? layout.restY : clamp(obj.y + 42, minTargetY, maxTargetY);
+      const idealSpan = world.band.heldItem ? layout.idealSpanHeld : (obj.kind === 'safe' ? layout.idealSpanSafe : layout.idealSpan);
 
       if (isAttractP1) {
         goalX = clamp(targetX - idealSpan * 0.5, ARENA_MIN_X + 10, ARENA_MAX_X - 10);
@@ -2726,13 +3555,13 @@
         let mirrorX = 2 * targetX - mate.x;
         const dxFromMate = mirrorX - mate.x;
         const sideSign = dxFromMate >= 0 ? 1 : -1;
-        if (Math.abs(dxFromMate) < 155) {
-          mirrorX = mate.x + sideSign * 195;
+        if (Math.abs(dxFromMate) < minSpan) {
+          mirrorX = mate.x + sideSign * nudgeSpan;
           if (mirrorX > ARENA_MAX_X - 20 || mirrorX < ARENA_MIN_X + 20) {
-            mirrorX = mate.x - sideSign * 195;
+            mirrorX = mate.x - sideSign * nudgeSpan;
           }
-        } else if (Math.abs(dxFromMate) > 340) {
-          mirrorX = mate.x + sideSign * 310;
+        } else if (Math.abs(dxFromMate) > maxSpan) {
+          mirrorX = mate.x + sideSign * clampSpan;
         }
         goalX = clamp(mirrorX, ARENA_MIN_X + 10, ARENA_MAX_X - 10);
       }
@@ -2740,7 +3569,7 @@
       const wantHigh = obj.kind === 'spark' || obj.kind === 'prism' || (app.onboarding && app.obStep === 2);
       const chute = getChuteTargetForItem(obj.type, wantHigh);
       const midX = (mate.x + goalX) * 0.5;
-      const midY = pick.isTelegraph ? 495 : clamp(mate.y, 380, 555);
+      const midY = pick.isTelegraph ? layout.restY : clamp(mate.y, minTargetY + 25, maxTargetY);
       const aimDx = chute.aimX - midX;
       const aimDy = Math.min(-80, chute.aimY - midY);
       const aimLen = hypot(aimDx, aimDy) || 1;
@@ -2750,10 +3579,10 @@
       const dxPod = goalX - mate.x;
 
       if (isAttractP1) {
-        goalY = clamp(targetY - rawSlope * (idealSpan * 0.45), 340, 565);
+        goalY = clamp(targetY - rawSlope * (idealSpan * 0.45), minTargetY, maxTargetY);
       } else {
         const desiredDy = clamp(rawSlope * dxPod, -110, 110);
-        const baseY = pick.isTelegraph ? 500 : clamp(Math.max(mate.y, obj.y + 40), 370, 575);
+        const baseY = pick.isTelegraph ? layout.restY : clamp(Math.max(mate.y, obj.y + 40), minTargetY + 18, ARENA_MAX_Y - 38);
         goalY = clamp(baseY + desiredDy * 0.85, ARENA_MIN_Y + 28, ARENA_MAX_Y - 12);
       }
 
@@ -2768,17 +3597,17 @@
       }
     } else {
       const side = mate.x < W * 0.5 ? 1 : -1;
-      goalX = clamp(mate.x + side * 250, ARENA_MIN_X + 30, ARENA_MAX_X - 30);
-      goalY = clamp(mate.y, 410, 540);
+      goalX = clamp(mate.x + side * layout.idealSpan, ARENA_MIN_X + 24, ARENA_MAX_X - 24);
+      goalY = clamp(mate.y, ARENA_MIN_Y + 120, ARENA_MAX_Y - 60);
     }
 
     // Smooth vertical bypass when crossing horizontally past P1
-    const crossingMate = Math.abs(pod.x - mate.x) < 115 &&
+    const crossingMate = Math.abs(pod.x - mate.x) < 105 &&
       Math.sign(goalX - mate.x) !== 0 &&
       Math.sign(pod.x - mate.x) !== 0 &&
       Math.sign(goalX - mate.x) !== Math.sign(pod.x - mate.x);
     if (crossingMate && Math.abs(pod.y - mate.y) < 75) {
-      goalY = clamp(mate.y > 460 ? mate.y - 96 : mate.y + 96, ARENA_MIN_Y + 24, ARENA_MAX_Y - 12);
+      goalY = clamp(mate.y > layout.restY - 30 ? mate.y - 96 : mate.y + 96, ARENA_MIN_Y + 24, ARENA_MAX_Y - 12);
     }
 
     const desiredVx = clamp((goalX - pod.x) * 6.4, -maxSpeed, maxSpeed);
@@ -2795,8 +3624,9 @@
   function updatePods(dt, isAttract) {
     const p1 = world.p1;
     const p2 = world.p2;
-    const speed = app.calmMode ? 450 : 565;
+    const speed = (app.calmMode ? 450 : 565) * layout.speedScale;
     const accel = 1 - Math.exp(-15 * dt);
+    const fingerLift = layout.portrait ? 46 : 34;
 
     if (isAttract) {
       computeAiControls(p1, p2, dt, true);
@@ -2822,9 +3652,10 @@
       } else if (touches.p1Id !== null) {
         pointer.p1Source = 'touch';
         const tx = clamp(touches.p1X, ARENA_MIN_X, ARENA_MAX_X);
-        const ty = clamp(touches.p1Y - 34, ARENA_MIN_Y, ARENA_MAX_Y);
-        p1.vx = lerp(p1.vx, clamp((tx - p1.x) * 9, -speed, speed), accel);
-        p1.vy = lerp(p1.vy, clamp((ty - p1.y) * 9, -speed, speed), accel);
+        const ty = clamp(touches.p1Y - fingerLift, ARENA_MIN_Y, ARENA_MAX_Y);
+        const touchSpeed = speed * 1.25;
+        p1.vx = lerp(p1.vx, clamp((tx - p1.x) * 11, -touchSpeed, touchSpeed), accel);
+        p1.vy = lerp(p1.vy, clamp((ty - p1.y) * 11, -touchSpeed, touchSpeed), accel);
       } else if (pointer.active && pointer.p1Source === 'mouse') {
         const mx = clamp(pointer.x, ARENA_MIN_X, ARENA_MAX_X);
         const my = clamp(pointer.y, ARENA_MIN_Y, ARENA_MAX_Y);
@@ -2854,9 +3685,10 @@
           p2.vy = lerp(p2.vy, (p2dy / len) * speed, accel);
         } else if (touches.p2Id !== null) {
           const tx = clamp(touches.p2X, ARENA_MIN_X, ARENA_MAX_X);
-          const ty = clamp(touches.p2Y - 34, ARENA_MIN_Y, ARENA_MAX_Y);
-          p2.vx = lerp(p2.vx, clamp((tx - p2.x) * 9, -speed, speed), accel);
-          p2.vy = lerp(p2.vy, clamp((ty - p2.y) * 9, -speed, speed), accel);
+          const ty = clamp(touches.p2Y - fingerLift, ARENA_MIN_Y, ARENA_MAX_Y);
+          const touchSpeed = speed * 1.25;
+          p2.vx = lerp(p2.vx, clamp((tx - p2.x) * 11, -touchSpeed, touchSpeed), accel);
+          p2.vy = lerp(p2.vy, clamp((ty - p2.y) * 11, -touchSpeed, touchSpeed), accel);
         } else {
           p2.vx = lerp(p2.vx, 0, accel);
           p2.vy = lerp(p2.vy, 0, accel);
@@ -2876,16 +3708,16 @@
     let dy = p2.y - p1.y;
     let dist = hypot(dx, dy);
     if (dist < 1) { dx = 1; dy = 0; dist = 1; }
-    if (dist < 74) {
-      const push = (74 - dist) * 0.5;
+    if (dist < layout.tetherMin) {
+      const push = (layout.tetherMin - dist) * 0.5;
       p1.x -= (dx / dist) * push; p1.y -= (dy / dist) * push;
       p2.x += (dx / dist) * push; p2.y += (dy / dist) * push;
-      dist = 74;
-    } else if (dist > 475) {
-      const pull = (dist - 475) * 0.5;
+      dist = layout.tetherMin;
+    } else if (dist > layout.tetherMax) {
+      const pull = (dist - layout.tetherMax) * 0.5;
       p1.x += (dx / dist) * pull; p1.y += (dy / dist) * pull;
       p2.x -= (dx / dist) * pull; p2.y -= (dy / dist) * pull;
-      dist = 475;
+      dist = layout.tetherMax;
     }
 
     p1.x = clamp(p1.x, ARENA_MIN_X, ARENA_MAX_X);
@@ -2943,12 +3775,13 @@
     it.hitCooldown = 0.2;
     it.bouncedOnce = true;
 
-    const taut = clamp((band.dist - 90) / 260, 0.35, 1.1);
+    const tautSpan = Math.max(120, layout.tetherMax - layout.tetherMin - 110);
+    const taut = clamp((band.dist - (layout.tetherMin + 12)) / tautSpan, 0.35, 1.1);
     const distClosed = band.holdStartDist - band.dist;
-    const didSnap = isSnap || distClosed > 30 || band.closingRate > 125 || (world.p1.magActive && world.p2.magActive);
+    const didSnap = isSnap || distClosed > 28 || band.closingRate > 120 || (world.p1.magActive && world.p2.magActive);
 
     const calmScale = app.calmMode ? 0.86 : 1.0;
-    let launchSpeed = (675 + taut * 135) * it.restitution * calmScale;
+    let launchSpeed = (675 + taut * 135) * it.restitution * calmScale * layout.launchScale;
     launchSpeed /= Math.pow(it.weight, 0.34);
 
     // Squash-and-stretch launch impulse!
@@ -2987,7 +3820,7 @@
     const band = world.band;
     const p1 = world.p1;
     const p2 = world.p2;
-    const gravity = app.calmMode ? 355 : (app.onboarding ? 420 : 585);
+    const gravity = (app.calmMode ? 355 : (app.onboarding ? 420 : 585)) * layout.gravScale;
     const subSteps = 4;
     const subDt = dt / subSteps;
 
@@ -3189,14 +4022,15 @@
                 it.hitCooldown = 0.14;
                 it.bouncedOnce = true;
 
-                const taut = clamp((band.dist - 80) / 270, 0.35, 1.12);
+                const tautSpan = Math.max(120, layout.tetherMax - layout.tetherMin - 110);
+                const taut = clamp((band.dist - (layout.tetherMin + 8)) / tautSpan, 0.35, 1.12);
                 const bl = Math.sqrt(lenSq) || 1;
                 const ux = bdx / bl;
                 const uy = bdy / bl;
                 const p1Inward = p1.vx * ux + p1.vy * uy;
                 const p2Inward = -(p2.vx * ux + p2.vy * uy);
-                const bothClosing = p1Inward > 80 && p2Inward > 80 && band.closingRate > 240;
-                const hardClosing = band.closingRate > 440 && band.dist < 320;
+                const bothClosing = p1Inward > 75 && p2Inward > 75 && band.closingRate > 220;
+                const hardClosing = band.closingRate > 410 && band.dist < (layout.tetherMax * 0.72);
                 const isSnap = bothClosing || hardClosing;
                 const calmScale = app.calmMode ? 0.85 : 1.0;
 
@@ -3204,7 +4038,7 @@
                 const ty = band.aimNormalX;
                 const tanVel = (it.vx * tx + it.vy * ty) * 0.42;
 
-                let launchSpd = (625 + taut * 145) * it.restitution * calmScale;
+                let launchSpd = (625 + taut * 145) * it.restitution * calmScale * layout.launchScale;
                 launchSpd /= Math.pow(it.weight, 0.34);
 
                 // Juicy squash-and-stretch on impact!
@@ -3382,7 +4216,7 @@
     // Moving COIL Chute on Flux Turbine & Overdrive Core
     if (!app.onboarding && st.movingCoil) {
       app.coilMovePhase += simDt * (app.calmMode ? 0.55 : 0.95);
-      const offset = Math.sin(app.coilMovePhase) * 96;
+      const offset = Math.sin(app.coilMovePhase) * layout.coilRange;
       CHUTES[2].x = CHUTES[2].baseX + offset;
       CHUTES[2].mouthX = CHUTES[2].x + CHUTES[2].w * 0.5;
       CHUTES[2].aimX = CHUTES[2].mouthX;
@@ -3414,11 +4248,11 @@
           if (world.items.length === 0 && world.telegraphs.length === 0) {
             app.obFeedTimer -= dt;
             if (app.obFeedTimer <= 0) {
-              if (app.obStep === 0) queueDrop('standard', 'star', 410);
-              else if (app.obStep === 1) queueDrop('standard', 'star', 370);
+              if (app.obStep === 0) queueDrop('standard', 'star', layout.obDropX[0]);
+              else if (app.obStep === 1) queueDrop('standard', 'star', layout.obDropX[1]);
               else {
                 CHUTES[3].active = true;
-                queueDrop('spark', 'wild', 360);
+                queueDrop('spark', 'wild', layout.obDropX[2]);
               }
               app.obFeedTimer = 0.8;
             }
@@ -3626,17 +4460,17 @@
     ctx.fillStyle = st.accent;
     ctx.globalAlpha = app.calmMode ? 0.025 : 0.038;
     ctx.beginPath();
-    ctx.moveTo(300, HUD_H);
-    ctx.lineTo(440, HUD_H);
-    ctx.lineTo(540, FLOOR_Y);
-    ctx.lineTo(200, FLOOR_Y);
+    ctx.moveTo(W * 0.23, HUD_H);
+    ctx.lineTo(W * 0.34, HUD_H);
+    ctx.lineTo(W * 0.42, FLOOR_Y);
+    ctx.lineTo(W * 0.16, FLOOR_Y);
     ctx.closePath();
     ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(840, HUD_H);
-    ctx.lineTo(980, HUD_H);
-    ctx.lineTo(1080, FLOOR_Y);
-    ctx.lineTo(740, FLOOR_Y);
+    ctx.moveTo(W * 0.66, HUD_H);
+    ctx.lineTo(W * 0.77, HUD_H);
+    ctx.lineTo(W * 0.84, FLOOR_Y);
+    ctx.lineTo(W * 0.58, FLOOR_Y);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
@@ -3676,20 +4510,20 @@
     // Moving Coil Chute Overhead Track (Stages 4 & 5)
     if (st.movingCoil) {
       ctx.fillStyle = '#1e293b';
-      ctx.fillRect(424, HUD_H + 4, 432, 12);
+      ctx.fillRect(layout.coilTrack.x, HUD_H + 4, layout.coilTrack.w, 12);
       ctx.strokeStyle = '#fbbf24';
       ctx.lineWidth = 2;
-      ctx.strokeRect(424, HUD_H + 4, 432, 12);
+      ctx.strokeRect(layout.coilTrack.x, HUD_H + 4, layout.coilTrack.w, 12);
     }
 
     // Drop bay rails
     ctx.fillStyle = '#1e293b';
-    ctx.fillRect(195, HUD_H, 230, 22);
-    ctx.fillRect(855, HUD_H, 230, 22);
+    ctx.fillRect(layout.railL.x, HUD_H, layout.railL.w, 22);
+    ctx.fillRect(layout.railR.x, HUD_H, layout.railR.w, 22);
     ctx.strokeStyle = '#475569';
     ctx.lineWidth = 2;
-    ctx.strokeRect(195, HUD_H, 230, 22);
-    ctx.strokeRect(855, HUD_H, 230, 22);
+    ctx.strokeRect(layout.railL.x, HUD_H, layout.railL.w, 22);
+    ctx.strokeRect(layout.railR.x, HUD_H, layout.railR.w, 22);
 
     // Side Bumpers (Stages 2, 4, 5)
     if (st.bumpers) {
@@ -3896,14 +4730,15 @@
       }
 
       const centerX = c.x + c.w * 0.5 + (c.side === 'left' || c.side === 'highLeft' ? -4 : c.side === 'right' || c.side === 'highRight' ? 4 : 0);
-      const centerY = c.side === 'top' ? c.y + 42 : c.y + c.h * 0.42;
-      drawTypeEmblem(c.isBonus ? 'wild' : c.type, centerX, centerY, c.isBonus ? 22 : 26, st.soft);
+      const centerY = c.side === 'top' ? c.y + 38 : c.y + c.h * 0.39;
+      drawTypeEmblem(c.isBonus ? 'wild' : c.type, centerX, centerY, c.isBonus ? 20 : 24, st.soft);
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = '800 18px "Segoe UI", system-ui, sans-serif';
+      const chuteFontPx = Math.round((layout.portrait ? 22 : 18) * (layout.portrait ? 1 : layout.fontScale));
+      ctx.font = `800 ${chuteFontPx}px "Segoe UI", system-ui, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(c.isBonus ? (c.active ? '2x HIGH' : 'WAIT') : st.label, centerX, c.side === 'top' ? c.y + 84 : c.y + c.h * 0.78);
+      ctx.fillText(c.isBonus ? (c.active ? '2x HIGH' : 'WAIT') : st.label, centerX, c.side === 'top' ? c.y + c.h - 24 : c.y + c.h * 0.77);
       ctx.restore();
     }
   }
@@ -3922,8 +4757,7 @@
     ctx.lineJoin = 'round';
 
     if (app.obStep === 0) {
-      // Point toward drop lane x = 410
-      const tx = 410;
+      const tx = layout.obDropX[0];
       const ty = FLOOR_Y - 56 + bob;
       ctx.beginPath();
       ctx.moveTo(tx, ty - 28);
@@ -3933,9 +4767,8 @@
       ctx.lineTo(tx + 10, ty - 10);
       ctx.stroke();
     } else if (app.obStep === 1) {
-      // Arrow pointing from playfield toward STAR chute
-      const ax = 210 + bob;
-      const ay = 378;
+      const ax = CHUTES[0].mouthX + 58 + bob;
+      const ay = CHUTES[0].mouthY;
       ctx.beginPath();
       ctx.moveTo(ax + 44, ay);
       ctx.lineTo(ax, ay);
@@ -3944,7 +4777,6 @@
       ctx.lineTo(ax + 12, ay + 11);
       ctx.stroke();
     } else if (app.obStep === 2) {
-      // Inward arrows beside both pods + arrow toward 2x HIGH
       const midX = (p1.x + p2.x) * 0.5;
       const midY = (p1.y + p2.y) * 0.5;
       ctx.beginPath();
@@ -3955,7 +4787,7 @@
       ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(midX, midY - 34);
-      ctx.lineTo(205, 175);
+      ctx.lineTo(CHUTES[3].mouthX + 44, CHUTES[3].mouthY + 12);
       ctx.stroke();
     }
     ctx.restore();
@@ -3989,7 +4821,7 @@
 
       if (tg.kind === 'safe' || tg.kind === 'tyre' || tg.kind === 'prism') {
         ctx.fillStyle = tg.kind === 'safe' ? '#f87171' : (tg.kind === 'prism' ? '#fde047' : '#a3e635');
-        ctx.font = '900 17px "Segoe UI", system-ui, sans-serif';
+        ctx.font = `900 ${Math.round(17 * layout.fontScale)}px "Segoe UI", system-ui, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(tg.kind === 'safe' ? 'HEAVY' : (tg.kind === 'prism' ? 'PRISM 3x' : 'BOUNCY'), tg.x, HUD_H + 54);
@@ -4036,8 +4868,9 @@
     const cpx = mx - band.aimNormalX * band.sag;
     const cpy = my - band.aimNormalY * band.sag;
 
-    const taut = clamp((band.dist - 90) / 280, 0, 1);
-    const overstretched = band.dist > 430;
+    const tautSpan = Math.max(120, layout.tetherMax - layout.tetherMin - 110);
+    const taut = clamp((band.dist - (layout.tetherMin + 12)) / tautSpan, 0, 1);
+    const overstretched = band.dist > layout.tetherMax - 45;
     const isHolding = !!band.heldItem;
     const isSnapping = band.snapGlow > 0.15;
 
@@ -4048,10 +4881,10 @@
     if (isHolding) {
       const it = band.heldItem;
       const calmScale = app.calmMode ? 0.86 : 1.0;
-      const spd = ((675 + clamp((band.dist - 90) / 260, 0.35, 1.1) * 135) * it.restitution * calmScale) / Math.pow(it.weight, 0.34);
+      const spd = ((675 + clamp((band.dist - (layout.tetherMin + 12)) / tautSpan, 0.35, 1.1) * 135) * it.restitution * calmScale * layout.launchScale) / Math.pow(it.weight, 0.34);
       const vx = band.aimNormalX * spd;
       const vy = band.aimNormalY * spd;
-      const g = app.calmMode ? 355 : 585;
+      const g = (app.calmMode ? 355 : 585) * layout.gravScale;
       ctx.fillStyle = '#fde047';
       for (let k = 1; k <= 11; k++) {
         const tStep = k * 0.052;
@@ -4226,7 +5059,7 @@
     }
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 17px "Segoe UI", system-ui, sans-serif';
+    ctx.font = `900 ${Math.round(17 * (layout.portrait ? 1.25 : 1))}px "Segoe UI", system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(isP1 ? 'P1' : (isAi ? 'AI' : 'P2'), 0, -2);
@@ -4400,7 +5233,9 @@
       ctx.globalAlpha = a;
       ctx.translate(pop.x, pop.y);
       ctx.scale(popIn, popIn);
-      ctx.font = pop.big ? '900 24px "Segoe UI", system-ui, sans-serif' : '800 19px "Segoe UI", system-ui, sans-serif';
+      ctx.font = pop.big
+        ? `900 ${Math.round(24 * layout.fontScale)}px "Segoe UI", system-ui, sans-serif`
+        : `800 ${Math.round(19 * layout.fontScale)}px "Segoe UI", system-ui, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.lineWidth = 4;
@@ -4435,7 +5270,73 @@
     return { x: start, s };
   }
 
+  let lastMHudScore = '';
+  let lastMHudStreak = -1;
+  let lastMHudTimer = '';
+  let lastMHudWave = '';
+
+  function syncMobileHudLive() {
+    if (!layout.mobile) return;
+    if (app.mode !== 'playing' && app.mode !== 'paused' && app.mode !== 'results') return;
+    const sc = String(app.displayScore);
+    if (sc !== lastMHudScore) {
+      lastMHudScore = sc;
+      mHudScore1.textContent = sc;
+      mHudScore2.textContent = sc;
+    }
+    if (app.streak !== lastMHudStreak) {
+      lastMHudStreak = app.streak;
+      const hot = app.streak >= 2;
+      mHudStreak1.textContent = `x${app.streak}`;
+      mHudStreak2.textContent = `STREAK x${app.streak}`;
+      mHudStreakPill1.classList.toggle('hot', hot);
+      mHudStreakPill2.classList.toggle('hot', hot);
+    }
+    const tStr = app.onboarding ? 'DEMO' : formatTime(app.timeLeft);
+    if (tStr !== lastMHudTimer) {
+      lastMHudTimer = tStr;
+      mHudTimer.textContent = tStr;
+    }
+    const urgent = !app.calmMode && !app.onboarding && app.timeLeft <= 15;
+    mHudTimerPill.classList.toggle('urgent', urgent);
+    const st = getActiveStage();
+    const wShort = app.onboarding ? `STEP ${app.obStep + 1}/3` : `B${st.idx + 1} · W${app.wave}`;
+    const wLong = app.onboarding ? `WARM-UP ${app.obStep + 1}/3` : `${st.code} · W${app.wave}`;
+    if (wLong !== lastMHudWave) {
+      lastMHudWave = wLong;
+      mHudWave1.textContent = wShort;
+      mHudWave2.textContent = wLong;
+    }
+  }
+
   function drawTopHud() {
+    if (layout.mobile) {
+      syncMobileHudLive();
+      // In mobile layout, top HUD lives in DOM (#mobileHud), so draw only wave banner on canvas!
+      if (app.mode === 'playing' && app.waveBannerTimer > 0 && app.waveBanner) {
+        ctx.save();
+        const a = clamp(app.waveBannerTimer / 0.45, 0, 1);
+        ctx.globalAlpha = a;
+        const bw = Math.min(W - 36, layout.portrait ? 560 : 520);
+        const bh = layout.portrait ? 64 : 54;
+        const by = layout.portrait ? Math.round(H * 0.24) : 136;
+        ctx.fillStyle = 'rgba(13, 21, 38, 0.92)';
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(W * 0.5 - bw * 0.5, by, bw, bh, 14);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#fef08a';
+        ctx.font = `900 ${Math.round(22 * layout.fontScale)}px "Segoe UI", system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(app.waveBanner, W * 0.5, by + bh * 0.5 + 1);
+        ctx.restore();
+      }
+      return;
+    }
+
     ctx.fillStyle = '#0c1425';
     ctx.fillRect(0, 0, W, HUD_H);
     ctx.strokeStyle = '#334155';
@@ -4664,13 +5565,21 @@
     collSnaps.textContent = String(app.career.snaps);
     collHigh.textContent = String(app.career.high2x);
 
+    const scrapIconSvg = {
+      star:  '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2 15,9 22,9.5 16.5,14 18.2,21 12,17.2 5.8,21 7.5,14 2,9.5 9,9" fill="#22d3ee" stroke="#ffffff" stroke-width="1.8"/></svg>',
+      coil:  '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4" fill="#d97706" stroke="#ffffff" stroke-width="1.8"/><path d="M8 7l8 2.5-8 3 8 2.5-8 2" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      hex:   '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7" fill="#f472b6" stroke="#ffffff" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="#0f172a"/></svg>',
+      tyre:  '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="#1f2937" stroke="#a3e635" stroke-width="2.5"/><circle cx="12" cy="12" r="4" fill="#a3e635"/></svg>',
+      safe:  '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" fill="#334155" stroke="#f87171" stroke-width="2.4"/><path d="M8 10l4 5 4-5" fill="none" stroke="#f87171" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      wild:  '<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><polygon points="4,18 5,8 9.5,12 12,5 14.5,12 19,8 20,18" fill="#fde047" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round"/></svg>'
+    };
     scrapCatalogGrid.innerHTML = '';
     for (const item of SCRAP_CATALOG) {
       const count = app.career.seen[item.key] || 0;
       const div = document.createElement('div');
       div.className = 'scrap-card' + (count > 0 ? ' seen' : '');
       div.innerHTML =
-        `<span style="display:inline-block;width:24px;height:24px;border-radius:6px;background:${item.color};border:2px solid #ffffff" aria-hidden="true"></span>` +
+        (scrapIconSvg[item.shape] || `<span style="display:inline-block;width:24px;height:24px;border-radius:6px;background:${item.color};border:2px solid #ffffff" aria-hidden="true"></span>`) +
         `<span class="scrap-name">${item.name}</span>` +
         `<span class="scrap-count">${count > 0 ? `×${count}` : 'New'}</span>`;
       scrapCatalogGrid.appendChild(div);
@@ -4712,14 +5621,22 @@
 
     btnHudAi.setAttribute('aria-pressed', String(app.aiMate));
     lblHudAi.textContent = app.aiMate ? 'AI On' : '2P';
+    btnMHudAi.setAttribute('aria-pressed', String(app.aiMate));
+    lblMHudAi.textContent = app.aiMate ? 'AI' : '2P';
     btnPauseAi.setAttribute('aria-pressed', String(app.aiMate));
     lblPauseAi.textContent = app.aiMate ? 'AI Mate: On' : 'AI Mate: Off';
     btnTouchMag2.style.visibility = app.aiMate ? 'hidden' : 'visible';
+    mobileDock.classList.toggle('solo-mode', app.aiMate);
+    lblDockMag1.textContent = app.aiMate ? 'Hold Magnet' : 'P1 Hold';
+    if (lblMode2PSub) {
+      lblMode2PSub.textContent = app.touchDetected ? 'Two-Thumb Touch Co-op' : 'WASD + Arrows (1 Keyboard)';
+    }
 
     document.body.classList.toggle('calm-mode', app.calmMode);
     btnTitleCalm.setAttribute('aria-pressed', String(app.calmMode));
     lblTitleCalm.textContent = app.calmMode ? 'Calm: On' : 'Calm: Off';
     btnHudCalm.setAttribute('aria-pressed', String(app.calmMode));
+    btnMHudCalm.setAttribute('aria-pressed', String(app.calmMode));
     btnPauseCalm.setAttribute('aria-pressed', String(app.calmMode));
     lblPauseCalm.textContent = app.calmMode ? 'Calm: On' : 'Calm: Off';
     btnSetCalm.setAttribute('aria-pressed', String(app.calmMode));
@@ -4728,6 +5645,7 @@
     btnTitleSound.setAttribute('aria-pressed', String(sound.enabled));
     lblTitleSound.textContent = sound.enabled ? 'Sound: On' : 'Sound: Off';
     btnHudSound.setAttribute('aria-pressed', String(sound.enabled));
+    btnMHudSound.setAttribute('aria-pressed', String(sound.enabled));
     lblHudSound.textContent = sound.enabled ? 'On' : 'Off';
     btnSetSound.setAttribute('aria-pressed', String(sound.enabled));
     lblSetSound.textContent = sound.enabled ? 'Sound: On' : 'Sound: Off';
@@ -4744,6 +5662,27 @@
     lblBestStreak.textContent = String(app.bestStreakAll);
   }
 
+  function updatePlayChromeVisibility() {
+    const isPlaying = app.mode === 'playing';
+    const showDesktopHud = isPlaying && !layout.mobile;
+    const showMobileHud = isPlaying && layout.mobile;
+    const showMobileDock = isPlaying && layout.portrait;
+
+    hudBar.classList.toggle('hidden', !showDesktopHud);
+    hudBar.setAttribute('aria-hidden', String(!showDesktopHud));
+    if ('inert' in hudBar) hudBar.inert = !showDesktopHud;
+
+    mobileHud.classList.toggle('hidden', !showMobileHud);
+    mobileHud.setAttribute('aria-hidden', String(!showMobileHud));
+    if ('inert' in mobileHud) mobileHud.inert = !showMobileHud;
+
+    mobileDock.classList.toggle('hidden', !showMobileDock);
+    mobileDock.setAttribute('aria-hidden', String(!showMobileDock));
+    if ('inert' in mobileDock) mobileDock.inert = !showMobileDock;
+
+    touchPads.classList.toggle('active', isPlaying && app.touchDetected && !layout.portrait);
+  }
+
   function showScreen(target) {
     app.mode = target;
     for (const [key, el] of Object.entries(screens)) {
@@ -4752,13 +5691,15 @@
       el.setAttribute('aria-hidden', String(!active));
       if ('inert' in el) el.inert = !active;
     }
-    const isPlaying = target === 'playing';
-    hudBar.classList.toggle('hidden', !isPlaying);
-    hudBar.setAttribute('aria-hidden', String(!isPlaying));
-    if ('inert' in hudBar) hudBar.inert = !isPlaying;
-    touchPads.classList.toggle('active', isPlaying && app.touchDetected);
+    updatePlayChromeVisibility();
+    resizeCanvas();
     updateOnboardingUi();
     syncUiState();
+    lastMHudScore = '';
+    lastMHudStreak = -1;
+    lastMHudTimer = '';
+    lastMHudWave = '';
+    syncMobileHudLive();
   }
 
   function guardHeldKeysOnPlay() {
@@ -4785,8 +5726,10 @@
     sound.ensure();
     sound.uiClick();
     const shouldOnboard = forceOnboarding === true || (forceOnboarding !== false && !app.onboarded);
-    resetArena(false, shouldOnboard);
     showScreen('playing');
+    resetArena(false, shouldOnboard);
+    updateOnboardingUi();
+    syncMobileHudLive();
     guardHeldKeysOnPlay();
     const st = getActiveStage();
     announce(shouldOnboard ? 'Interactive warm-up started. Follow the prompts or press Skip.' : `${st.name} shift started.`);
@@ -4965,7 +5908,7 @@
     if (app.mode === 'playing') {
       addPopup(world.p2.x, world.p2.y - 44, app.aiMate ? 'AI MATE ON!' : '2P MODE!', '#fb923c', false);
       if (fromMouse) {
-        btnHudAi.blur();
+        if (document.activeElement && document.activeElement.tagName === 'BUTTON') document.activeElement.blur();
         canvas.focus({ preventScroll: true });
       }
     }
@@ -4979,7 +5922,7 @@
     sound.uiClick();
     syncUiState();
     if (app.mode === 'playing' && fromMouse) {
-      btnHudCalm.blur();
+      if (document.activeElement && document.activeElement.tagName === 'BUTTON') document.activeElement.blur();
       canvas.focus({ preventScroll: true });
     }
     announce(app.calmMode ? 'Calm Mode on' : 'Calm Mode off');
@@ -4993,7 +5936,7 @@
     }
     syncUiState();
     if (app.mode === 'playing' && fromMouse) {
-      btnHudSound.blur();
+      if (document.activeElement && document.activeElement.tagName === 'BUTTON') document.activeElement.blur();
       canvas.focus({ preventScroll: true });
     }
     announce(sound.enabled ? 'Sound on' : 'Sound off');
@@ -5054,6 +5997,11 @@
   btnHudCalm.addEventListener('click', (e) => toggleCalmMode(e.detail > 0));
   btnHudSound.addEventListener('click', (e) => toggleSound(e.detail > 0));
   btnHudPause.addEventListener('click', () => pauseShift(false));
+
+  btnMHudAi.addEventListener('click', (e) => toggleAiMate(e.detail > 0));
+  btnMHudCalm.addEventListener('click', (e) => toggleCalmMode(e.detail > 0));
+  btnMHudSound.addEventListener('click', (e) => toggleSound(e.detail > 0));
+  btnMHudPause.addEventListener('click', () => pauseShift(false));
 
   btnResume.addEventListener('click', resumeShift);
   btnPauseRestart.addEventListener('click', () => startShift(false));
@@ -5134,22 +6082,70 @@
     }
   });
 
-  canvas.addEventListener('pointermove', (e) => {
-    if (e.pointerType === 'touch') return;
-    const pt = clientToWorld(e.clientX, e.clientY);
-    const moved = hypot(pt.x - pointer.lastMoveX, pt.y - pointer.lastMoveY);
-    pointer.x = pt.x;
-    pointer.y = pt.y;
-    pointer.active = true;
-    if (moved > 14 || app.aiMate) {
-      pointer.p1Source = 'mouse';
-      pointer.lastMoveX = pt.x;
-      pointer.lastMoveY = pt.y;
+  function enableTouchUi() {
+    if (!app.touchDetected) {
+      app.touchDetected = true;
+      updatePlayChromeVisibility();
+      updateOnboardingUi();
+      syncUiState();
     }
-  });
+  }
+
+  function assignTouchPointer(pointerId, pt) {
+    if (app.aiMate) {
+      if (touches.p1Id === null) {
+        touches.p1Id = pointerId;
+        touches.p1X = pt.x;
+        touches.p1Y = pt.y;
+      } else if (touches.canvasMagId === null) {
+        // Second finger on canvas activates magnet grip in 1P + AI mode
+        touches.canvasMagId = pointerId;
+        touches.mag1 = true;
+        btnTouchMag1.classList.add('held');
+        btnDockMag1.classList.add('held');
+      }
+    } else {
+      // 2P touch: grab nearest unassigned pod so both thumbs can stretch & snap naturally
+      if (touches.p1Id === null && touches.p2Id === null) {
+        const d1 = hypot(pt.x - world.p1.x, pt.y - world.p1.y);
+        const d2 = hypot(pt.x - world.p2.x, pt.y - world.p2.y);
+        if (d1 <= d2) {
+          touches.p1Id = pointerId; touches.p1X = pt.x; touches.p1Y = pt.y;
+        } else {
+          touches.p2Id = pointerId; touches.p2X = pt.x; touches.p2Y = pt.y;
+        }
+      } else if (touches.p1Id === null) {
+        touches.p1Id = pointerId; touches.p1X = pt.x; touches.p1Y = pt.y;
+      } else if (touches.p2Id === null) {
+        touches.p2Id = pointerId; touches.p2X = pt.x; touches.p2Y = pt.y;
+      }
+    }
+  }
+
+  function releaseTouchPointer(pointerId) {
+    if (pointerId === touches.p1Id) touches.p1Id = null;
+    if (pointerId === touches.p2Id) touches.p2Id = null;
+    if (pointerId === touches.canvasMagId) {
+      touches.canvasMagId = null;
+      touches.mag1 = false;
+      btnTouchMag1.classList.remove('held');
+      btnDockMag1.classList.remove('held');
+    }
+  }
 
   canvas.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'touch' || app.mode !== 'playing') return;
+    if (e.pointerType === 'touch') {
+      enableTouchUi();
+      if (app.mode !== 'playing') return;
+      e.preventDefault();
+      sound.ensure();
+      if (document.activeElement && document.activeElement.tagName === 'BUTTON') document.activeElement.blur();
+      try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+      const pt = clientToWorld(e.clientX, e.clientY);
+      assignTouchPointer(e.pointerId, pt);
+      return;
+    }
+    if (app.mode !== 'playing') return;
     sound.ensure();
     if (document.activeElement && document.activeElement.tagName === 'BUTTON') document.activeElement.blur();
     const pt = clientToWorld(e.clientX, e.clientY);
@@ -5167,67 +6163,82 @@
     }
   });
 
-  window.addEventListener('pointerup', (e) => {
-    if (e.pointerType === 'touch' || !pointer.down) return;
+  canvas.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch') {
+      if (app.mode !== 'playing') return;
+      if (e.pointerId !== touches.p1Id && e.pointerId !== touches.p2Id) return;
+      e.preventDefault();
+      const pt = clientToWorld(e.clientX, e.clientY);
+      if (e.pointerId === touches.p1Id) { touches.p1X = pt.x; touches.p1Y = pt.y; }
+      else if (e.pointerId === touches.p2Id) { touches.p2X = pt.x; touches.p2Y = pt.y; }
+      return;
+    }
+    const pt = clientToWorld(e.clientX, e.clientY);
+    const moved = hypot(pt.x - pointer.lastMoveX, pt.y - pointer.lastMoveY);
+    pointer.x = pt.x;
+    pointer.y = pt.y;
+    pointer.active = true;
+    if (moved > 14 || app.aiMate) {
+      pointer.p1Source = 'mouse';
+      pointer.lastMoveX = pt.x;
+      pointer.lastMoveY = pt.y;
+    }
+  });
+
+  function handlePointerEnd(e) {
+    if (e.pointerType === 'touch') {
+      releaseTouchPointer(e.pointerId);
+      return;
+    }
+    if (!pointer.down) return;
     const heldMs = performance.now() - pointer.downTime;
     pointer.down = false;
     if (heldMs > 220) pointer.magToggle = false;
-  });
-
-  function enableTouchUi() {
-    if (!app.touchDetected) {
-      app.touchDetected = true;
-      if (app.mode === 'playing') touchPads.classList.add('active');
-    }
   }
+  canvas.addEventListener('pointerup', handlePointerEnd);
+  canvas.addEventListener('pointercancel', handlePointerEnd);
+  window.addEventListener('pointerup', handlePointerEnd);
+  window.addEventListener('pointercancel', handlePointerEnd);
 
+  // Prevent browser pinch/scroll gesture ONLY when starting on the play canvas
   canvas.addEventListener('touchstart', (e) => {
     enableTouchUi();
-    if (app.mode !== 'playing') return;
-    e.preventDefault();
-    sound.ensure();
-    for (const t of e.changedTouches) {
-      const pt = clientToWorld(t.clientX, t.clientY);
-      if (app.aiMate) {
-        if (touches.p1Id === null) { touches.p1Id = t.identifier; touches.p1X = pt.x; touches.p1Y = pt.y; }
-      } else {
-        if (pt.x < W * 0.5 && touches.p1Id === null) { touches.p1Id = t.identifier; touches.p1X = pt.x; touches.p1Y = pt.y; }
-        else if (pt.x >= W * 0.5 && touches.p2Id === null) { touches.p2Id = t.identifier; touches.p2X = pt.x; touches.p2Y = pt.y; }
-      }
-    }
+    if (app.mode === 'playing') e.preventDefault();
   }, { passive: false });
-
-  canvas.addEventListener('touchmove', (e) => {
-    if (app.mode !== 'playing') return;
-    e.preventDefault();
-    for (const t of e.changedTouches) {
-      const pt = clientToWorld(t.clientX, t.clientY);
-      if (t.identifier === touches.p1Id) { touches.p1X = pt.x; touches.p1Y = pt.y; }
-      else if (t.identifier === touches.p2Id) { touches.p2X = pt.x; touches.p2Y = pt.y; }
-    }
-  }, { passive: false });
-
-  function endTouches(e) {
-    for (const t of e.changedTouches) {
-      if (t.identifier === touches.p1Id) touches.p1Id = null;
-      if (t.identifier === touches.p2Id) touches.p2Id = null;
-    }
-  }
-  canvas.addEventListener('touchend', endTouches);
-  canvas.addEventListener('touchcancel', endTouches);
 
   function wireTouchMagBtn(btn, which) {
+    let heldPid = null;
     const setHeld = (on) => {
-      if (which === 1) touches.mag1 = on; else touches.mag2 = on;
-      btn.classList.toggle('held', on);
+      if (which === 1) {
+        touches.mag1 = on;
+        btnTouchMag1.classList.toggle('held', on);
+        btnDockMag1.classList.toggle('held', on);
+      } else {
+        touches.mag2 = on;
+        btnTouchMag2.classList.toggle('held', on);
+        btnDockMag2.classList.toggle('held', on);
+      }
     };
-    btn.addEventListener('pointerdown', (e) => { e.preventDefault(); sound.ensure(); setHeld(true); });
-    btn.addEventListener('pointerup', () => setHeld(false));
-    btn.addEventListener('pointercancel', () => setHeld(false));
-    btn.addEventListener('pointerleave', () => setHeld(false));
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      sound.ensure();
+      heldPid = e.pointerId;
+      try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+      setHeld(true);
+    });
+    const endHold = (e) => {
+      if (heldPid !== null && e.pointerId !== heldPid) return;
+      heldPid = null;
+      setHeld(false);
+    };
+    btn.addEventListener('pointerup', endHold);
+    btn.addEventListener('pointercancel', endHold);
   }
   wireTouchMagBtn(btnTouchMag1, 1);
   wireTouchMagBtn(btnTouchMag2, 2);
+  wireTouchMagBtn(btnDockMag1, 1);
+  wireTouchMagBtn(btnDockMag2, 2);
 
   // Clean pause + audio suspend when tab hides or window blurs, and clean recovery on return
   function handleBackgroundHide() {
@@ -5235,6 +6246,11 @@
     keys.clear();
     physicalKeysDown.clear();
     pointer.down = false;
+    touches.p1Id = null;
+    touches.p2Id = null;
+    touches.canvasMagId = null;
+    touches.mag1 = false;
+    touches.mag2 = false;
     lastTs = 0; // Reset frame clock so dt never spikes when tab returns!
     if (app.mode === 'playing') pauseShift(true);
   }
@@ -5260,12 +6276,42 @@
   }
 
   /* =========================================================================
-     15. RESIZE (DPR Capped at 1.5) & ANIMATION LOOP
+     15. ADAPTIVE RESIZE (DPR Capped at 1.5) & ANIMATION LOOP
      ========================================================================= */
   function resizeCanvas() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const isPortrait = vh > vw;
+    const isMobile = isPortrait || vw < 960 || vh < 540;
+
+    document.body.classList.toggle('mobile-play-layout', isMobile);
+    document.body.classList.toggle('portrait-layout', isMobile && isPortrait);
+    layout.mobile = isMobile;
+    layout.portrait = isMobile && isPortrait;
+    updatePlayChromeVisibility();
+
+    if (!isMobile) {
+      stageEl.style.width = '';
+      stageEl.style.height = '';
+    } else if (isPortrait) {
+      stageEl.style.width = '100%';
+      stageEl.style.height = '100%';
+    } else {
+      const wrapRect = stageWrap.getBoundingClientRect();
+      const wrapW = Math.max(200, wrapRect.width);
+      const wrapH = Math.max(120, wrapRect.height);
+      const targetAspect = 1280 / 656;
+      let fitW = Math.min(wrapW, Math.round(wrapH * targetAspect));
+      let fitH = Math.min(wrapH, Math.round(fitW / targetAspect));
+      stageEl.style.width = fitW + 'px';
+      stageEl.style.height = fitH + 'px';
+    }
+
     const rect = stageEl.getBoundingClientRect();
+    applyArenaLayout(isMobile, isPortrait, rect.width, rect.height);
+
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-    const cw = Math.max(320, Math.round(rect.width * dpr));
+    const cw = Math.max(280, Math.round(rect.width * dpr));
     const ch = Math.max(180, Math.round(rect.height * dpr));
     if (canvas.width !== cw || canvas.height !== ch) {
       canvas.width = cw;
@@ -5273,6 +6319,7 @@
     }
   }
   window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 60));
 
   let lastTs = 0;
   function tick(ts) {
