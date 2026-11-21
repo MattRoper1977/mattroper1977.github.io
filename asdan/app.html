@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
-<title>ASDAN Register · Made by Matt</title>
-<meta name="description" content="Track ASDAN PEQ units and Short Courses in your browser. Every record stays on your device.">
+<title>Course register · Made by Matt</title>
+<meta name="description" content="Track course units and short courses in your browser. Every record stays on your device.">
 <link rel="canonical" href="https://madebymatt.uk/asdan/app.html">
 <meta property="og:url" content="https://madebymatt.uk/asdan/app.html">
-<meta property="og:title" content="ASDAN Register — Made by Matt">
-<meta property="og:description" content="Track ASDAN PEQ units and Short Courses in your browser. Every record stays on your device.">
+<meta property="og:title" content="Course register — Made by Matt">
+<meta property="og:description" content="Track course units and short courses in your browser. Every record stays on your device.">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Made by Matt">
 <meta property="og:image" content="https://madebymatt.uk/assets/og-cover.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
@@ -175,7 +175,7 @@ table.list tr:last-child td{border-bottom:none}
 </head>
 <body>
 <header class="app">
-  <div class="brand">ASDAN Register<small>PEQ &amp; Short Courses · Made by Matt</small></div>
+  <div class="brand">Course register<small>Units &amp; short courses · Made by Matt</small></div>
   <nav class="tabs" aria-label="Sections">
     <button data-view="today" aria-current="true">Today</button>
     <button data-view="pupils">Pupils</button>
@@ -319,7 +319,7 @@ table.list tr:last-child td{border-bottom:none}
     <div class="row">
       <div class="field"><label for="set-centre">Centre name</label><input id="set-centre" placeholder="Your centre"></div>
       <div class="field"><label for="set-cno">ASDAN centre number</label><input id="set-cno" style="width:130px"></div>
-      <div class="field"><label for="set-teacher">Tutor (signature)</label><input id="set-teacher" placeholder="Matt Roper"></div>
+      <div class="field"><label for="set-teacher">Tutor (signature)</label><input id="set-teacher" placeholder="Your name"></div>
       <button class="btn" id="set-save">Save</button>
     </div>
   </div>
@@ -792,7 +792,7 @@ function renderTrackShort(p,roster,body){
   h+='</div>';
   const pupil=roster.find(x=>x.id===S.trackPupil);
   const banked=bankedHours(p,pupil.id),credits=creditsFromHours(banked);
-  h+=`<div class="notice ok" style="margin:8px 0"><b>${esc(pupil.forename)}:</b> ${banked.toFixed(1)} hours banked → <b>≈${credits} credit-equivalent${credits===1?"":"s"}</b>${banked%10?` (${(10-banked%10).toFixed(1)}h to the next credit-equivalent)`:""} — 10 h ≈ 1 credit, a planning estimate; PEQ credits are awarded per unit achieved, not per hour banked. Challenges only bank when W, P and R are all ticked.</div>`;
+  h+=`<div class="notice ok" style="margin:8px 0"><b>${esc(pupil.forename)}:</b> ${banked.toFixed(1)} hours banked → <b>≈${credits} credit-equivalent${credits===1?"":"s"}</b>${banked % 10?` (${(10-banked % 10).toFixed(1)}h to the next credit-equivalent)`:""} — 10 h ≈ 1 credit, a planning estimate; PEQ credits are awarded per unit achieved, not per hour banked. Challenges only bank when W, P and R are all ticked.</div>`;
   h+='<table class="list"><tr><th>Sec</th><th>Challenge</th><th>Hours</th><th>W · P · R</th><th></th></tr>';
   for(const m of p.modules||[]){
     h+=`<tr><td colspan="5" style="background:var(--mint);font-weight:700;color:var(--asdan)">${esc(m.title)}</td></tr>`;
@@ -1317,7 +1317,7 @@ function renderNudges(){
     for(const pid of (p.enrolled||[])){
       const pu=S.pupils.find(x=>x.id===pid);if(!pu||pu.archived)continue;
       const h=loggedHours(p.id,pid);
-      if(h>0&&h%10>=8)out.push(`<b>${pupilLabel(pu)}</b> is ${(10-(h%10)).toFixed(1)}h from the next credit on <b>${esc(p.title)}</b> — one good session.`);
+      if(h>0&&h % 10>=8)out.push(`<b>${pupilLabel(pu)}</b> is ${(10-(h % 10)).toFixed(1)}h from the next credit on <b>${esc(p.title)}</b> — one good session.`);
       const evs=S.evidence.filter(e=>e.progId===p.id&&(e.pupilIds||[]).includes(pid));
       if(evs.length){
         const last=evs.map(e=>e.date||"").sort().pop();
