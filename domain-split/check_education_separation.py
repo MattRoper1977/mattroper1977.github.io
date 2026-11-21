@@ -94,7 +94,12 @@ TEACHING_PACK_ADDITIONS = HERE/'teaching-packs-download-usage-additions.json'
 # the Week 8 model page (7 under each of five pack roots, one lesson_open row per new page, no download row) join the Humanities
 # prefix at their built places (1382 -> 1417 rows); all 1382 reviewed rows are kept unchanged and in order, and no other prefix
 # moves. Rows measured by the Lessons served digest census run 44075584336, never transcribed. 4defbcee -> eb042442.
-TEACHING_PACK_ADDITIONS_SHA256 = 'eb04244274992a7cf5c2ffeaa8ca5c1430d3fd41c550d01c0cbca5a2f507bb21'
+# R-RAISE for Autumn 1, window W2 (ruling thread, 21 November 2026, flight 60 option A; Lessons claude/lesson-swap-batch60 at
+# d979efcd): the 7 lesson rows of the Humanities lower pathway Autumn 1 local history lessons of weeks 1 to 7 rebuilt on the Week 8
+# model page (HUM_BUILD_A1_Wnn.html under HUM_Autumn_1_BUILD_GROW_Fallback/BUILD, one lesson_open row per new page, no download
+# row) join the Humanities prefix at their built places (1417 -> 1424 rows); all 1417 reviewed rows are kept unchanged and in
+# order, and no other prefix moves. Rows measured by the Lessons served digest census run 44894561942, never transcribed. eb042442 -> f0d772b2.
+TEACHING_PACK_ADDITIONS_SHA256 = 'f0d772b2a10df2b0b6191a08a4ae45a5854765533ef34fc18a71d46f38450ee3'
 # RE Spring 1 window W1 (ruling ss, ss-2: option A, the io-3 shape of #471; 17 October 2026): the transition form of the
 # reviewed list. While the RE Spring 1 landing is in flight the Site still builds its pinned Lessons (876 Humanities rows) and
 # the Lessons publication builds the landing (1092), so a prefix with a declared pending set passes with EITHER its reviewed
@@ -110,7 +115,11 @@ TEACHING_PACK_PENDING = HERE/'teaching-packs-download-usage-pending.json'
 # rows now, so those 290 collapse out of the pending set. It becomes the 35 Autumn 1 lesson rows the landing adds plus the 9 um
 # retiring rows (44): the pin and main build the reviewed rows minus the pending set (1373), the landing builds them minus the
 # retiring set (1408), and no other state passes.
-TEACHING_PACK_PENDING_SHA256 = '18aea40cb922b67284f4ad81f274c381adcab30fc5735a48fb660a30b435a152'  # R-RAISE for Autumn 1 window W1: the 35 Autumn 1 lesson rows and the 9 um retiring rows (44); the Site pin and Lessons main build 1373
+# R-RAISE for Autumn 1, window W2 (21 November 2026): the carrier Lessons pin and Lessons main both carry the 35 window W1 rows
+# now, so those collapse out of the pending set. It becomes the 7 lower pathway lesson rows the landing adds plus the 9 um
+# retiring rows (16): the pin and main build the reviewed rows minus the pending set (1408), the landing builds them minus the
+# retiring set (1415), and no other state passes.
+TEACHING_PACK_PENDING_SHA256 = '4bfe468c1b665442ce55755178dc8f82ae6a2b3dee5d2e04c847732f69b3f497'  # R-RAISE for Autumn 1 window W2: the 7 lower pathway lesson rows and the 9 um retiring rows (16); the Site pin and Lessons main build 1408
 
 
 # um window W1 (rulings um, um add.1 (ii) and answer B, um-4 (a); 24 October 2026): the io-3 transition form again, as a
@@ -143,18 +152,17 @@ def retiring_set_problems(retiring, approved):
     return problems
 
 
-# The exact 35 pending rows under the five Autumn 1 pack roots (json.dumps(rows, sort_keys=True), in reviewed order), so no
-# other row under those folders can stand in for one of them. Pinned 17 November 2026 on the Lessons claude/lesson-swap-batch25
-# build 5d63e1e2 (ruling thread, R-RAISE for Autumn 1); it replaces the 290 Autumn 2 rows pinned 6 and 7 November 2026 (4b3ffb26),
-# which every build now carries. Roots named one by one; weeks 1 to 7 of Autumn 1 only.
-RAISE_PENDING_ROWS_SHA256 = 'a51e7145252d23b7c3db25253497fd54977cb05b8f2d5651c5eccfa7e8a9cd27'
-RAISE_PENDING_ROOTS = ('RE_Autumn_BUILD_Reviewed', 'RE_Autumn_GROW_Reviewed', 'RE_Autumn_LAUNCH_Reviewed',
-                       'HUM_Autumn_1_LAUNCH_Reviewed', 'HUM_Autumn_1_BUILD_GROW_Fallback')
+# The exact 7 pending rows under the one Autumn 1 pack root they sit in (json.dumps(rows, sort_keys=True), in reviewed order), so
+# no other row under that folder can stand in for one of them. Pinned 21 November 2026 on the Lessons claude/lesson-swap-batch60
+# build d979efcd (ruling thread, R-RAISE for Autumn 1 window W2); it replaces the 35 Autumn 1 rows pinned 17 November 2026 (a51e7145),
+# which every build now carries. Root named; weeks 1 to 7 of Autumn 1 only.
+RAISE_PENDING_ROWS_SHA256 = '4792c7b65f3ad5ed6ecdd8811bf681e636960837c305483e7e6de006915198f1'
+RAISE_PENDING_ROOTS = ('HUM_Autumn_1_BUILD_GROW_Fallback',)
 RE_S1_PENDING_ROOTS = ('RE_Spring_1_BUILD_Reviewed', 'RE_Spring_1_GROW_Reviewed', 'RE_Spring_1_LAUNCH_Reviewed')
 
 def pending_set_problems(pending, approved, retiring=None):
     """Self-test helper (ruling ss, ss-2; the io-3 helper of #471; owner ruling R-RAISE Humanities/RE window W1): the declared
-    pending set must be one prefix of exactly 44 distinct rows: 35 under the five Autumn 1 rebuild pack roots' Autumn_1 week
+    pending set must be one prefix of exactly 16 distinct rows: 7 under the Autumn 1 rebuild pack root's Autumn_1 week
     folders, plus exactly that prefix's 9 um retiring rows, each of them present exactly once among the reviewed rows, so that
     none is present in the reviewed rows minus the pending set. Returns the problems found (empty = sound)."""
     problems = []
@@ -162,13 +170,13 @@ def pending_set_problems(pending, approved, retiring=None):
     if len(pending) != 1: problems.append('pending set is not one prefix')
     for prefix, rows in pending.items():
         keys = [json.dumps(r, sort_keys=True) for r in rows]
-        if len(rows) != 44: problems.append('pending set holds %d rows, not 44' % len(rows))
+        if len(rows) != 16: problems.append('pending set holds %d rows, not 16' % len(rows))
         if len(set(keys)) != len(keys): problems.append('pending rows are not distinct')
         raise_rows = [r for r in rows if any('/' + root + '/' in r['route'] for root in RAISE_PENDING_ROOTS)
                       and re.search(r'/Autumn_1/W0[1-7]/', r['route'])]
-        if len(raise_rows) != 35: problems.append('%d R-RAISE pending rows, not 35 under Autumn_1' % len(raise_rows))
+        if len(raise_rows) != 7: problems.append('%d R-RAISE pending rows, not 7 under Autumn_1' % len(raise_rows))
         if sha256(json.dumps(raise_rows, sort_keys=True).encode()).hexdigest() != RAISE_PENDING_ROWS_SHA256:
-            problems.append('R-RAISE pending rows are not the reviewed 35')
+            problems.append('R-RAISE pending rows are not the reviewed 7')
         rest = [r for r in rows if r not in raise_rows]
         if rest != retiring.get(prefix, []) or len(rest) != 9: problems.append('pending rows outside R-RAISE are not exactly the 9 retiring rows')
         reviewed = [json.dumps(r, sort_keys=True) for r in approved.get(prefix, [])]
@@ -610,7 +618,8 @@ def self_test():
     # planted rows and on the real list (the 876 Humanities rows minus the 36 io-3 rows). The 876 below pins the approved
     # list's length: it moves only by ruling, with the list (sc-3; 861 -> 876 with the Spring 1 window W1; ruling sr, sr-3:
     # 876 -> 1092 with the RE Spring 1 window W1; owner ruling R-RAISE: 1092 -> 1374 with the Humanities/RE window W1; ENG1
-    # window W1: 1374 -> 1382 with the 8 ENG1 Slides rows; R-RAISE for Autumn 1 window W1: 1382 -> 1417 with the 35 lesson rows).
+    # window W1: 1374 -> 1382 with the 8 ENG1 Slides rows; R-RAISE for Autumn 1 window W1: 1382 -> 1417 with the 35 lesson rows;
+    # R-RAISE for Autumn 1 window W2: 1417 -> 1424 with the 7 lower pathway lesson rows).
     pp='/Lessons/Careers/Teaching_Packs/'; a,b,c,d=(row(pp+'BUILD/downloads/'+x+'.zip') for x in 'abcd')
     for label,rs,expected in [('the reviewed rows',[a,b,c,d],0),('the reviewed rows minus two (the retired form)',[a,b],1),
                               ('the reviewed rows reordered',[a,b,d,c],1),('a changed row',[a,{**b,'kind':'planted'},c,d],1)]:
@@ -621,7 +630,7 @@ def self_test():
     hp=next(p for p in real_add if p.startswith('/Lessons/Humanities'))
     io3=[r for r in real_add[hp] if any('/'+s+'_' in r['route'] for s in ('HUM_BUILD_A2_W01','HUM_GROW_A2_W01','HUM_LAUNCH_A2_W01'))]
     errors,_=registry_partition([r for r in real_add[hp] if r not in io3],{hp:real_add[hp]},{hp:True})
-    passed=len(io3)==36 and len(real_add[hp])==1417 and len(errors)==1; ok=ok and passed
+    passed=len(io3)==36 and len(real_add[hp])==1424 and len(errors)==1; ok=ok and passed
     print(f"  [{'ok' if passed else 'FAIL'}] the real Humanities rows minus the 36 io-3 rows are red ({len(real_add[hp])} reviewed, {len(io3)} io-3)")
     # RE Spring 1 W1 (ruling ss, ss-2: option A): the pending transition form, proved on planted rows, as io-3's was. With
     # reviewed rows a, b, c, d and pending c, d, exactly two states pass: all four, and the reviewed rows minus the pending set.
@@ -647,9 +656,9 @@ def self_test():
     probs=pending_set_problems(real_pending, real_add)
     passed=sha256(TEACHING_PACK_PENDING.read_bytes()).hexdigest()==TEACHING_PACK_PENDING_SHA256 and not probs
     ok=ok and passed
-    print(f"  [{'ok' if passed else 'FAIL'}] the pending set is one prefix, 44 distinct rows (the 35 Autumn 1 lesson rows of R-RAISE for Autumn 1, plus the 9 um retiring rows), each once among the reviewed rows, at its pinned digest")
+    print(f"  [{'ok' if passed else 'FAIL'}] the pending set is one prefix, 16 distinct rows (the 7 lower pathway Autumn 1 lesson rows of R-RAISE for Autumn 1 window W2, plus the 9 um retiring rows), each once among the reviewed rows, at its pinned digest")
     errors,_=registry_partition([r for r in real_add[hp] if r not in real_pending[hp]],{hp:real_add[hp]},{hp:True},real_pending)
-    passed=not errors and len(real_add[hp])-len(real_pending[hp])==1373; ok=ok and passed  # R-RAISE for Autumn 1: the Site pin's 1373 (was 1083)
+    passed=not errors and len(real_add[hp])-len(real_pending[hp])==1408; ok=ok and passed  # R-RAISE for Autumn 1 window W2: the Site pin's 1408 (was 1373)
     print(f"  [{'ok' if passed else 'FAIL'}] the real reviewed rows minus the pending set pass with the form ({len(real_add[hp])-len(real_pending[hp])} rows, the Site pin's)")
     earlier=[r for r in real_add[hp] if r not in real_pending[hp]]
     planted={hp:real_pending[hp][:-1]+[earlier[0]]}
