@@ -69,47 +69,50 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .ui-btn.gold{color:#1b1000;background:linear-gradient(135deg,#ffe28b,#ffb84d);border-color:transparent}
 .ui-btn.danger{background:linear-gradient(180deg,rgba(104,27,45,.9),rgba(52,13,28,.94));border-color:rgba(255,83,112,.44)}
 .ui-btn.ghost{background:rgba(7,12,22,.52)}
-.ui-btn.small{min-height:35px;padding:8px 12px;border-radius:9px;font-size:12px}
+.ui-btn.small{min-height:44px;padding:9px 14px;border-radius:10px;font-size:14px}
 .ui-btn:disabled{opacity:.42;cursor:not-allowed;transform:none;filter:none}
-.menu-note{margin-top:18px;color:#657a91;font-size:11px;line-height:1.45;max-width:580px}
-.config-panel{width:min(980px,96vw);max-height:min(900px,94vh);overflow:auto;border-radius:24px;padding:clamp(18px,3vw,34px)}
-.config-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:22px}
-.config-head h2{margin:4px 0;font-size:clamp(26px,4vw,42px);letter-spacing:-.03em}
-.config-head p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
-.section-label{margin:18px 0 9px;color:#b9cbe0;font-size:11px;text-transform:uppercase;letter-spacing:.15em;font-weight:900}
+.menu-note{margin-top:16px;color:#93a9c0;font-size:14px;line-height:1.45;max-width:600px}
+.config-panel{width:min(980px,96vw);max-height:min(900px,92dvh);overflow:auto;border-radius:24px;padding:clamp(18px,3vw,32px);margin-top:44px}
+.config-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:20px}
+.config-head h2{margin:4px 0;font-size:clamp(26px,4vw,40px);letter-spacing:-.03em}
+.config-head p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+.section-label{margin:16px 0 9px;color:#c7d8ec;font-size:14px;text-transform:uppercase;letter-spacing:.1em;font-weight:900}
 .choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.choice-card{border:1px solid rgba(139,180,232,.22);background:linear-gradient(155deg,rgba(28,41,66,.8),rgba(10,16,28,.86));border-radius:16px;padding:16px;cursor:pointer;min-height:156px;transition:.18s ease;position:relative;overflow:hidden}
+.choice-card{border:1px solid rgba(139,180,232,.26);background:linear-gradient(155deg,rgba(28,41,66,.88),rgba(10,16,28,.92));color:#f4f7ff;text-align:left;border-radius:16px;padding:16px;cursor:pointer;min-height:156px;transition:.18s ease;position:relative;overflow:hidden}
 .choice-card:before{content:"";position:absolute;inset:auto -30% -70% 10%;height:120px;background:radial-gradient(circle,var(--card-accent,rgba(85,216,255,.22)),transparent 70%);pointer-events:none}
 .choice-card:hover{transform:translateY(-3px);border-color:rgba(85,216,255,.55)}
-.choice-card.selected{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(85,216,255,.35),0 14px 34px rgba(27,145,210,.18);background:linear-gradient(155deg,rgba(30,65,95,.84),rgba(12,24,43,.92))}
+.choice-card.selected{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(85,216,255,.35),0 14px 34px rgba(27,145,210,.18);background:linear-gradient(155deg,rgba(30,65,95,.88),rgba(12,24,43,.94))}
 .choice-icon{font-size:30px;filter:drop-shadow(0 0 12px rgba(255,255,255,.22))}
-.choice-title{margin-top:9px;font-weight:950;font-size:16px;letter-spacing:.03em;text-transform:uppercase}
-.choice-sub{font-size:11px;color:var(--cyan);font-weight:800;margin-top:2px;text-transform:uppercase;letter-spacing:.09em}
-.choice-copy{font-size:12px;color:#9eb0c4;line-height:1.42;margin-top:9px}
+.choice-title{margin-top:9px;font-weight:950;font-size:16px;letter-spacing:.03em;text-transform:uppercase;color:#f4f7ff}
+.choice-sub{font-size:14px;color:var(--cyan);font-weight:800;margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
+.choice-copy{font-size:14px;color:#c2d2e4;line-height:1.42;margin-top:8px}
 .config-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:22px}
 #hud{position:fixed;inset:0;z-index:20;pointer-events:none;display:none}
 #hud.active{display:block}
-.hud-card{border-radius:15px;background:rgba(7,12,22,.72);border:1px solid rgba(139,180,232,.18);box-shadow:0 10px 32px rgba(0,0,0,.32);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-#player-hud{position:absolute;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));width:min(310px,calc(100vw - 24px));padding:12px 13px}
-.hero-line{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
-.hero-name{font-size:13px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#eef9ff}
-.hero-meta{font-size:10px;color:var(--cyan);font-weight:850;text-transform:uppercase;letter-spacing:.08em}
-.stat-row{display:grid;grid-template-columns:54px 1fr 62px;align-items:center;gap:7px;margin-top:5px}
-.stat-label{font-size:9px;font-weight:900;letter-spacing:.1em;color:#91a6bd;text-transform:uppercase}
-.stat-value{font-size:9px;color:#c7d6e6;text-align:right;font-variant-numeric:tabular-nums}
+.hud-card{border-radius:15px;background:rgba(7,12,22,.78);border:1px solid rgba(139,180,232,.22);box-shadow:0 10px 32px rgba(0,0,0,.32);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#player-hud{position:absolute;top:max(60px,calc(env(safe-area-inset-top) + 56px));left:max(12px,env(safe-area-inset-left));width:min(316px,calc(100vw - 24px));padding:11px 13px}
+#hud-quick-actions{position:absolute;top:max(10px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));z-index:25;display:flex;gap:8px;pointer-events:auto}
+#hud-quick-actions button{min-width:44px;min-height:44px;padding:0 12px;border-radius:12px;border:1px solid rgba(139,180,232,.32);background:rgba(7,12,22,.84);color:#f4f7ff;font-size:14px;font-weight:850;cursor:pointer;backdrop-filter:blur(8px);display:inline-flex;align-items:center;justify-content:center;gap:5px}
+#hud-quick-actions button:hover,#hud-quick-actions button:focus-visible{border-color:var(--cyan);outline:2px solid var(--cyan);outline-offset:2px}
+.hero-line{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.hero-name{font-size:15px;font-weight:950;letter-spacing:.06em;text-transform:uppercase;color:#eef9ff}
+.hero-meta{font-size:14px;color:var(--cyan);font-weight:850;text-transform:uppercase;letter-spacing:.04em}
+.stat-row{display:grid;grid-template-columns:58px 1fr 72px;align-items:center;gap:7px;margin-top:4px}
+.stat-label{font-size:14px;font-weight:850;color:#b2c6dc;text-transform:uppercase}
+.stat-value{font-size:14px;color:#dce8f5;text-align:right;font-variant-numeric:tabular-nums}
 .bar-track{height:9px;border-radius:999px;overflow:hidden;background:rgba(0,0,0,.58);border:1px solid rgba(255,255,255,.07)}
 .bar-fill{height:100%;width:100%;border-radius:inherit;transition:width .14s linear}
 #hp-fill{background:linear-gradient(90deg,#ff3f68,#ff6f7e);box-shadow:0 0 12px rgba(255,63,104,.45)}
 #stamina-fill{background:linear-gradient(90deg,#42d9ff,#4d7cff);box-shadow:0 0 12px rgba(66,217,255,.35)}
 #xp-fill{background:linear-gradient(90deg,#7f66ff,#c06cff);box-shadow:0 0 12px rgba(166,108,255,.35)}
-.resource-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08)}
-.resource-pill{display:flex;align-items:center;gap:5px;font-size:10px;color:#c4d4e5;font-weight:750}
+.resource-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;padding-top:7px;border-top:1px solid rgba(255,255,255,.08)}
+.resource-pill{display:flex;align-items:center;gap:5px;font-size:14px;color:#d2e1f0;font-weight:750}
 .resource-pill b{color:#fff;font-variant-numeric:tabular-nums}
-#objective-hud{position:absolute;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));width:min(330px,calc(100vw - 24px));padding:13px}
-.zone-title{color:var(--gold);font-size:10px;font-weight:950;letter-spacing:.13em;text-transform:uppercase}
-.objective-title{font-size:14px;font-weight:900;margin-top:4px;line-height:1.25}
-.objective-copy{font-size:11px;color:#aabbd0;line-height:1.4;margin-top:5px}
-.guide-line{font-size:10px;color:var(--cyan);line-height:1.35;margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.08)}
+#objective-hud{position:absolute;top:max(60px,calc(env(safe-area-inset-top) + 56px));right:max(12px,env(safe-area-inset-right));width:min(330px,calc(100vw - 24px));padding:11px 13px}
+.zone-title{color:var(--gold);font-size:14px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}
+.objective-title{font-size:15px;font-weight:900;margin-top:3px;line-height:1.25}
+.objective-copy{font-size:14px;color:#bccce0;line-height:1.38;margin-top:4px}
+.guide-line{font-size:14px;color:var(--cyan);line-height:1.35;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08)}
 #boss-hud{position:absolute;top:max(14px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(440px,56vw);padding:10px 15px;display:none;text-align:center}
 #boss-hud.active{display:block}
 .boss-line{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:6px}
@@ -131,9 +134,9 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 #crosshair:before,#crosshair:after{content:"";position:absolute;background:rgba(225,247,255,.78);box-shadow:0 0 8px rgba(85,216,255,.55)}
 #crosshair:before{width:12px;height:1px;left:2px;top:7px}
 #crosshair:after{height:12px;width:1px;left:7px;top:2px}
-#toast-container{position:fixed;right:max(14px,env(safe-area-inset-right));top:92px;z-index:95;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;width:min(360px,calc(100vw - 28px))}
-.toast{max-width:100%;padding:10px 13px;border-radius:11px;background:rgba(7,13,24,.92);border:1px solid rgba(99,204,255,.28);box-shadow:0 12px 30px rgba(0,0,0,.35);font-size:11px;font-weight:750;color:#dcefff;animation:toast-in .25s ease both;line-height:1.35}
-.toast strong{display:block;color:var(--cyan);font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+#toast-container{position:fixed;right:max(14px,env(safe-area-inset-right));top:172px;z-index:95;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;width:min(360px,calc(100vw - 28px))}
+.toast{max-width:100%;padding:10px 13px;border-radius:11px;background:rgba(7,13,24,.94);border:1px solid rgba(99,204,255,.32);box-shadow:0 12px 30px rgba(0,0,0,.35);font-size:14px;font-weight:750;color:#dcefff;animation:toast-in .25s ease both;line-height:1.35}
+.toast strong{display:block;color:var(--cyan);font-size:14px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
 .toast.gold{border-color:rgba(255,200,87,.45)}.toast.gold strong{color:var(--gold)}
 .toast.red{border-color:rgba(255,83,112,.5)}.toast.red strong{color:var(--red)}
 .toast.green{border-color:rgba(78,230,168,.45)}.toast.green strong{color:var(--green)}
@@ -144,7 +147,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .touch-device #touch-ui{display:block}
 #joystick-base{position:absolute;width:116px;height:116px;border-radius:50%;display:none;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(132,214,255,.12),rgba(32,67,98,.08));border:2px solid rgba(161,220,255,.34);box-shadow:inset 0 0 24px rgba(80,188,255,.12),0 8px 28px rgba(0,0,0,.25);pointer-events:none}
 #joystick-knob{position:absolute;left:50%;top:50%;width:46px;height:46px;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle at 35% 30%,#e7faff,#83d9ff 42%,rgba(63,126,190,.75));box-shadow:0 0 20px rgba(85,216,255,.46)}
-.touch-button{position:absolute;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:auto;border-radius:50%;border:1.5px solid rgba(188,224,255,.34);color:#fff;background:rgba(16,29,48,.57);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:9px;font-weight:950;letter-spacing:.04em;text-shadow:0 1px 4px #000;box-shadow:0 8px 24px rgba(0,0,0,.3);transition:transform .08s,filter .08s;overflow:hidden}
+.touch-button{position:absolute;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:auto;border-radius:50%;border:1.5px solid rgba(188,224,255,.38);color:#fff;background:rgba(16,29,48,.66);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:14px;font-weight:900;letter-spacing:.02em;text-shadow:0 1px 4px #000;box-shadow:0 8px 24px rgba(0,0,0,.3);transition:transform .08s,filter .08s;overflow:hidden;min-width:48px;min-height:48px}
 .touch-button:active,.touch-button.pressed{transform:scale(.91);filter:brightness(1.25)}
 .touch-button b{font-size:18px;line-height:1;margin-bottom:2px}
 #touch-attack{right:20px;bottom:max(24px,env(safe-area-inset-bottom));width:76px;height:76px;background:rgba(166,43,72,.48);border-color:rgba(255,112,140,.66)}
@@ -163,15 +166,15 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .modal-panel.active{display:block;animation:modal-in .2s ease both}
 @keyframes modal-in{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
 .modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:18px}
-.modal-kicker{font-size:9px;color:var(--cyan);font-weight:950;letter-spacing:.15em;text-transform:uppercase}
+.modal-kicker{font-size:14px;color:var(--cyan);font-weight:900;letter-spacing:.1em;text-transform:uppercase}
 .modal-title{font-size:clamp(24px,4vw,38px);font-weight:950;letter-spacing:-.035em;margin:2px 0 3px}
-.modal-copy{font-size:12px;color:#95a9be;line-height:1.45;margin:0;max-width:620px}
-.close-x{width:38px;height:38px;border-radius:50%;padding:0;font-size:20px}
+.modal-copy{font-size:14px;color:#b2c4d6;line-height:1.45;margin:0;max-width:620px}
+.close-x{min-width:44px;min-height:44px;width:44px;height:44px;border-radius:50%;padding:0;font-size:20px;display:inline-flex;align-items:center;justify-content:center}
 .pause-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:15px}
 .pause-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .pause-summary{border-radius:16px;padding:15px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)}
 .summary-list{display:grid;gap:8px;margin-top:10px}
-.summary-row{display:flex;justify-content:space-between;gap:15px;font-size:11px;color:#9fb2c7}.summary-row b{color:#eef7ff}
+.summary-row{display:flex;justify-content:space-between;gap:15px;font-size:14px;color:#b4c6da}.summary-row b{color:#eef7ff}
 .equipment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
 .equip-slot{padding:12px;border-radius:14px;border:1px solid rgba(133,176,228,.18);background:rgba(255,255,255,.025);min-height:92px}
 .equip-slot .slot-label{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:#748ba2;font-weight:900}
@@ -195,42 +198,46 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .forge-option h4{margin:0;font-size:13px}.forge-option p{margin:4px 0 10px;font-size:10px;color:#91a5bb;line-height:1.4}.forge-cost{font-size:9px;color:var(--gold);margin-bottom:8px}
 .diagnostic-layout{display:grid;grid-template-columns:1.1fr .9fr;gap:15px}
 .diag-controls{display:grid;gap:11px}
-.field{display:grid;gap:5px}.field label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#8ca1b8;font-weight:900}.field select,.field input[type=range]{width:100%;background:#080e19;color:#e9f6ff;border:1px solid rgba(125,175,230,.2);border-radius:9px;padding:9px;accent-color:var(--violet)}
-.diag-log{margin-top:10px;border-radius:10px;padding:10px;background:#03070d;border:1px solid rgba(125,175,230,.16);min-height:82px;color:#6fd7ff;font:10px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
+.field{display:grid;gap:5px}.field label{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#a8bdd4;font-weight:900}.field select,.field input[type=range]{width:100%;min-height:44px;background:#080e19;color:#e9f6ff;border:1px solid rgba(125,175,230,.24);border-radius:9px;padding:9px;font-size:14px;accent-color:var(--violet)}
+.diag-log{margin-top:10px;border-radius:10px;padding:10px;background:#03070d;border:1px solid rgba(125,175,230,.16);min-height:82px;color:#6fd7ff;font:14px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
 .levelup-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.level-card{border:1px solid rgba(148,188,255,.2);border-radius:16px;padding:16px;background:linear-gradient(150deg,rgba(49,70,108,.45),rgba(11,18,32,.76));cursor:pointer;transition:.16s;min-height:190px}
+.level-card{border:1px solid rgba(148,188,255,.2);border-radius:16px;padding:16px;background:linear-gradient(150deg,rgba(49,70,108,.45),rgba(11,18,32,.76));color:#f4f7ff;text-align:left;cursor:pointer;transition:.16s;min-height:190px}
 .level-card:hover{transform:translateY(-4px);border-color:var(--violet);box-shadow:0 16px 32px rgba(66,31,130,.22)}
-.level-icon{font-size:29px}.level-name{font-size:15px;font-weight:950;margin-top:10px}.level-rank{font-size:9px;color:var(--violet);text-transform:uppercase;letter-spacing:.1em;font-weight:900;margin-top:2px}.level-desc{font-size:11px;color:#9db0c5;line-height:1.45;margin-top:9px}
+.level-icon{font-size:29px}.level-name{font-size:16px;font-weight:950;margin-top:10px;color:#f4f7ff}.level-rank{font-size:14px;color:var(--violet);text-transform:uppercase;letter-spacing:.08em;font-weight:900;margin-top:2px}.level-desc{font-size:14px;color:#bacbe0;line-height:1.45;margin-top:9px}
 .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.setting-card{border:1px solid rgba(130,175,225,.16);border-radius:14px;padding:13px;background:rgba(255,255,255,.025)}
-.setting-card label{display:flex;justify-content:space-between;gap:10px;font-size:11px;font-weight:850;margin-bottom:8px}.setting-card small{color:#8095ac;font-weight:600}.setting-card select,.setting-card input[type=range]{width:100%;background:#080e19;color:#eaf6ff;border:1px solid rgba(135,180,232,.18);border-radius:9px;padding:8px;accent-color:var(--cyan)}
-.switch-line{display:flex;align-items:center;justify-content:space-between;gap:15px}.switch-line input{width:20px;height:20px;accent-color:var(--cyan)}
-.end-panel{text-align:center;max-width:680px}.end-emblem{font-size:56px;filter:drop-shadow(0 0 22px rgba(118,211,255,.45))}.end-panel .modal-copy{margin-left:auto;margin-right:auto}.end-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:18px 0}.end-stat{border:1px solid rgba(140,185,238,.17);border-radius:13px;padding:12px;background:rgba(255,255,255,.025)}.end-stat b{display:block;font-size:19px;color:#fff}.end-stat span{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#8298af}
-#story-card{position:fixed;left:50%;bottom:9%;transform:translateX(-50%) translateY(20px);z-index:45;width:min(620px,88vw);padding:14px 17px;border-radius:14px;opacity:0;pointer-events:none;transition:.35s ease;background:rgba(5,10,19,.88);border:1px solid rgba(106,206,255,.25);box-shadow:0 18px 52px rgba(0,0,0,.5)}
+.setting-card{border:1px solid rgba(130,175,225,.18);border-radius:14px;padding:13px;background:rgba(255,255,255,.03)}
+.setting-card label{display:flex;justify-content:space-between;gap:10px;font-size:14px;font-weight:850;margin-bottom:8px}.setting-card small{color:#a2b6cc;font-weight:600;font-size:14px}.setting-card select,.setting-card input[type=range]{width:100%;min-height:44px;background:#080e19;color:#eaf6ff;border:1px solid rgba(135,180,232,.24);border-radius:9px;padding:9px;font-size:14px;accent-color:var(--cyan)}
+.switch-line{display:flex;align-items:center;justify-content:space-between;gap:15px;min-height:56px}.switch-line input{width:28px;height:28px;min-width:44px;min-height:44px;padding:8px;accent-color:var(--cyan);cursor:pointer}
+.end-panel{text-align:center;max-width:680px}.end-emblem{font-size:56px;filter:drop-shadow(0 0 22px rgba(118,211,255,.45))}.end-panel .modal-copy{margin-left:auto;margin-right:auto}.end-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:18px 0}.end-stat{border:1px solid rgba(140,185,238,.17);border-radius:13px;padding:12px;background:rgba(255,255,255,.025)}.end-stat b{display:block;font-size:19px;color:#fff}.end-stat span{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#9eb3c9}
+#story-card{position:fixed;left:50%;bottom:188px;transform:translateX(-50%) translateY(20px);z-index:45;width:min(620px,88vw);padding:13px 16px;border-radius:14px;opacity:0;pointer-events:none;transition:.35s ease;background:rgba(5,10,19,.92);border:1px solid rgba(106,206,255,.32);box-shadow:0 18px 52px rgba(0,0,0,.5)}
 #story-card.active{opacity:1;transform:translateX(-50%) translateY(0)}
-#story-speaker{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--cyan);font-weight:950}
-#story-text{font-size:12px;color:#d8e8f7;line-height:1.5;margin-top:4px}
+#story-speaker{font-size:14px;text-transform:uppercase;letter-spacing:.1em;color:var(--cyan);font-weight:950}
+#story-text{font-size:14px;color:#e3f0fc;line-height:1.45;margin-top:4px}
 .high-contrast{--panel:rgba(0,0,0,.9);--panel-strong:rgba(0,0,0,.97);--line:rgba(255,255,255,.55);--muted:#c3d4e5}
 .reduced-motion *, .reduced-motion *:before, .reduced-motion *:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
 @media(max-width:820px){
-  #menu-screen{background:linear-gradient(180deg,rgba(3,6,13,.68),rgba(3,7,14,.91) 60%,rgba(3,7,14,.97))}.menu-shell{justify-content:flex-end;padding-bottom:54px}.menu-title{font-size:clamp(46px,16vw,78px)}
+  #menu-screen{background:linear-gradient(180deg,rgba(3,6,13,.68),rgba(3,7,14,.91) 60%,rgba(3,7,14,.97))}.menu-shell{justify-content:flex-end;padding-top:64px;padding-bottom:54px}.menu-title{font-size:clamp(46px,16vw,78px)}
   .choice-grid{grid-template-columns:1fr}.choice-card{min-height:0}.choice-copy{margin-bottom:2px}
-  #objective-hud{top:auto;bottom:190px;right:10px;width:min(255px,67vw);padding:10px}.objective-copy,.guide-line{font-size:9px}
-  #boss-hud{width:min(390px,78vw);top:10px}
-  #player-hud{width:min(270px,72vw);padding:10px}.stat-row{grid-template-columns:42px 1fr 50px}.resource-row{gap:6px}
-  #minimap-wrap{width:120px;height:120px;bottom:18px;left:12px}
+  #objective-hud{top:max(60px,calc(env(safe-area-inset-top) + 56px));bottom:auto;right:10px;width:min(176px,44vw);padding:8px 10px}.objective-copy,.guide-line{display:none}
+  #boss-hud{width:min(390px,78vw);top:60px}
+  #player-hud{width:min(200px,51vw);padding:8px 10px}.stat-row{grid-template-columns:46px 1fr 56px}.resource-row{gap:6px}
+  #minimap-wrap{width:108px;height:108px;bottom:14px;left:12px}
+  #story-card{bottom:186px;width:min(360px,90vw)}
   #desktop-help,#mouse-hint{display:none}
-  #interaction-prompt{bottom:150px}
+  #interaction-prompt{bottom:172px}
   .pause-grid,.forge-layout,.diagnostic-layout{grid-template-columns:1fr}.pause-actions{grid-template-columns:1fr 1fr}
   .inventory-list{grid-template-columns:1fr}.equipment-grid{grid-template-columns:1fr 1fr 1fr}.levelup-grid{grid-template-columns:1fr}.settings-grid{grid-template-columns:1fr}
   .modal-panel{padding:17px}.end-stats{grid-template-columns:1fr 1fr}
 }
 @media(max-width:480px){
-  .menu-actions .ui-btn{flex:1 1 44%}.config-panel{border-radius:0;min-height:100vh;max-height:none;width:100vw;padding-top:max(20px,env(safe-area-inset-top))}
-  #objective-hud{display:none}#minimap-wrap{width:104px;height:104px}
-  #player-hud{width:235px}.hero-meta{display:none}.resource-pill{font-size:9px}
-  #target-hud{top:72px}.equipment-grid{grid-template-columns:1fr}.pause-actions{grid-template-columns:1fr}
+  .menu-actions .ui-btn{flex:1 1 44%}.config-panel{border-radius:0;min-height:100vh;max-height:none;width:100vw;margin-top:0;padding-top:max(62px,calc(env(safe-area-inset-top) + 56px))}
+  #objective-hud{display:block;top:max(60px,calc(env(safe-area-inset-top) + 56px));right:8px;width:calc(48vw - 12px);padding:8px}#minimap-wrap{width:100px;height:100px}
+  #player-hud{width:calc(52vw - 14px);left:8px;padding:8px}.hero-meta{display:none}.stat-row{grid-template-columns:36px 1fr 48px;gap:4px}.stat-label,.stat-value,.resource-pill{font-size:14px}
+  #target-hud{top:164px}.equipment-grid{grid-template-columns:1fr}.pause-actions{grid-template-columns:1fr}
   #touch-jump{right:156px}.modal-title{font-size:26px}
+}
+@media(max-height:500px){
+  #player-hud{width:220px;padding:7px 9px}.resource-row{display:none}#objective-hud{width:210px;padding:7px 9px}.objective-copy,.guide-line{display:none}#minimap-wrap{width:92px;height:92px;bottom:10px;left:10px}#story-card{bottom:112px}
 }
 </style>
 <script src="vendor/three.min.js"></script>
@@ -389,7 +396,7 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       <button id="new-game-button" class="ui-btn gold">New Adventure</button>
       <button id="menu-settings-button" class="ui-btn ghost">Settings</button>
     </div>
-    <div class="menu-note">Desktop: WASD, mouse, Space, Shift, Q, E, R, I and Tab. Mobile: dual-zone touch controls. Progress saves locally in this browser. Three.js is loaded from a CDN, so an internet connection is required when opening the file.</div>
+    <div class="menu-note">Desktop: WASD, mouse (drag or click to look/attack), Space, Shift, Q, E, R, I and Tab. Mobile: dual-zone touch controls. Progress saves locally in this browser.</div>
   </div>
 
   <div id="new-game-config" class="config-panel glass hidden">
@@ -430,6 +437,10 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
 </div>
 
 <div id="hud">
+  <div id="hud-quick-actions">
+    <button id="hud-inv-btn" type="button" aria-label="Open Inventory" title="Inventory (I)">🎒 Bag</button>
+    <button id="hud-pause-btn" type="button" aria-label="Pause Game" title="Pause (Esc)">Ⅱ Pause</button>
+  </div>
   <div id="player-hud" class="hud-card">
     <div class="hero-line"><span id="hero-name" class="hero-name">Forgeguard</span><span id="hero-meta" class="hero-meta">Level 1 · Grow</span></div>
     <div class="stat-row"><span class="stat-label">Health</span><div class="bar-track"><div id="hp-fill" class="bar-fill"></div></div><span id="hp-text" class="stat-value">100 / 100</span></div>
@@ -545,7 +556,8 @@ if(document.body)go();else document.addEventListener("DOMContentLoaded",go);
       <div class="setting-card"><label>Look sensitivity <small id="setting-sensitivity-value">100%</small></label><input id="setting-sensitivity" type="range" min="40" max="180" value="100"></div>
       <div class="setting-card switch-line"><label style="margin:0">Reduced motion <small>Limits camera shake and pulsing</small></label><input id="setting-reduced-motion" type="checkbox"></div>
       <div class="setting-card switch-line"><label style="margin:0">Screen shake <small>Combat impact feedback</small></label><input id="setting-screen-shake" type="checkbox" checked></div>
-      <div class="setting-card switch-line"><label style="margin:0">High-contrast UI <small>Stronger panel and border contrast</small></label><input id="setting-high-contrast" type="checkbox"></div>
+      <div class="setting-card switch-line"><label style="margin:0" for="setting-high-contrast">High-contrast UI <small>Stronger panel and border contrast</small></label><input id="setting-high-contrast" type="checkbox"></div>
+      <div class="setting-card"><label for="setting-touch-controls">Touch controls <small>On-screen stick and action buttons</small></label><select id="setting-touch-controls"><option value="auto">Auto (detect touch)</option><option value="on">Always on</option><option value="off">Off</option></select></div>
     </div>
     <div class="config-actions"><button id="reset-save-button" class="ui-btn danger">Delete Adventure Save</button><button id="settings-done-button" class="ui-btn primary">Apply &amp; Close</button></div>
   </section>
@@ -581,25 +593,6 @@ const RM_MEDIA = window.matchMedia ? window.matchMedia('(prefers-reduced-motion:
 function osReducedMotion() { return Boolean(RM_MEDIA && RM_MEDIA.matches); }
 function motionReduced() { return settings.reducedMotion === true || osReducedMotion(); }
 
-/* Pass 5c trailer slot. Empty until Matt pastes a YouTube ID here after he
-   uploads. It renders a LINK, never an iframe: an embed would add a remote
-   origin to a game whose own head text says zero dependencies, and R1 does not
-   bend for a nice-to-have. Empty string = the control is simply absent. */
-const TRAILER_VIDEO_ID = '';
-
-function mountTrailerLink() {
-  if (!TRAILER_VIDEO_ID) return;                       /* ships empty, renders nothing */
-  const home = document.getElementById('menu-home');
-  if (!home || document.getElementById('trailer-link')) return;
-  const a = document.createElement('a');
-  a.id = 'trailer-link';
-  a.className = 'ui-btn ghost';
-  a.href = `https://www.youtube.com/watch?v=${encodeURIComponent(TRAILER_VIDEO_ID)}`;
-  a.target = '_blank'; a.rel = 'noopener noreferrer';
-  a.textContent = 'Watch the trailer';
-  home.appendChild(a);
-}
-
 /* Accessibility floor: one announce channel, used by toasts and game events. */
 function announce(message) {
   const el = document.getElementById('announce-live');
@@ -608,7 +601,17 @@ function announce(message) {
   setTimeout(() => { el.textContent = String(message); }, 30);
 }
 const IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-if (IS_TOUCH) document.body.classList.add('touch-device');
+let touchDetected = IS_TOUCH;
+function syncTouchUI() {
+  let mode = 'auto';
+  try { if (settings && settings.touchControls) mode = settings.touchControls; } catch (_) {}
+  const want = mode === 'on' || (mode === 'auto' && (touchDetected || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)));
+  document.body.classList.toggle('touch-device', !!want);
+}
+syncTouchUI();
+window.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'touch' && !touchDetected) { touchDetected = true; syncTouchUI(); }
+}, { passive: true, capture: true });
 
 const CLASS_DEFS = {
   forgeguard: {
@@ -717,7 +720,7 @@ function defaultSettings() {
   return {
     quality: mobile ? 'medium' : 'high', volume: 0.7, sensitivity: 1,
     reducedMotion: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    screenShake: true, highContrast: false
+    screenShake: true, highContrast: false, touchControls: 'auto'
   };
 }
 
@@ -744,7 +747,8 @@ function loadSettings() {
       sensitivity: clamp(Number(parsed.sensitivity ?? base.sensitivity), 0.4, 1.8),
       reducedMotion: Boolean(parsed.reducedMotion),
       screenShake: parsed.screenShake !== false,
-      highContrast: Boolean(parsed.highContrast)
+      highContrast: Boolean(parsed.highContrast),
+      touchControls: ['auto', 'on', 'off'].includes(parsed.touchControls) ? parsed.touchControls : 'auto'
     };
   } catch (error) {
     console.warn('Settings reset:', error);
@@ -759,15 +763,17 @@ function saveSettings() {
 const SoundFX = {
   ctx: null, master: null, ambientNodes: [],
   init() {
-    if (!this.ctx) {
-      const AudioCtor = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtor) return;
-      this.ctx = new AudioCtor();
-      this.master = this.ctx.createGain();
-      this.master.gain.value = settings.volume * 0.48;
-      this.master.connect(this.ctx.destination);
-    }
-    if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+    try {
+      if (!this.ctx) {
+        const AudioCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtor) return;
+        this.ctx = new AudioCtor();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = settings.volume * 0.48;
+        this.master.connect(this.ctx.destination);
+      }
+      if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+    } catch (_) { this.ctx = null; this.master = null; }
   },
   setVolume(value) {
     if (!this.master || !this.ctx) return;
@@ -954,7 +960,6 @@ function initialise() {
     updateContinueButton();
     populateSettingsUI();
     game.mode = 'menu';
-    mountTrailerLink();
     requestAnimationFrame(mainLoop);
     scheduleSplashClose();
   } catch (error) {
@@ -1226,6 +1231,7 @@ function applySettings() {
     keyLight.shadow.mapSize.set(settings.quality === 'high' ? 2048 : 1024, settings.quality === 'high' ? 2048 : 1024);
   }
   SoundFX.setVolume(settings.volume);
+  syncTouchUI();
 }
 
 function populateSettingsUI() {
@@ -1241,6 +1247,7 @@ function populateSettingsUI() {
   rmBox.title = osReducedMotion() ? 'Your device is set to reduce motion, so this stays on.' : '';
   $('setting-screen-shake').checked = settings.screenShake;
   $('setting-high-contrast').checked = settings.highContrast;
+  if ($('setting-touch-controls')) $('setting-touch-controls').value = settings.touchControls || 'auto';
 }
 
 function showMainMenu() {
@@ -1584,6 +1591,9 @@ function beginAdventure(fromSave) {
   if (!fromSave) {
     game.hero.hp = currentStats.maxHp;
     game.hero.stamina = currentStats.maxStamina;
+  } else {
+    game.hero.hp = Math.max(Math.round(currentStats.maxHp * 0.5), Number(game.hero.hp) || 0);
+    game.hero.stamina = Math.max(Math.round(currentStats.maxStamina * 0.5), Number(game.hero.stamina) || 0);
   }
   loadZone(game.zoneIndex, fromSave ? game.loadedPosition : null);
   game.mode = 'playing';
@@ -3595,14 +3605,23 @@ function drawMinimap() {
     if (hint === 0 && e.type === 'objective') continue;
     const p = toMap(e.x, e.z); if (p.x < -8 || p.x > w + 8 || p.y < -8 || p.y > h + 8) continue;
     ctx.fillStyle = e.type === 'objective' ? '#55d8ff' : e.type === 'portal' ? (e.unlocked ? '#4ee6a8' : '#5e6b7e') : e.type === 'forge' ? '#ffc857' : e.type === 'victory' ? '#ffc857' : '#d99725';
-    ctx.beginPath(); ctx.arc(p.x, p.y, e.type === 'objective' ? 4 : 3, 0, TAU); ctx.fill();
+    if (e.type === 'objective') {
+      ctx.beginPath(); ctx.moveTo(p.x, p.y - 5); ctx.lineTo(p.x + 5, p.y); ctx.lineTo(p.x, p.y + 5); ctx.lineTo(p.x - 5, p.y); ctx.closePath(); ctx.fill();
+    } else if (e.type === 'forge' || e.type === 'portal' || e.type === 'victory') {
+      ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
+    } else {
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3.2, 0, TAU); ctx.fill();
+    }
   }
   if (hint >= 1) {
     for (const enemy of enemies) {
       if (enemy.dead) continue;
       const dist = Math.hypot(enemy.group.position.x - playerGroup.position.x, enemy.group.position.z - playerGroup.position.z);
       if (hint === 1 && dist > 22) continue;
-      const p = toMap(enemy.group.position.x, enemy.group.position.z); ctx.fillStyle = enemy.isBoss ? '#ff4d91' : '#ff5370'; ctx.beginPath(); ctx.arc(p.x, p.y, enemy.isBoss ? 5 : 2.5, 0, TAU); ctx.fill();
+      const p = toMap(enemy.group.position.x, enemy.group.position.z);
+      const sz = enemy.isBoss ? 6 : 3.8;
+      ctx.fillStyle = enemy.isBoss ? '#ff4d91' : '#ff5370';
+      ctx.beginPath(); ctx.moveTo(p.x, p.y - sz); ctx.lineTo(p.x + sz, p.y + sz * 0.85); ctx.lineTo(p.x - sz, p.y + sz * 0.85); ctx.closePath(); ctx.fill();
     }
   }
   ctx.restore();
@@ -3716,12 +3735,24 @@ function wireInterface() {
   $('setting-quality').addEventListener('change', () => { readSettingsFromUI(); applySettings(); });
   $('setting-volume').addEventListener('input', () => { $('setting-volume-value').textContent = $('setting-volume').value + '%'; readSettingsFromUI(); SoundFX.setVolume(settings.volume); });
   $('setting-sensitivity').addEventListener('input', () => { $('setting-sensitivity-value').textContent = $('setting-sensitivity').value + '%'; readSettingsFromUI(); });
-  ['setting-reduced-motion', 'setting-screen-shake', 'setting-high-contrast'].forEach(id => $(id).addEventListener('change', () => { readSettingsFromUI(); applySettings(); }));
+  ['setting-reduced-motion', 'setting-screen-shake', 'setting-high-contrast', 'setting-touch-controls'].forEach(id => $(id)?.addEventListener('change', () => { readSettingsFromUI(); applySettings(); saveSettings(); }));
+  let deleteSaveArmedUntil = 0;
   $('reset-save-button').addEventListener('click', () => {
-    if (!confirm('Delete the Relicforge adventure save from this browser? Settings will be kept.')) return;
+    const now = Date.now();
+    if (now > deleteSaveArmedUntil) {
+      deleteSaveArmedUntil = now + 4000;
+      $('reset-save-button').textContent = 'Tap again to confirm delete';
+      showToast('Confirm Delete', 'Tap Delete Adventure Save again within 4s to confirm.', 'gold');
+      setTimeout(() => { if (Date.now() >= deleteSaveArmedUntil) $('reset-save-button').textContent = 'Delete Adventure Save'; }, 4100);
+      return;
+    }
+    deleteSaveArmedUntil = 0;
+    $('reset-save-button').textContent = 'Delete Adventure Save';
     try { localStorage.removeItem(SAVE_KEY); } catch (_) {}
     updateContinueButton(); showToast('Adventure Deleted', 'A new Chronicle can now be forged.', 'red');
   });
+  $('hud-pause-btn')?.addEventListener('click', () => { SoundFX.init(); if (game.mode === 'playing') openPause(); });
+  $('hud-inv-btn')?.addEventListener('click', () => { SoundFX.init(); if (game.mode === 'playing') openModal('inventory-panel', 'playing', true); });
 
   $('modal-layer').addEventListener('pointerdown', event => {
     if (event.target === $('modal-layer') && game.modalClosable !== false) closeModal();
@@ -3760,7 +3791,12 @@ function wireInterface() {
     if (game.mode === 'playing') openPause();
   });
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && game.started) { saveGame(false); clearInputState(); if (game.mode === 'playing') openPause(); }
+    if (document.hidden) {
+      if (SoundFX.ctx && SoundFX.ctx.state === 'running') SoundFX.ctx.suspend().catch(() => {});
+      if (game.started) { saveGame(false); clearInputState(); if (game.mode === 'playing') openPause(); }
+    } else {
+      if (SoundFX.ctx && SoundFX.ctx.state === 'suspended') SoundFX.ctx.resume().catch(() => {});
+    }
   });
   window.addEventListener('resize', handleResize);
   window.addEventListener('beforeunload', () => { if (game.started) saveGame(false); });
@@ -3773,18 +3809,28 @@ function readSettingsFromUI() {
   settings.reducedMotion = $('setting-reduced-motion').checked;
   settings.screenShake = $('setting-screen-shake').checked;
   settings.highContrast = $('setting-high-contrast').checked;
+  if ($('setting-touch-controls')) settings.touchControls = $('setting-touch-controls').value;
 }
 
 function bindTouchButton(id, action) {
   const button = $(id);
   button.addEventListener('pointerdown', event => {
     event.preventDefault(); event.stopPropagation(); button.classList.add('pressed'); action();
-    if (navigator.vibrate) navigator.vibrate(10);
+    try { if (navigator.vibrate) navigator.vibrate(10); } catch (_) {}
   });
   const release = event => { event.preventDefault(); event.stopPropagation(); button.classList.remove('pressed'); };
   button.addEventListener('pointerup', release); button.addEventListener('pointercancel', release); button.addEventListener('pointerleave', release);
 }
 
+let mouseDragState = { active: false, pointerId: null, startX: 0, startY: 0, lastX: 0, lastY: 0, dragged: false };
+function safeRequestPointerLock() {
+  try {
+    const fn = renderer.domElement.requestPointerLock;
+    if (typeof fn !== 'function') return;
+    const res = fn.call(renderer.domElement);
+    if (res && typeof res.catch === 'function') res.catch(() => {});
+  } catch (_) {}
+}
 function handleWorldPointerDown(event) {
   if (game.mode !== 'playing') return;
   SoundFX.init();
@@ -3795,20 +3841,35 @@ function handleWorldPointerDown(event) {
     if (x < rect.width * 0.48 && input.movePointer === null) {
       input.movePointer = event.pointerId; input.moveOriginX = x; input.moveOriginY = y;
       $('joystick-base').style.left = `${event.clientX}px`; $('joystick-base').style.top = `${event.clientY}px`; $('joystick-base').style.display = 'block';
-      renderer.domElement.setPointerCapture?.(event.pointerId);
+      try { renderer.domElement.setPointerCapture?.(event.pointerId); } catch (_) {}
     } else if (input.lookPointer === null) {
       input.lookPointer = event.pointerId; input.lookLastX = x; input.lookLastY = y;
-      renderer.domElement.setPointerCapture?.(event.pointerId);
+      try { renderer.domElement.setPointerCapture?.(event.pointerId); } catch (_) {}
     }
     return;
   }
-  if (event.button === 2) { if (document.pointerLockElement === renderer.domElement) triggerHeavyAttack(); return; }
-  if (document.pointerLockElement !== renderer.domElement) renderer.domElement.requestPointerLock?.();
-  else if (event.button === 0) triggerAttack();
+  if (event.button === 2) { triggerHeavyAttack(); return; }
+  if (document.pointerLockElement === renderer.domElement) {
+    if (event.button === 0) triggerAttack();
+    return;
+  }
+  mouseDragState = { active: true, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, lastX: event.clientX, lastY: event.clientY, dragged: false };
+  try { renderer.domElement.setPointerCapture?.(event.pointerId); } catch (_) {}
+  safeRequestPointerLock();
 }
 
 function handleWorldPointerMove(event) {
-  if (event.pointerType !== 'touch' || game.mode !== 'playing') return;
+  if (game.mode !== 'playing') return;
+  if (event.pointerType !== 'touch') {
+    if (mouseDragState.active && event.pointerId === mouseDragState.pointerId && document.pointerLockElement !== renderer.domElement) {
+      const dx = event.clientX - mouseDragState.lastX, dy = event.clientY - mouseDragState.lastY;
+      if (Math.hypot(event.clientX - mouseDragState.startX, event.clientY - mouseDragState.startY) > 6) mouseDragState.dragged = true;
+      cameraYaw -= dx * 0.0042 * settings.sensitivity;
+      cameraPitch = clamp(cameraPitch + dy * 0.0036 * settings.sensitivity, -0.04, 1.02);
+      mouseDragState.lastX = event.clientX; mouseDragState.lastY = event.clientY;
+    }
+    return;
+  }
   const rect = renderer.domElement.getBoundingClientRect();
   const x = event.clientX - rect.left, y = event.clientY - rect.top;
   if (event.pointerId === input.movePointer) {
@@ -3826,6 +3887,11 @@ function handleWorldPointerMove(event) {
 }
 
 function handleWorldPointerUp(event) {
+  if (mouseDragState.active && event.pointerId === mouseDragState.pointerId) {
+    const wasClick = !mouseDragState.dragged && event.button === 0 && game.mode === 'playing';
+    mouseDragState.active = false; mouseDragState.pointerId = null;
+    if (wasClick && document.pointerLockElement !== renderer.domElement) triggerAttack();
+  }
   if (event.pointerId === input.movePointer) {
     input.movePointer = null; input.touchX = 0; input.touchY = 0;
     $('joystick-base').style.display = 'none'; $('joystick-knob').style.transform = 'translate(-50%,-50%)';
