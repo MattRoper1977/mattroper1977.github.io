@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="author" content="Lesson resource">
 <meta name="creator" content="Lesson resource">
 <title>LAYER PRESS — Streetwear Print Studio</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'/>">
 <style>
   :root {
     --bg-mat: #171b22;
@@ -490,7 +491,7 @@
     background: #ebe4d7;
     border: 2px solid #cec4b2;
     border-radius: var(--radius-sm);
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
   }
 
   .title-ink-chip {
@@ -866,6 +867,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 6px;
+    flex-wrap: wrap;
     font-size: 16px;
     font-weight: 800;
   }
@@ -1994,9 +1997,9 @@
 
   .toast {
     position: fixed;
-    bottom: 18px;
+    top: 66px;
     left: 50%;
-    transform: translateX(-50%) translateY(80px);
+    transform: translateX(-50%) translateY(-20px);
     background: var(--ink-dark);
     color: var(--accent-gold);
     border: 2px solid var(--accent-gold);
@@ -2041,12 +2044,406 @@
     .workbench-bar button {
       padding: 6px 8px;
     }
-    .title-ink-chip span {
-      display: none;
+    .title-ink-chip {
+      flex: 1 1 auto;
+      min-width: fit-content;
     }
     .title-ink-chip canvas {
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .mobile-deck-tabs {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+    .screen {
+      transform: none !important;
+    }
+  }
+
+  @media (max-width: 980px), (max-height: 760px) {
+    #screen-title,
+    #screen-stages,
+    #screen-results,
+    #screen-rail {
+      padding: calc(58px + env(safe-area-inset-top, 0px)) 14px 20px;
+      overflow-y: auto;
+      align-items: flex-start;
+    }
+  }
+
+  @media (max-width: 980px) {
+    .screen {
+      height: 100dvh;
+    }
+    #screen-title {
+      justify-content: flex-start;
+    }
+    .title-shell {
+      height: auto;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+    .title-stage {
+      min-height: 220px;
+      padding: 12px;
+    }
+    .title-card {
+      padding: 16px;
+    }
+    .stages-shell,
+    .results-card,
+    .rail-shell {
+      max-height: none;
+      overflow: visible;
+    }
+    .stages-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .topbar {
+      height: auto;
+      min-height: 52px;
+      padding: 8px 8px 4px;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .topbar .topbar-left {
+      min-height: 44px;
+      padding-left: 52px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    body:has(#mbmexit-home) .topbar .topbar-left {
+      padding-left: 102px;
+    }
+    .topbar-right {
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      max-width: 100%;
+    }
+    .studio-grid {
+      display: flex;
+      flex-direction: column;
+      padding: 6px 8px;
+      gap: 6px;
+      overflow: hidden;
+    }
+    .panel-left {
+      flex-shrink: 0;
+      padding: 6px 10px;
+      gap: 6px;
+      overflow: visible;
+    }
+    .lookbook-head {
+      display: none;
+    }
+    #lookbook-body {
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 8px !important;
+      flex: 0 0 auto !important;
+    }
+    .panel-left .target-box {
+      flex: 0 0 auto;
+      min-height: 64px;
+      width: 68px;
+      height: 68px;
+      padding: 3px;
+    }
+    .panel-left .match-panel {
+      flex: 1;
+      min-width: 0;
+      padding: 5px 8px;
+    }
+    .panel-left .hint-strip.open {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: calc(100% + 4px);
+      z-index: 20;
+    }
+    #free-body {
+      flex: 1 !important;
+    }
+    .free-garments {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 6px;
+      padding-bottom: 2px;
+    }
+    .free-garments button {
+      flex: 0 0 auto;
+      min-height: 44px;
+      padding: 4px 10px;
+    }
+    .free-tip {
+      display: none;
+    }
+    .panel-left .left-cta {
+      width: auto;
+      min-height: 44px;
+      padding: 6px 12px;
+      font-size: 15px;
+      align-self: stretch;
+    }
+    .panel-center {
+      flex: 1;
+      min-height: 0;
+      gap: 6px;
+    }
+    .workbench-stage {
+      flex: 1;
+      min-height: 170px;
+    }
+    .mobile-deck-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .mobile-deck-tabs button {
+      min-height: 44px;
+      background: var(--bg-panel-2);
+      color: var(--ink-light);
+      border: 2px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-weight: 800;
+      font-size: 16px;
+    }
+    .mobile-deck-tabs button[aria-selected="true"] {
+      background: var(--accent-gold);
+      color: var(--ink-dark);
+      border-color: #fff3c7;
+    }
+    .workbench-bar {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      padding: 6px;
+    }
+    .wb-group {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .workbench-bar button {
+      min-height: 48px;
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 16px;
+    }
+    .panel-right {
+      flex-shrink: 0;
+      max-height: 36vh;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .panel-right .rack-label {
+      display: none;
+    }
+    .mask-grid,
+    .ink-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+    .tool-btn,
+    .ink-btn {
+      min-height: 48px;
+      padding: 6px;
+      justify-content: center;
+    }
+    .tool-btn.span-2 {
+      grid-column: span 3;
+    }
+    .tool-kind {
+      display: none;
+    }
+    #screen-play:not([data-mobile-tab="press"]) .workbench-bar {
+      display: none;
+    }
+    #screen-play[data-mobile-tab="press"] .panel-right {
+      display: none;
+    }
+    #screen-play[data-mobile-tab="masks"] .ink-grid {
+      display: none;
+    }
+    #screen-play[data-mobile-tab="inks"] .mask-grid {
+      display: none;
+    }
+  }
+
+  @media (max-width: 680px) {
+    .logo-mini {
+      font-size: 14px;
+      gap: 4px;
+    }
+    .logo-mini em {
+      padding: 1px 5px;
+    }
+    .stages-grid {
+      grid-template-columns: 1fr;
+    }
+    .topbar-right {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 5px;
+    }
+    .topbar-right button {
+      min-height: 44px;
+      padding: 4px 5px;
+      font-size: 14px;
+      justify-content: center;
+    }
+    .toast {
+      top: 196px;
+      bottom: auto;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  @media (max-width: 980px) and (max-height: 500px) {
+    .logo-mini {
+      font-size: 14px;
+      gap: 4px;
+    }
+    .logo-mini em {
+      padding: 1px 5px;
+    }
+    .topbar-right {
+      width: auto;
+      display: flex;
+      gap: 4px;
+    }
+    .topbar {
+      flex-wrap: nowrap;
+      min-height: 46px;
+      padding: 2px 8px;
+      gap: 6px;
+    }
+    .topbar .topbar-left {
+      min-height: 0;
+      flex-wrap: nowrap;
+      padding-left: 52px;
+      gap: 4px;
+      min-width: 0;
+    }
+    body:has(#mbmexit-home) .topbar .topbar-left {
+      padding-left: 102px;
+    }
+    #stage-pill-hud {
+      max-width: 132px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      padding: 2px 8px;
+    }
+    .order-pills {
+      gap: 4px;
+    }
+    .order-pill {
+      min-width: 32px;
+      padding: 2px 6px;
+      font-size: 14px;
+    }
+    .topbar-right {
+      gap: 3px;
+      flex-shrink: 0;
+    }
+    .topbar-right button {
+      padding: 3px 6px;
+      font-size: 14px;
+    }
+    .studio-grid {
+      display: grid;
+      grid-template-columns: 168px 1fr 264px;
+      grid-template-rows: 1fr;
+      padding: 4px 8px;
+      gap: 6px;
+    }
+    .workbench-stage {
+      min-height: 100px;
+    }
+    .workbench-head {
+      padding: 2px 6px;
+    }
+    .workbench-bar {
+      padding: 4px;
+      gap: 4px;
+    }
+    .wb-group {
+      gap: 4px;
+    }
+    .panel-left {
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    #lookbook-body {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      flex: 1 !important;
+    }
+    .panel-left .match-panel {
+      width: 100%;
+    }
+    .panel-left .target-box {
+      width: 100%;
+      height: auto;
+      flex: 1;
+      min-height: 88px;
+    }
+    .mobile-deck-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .mobile-deck-tabs [data-deck="press"] {
+      display: none;
+    }
+    #screen-play .workbench-bar {
+      display: grid !important;
+    }
+    #screen-play .panel-right {
+      display: flex !important;
+      max-height: none;
+      height: 100%;
+      overflow-y: auto;
+    }
+    #screen-play[data-mobile-tab="inks"] .mask-grid {
+      display: none !important;
+    }
+    #screen-play[data-mobile-tab="inks"] .ink-grid {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+    }
+    #screen-play:not([data-mobile-tab="inks"]) .ink-grid {
+      display: none !important;
+    }
+    #screen-play:not([data-mobile-tab="inks"]) .mask-grid {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+    }
+    .tool-btn.span-2 {
+      grid-column: span 2;
+    }
+    .workbench-bar button {
+      min-height: 44px;
+      font-size: 14px;
+    }
+    .toast {
+      top: 90px;
+      bottom: auto;
     }
   }
 </style>
@@ -2167,7 +2564,7 @@
 </section>
 
 <!-- ==================== PLAY SCREEN ==================== -->
-<section id="screen-play" class="screen" aria-label="Layer Press Studio Workbench">
+<section id="screen-play" class="screen" data-mobile-tab="press" aria-label="Layer Press Studio Workbench">
   <header class="topbar">
     <div class="topbar-left">
       <div class="logo-mini">LAYER <em>PRESS</em></div>
@@ -2271,6 +2668,12 @@
             Skip Guide
           </button>
         </div>
+      </div>
+
+      <div id="mobile-deck-tabs" class="mobile-deck-tabs" role="tablist" aria-label="Studio Deck">
+        <button id="m-tab-masks" type="button" role="tab" aria-selected="false" data-deck="masks">Masks</button>
+        <button id="m-tab-inks" type="button" role="tab" aria-selected="false" data-deck="inks">Inks</button>
+        <button id="m-tab-press" type="button" role="tab" aria-selected="true" data-deck="press">Press</button>
       </div>
 
       <div class="workbench-bar" role="toolbar" aria-label="Press Controls">
@@ -4167,6 +4570,7 @@
       const b = $(id);
       if (b) b.setAttribute('aria-pressed', state.calm ? 'true' : 'false');
     });
+    if (typeof wakeFrame === 'function') wakeFrame();
   }
 
   function applySoundUI() {
@@ -4244,6 +4648,38 @@
   }
 
   /* ---- Screen & Modal Navigation ---- */
+  function syncModalInert() {
+    const anyOpen = Object.values(modals).some(m => m && m.classList.contains('open'));
+    Object.values(screens).forEach(s => {
+      if (s) s.inert = anyOpen;
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    const activeModal = Object.values(modals).find(m => m && m.classList.contains('open'));
+    if (!activeModal) return;
+    const exitControls = ['mbmexit-back', 'mbmexit-home']
+      .map(id => document.getElementById(id))
+      .filter(el => el && el.getClientRects().length > 0);
+    const focusables = [
+      ...[...activeModal.querySelectorAll('button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+        .filter(el => el.getClientRects().length > 0),
+      ...exitControls
+    ];
+    if (!focusables.length) {
+      e.preventDefault();
+      activeModal.focus?.();
+      return;
+    }
+    const idx = focusables.indexOf(document.activeElement);
+    e.preventDefault();
+    const next = idx === -1
+      ? (e.shiftKey ? focusables.length - 1 : 0)
+      : (idx + (e.shiftKey ? -1 : 1) + focusables.length) % focusables.length;
+    focusables[next].focus();
+  }, true);
+
   function showScreen(name) {
     Object.keys(screens).forEach(k => screens[k].classList.toggle('active', k === name));
     state.screen = name;
@@ -4259,6 +4695,7 @@
     } else if (name === 'rail') {
       renderStudioScreen();
     }
+    wakeFrame();
   }
 
   let modalReturnFocus = null;
@@ -4267,21 +4704,26 @@
       modalReturnFocus = document.activeElement;
     }
     modals[name].classList.add('open');
+    syncModalInert();
     if (focusId && $(focusId)) {
       setTimeout(() => { $(focusId).focus({ preventScroll: true }); }, 30);
     }
+    wakeFrame();
   }
 
   function closeModal(name) {
     modals[name].classList.remove('open');
+    syncModalInert();
     if (modalReturnFocus && typeof modalReturnFocus.focus === 'function' && document.body.contains(modalReturnFocus)) {
       modalReturnFocus.focus({ preventScroll: true });
     }
+    wakeFrame();
   }
 
   function closeAllModals() {
     Object.values(modals).forEach(m => m.classList.remove('open'));
     state.paused = false;
+    syncModalInert();
   }
 
   function openPause() {
@@ -4296,7 +4738,9 @@
     state.paused = false;
     modals.pause.classList.remove('open');
     modals.settings.classList.remove('open');
+    syncModalInert();
     wbCanvas.focus({ preventScroll: true });
+    wakeFrame();
   }
 
   function openSettings(fromPause) {
@@ -4309,12 +4753,14 @@
 
   function closeSettings() {
     modals.settings.classList.remove('open');
+    syncModalInert();
     if (state.settingsReturnTo === 'pause' && state.paused) {
       openModal('pause', 'btn-pause-resume');
     } else if (modalReturnFocus && typeof modalReturnFocus.focus === 'function') {
       modalReturnFocus.focus({ preventScroll: true });
     }
     state.settingsReturnTo = null;
+    wakeFrame();
   }
 
   /* ---- Build Ink Rack & Title Ink Strip ---- */
@@ -4396,6 +4842,7 @@
     Sound.playClick();
     syncInkUI();
     updateGuideState();
+    if (typeof wakeFrame === 'function') wakeFrame();
   }
 
   function syncInkUI() {
@@ -4958,6 +5405,7 @@
   }
 
   function updateStatusPill() {
+    if (typeof wakeFrame === 'function') wakeFrame();
     const pill = $('status-pill');
     pill.classList.remove('peel-alert');
     if (state.anim && state.anim.type === 'roll') {
@@ -5378,20 +5826,23 @@
     const stage = $('workbench-stage');
     if (!stage) return;
     const { cssW, cssH } = resizeCanvasToFit(wbCanvas, stage);
-    const guideClearance = state.guideActive ? 64 : 0;
-    const pad = 28;
+    const guideClearance = state.guideActive ? (cssH < 300 ? 44 : 64) : 0;
+    const pad = (cssW < 360 || cssH < 280) ? 10 : 28;
+    const topClear = (cssH < 280) ? 40 : 68;
     const availW = Math.max(100, cssW - pad * 2);
-    const availH = Math.max(100, cssH - 68 - guideClearance);
+    const availH = Math.max(100, cssH - topClear - guideClearance);
     const scale = Math.min(availW / ART_SIZE, availH / ART_SIZE);
     const ox = (cssW - ART_SIZE * scale) * 0.5;
-    const oy = (cssH - guideClearance - ART_SIZE * scale) * 0.5 + 14;
+    const oy = (cssH - guideClearance - ART_SIZE * scale) * 0.5 + (cssH < 280 ? 10 : 14);
     state.wbRect = { ox, oy, scale };
+    if (typeof wakeFrame === 'function') wakeFrame();
   }
 
   function resizeTitleCanvas() {
     const wrap = titleCanvas.parentElement;
     if (wrap) resizeCanvasToFit(titleCanvas, wrap);
     if (titleBgCanvas && screens.title) resizeCanvasToFit(titleBgCanvas, screens.title);
+    if (typeof wakeFrame === 'function') wakeFrame();
   }
 
   /* ---- Masking Tape Renderer (Flat, Inked, Squash Pop, or Curling Peel) ---- */
@@ -5861,57 +6312,86 @@
     titleCtx.restore();
   }
 
-  /* ---- 60 FPS Loop with Eased Springs & Crisp Hit-Stop ---- */
-  let lastTs = 0;
+  /* ---- 60 FPS Idle-Sleeping Loop ---- */
+  let lastTs = 0, rafId = 0;
+  function stopFrame() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+  }
+  function wakeFrame() {
+    if (!rafId && !document.hidden) {
+      lastTs = 0;
+      rafId = requestAnimationFrame(frame);
+    }
+  }
+  function needsNextFrame() {
+    if (document.hidden || state.paused) return false;
+    if (state.screen === 'title') {
+      const reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      return !state.calm && !reduced;
+    }
+    if (state.screen === 'play') {
+      const dRot = Math.abs(((state.cursor.rot - state.cursorVis.rot + 540) % 360) - 180);
+      const dPos = Math.hypot(state.cursor.x - state.cursorVis.x, state.cursor.y - state.cursorVis.y);
+      const popping = state.pendingMasks.some(m => typeof m.popT === 'number' && m.popT < 1);
+      return !!(state.anim || state.hitStop > 0 || state.particles.length > 0 || Math.abs(state.garmentSquash) > 0.001 || dPos > 0.4 || dRot > 0.4 || popping);
+    }
+    return false;
+  }
   function frame(ts) {
+    rafId = 0;
+    if (document.hidden || state.paused) return;
     const dt = lastTs ? Math.min(0.05, Math.max(0, (ts - lastTs) / 1000)) : 0.016;
     lastTs = ts;
 
-    if (!document.hidden && !state.paused) {
-      if (state.screen === 'title') {
-        drawTitleDemo(ts);
-      } else if (state.screen === 'play') {
-        // Brief crisp hit-stop freeze on major reveal moments
-        if (state.hitStop > 0) {
-          state.hitStop = Math.max(0, state.hitStop - dt);
-        } else {
-          // Smooth eased cursor position & shortest-angle rotation
-          const k = 1 - Math.exp(-(state.calm ? 12 : 24) * dt);
-          state.cursorVis.x += (state.cursor.x - state.cursorVis.x) * k;
-          state.cursorVis.y += (state.cursor.y - state.cursorVis.y) * k;
-          let dRot = ((state.cursor.rot - state.cursorVis.rot + 540) % 360) - 180;
-          state.cursorVis.rot += dRot * k;
+    if (state.screen === 'title') {
+      drawTitleDemo(ts);
+    } else if (state.screen === 'play') {
+      if (state.hitStop > 0) {
+        state.hitStop = Math.max(0, state.hitStop - dt);
+      } else {
+        const k = 1 - Math.exp(-(state.calm ? 12 : 24) * dt);
+        state.cursorVis.x += (state.cursor.x - state.cursorVis.x) * k;
+        state.cursorVis.y += (state.cursor.y - state.cursorVis.y) * k;
+        let dRot = ((state.cursor.rot - state.cursorVis.rot + 540) % 360) - 180;
+        state.cursorVis.rot += dRot * k;
+        if (Math.hypot(state.cursor.x - state.cursorVis.x, state.cursor.y - state.cursorVis.y) <= 0.4) {
+          state.cursorVis.x = state.cursor.x;
+          state.cursorVis.y = state.cursor.y;
+        }
+        if (Math.abs(((state.cursor.rot - state.cursorVis.rot + 540) % 360) - 180) <= 0.4) {
+          state.cursorVis.rot = state.cursor.rot;
+        }
 
-          // Squash decay
-          state.garmentSquash *= Math.exp(-14 * dt);
-          if (Math.abs(state.garmentSquash) < 0.0005) state.garmentSquash = 0;
+        state.garmentSquash *= Math.exp(-14 * dt);
+        if (Math.abs(state.garmentSquash) < 0.0005) state.garmentSquash = 0;
 
-          // Stuck mask impact pop timers
-          state.pendingMasks.forEach(m => {
-            if (typeof m.popT === 'number' && m.popT < 1) {
-              m.popT = Math.min(1, m.popT + dt * 5.2);
-            }
-          });
+        state.pendingMasks.forEach(m => {
+          if (typeof m.popT === 'number' && m.popT < 1) {
+            m.popT = Math.min(1, m.popT + dt * 5.2);
+          }
+        });
 
-          updateParticles(dt);
+        updateParticles(dt);
 
-          if (state.anim) {
-            state.anim.t += dt;
-            if (state.anim.t >= state.anim.dur) {
-              if (state.anim.type === 'roll') {
-                finishRollAnim();
-              } else if (state.anim.type === 'peel') {
-                const cb = state.anim.onComplete;
-                state.anim = null;
-                finishPeelAnim(cb);
-              }
+        if (state.anim) {
+          state.anim.t += dt;
+          if (state.anim.t >= state.anim.dur) {
+            if (state.anim.type === 'roll') {
+              finishRollAnim();
+            } else if (state.anim.type === 'peel') {
+              const cb = state.anim.onComplete;
+              state.anim = null;
+              finishPeelAnim(cb);
             }
           }
         }
-        drawWorkbench(ts);
       }
+      drawWorkbench(ts);
     }
-    requestAnimationFrame(frame);
+    if (needsNextFrame()) rafId = requestAnimationFrame(frame);
   }
 
   /* =====================================================================
@@ -5925,13 +6405,39 @@
     };
   }
 
+  function snapArtPoint(pt) {
+    return {
+      x: Math.max(48, Math.min(ART_SIZE - 48, Math.round(pt.x / GRID_STEP) * GRID_STEP)),
+      y: Math.max(48, Math.min(ART_SIZE - 48, Math.round(pt.y / GRID_STEP) * GRID_STEP))
+    };
+  }
+
+  let activeTouchId = null, touchDownClient = null, touchDragMoved = false, touchSameSpotReady = false;
+
   wbCanvas.addEventListener('pointermove', e => {
     if (state.screen !== 'play' || state.paused || state.anim || state.tool === 'full' || state.inkedMasks) return;
-    if (e.pointerType === 'touch') return;
+    if (e.pointerType === 'touch') {
+      if (e.pointerId !== activeTouchId) return;
+      if (touchDownClient && Math.hypot(e.clientX - touchDownClient.x, e.clientY - touchDownClient.y) > 8) {
+        touchDragMoved = true;
+      }
+      const pt = canvasEventToArtCoords(e);
+      if (pt.x >= 16 && pt.x <= ART_SIZE - 16 && pt.y >= 16 && pt.y <= ART_SIZE - 16) {
+        const sn = snapArtPoint(pt);
+        state.cursor.x = sn.x;
+        state.cursor.y = sn.y;
+        state.cursorVis.x = sn.x;
+        state.cursorVis.y = sn.y;
+        wakeFrame();
+      }
+      return;
+    }
     const pt = canvasEventToArtCoords(e);
     if (pt.x >= 24 && pt.x <= ART_SIZE - 24 && pt.y >= 24 && pt.y <= ART_SIZE - 24) {
-      state.cursor.x = Math.max(48, Math.min(ART_SIZE - 48, Math.round(pt.x / GRID_STEP) * GRID_STEP));
-      state.cursor.y = Math.max(48, Math.min(ART_SIZE - 48, Math.round(pt.y / GRID_STEP) * GRID_STEP));
+      const sn = snapArtPoint(pt);
+      state.cursor.x = sn.x;
+      state.cursor.y = sn.y;
+      wakeFrame();
     }
   });
 
@@ -5939,14 +6445,48 @@
     Sound.unlock();
     if (state.screen !== 'play' || state.paused || state.anim) return;
     wbCanvas.focus({ preventScroll: true });
-    if (state.inkedMasks && state.inkedMasks.length > 0) { triggerPeel(); return; }
+    if (state.inkedMasks && state.inkedMasks.length > 0) { triggerPeel(); wakeFrame(); return; }
     const pt = canvasEventToArtCoords(e);
     if (state.tool === 'full') {
       if (pt.x >= 24 && pt.x <= ART_SIZE - 24 && pt.y >= 24 && pt.y <= ART_SIZE - 24) triggerRollInk();
+      wakeFrame();
+      return;
+    }
+    if (e.pointerType === 'touch') {
+      activeTouchId = e.pointerId;
+      touchDownClient = { x: e.clientX, y: e.clientY };
+      touchDragMoved = false;
+      const sn = snapArtPoint(pt);
+      touchSameSpotReady = Math.hypot(sn.x - state.cursor.x, sn.y - state.cursor.y) <= GRID_STEP && $('btn-stick')?.dataset.touchPreview === '1';
+      state.cursor.x = sn.x;
+      state.cursor.y = sn.y;
+      state.cursorVis.x = sn.x;
+      state.cursorVis.y = sn.y;
+      try { wbCanvas.setPointerCapture(e.pointerId); } catch (_) {}
+      const sp = $('status-pill');
+      if (sp) sp.textContent = 'Drag to position · Tap Stick (or tap spot) to place';
+      const st = $('btn-stick');
+      if (st) st.dataset.touchPreview = '1';
+      wakeFrame();
       return;
     }
     stickMaskAt(pt.x, pt.y);
+    wakeFrame();
   });
+
+  function finishTouchDrag(e) {
+    if (e.pointerType !== 'touch' || e.pointerId !== activeTouchId) return;
+    activeTouchId = null;
+    try { wbCanvas.releasePointerCapture(e.pointerId); } catch (_) {}
+    if (!touchDragMoved && touchSameSpotReady) {
+      const st = $('btn-stick');
+      if (st) delete st.dataset.touchPreview;
+      stickMaskAt(state.cursor.x, state.cursor.y);
+    }
+    wakeFrame();
+  }
+  wbCanvas.addEventListener('pointerup', finishTouchDrag);
+  wbCanvas.addEventListener('pointercancel', finishTouchDrag);
 
   function isInteractiveTarget(el) {
     if (!el) return false;
@@ -5959,8 +6499,9 @@
     if (e.code === 'Escape') {
       if (modals.settings.classList.contains('open')) { e.preventDefault(); closeSettings(); return; }
       if (modals.howto.classList.contains('open')) { e.preventDefault(); closeModal('howto'); return; }
+      if (modals.order.classList.contains('open')) { e.preventDefault(); closeModal('order'); wbCanvas.focus({ preventScroll: true }); return; }
       if (modals.pause.classList.contains('open')) { e.preventDefault(); closePause(); return; }
-      if (state.screen === 'play' && !modals.order.classList.contains('open')) { e.preventDefault(); openPause(); return; }
+      if (state.screen === 'play') { e.preventDefault(); openPause(); return; }
       if (state.screen === 'stages' || state.screen === 'rail') { e.preventDefault(); showScreen('title'); return; }
       return;
     }
@@ -6005,13 +6546,16 @@
     if (e.code >= 'Digit1' && e.code <= 'Digit6') {
       e.preventDefault();
       selectInk(Number(e.code.slice(-1)));
+      wakeFrame();
       return;
     }
+    wakeFrame();
   });
 
   /* ---- Clean Tab Hide / Show Recovery ---- */
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
+      stopFrame();
       Sound.suspend();
       lastTs = 0;
       if (state.screen === 'play' && !state.paused && !modals.order.classList.contains('open')) {
@@ -6021,6 +6565,7 @@
       lastTs = 0;
       if (state.screen === 'play') resizeWorkbench();
       else if (state.screen === 'title') resizeTitleCanvas();
+      wakeFrame();
     }
   });
 
@@ -6038,6 +6583,7 @@
         Sound.unlock();
         if (e.detail > 0) el.blur();
         fn(e);
+        wakeFrame();
       });
     };
 
@@ -6117,6 +6663,16 @@
       startStage(0, true);
     });
 
+    document.querySelectorAll('#mobile-deck-tabs button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const deck = btn.dataset.deck;
+        screens.play.dataset.mobileTab = deck;
+        document.querySelectorAll('#mobile-deck-tabs button').forEach(b => b.setAttribute('aria-selected', b === btn ? 'true' : 'false'));
+        Sound.playClick();
+        requestAnimationFrame(resizeWorkbench);
+      });
+    });
+
     // Order review modal
     $('btn-review-save').addEventListener('click', () => {
       const rev = state._pendingReview;
@@ -6131,7 +6687,7 @@
     });
     $('btn-review-tweak').addEventListener('click', () => {
       Sound.playClick();
-      modals.order.classList.remove('open');
+      closeModal('order');
       wbCanvas.focus({ preventScroll: true });
     });
     $('btn-review-next').addEventListener('click', () => {
@@ -6216,7 +6772,7 @@
   loadSavedState();
   wireButtons();
   resizeTitleCanvas();
-  requestAnimationFrame(frame);
+  wakeFrame();
 })();
 </script>
 <!-- MBM-INLINE-EXIT:BEGIN generated by tools/render_inline_exit.py, do not edit by hand -->
