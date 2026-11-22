@@ -678,34 +678,58 @@ async function orderGates(browser, origin, html) {
     await ctx.close();
   }
 
-  // ---- TG4: the generated splash on first load, suppressed within 24 h,
+  // ---- TG4: the generated splash on first load, quick loader on second load,
   // reduced-motion timing, hook shape, gamepad back, stood-down bootstrap.
   {
     // Init scripts run before the document has an element, so observe the
     // document node itself and define the helpers before anything can throw.
-    const seenScript = () => { window.__splashSeen = []; window.__splashIds = () => document.querySelectorAll('#mbmSplash').length; try { const mo = new MutationObserver(l => { for (const r of l) for (const n of r.addedNodes) if (n.nodeType === 1 && n.matches && n.matches('[data-mbm-maker-splash]')) window.__splashSeen.push(performance.now()); }); mo.observe(document, { childList: true, subtree: true }); } catch (e) { window.__splashSeenErr = String(e); } };
+    const seenScript = () => {
+      window.__splashSeen = [];
+      window.__splashIds = () => document.querySelectorAll('#mbmSplash').length;
+      try {
+        const mo = new MutationObserver(l => {
+          for (const r of l) for (const n of r.addedNodes) {
+            if (n.nodeType === 1 && n.matches && n.matches('[data-mbm-maker-splash]')) {
+              const cs = getComputedStyle(n);
+              const beforeCs = getComputedStyle(n, '::before');
+              const line = n.querySelector('.mbm-splash-line');
+              const lineCs = line ? getComputedStyle(line) : null;
+              window.__splashSeen.push({
+                t: performance.now(),
+                quick: n.hasAttribute('data-mbm-quick'),
+                fullAnim: cs.animationName === 'mbmSplash' || beforeCs.animationName === 'mbmSweep' || (lineCs ? lineCs.animationName === 'mbmLine' : false),
+              });
+            }
+          }
+        });
+        mo.observe(document, { childList: true, subtree: true });
+      } catch (e) { window.__splashSeenErr = String(e); }
+    };
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const errors = [];
     const page = await ctx.newPage(); page.on('pageerror', e => errors.push(String(e.message)));
     await page.addInitScript(seenScript);
     await page.goto(origin + '/touchline/'); await page.waitForTimeout(300);
-    const first = await page.evaluate(() => ({ seen: window.__splashSeen.length, present: !!document.querySelector('[data-mbm-maker-splash]'), ids: window.__splashIds() }));
+    const first = await page.evaluate(() => ({ seen: window.__splashSeen, present: !!document.querySelector('[data-mbm-maker-splash]'), ids: window.__splashIds() }));
     await page.waitForTimeout(3200);
-    const afterFirst = await page.evaluate(() => ({ present: !!document.querySelector('[data-mbm-maker-splash]'), hook: window.__TDV2_CAREER_TEST__.splash(), ids: window.__splashIds() }));
-    gate('TG4c', 'generated splash shows on first load, then stands down', first.seen === 1 && first.present && !afterFirst.present && first.ids <= 1 && afterFirst.ids === 0,
-      `seen=${first.seen}, present at 300ms=${first.present}, at 3.5s=${afterFirst.present}, #mbmSplash count max=${Math.max(first.ids, afterFirst.ids)}`);
+    const afterFirst = await page.evaluate(() => ({ present: !!document.querySelector('[data-mbm-maker-splash]'), hook: window.__TDV2_CAREER_TEST__.splash(), ids: window.__splashIds(), last: localStorage.getItem('mbm_splash_last') }));
+    gate('TG4c', 'generated splash shows full on first load, then stands down', first.seen.length === 1 && first.seen[0].quick === false && first.present && !afterFirst.present && first.ids <= 1 && afterFirst.ids === 0,
+      `seen=${JSON.stringify(first.seen)}, present at 300ms=${first.present}, at 3.5s=${afterFirst.present}, #mbmSplash count max=${Math.max(first.ids, afterFirst.ids)}`);
     const h = afterFirst.hook || {};
     gate('TG4h', 'splash() hook returns {visible,hidden,last} consistently after the splash', h.visible === false && h.hidden === true && /^\d{13}$/.test(String(h.last)) && Number(h.last) <= Date.now(),
       JSON.stringify(h));
-    // second load in the same storage: suppressed
-    await page.goto(origin + '/touchline/'); await page.waitForTimeout(1200);
-    const second = await page.evaluate(() => ({ seen: window.__splashSeen.length, present: !!document.querySelector('[data-mbm-maker-splash]'), last: localStorage.getItem('mbm_splash_last') }));
-    gate('TG4d', 'splash suppressed within 24 h on the shared key mbm_splash_last', second.seen === 0 && !second.present && !!second.last, `second load: seen=${second.seen}, key=${second.last}`);
-    // control: clearing the key brings it back; a stale key (25 h) too
+    // second load in the same storage: quick loader ([data-mbm-quick], no full animation, key unchanged)
+    await page.goto(origin + '/touchline/');
+    await page.waitForFunction(() => !document.querySelector('[data-mbm-maker-splash]'), null, { timeout: 2200 }).catch(() => {});
+    const second = await page.evaluate(() => ({ seen: window.__splashSeen, present: !!document.querySelector('[data-mbm-maker-splash]'), last: localStorage.getItem('mbm_splash_last') }));
+    gate('TG4d', 'second load within the same day shows quick loader ([data-mbm-quick], no full animation, key unchanged)',
+      second.seen.length === 1 && second.seen[0].quick === true && second.seen[0].fullAnim === false && !second.present && second.last === afterFirst.last,
+      `second load: seen=${JSON.stringify(second.seen)}, present=${second.present}, key=${second.last} (was ${afterFirst.last})`);
+    // control: a stale key (25 h) brings back the full splash
     await page.evaluate(() => localStorage.setItem('mbm_splash_last', String(Date.now() - 25 * 3600 * 1000)));
     await page.goto(origin + '/touchline/'); await page.waitForTimeout(400);
-    const stale = await page.evaluate(() => window.__splashSeen.length);
-    gate('TG4d-ctl', 'control: a 25 h-old key lets the splash show again', stale === 1, `seen=${stale}`);
+    const stale = await page.evaluate(() => window.__splashSeen);
+    gate('TG4d-ctl', 'control: a 25 h-old key brings back the full splash', stale.length === 1 && stale[0].quick === false && stale[0].fullAnim === true, `seen=${JSON.stringify(stale)}`);
     await page.waitForTimeout(3000);
     gate('TG4g', 'stood-down legacy bootstrap fires nothing: no second splash, no console error', errors.length === 0 && afterFirst.ids === 0, errors.slice(0, 2).join(' | ') || 'no errors, no lingering #mbmSplash');
     await ctx.close();

@@ -160,6 +160,8 @@ function fetchedReferences(html) {
 }
 
 function verifyPayloads() {
+  const ledger = JSON.parse(text('data/hud-coverage.json'));
+  const ownScreen = new Set((ledger.makerSplash?.['declined-own-screen'] || []).map(item => typeof item === 'string' ? item : item.route));
   for (const game of GAMES) {
     const bytes = read(game.file);
     const html = bytes.toString('utf8');
@@ -178,7 +180,8 @@ function verifyPayloads() {
       assert(game.identity.test(visibleIdentity), `${game.id}: V4 identity missing`);
     }
     assert(!/user-scalable\s*=\s*no|maximum-scale\s*=\s*1(?:\.0)?(?:[,"'])/i.test(html), `${game.id}: browser zoom is blocked`);
-    assert.equal(count(html, /MBM-MAKER-SPLASH:BEGIN/g), 1, `${game.id}: maker splash count`);
+    const expectedSplashCount = ownScreen.has(game.route) ? 0 : 1;
+    assert.equal(count(html, /MBM-MAKER-SPLASH:BEGIN/g), expectedSplashCount, `${game.id}: maker splash count`);
     if (INLINE_EXIT_IDS.has(game.id)) {
       assert.equal(count(html, /MBM-INLINE-EXIT:BEGIN/g), 1, `${game.id}: inline exit count`);
       assert(!/<script\b[^>]*\bsrc=["']\/hud\.js["']/i.test(html), `${game.id}: duplicate HUD integration`);
@@ -255,13 +258,20 @@ function verifyLedger() {
   const ledger = JSON.parse(text('data/hud-coverage.json'));
   const applied = new Set((ledger.makerSplash?.applied || []).map(item => typeof item === 'string' ? item : item.route));
   const declined = new Set((ledger.makerSplash?.['declined-with-reason'] || []).map(item => typeof item === 'string' ? item : item.route));
+  const ownScreen = new Map((ledger.makerSplash?.['declined-own-screen'] || []).map(item => [item.route, item]));
   // A route may instead be held at a previous accepted region, with a reason and the sha of the
   // region it keeps (PLAY-Q1 batch 1b: clip-bearing routes wait for their clips to be recaptured).
   const held = new Map((ledger.makerSplash?.['held-at-previous-region-with-reason'] || []).map(item => [item.route, item]));
   const excluded = new Map((ledger.excluded || []).map(item => [item.route, item]));
-  let appliedCount = 0, heldCount = 0;
+  let appliedCount = 0, heldCount = 0, ownScreenCount = 0;
   for (const game of GAMES) {
-    if (held.has(game.route)) {
+    if (ownScreen.has(game.route)) {
+      const entry = ownScreen.get(game.route);
+      assert(typeof entry.reason === 'string' && entry.reason.trim().length > 0, `${game.id}: declined-own-screen without a reason`);
+      assert(!applied.has(game.route), `${game.id}: maker splash both applied and declined-own-screen`);
+      assert(!held.has(game.route), `${game.id}: maker splash both held and declined-own-screen`);
+      ownScreenCount += 1;
+    } else if (held.has(game.route)) {
       const entry = held.get(game.route);
       assert(typeof entry.reason === 'string' && entry.reason.trim().length > 0, `${game.id}: held without a reason`);
       assert(/^[0-9a-f]{64}$/.test(entry.region_sha256 || ''), `${game.id}: held without the region sha`);
@@ -274,7 +284,7 @@ function verifyLedger() {
       assert.equal(excluded.get(game.route).verifier, 'tools/verify_v4_games_deployment.mjs', `${game.id}: verifier ownership`);
     } else assert(!excluded.has(game.route), 'voxel: HUD route incorrectly excluded');
   }
-  gate('route shell ledger', `${appliedCount} maker splashes applied · ${heldCount} held at a previous region · 7 inline exits · 1 canonical HUD route`);
+  gate('route shell ledger', `${appliedCount} maker splashes applied · ${heldCount} held at a previous region · ${ownScreenCount} declined-own-screen · 7 inline exits · 1 canonical HUD route`);
 }
 
 function staticMain() {
