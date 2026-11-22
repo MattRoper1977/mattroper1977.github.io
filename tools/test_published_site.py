@@ -306,7 +306,23 @@ class PublishedChromeControls(unittest.TestCase):
         self.assertIn('<p>Retained prose.</p>', result)
         self.assertIn('<a href="/commission/">Contact</a>', result)
         self.assertNotIn('>Commission a resource</a>', result)
-        self.assertIn('<a href="/main/#about">About</a>', result)
+        # Redesign Phase 1: the shared group is Lessons, Help, Tools, Privacy, Contact, Play.
+        for link in ['<a href="/Lessons/">Lessons</a>', '<a href="/Lessons/help/">Help</a>',
+                     '<a href="/tools/">Tools</a>', '<a href="/privacy/">Privacy</a>']:
+            self.assertIn(link, result)
+        self.assertNotIn('<a href="/main/#about">About</a>', result)
+        self.assertNotIn('<a href="/mailing-list/">', result)
+
+    def test_signoff_with_trust_line_is_written_once_by_both_passes(self):
+        # Redesign Phase 1 regression: the trust line made the second pass miss the
+        # whole signoff and nest a copy inside it. One signoff, one line of each.
+        from education_palette import adopt_palette
+        source = '<html><head></head><body><footer><p>Authored.</p></footer></body></html>'
+        result = adopt_palette(self.navigation.complete_chrome(source), '/', False, self.navigation.chrome_template)
+        self.assertEqual(result.count('class="mbm-chrome-signoff"'), 1)
+        self.assertEqual(result.count('Learn • Build • Explore'), 1)
+        self.assertEqual(result.count('Free to use. No pupil logins, no pupil data.'), 1)
+        self.assertIn('<p>Authored.</p>', result)
 
     def test_published_tokens_and_signoff_preserve_authored_footer_and_body(self):
         source = ('<!doctype html><html><head><title>Test</title></head><body>'
@@ -361,9 +377,19 @@ class PublishedChromeControls(unittest.TestCase):
         complete = ('<html><head><link rel="stylesheet" href="/assets/mbm-tokens.css"></head><body>' + brand
                     + '<footer>Learn • Build • Explore</footer></body></html>')
         self.assertEqual(self.navigation.complete_chrome(complete), complete)
-        rendered = self.navigation.header('/', [('/for/teachers/', 'Teachers')], adult=True)
-        self.assertEqual(rendered.count('<strong>MADE BY MATT</strong><small>Learn • Build • Explore</small>'), 1)
-        self.assertEqual(self.navigation.ChromeDocument(rendered).taglines(), {'all': 1, 'header': 1, 'footer': 0})
+        # Redesign choice 4 (Matt, 22 November 2026): the header this renderer writes
+        # is one row with no tagline. The census above still admits a page that an
+        # older builder wrote with the line in its header, so a consumer publication
+        # that has not yet moved to this builder is not refused.
+        rendered = self.navigation.header('/', [('/for/teachers/', 'Teachers')], adult=True, theme=True)
+        self.assertEqual(rendered.count('<strong>Made by Matt</strong>'), 1)
+        self.assertNotIn('<small>', rendered)
+        self.assertEqual(self.navigation.ChromeDocument(rendered).taglines(), {'all': 0, 'header': 0, 'footer': 0})
+        self.assertEqual(rendered.count('class="mbm-unified-display"'), 1)
+        self.assertEqual(rendered.count('data-mbm-theme-slot'), 1)
+        self.assertNotIn('mbm-unified-saved', rendered)
+        studios = self.navigation.header('/Matt-s-Apps-/PDF_Studio.html', [('/for/teachers/', 'Teachers')])
+        self.assertEqual(studios.count('<a href="/Matt-s-Apps-/" aria-current="page">Studios</a>'), 2)
 
     def subject_publication_fixture(self, root, subject):
         """Use the real refresh path; unrelated front doors are small fixtures."""

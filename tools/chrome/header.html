@@ -12,14 +12,11 @@
      superseded by a user-supplied logo, so §10's stop applies: this is the
      current header mark, and it is reported rather than invented.
 
-     The source-page variants below carry no tagline: "Learn • Build • Explore"
-     belongs to their footer, once per page (§0.6). The published Education
-     fragment is the one exception, ruled by EDU-HEADER-BRAND-20260915 (CX2
-     §5.2, Matt 16 September 2026): the line sits beneath the wordmark inside
-     the brand lock-up as readable text, and the footer keeps its own line, so
-     a published Education page carries the tagline twice — once in the header
-     brand, once in the footer — and shared_navigation.complete_chrome censuses
-     exactly that. -->
+     No header carries the tagline. "Learn • Build • Explore" belongs to the
+     footer, once per page (§0.6). EDU-HEADER-BRAND-20260915 put the line under
+     the wordmark in the published Education header; Matt's redesign choice 4
+     (22 November 2026) moved it back to the footer so the header stays one
+     row, and shared_navigation.complete_chrome censuses exactly that. -->
 
 <!-- MBM-CHROME-FRAGMENT: tokens -->
 <!-- The T1 token file, linked once per page, root-absolute. It declares
@@ -45,8 +42,15 @@
      The source-page variants below retain their separate preservation scope;
      this fragment changes neither their brand nor their navigation links. -->
 <!-- MBM-CHROME-FRAGMENT: published-education -->
-<header class="mbm-unified-header" data-mbm-navigation="education" data-mbm-variant="{{variant}}"><div class="mbm-unified-bar"><a class="mbm-unified-brand" href="/"><img src="/assets/brand/approved-mark.jpg" width="44" height="44" alt=""><span><strong>MADE BY MATT</strong><small>Learn • Build • Explore</small></span></a>{{navigation}}{{saved}}<a class="mbm-unified-search" href="{{search}}" aria-label="Search"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></a>{{menu}}</div></header>
+<header class="mbm-unified-header" data-mbm-navigation="education" data-mbm-variant="{{variant}}"><div class="mbm-unified-bar"><a class="mbm-unified-brand" href="/" aria-label="Made by Matt, home"><img src="/assets/brand/approved-mark.jpg" width="40" height="40" alt=""><span><strong>Made by Matt</strong></span></a>{{navigation}}<a class="mbm-unified-search" href="{{search}}" aria-label="Search site"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span class="mbm-unified-word" aria-hidden="true">Search</span></a>{{display}}{{menu}}</div></header>
 <!-- /MBM-CHROME-FRAGMENT: published-education -->
+
+<!-- Redesign Phase 1: Display options, one tap from every Education header.
+     shared-navigation.js fills the panel (six named reading backgrounds, text
+     size, extra spacing, reset). The stored values and keys are unchanged. -->
+<!-- MBM-CHROME-FRAGMENT: published-display -->
+<details class="mbm-unified-display"><summary aria-label="Display options" aria-controls="mbm-display-panel"><span aria-hidden="true">Aa</span></summary><div class="mbm-display-panel" id="mbm-display-panel" role="group" aria-label="Display options"><div class="mbm-menu-head"><p class="mbm-menu-title">Display options</p><button type="button" class="mbm-display-close" aria-label="Close display options"><span aria-hidden="true">×</span></button></div><p class="mbm-display-note">Saved on this device</p><div data-mbm-theme-slot></div></div></details>
+<!-- /MBM-CHROME-FRAGMENT: published-display -->
 
 <!-- MBM-CHROME-VARIANT: adult -->
 <header class="header mbm-site-header" data-mbm-chrome="adult"><div class="bar"><a class="brand" href="/main/"><img src="/assets/brand/micro_mark.svg" alt="" width="100" height="100"><span><strong>MADE BY MATT</strong></span></a><button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button><a class="mbm-saved" href="/Lessons/?view=saved">Saved</a><!-- MBM-CHROME-NAV-ROW --></div></header>

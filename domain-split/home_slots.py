@@ -15,7 +15,7 @@ Where each slot comes from (uz-6 (b)):
   retyped: title equals og:title, description equals og:description equals the
   h1. seo.canonical and seo.ogUrl are origin + '/', as the legacy render wrote.
 * brand.credit is confirmed equal to the <strong> credit of the chrome's
-  published-education header fragment (tools/chrome/header.html).
+  published-education header fragment (tools/chrome/header.html), ignoring case.
 * audiences.doors.{0..3}: data/audience-homepages.json by key (pupils,
   teachers, parents, schools), as subject_slots.py reads it.
 * flagship: Science, Autumn 2 Week 6, one Lessons registry row (resources.json)
@@ -122,8 +122,12 @@ FALLBACK = ('humanities-re', 'Aut2', 1)
 # uz-6 (d), vb-3 (g): never a pack badge.
 BRAND_ASSET = 'approved-mark.jpg'
 IMAGE = re.compile(r'\.(jpe?g|png|gif|svg|webp)$', re.I)
-# HUB_LINKS labels of the three Teacher Tools cards.
+# The three Teacher Tools cards and the words they carry on the homepage. The header row
+# renamed its links in November 2026 (Packs, Studios); the homepage body keeps its own words
+# until its own phase, so Resources and Tools are found in HUB_LINKS by route. Apps is still
+# found by its label: the Studios header link must not add a homepage card on its own.
 TOOL_LABELS = {'resources': 'Resources', 'apps': 'Apps & tools', 'tools': 'Tools'}
+TOOL_ROUTES = {'resources': '/resources/', 'tools': '/tools/'}
 # The owner's words (spec section 6), confirmed by digest of the draft's markup.
 # Pinned: the sha256 of each owner-word string as home.html r6 types it (unchanged from r5), in page order (masthead 1, door
 # bylines 4, pathway bylines 3, maker's note 1): spec b3d3df9b section 6, an input of record under uz-6.
@@ -267,9 +271,10 @@ def half_terms(lessons_root, hub_terms):
 def teacher_tools(site_root, hub_links):
     """{card: (route, label) or None}; None = the route is not served, so the card is omitted."""
     by_label = {label: route for route, label in hub_links}
+    routes = {route for route, _ in hub_links}
     tools = {}
     for card, label in TOOL_LABELS.items():
-        route = by_label.get(label)
+        route = TOOL_ROUTES[card] if TOOL_ROUTES.get(card) in routes else by_label.get(label) if card not in TOOL_ROUTES else None
         if card == 'resources' and not route:
             raise ValueError('HUB_LINKS has no Resources route; the Resources card is always present')
         if card == 'tools' and not (Path(site_root) / TOOLS_PAGE).is_file():
@@ -381,7 +386,10 @@ def confirm(text, sources):
     if len(described) != 2 or len(masthead) != 1 or set(described) != {html.unescape(masthead[0])}:
         raise ValueError('seo.description and seo.ogDescription are not the masthead string')
     credits = re.findall(r'<strong data-slot="brand.credit">([^<]*)</strong>', text)
-    if len(credits) != 2 or {html.unescape(c) for c in credits} != {sources['credit']}:
+    # The header wordmark is written in sentence case since November 2026 and the homepage keeps
+    # the owner's capitals, so the two are the same words compared without regard to case (as the
+    # title's brand line already is below); the two homepage credits must still be one string.
+    if len(credits) != 2 or len(set(credits)) != 1 or html.unescape(credits[0]).casefold() != sources['credit'].casefold():
         raise ValueError('brand.credit is not the chrome header credit')
 
 

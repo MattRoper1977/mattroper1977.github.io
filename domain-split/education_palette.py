@@ -14,7 +14,11 @@ class BrandingRegion(HTMLParser):
     This avoids a regex across nested divs and leaves all other bytes intact.
     """
     void = {'area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'}
-    branding = re.compile(r'(?:made by matt(?:\s*·\s*(?:learning|resources))?\s*(?:·\s*)?)?learn\s*•\s*build\s*•\s*explore', re.I)
+    # The shared signoff carries one trust line after the tagline (redesign Phase 1).
+    # It is part of the same branding group, so a second pass finds the whole
+    # signoff and replaces it with itself instead of nesting a copy inside it.
+    branding = re.compile(r'(?:made by matt(?:\s*·\s*(?:learning|resources))?\s*(?:·\s*)?)?learn\s*•\s*build\s*•\s*explore'
+                          r'(?:\s*free to use\. no pupil logins, no pupil data\.)?', re.I)
 
     def __init__(self, source):
         super().__init__(); self.source = source

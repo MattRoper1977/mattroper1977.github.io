@@ -2,9 +2,20 @@
 // J93 (rulings uz-6 (h), vb-3 (e)): on / and /main/ the card line icons are the J93 subject-tile icons
 // (#subjects a.home-subject-tile .home-subject-icon svg, exactly 4) in place of the SW2 .fd-symbol icons.
 const assert=require('node:assert/strict'),fs=require('node:fs');
-const expected=[['/Lessons/','Lessons'],['/resources/','Resources'],['/tools/','Tools']];
-// D4: the Apps index left the public row (one Tools entry) but still carries the shared header, so it stays a checked route.
-const routes=[...expected.map(([route])=>route),'/Matt-s-Apps-/','/','/main/'];
+// Redesign Phase 1 (merged plan 3.2, Matt's go-ahead 22 November 2026): the public row is five links,
+// Studios is back in it and is current on the Studios hub, and Help joins it. This replaces D4's three.
+// The row shows from 960px; below that the same five destinations are in the Menu and the row is not drawn.
+const expected=[['/Lessons/','Lessons'],['/resources/','Packs'],['/tools/','Tools'],['/Matt-s-Apps-/','Studios'],['/Lessons/help/','Help']];
+const ROW_FROM=960;
+const routes=['/Lessons/','/resources/','/tools/','/Matt-s-Apps-/','/','/main/'];
+const rowShown=page=>page.evaluate(min=>innerWidth>=min,ROW_FROM);
+const rowHidden=async(page,label)=>{
+  assert.equal(await page.locator('nav[data-mbm-hub-links]').evaluate(e=>getComputedStyle(e).display),'none','Below '+ROW_FROM+'px the row is not drawn: '+label);
+  // A lesson page may point its own Lessons links back at its subject list, so the path is what is compared.
+  const menu=await page.locator('.mbm-unified-panel .mbm-menu-group').first().evaluate(e=>[...e.querySelectorAll('a')].map(a=>new URL(a.href).pathname+new URL(a.href).search));
+  const pupil=await page.locator('.mbm-unified-panel a[href^="/for/"]').count()===1;
+  for(const [href] of expected) if(!(pupil&&['/tools/','/Matt-s-Apps-/'].includes(href))) assert(menu.some(item=>item.split('?')[0]===href),'The Menu carries '+href+' when the row is not drawn: '+label);
+};
 const slugs={'/Lessons/':'lessons','/resources/':'resources','/Matt-s-Apps-/':'apps','/tools/':'tools','/':'home','/main/':'main'};
 exports.assertPublicRow=async(page,route)=>{
   const rows=await page.locator('nav[data-mbm-hub-links]').evaluateAll(es=>es.map(e=>({
@@ -18,6 +29,8 @@ exports.assertPublicRow=async(page,route)=>{
   assert.deepEqual(rows[0].links,expected,'Exact shared destination/label/order: '+route);
   assert.deepEqual(rows[0].current,current,'Only the current hub is highlighted: '+route);
   assert(!rows[0].scroll,'No sideways scrolling: '+route);
+  assert.equal(await page.locator('.collection-nav').count(),0,'No legacy hub grid in the DOM: '+route);
+  if(!await rowShown(page)){await rowHidden(page,route);return rows[0];}
   assert(rows[0].boxes.every(b=>b.w>=44&&b.h>=44),'Every quick link meets 44px: '+route);
   {const ws=rows[0].boxes.map(b=>b.w),ys=rows[0].boxes.map(b=>b.y);assert(Math.max(...ws)-Math.min(...ws)<=1&&Math.max(...ys)-Math.min(...ys)<=1,'Quick links share one row at equal widths (evenly spaced): '+route);}
   assert.equal(await page.locator('.collection-nav').count(),0,'No legacy hub grid in the DOM: '+route);
@@ -36,13 +49,69 @@ exports.assertPlainLinks=async(page,activeCount=1)=>{
   assert(styles.every(s=>s.colour===styles[0].colour),'Active link retains the shared theme ink');
   return styles;
 };
+// Transition proof (redesign Phase 1). The Lessons and Studios sites publish their own copy of the
+// header markup and load the shared styles and script from this site. Between this site going live
+// and those two republishing, their pages carry the OLDER markup under the NEW shared files. These
+// two fixtures are the consumer pages exactly as they were before this change (same bytes, same
+// digests as the fixtures this check pinned until now). They must still give a working one-row header.
+const legacyFixtures=[
+  {route:'/Lessons/',file:'legacy-header-lessons.html',sha256:'536f4038b0ce45f8c2f159444cadca308f9ffa9f9dac652d55d579c233a67e4b'},
+  {route:'/Matt-s-Apps-/',file:'legacy-header-apps.html',sha256:'bbfefa423f70ba6437fd68536a74e3fe3ba8d7fd653ef2bf0cfa0835819a0726'},
+];
+exports.verifyLegacyHeader=async({page,origin,javaScriptEnabled})=>{
+  const path=require('node:path'),evidence=[];
+  for(const item of legacyFixtures){
+    const url=origin+item.route,body=fs.readFileSync(path.join(__dirname,'sw2',item.file));
+    assert.equal(require('node:crypto').createHash('sha256').update(body).digest('hex'),item.sha256,'Exact pre-change consumer header fixture: '+item.file);
+    assert(body.includes('mbm-menu-display')&&!body.includes('mbm-unified-display'),'The fixture carries the older header markup: '+item.file);
+    const handler=r=>r.fulfill({status:200,contentType:'text/html',body});
+    await page.route(url,handler);
+    try{
+      for(const width of [320,390,ROW_FROM,1280]){
+        await page.setViewportSize({width,height:900});
+        await page.goto(url);await page.waitForLoadState('networkidle');
+        const label=item.route+' older markup at '+width;
+        assert.equal(await page.locator('header.mbm-unified-header').count(),1,'One header: '+label);
+        const shape=await page.evaluate(()=>{const h=document.querySelector('header.mbm-unified-header'),bar=h.querySelector('.mbm-unified-bar');
+          const shown=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(e).visibility!=='hidden'};
+          const mids=[...bar.children].filter(e=>shown(e)&&getComputedStyle(e).position!=='absolute').map(e=>{const r=e.getBoundingClientRect();return Math.round(r.top+r.height/2)});
+          const small=[...h.querySelectorAll('a[href],button,summary')].filter(shown).map(e=>{const r=e.getBoundingClientRect();return {text:(e.textContent||e.getAttribute('aria-label')||'').trim().slice(0,30),w:Math.round(r.width),h:Math.round(r.height)}}).filter(t=>t.w<44||t.h<44);
+          return {height:Math.round(h.getBoundingClientRect().height),spread:Math.max(...mids)-Math.min(...mids),small,scroll:document.documentElement.scrollWidth,inner:innerWidth,tagline:[...h.querySelectorAll('.mbm-unified-brand small')].filter(shown).length}});
+        assert(shape.scroll<=shape.inner+1,'No sideways scrolling: '+label+' '+JSON.stringify(shape));
+        assert(shape.height<=66&&shape.spread<=2,'One header row: '+label+' '+JSON.stringify(shape));
+        assert.equal(shape.tagline,0,'No second line under the wordmark: '+label);
+        assert.deepEqual(shape.small,[],'Header controls meet 44px: '+label);
+        const summary=page.locator('.mbm-unified-menu > summary'),panel=page.locator('.mbm-unified-panel');
+        await summary.click();assert(await panel.isVisible(),'Menu opens: '+label);
+        assert(await panel.getByRole('link',{name:'Lessons',exact:true}).isVisible(),'Menu carries Lessons: '+label);
+        const short=await panel.locator('a').evaluateAll(es=>es.map(e=>e.getBoundingClientRect().height).filter(h=>h>0&&h<48));
+        assert.deepEqual(short,[],'Every Menu row is at least 48px: '+label);
+        assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No sideways scrolling with the Menu open: '+label);
+        if(javaScriptEnabled){
+          await page.locator('.mbm-menu-display > summary').click();
+          const blue=page.locator('.mbm-menu-display [data-mbm-theme-slot] button[data-t="blue"]');
+          await blue.scrollIntoViewIfNeeded();await blue.click();
+          assert.equal(await page.locator('html').getAttribute('data-theme'),'blue','Reading background still changes: '+label);
+          assert.equal((await blue.innerText()).trim().replace(/^✓\s*/,''),'Blue','The swatch carries its word: '+label);
+          await page.locator('.mbm-menu-display [data-mbm-theme-slot] button[data-t="cream"]').click();
+          assert.equal(await page.locator('html').getAttribute('data-theme'),null,'Cream restores the default: '+label);
+          await summary.press('Escape');
+        }
+        evidence.push({route:item.route,width,javaScriptEnabled,status:'PASS',...shape});
+      }
+    }finally{await page.unroute(url,handler);}
+  }
+  fs.mkdirSync('audit-output/home-play-discovery/section26',{recursive:true});
+  fs.writeFileSync(`audit-output/home-play-discovery/section26/legacy-header-${javaScriptEnabled?'js':'no-js'}.json`,JSON.stringify(evidence,null,2));
+  await page.setViewportSize({width:390,height:844});
+};
 exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
   const evidence=[];
   const overrides=[];
   const extraOwnerFixtures=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'sw2/nav-expanded-owner-fixtures.json'),'utf8'));
   const ownerFixtures=[
-    {route:'/Lessons/',file:'nav-lessons-published.html',sha256:'2625a5f4993013d515c2a2d87c73f1237904e11d5c01bd24392f6a466307ef59'},
-    {route:'/Matt-s-Apps-/',file:'nav-apps-published.html',sha256:'4a85764f2ea71e402cdc9f883eae4ea0ddfc5ecff9567e69dcb64cf81a6f6afe'},
+    {route:'/Lessons/',file:'nav-lessons-published.html',sha256:'2887ff854e641e6812d2821406af81bb9bd4a84a3f04a300741d4280d433e36b'},
+    {route:'/Matt-s-Apps-/',file:'nav-apps-published.html',sha256:'e1af21d1e94f532e936cfce581b0bef1b05253d116095af1894f48c78bb5dfc4'},
     ...extraOwnerFixtures,
   ];
   if(consumerFixtures) for(const item of ownerFixtures){
@@ -52,7 +121,7 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
     await page.route(url,handler);overrides.push([url,handler]);
   }
   fs.mkdirSync('audit-output/home-play-discovery/section26',{recursive:true});
-  for(const width of [390,900,1280]){
+  for(const width of [390,900,ROW_FROM,1280]){
     let geometry;
     for(const route of [...routes,...(consumerFixtures?extraOwnerFixtures.map(item=>item.route):[])]){
       const current=expected.some(([href])=>href===route)?[route]:[];
@@ -69,8 +138,9 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
         assert.deepEqual(rows[0].links,expected,'Exact shared destination/label/order');
         assert.deepEqual(rows[0].current,current,'Exactly the current hub is highlighted, if on a hub');
         assert(!rows[0].scroll,'No sideways scrolling');
-        assert(rows[0].boxes.every(b=>b.w>=44&&b.h>=44),'Every quick link meets 44px');
         assert.equal(await page.locator('.collection-nav').count(),0,'No legacy hub grid in the DOM');
+        if(!await rowShown(page)){await rowHidden(page,route);return rows[0];}
+        assert(rows[0].boxes.every(b=>b.w>=44&&b.h>=44),'Every quick link meets 44px');
         await exports.assertPlainLinks(page,current.length);
         return rows[0];
       };
@@ -96,7 +166,7 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
         const dims=await page.locator(selector).evaluateAll(es=>es.filter(e=>e.getClientRects().length).map(e=>({w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height})));
         assert(dims.every(b=>b.w>=24&&b.h>=24),'Readable card icon size');
         }
-        if(width===390&&route==='/resources/'){
+        if(width===1280&&route==='/resources/'){
           const last=page.locator('nav[data-mbm-hub-links] a').last();
           const prior=await last.getAttribute('href');await last.evaluate(e=>e.setAttribute('href','/missing-quick-link/'));
           await assert.rejects(check,/Exact shared destination/,'Wrong destination is detected');

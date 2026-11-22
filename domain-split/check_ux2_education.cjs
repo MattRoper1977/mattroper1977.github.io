@@ -118,6 +118,7 @@ fixtures.relocations.lessonRows = {
 const GATED = fixtures.appendix.gatedRoutes;
 const PUPIL_ROUTES = GATED.filter(r => fixtures.appendix.pupilRoutes.includes(r));
 const HEADER = '[data-mbm-navigation="education"]';
+const ADMISSION = JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname, 'education-publication-admission.json'), 'utf8'));
 const MENU = HEADER + ' .mbm-unified-menu';
 const PANEL = HEADER + ' .mbm-unified-panel';
 
@@ -304,10 +305,11 @@ async function suite(browser, mutation) {
           'The maker\'s note on / is rendered (box ' + Math.round(shown.w) + 'x' + Math.round(shown.h) + (shown.hiddenBy.length ? ', hidden by ' + shown.hiddenBy.join('; ') : '') + (shown.checked ? '' : ', checkVisibility false') + ')');
         assert.equal(sha256(normNote(shown.innerText)), sha256(normNote(drafted[0])), 'The maker\'s note on / renders the draft\'s own note (sha256 of its normalised innerText)');
       }
-      // EDU-HEADER-BRAND-20260915: once in the header brand lock-up, once in the footer.
+      // Redesign choice 4 (Matt, 22 November 2026): the line is in the footer only; the header is one row without it.
       const lbe = (text.match(/Learn • Build • Explore/g) || []).length;
-      assert.equal(lbe, 2, '"Learn • Build • Explore" exactly twice on ' + route + ' (header brand and footer)');
-      assert.equal(await page.locator(HEADER + ' .mbm-unified-brand small').count(), 1, 'The header line is the brand lock-up tagline on ' + route);
+      assert.equal(lbe, 1, '"Learn • Build • Explore" exactly once on ' + route + ' (the footer)');
+      assert.equal(await page.locator(HEADER + ' .mbm-unified-brand small').count(), 0, 'The header carries no tagline on ' + route);
+      assert.equal(await page.locator('footer').evaluateAll(fs => fs.reduce((n, f) => n + (f.textContent.match(/Learn • Build • Explore/g) || []).length, 0)), 1, 'The one line is inside the footer on ' + route);
       // vocabulary grep: each occurrence is the surviving name or a listed defect
       const defects = (fixtures.appendix.vocabularyDefects.routes[route] || {});
       const counts = Object.fromEntries(fixtures.appendix.vocabularyDefects.terms.map(t => [t, text.split(t).length - 1]));
@@ -326,7 +328,13 @@ async function suite(browser, mutation) {
       const anchors = await anchorsIn(page);
       const same = [...new Set(anchors.filter(a => new URL(a.abs).origin === origin).map(a => a.abs.replace(/#.*$/, '')))];
       const failed = [];
-      for (const u of same) { const r = await page.request.get(u); if (!r.ok()) failed.push(u + ' → ' + r.status()); }
+      // HC5 §1 applied to links: a file the Lessons repository's main already carries, and that this
+      // build's older pinned checkout predates, is an ARRIVING row in the admission registry. A link to
+      // exactly such a row is not a broken link; any other 404 still is.
+      const arriving = u => { const p = new URL(u).pathname; if (!p.startsWith('/Lessons/')) return false;
+        const rel = decodeURIComponent(p.slice('/Lessons/'.length)), row = ADMISSION.trees['education-lessons'][rel.endsWith('/') || rel === '' ? rel + 'index.html' : rel];
+        return Array.isArray(row) && row.includes('ARRIVING'); };
+      for (const u of same) { const r = await page.request.get(u); if (!r.ok() && !(r.status() === 404 && arriving(u))) failed.push(u + ' → ' + r.status()); }
       assert.deepEqual(failed, [], 'Same-origin hrefs that do not resolve on ' + route);
       const external = [...new Set(anchors.filter(a => new URL(a.abs).origin !== origin).map(a => a.abs))];
       const preOrderExternal = new Set(Object.values(fixtures.preOrder.routes).flat().filter(isExternal));

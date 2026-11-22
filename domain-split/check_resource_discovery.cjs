@@ -165,7 +165,7 @@ async function responsiveChecks(browser) {
       // NAV-2: Matt explicitly includes both homepages in the shared four-link row.
       await require('./check_education_hub_links.cjs').assertPublicRow(page,home);
       const links = [];
-      for (const [target, name] of [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/tools/', 'Tools']]) {
+      for (const [target, name] of [['/Lessons/', 'Lessons'], ['/resources/', 'Packs'], ['/tools/', 'Tools']]) {
         // SW2 H retires the duplicate place cards. The native menu preserves all three destinations.
         const menu = page.locator('.mbm-unified-menu');
         // J93 (uz-6 (c)): the menu panel nests its own Display options <details>, so a bare
@@ -184,11 +184,11 @@ async function responsiveChecks(browser) {
       await check(`${width}-${route}-obvious-learning-navigation`, page, async () => {
         await goto(page, route);
         assert.equal(await page.locator(collectionNav).count(), 1, 'Each hub needs one obvious Learning areas navigation');
-        const nav = page.locator(collectionNav), labels = await nav.innerText();
-        for (const label of ['Lessons', 'Resources', 'Tools']) assert(labels.includes(label), `${route} lacks ${label}`);
+        const nav = page.locator(collectionNav), labels = await nav.evaluate(e => e.textContent);
+        for (const label of ['Lessons', 'Packs', 'Tools']) assert(labels.includes(label), `${route} lacks ${label}`);
         const links = [];
         for (const target of ['/Lessons/', '/resources/', '/tools/']) {
-          const link = nav.locator('a').filter({ hasText: target === '/Lessons/' ? /^Lessons$/ : target === '/resources/' ? /^Resources$/ : /^Tools$/ }).first();
+          const link = nav.locator('a').filter({ hasText: target === '/Lessons/' ? /^Lessons$/ : target === '/resources/' ? /^Packs$/ : /^Tools$/ }).first();
           assert.equal(routeOf(await link.getAttribute('href'), route), routeOf(target));
           links.push({ target, bounds: await hitTarget(link) });
         }

@@ -51,12 +51,10 @@ async function assertChrome(page, route, expected) {
     }, unified: body.querySelectorAll('header[data-mbm-navigation="education"]').length};
   });
   assert.deepEqual(evidence.links, ['/assets/mbm-tokens.css'], 'One origin-root token link: ' + route);
-  // EDU-HEADER-BRAND-20260915: the published Education header carries the line
-  // once, inside the brand lock-up only; the footer keeps its own line. A page
-  // without the unified brand still carries exactly one footer-only tagline.
+  // November 2026 one-row header: the line left the brand lock-up, so the header
+  // never carries it and the page carries it exactly once, in the footer.
   assert(evidence.unified <= 1, 'At most one unified Education header: ' + route);
-  const brand = evidence.unified;
-  assert.deepEqual(evidence.taglines, {all: 1 + brand, header: brand, footer: 1, brand}, 'One brand tagline (inside the unified header lock-up only, and always there) and one footer tagline: ' + route);
+  assert.deepEqual(evidence.taglines, {all: 1, header: 0, footer: 1, brand: 0}, 'No header tagline and one footer tagline: ' + route);
   assert.deepEqual(await resolvedTokens(page), expected, 'Computed token census: ' + route);
   return evidence;
 }
@@ -109,7 +107,13 @@ async function proveChromeControls(page, origin, expected) {
   await assert.rejects(() => assertChrome(page, '/stats/', expected), /one footer tagline/);
   await page.reload();
   await assertChrome(page, '/stats/', expected);
-  await page.locator('[data-mbm-navigation="education"] .mbm-unified-brand small').evaluate(el => { el.remove(); });
+  await page.locator('[data-mbm-navigation="education"] .mbm-unified-brand').evaluate(el => {
+    const small = document.createElement('small'); small.textContent = 'Learn • Build • Explore'; el.append(small);
+  });
+  await assert.rejects(() => assertChrome(page, '/stats/', expected), /one footer tagline/);
+  await page.reload();
+  await assertChrome(page, '/stats/', expected);
+  await page.locator('footer').evaluateAll(els => { for (const el of els) el.remove(); });
   await assert.rejects(() => assertChrome(page, '/stats/', expected), /one footer tagline/);
   await page.reload();
   await assertChrome(page, '/stats/', expected);
@@ -129,7 +133,7 @@ async function proveChromeControls(page, origin, expected) {
   await assertChrome(page, '/stats/', expected);
   console.log('PASS chrome tokens: ' + names.length + ' computed tokens; ' +
     palettes.reduce((n, p) => n + p.pairs, 0) + ' pairs in four browser palettes; ' +
-    'unlinked tokens, stray header tagline, removed brand tagline and dark/contrast mutations rejected and restored');
+    'unlinked tokens, stray header tagline, planted brand tagline, removed footer tagline and dark/contrast mutations rejected and restored');
   return palettes;
 }
 
