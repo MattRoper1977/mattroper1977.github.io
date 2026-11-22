@@ -106,6 +106,7 @@ HERE = Path(__file__).resolve().parent
 TEMPLATE = HERE / 'home' / 'home.html'
 # home.html r6, the accepted draft of record (J93 revision 1, ruling vj-1).
 # Pinned: the sha256 of home.html r6 (35,244 B), the file of record in ruling vj-1 (r5 was 32f53a11, uz-6 and vb-3).
+# 21 Nov 2026, names flight N1 (ruling thread): only the place leaves the maker's note; this pin moves with it.
 TEMPLATE_SHA256 = '82a7150fcf90496e36ffcf94b11a60312fa1e80de9c3fda26b573248e6640f3f'
 NODE_SCRIPT = HERE / 'home_hub_counts.cjs'
 RECORD = 'data/audience-homepages.json'
@@ -135,6 +136,7 @@ OWNER_WORDS = {
     'pathway bylines': ['6169dec5ccba933f8bd3c32ef822dcb8a8c8e8e7b784595ce155353bc7fcd858',
                         '48b7c74e554c72172f525c8c93d1f8aaaf2f015c1be0be8bcb7d43eb4860355d',
                         'a72151587225ae8be9a73e1e59ead704779a47ae3f1bc34a6f51dfc91c3f24c4'],
+    # 21 Nov 2026, names flight N1 (ruling thread): only the place leaves the maker's note; this owner-words pin moves with it.
     "maker's note": ['c9e3e14e080bb93df859cf0220d228e4d7d237ccdee1745f2f285f595f2ae203'],
 }
 OWNER_PATTERNS = {
