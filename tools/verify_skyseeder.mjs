@@ -21,7 +21,8 @@
  *       toggle say so), proven against a no-preference negative control.
  * SSG6  boots without a page error; Launch reaches the flight and Escape opens
  *       the pause screen; with storage blocked it still boots and launches; the
- *       3D sky islands are drawn (read from a screenshot, decoded in the page).
+ *       3D sky islands are drawn (read from a screenshot of the canvas alone,
+ *       every other element hidden, decoded in the page).
  */
 'use strict';
 import fs from 'node:fs';
@@ -45,7 +46,8 @@ const VIEWPORTS = [[390, 844], [768, 1024], [1366, 768]];
 // 360x740 is the narrowest phone the ruling thread asked these gates to measure.
 const HUD_VIEWPORTS = [[360, 740], [390, 844], [839, 412], [768, 1024], [1280, 720], [1366, 768], [1920, 1080]];
 const FLOOR = 44;
-// Calibrated below from the shipped file in flight at 1366 and from the no-WebGL control.
+// Calibrated on the canvas alone at 1366: the shipped file in flight gives about 160
+// distinct colours, the no-WebGL control (const gl = null) gives 1.
 const SKY_MIN_COLOURS = 40;
 
 function loadChromium() {
@@ -187,7 +189,13 @@ const hudClear = page => page.evaluate(() => {
 // Evidence that the 3D sky islands are drawn: a screenshot of the page in flight,
 // decoded in the page itself, must hold many distinct colours.
 async function skyInk(page) {
-  const png = (await page.screenshot({ type: 'png' })).toString('base64');
+  // Only the WebGL canvas is left visible over a flat black page, so the HUD, the
+  // overlays and any CSS backdrop cannot lend colours to a sky that was never drawn.
+  const veil = await page.addStyleTag({ content: '*{visibility:hidden!important}html,body{background:#000!important}#glCanvas{visibility:visible!important}' });
+  await page.waitForTimeout(120);
+  const shot = await page.screenshot({ type: 'png' });
+  await veil.evaluate(n => n.remove());
+  const png = shot.toString('base64');
   return page.evaluate(async b64 => {
     const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode();
     const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
