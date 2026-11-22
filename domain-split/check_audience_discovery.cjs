@@ -33,6 +33,16 @@ function arriving(route) {
   const row = ADMISSION.trees['education-lessons'][rel.endsWith('/') || rel === '' ? rel + 'index.html' : rel];
   return Array.isArray(row) && row.includes('ARRIVING');
 }
+// Controls: the allowance covers a row whose registry state is ARRIVING and nothing else.
+// TEMPORARY: remove this allowance in the change that moves the Lessons pin past /Lessons/help/.
+{
+  const rows = ADMISSION.trees['education-lessons'];
+  const settled = Object.keys(rows).find(k => k.endsWith('.html') && !(Array.isArray(rows[k]) && rows[k].includes('ARRIVING')));
+  assert(settled, 'MEASUREMENT INVALID: no settled Lessons row to plant against');
+  assert.equal(arriving('/Lessons/' + settled), false, 'A settled Lessons row never has the allowance');
+  assert.equal(arriving('/Lessons/no-such-page-planted.html'), false, 'A route with no registry row never has the allowance');
+  assert.equal(arriving('/resources/'), false, 'A route outside Lessons never has the allowance');
+}
 const relocations = JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/menu-relocations.json'), 'utf8')).relocated;
 function hrefsIn(html) {
   return [...new Set([...html.matchAll(/<a\b[^>]*\bhref="([^"]+)"/g)].map(x => x[1].replaceAll('&amp;', '&')))]

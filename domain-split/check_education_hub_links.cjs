@@ -110,13 +110,13 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
   const overrides=[];
   const extraOwnerFixtures=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'sw2/nav-expanded-owner-fixtures.json'),'utf8'));
   const ownerFixtures=[
-    {route:'/Lessons/',file:'nav-lessons-published.html',sha256:'2887ff854e641e6812d2821406af81bb9bd4a84a3f04a300741d4280d433e36b'},
-    {route:'/Matt-s-Apps-/',file:'nav-apps-published.html',sha256:'e1af21d1e94f532e936cfce581b0bef1b05253d116095af1894f48c78bb5dfc4'},
+    {route:'/Lessons/',file:'nav-lessons-published.html',sha256:'cea5fb3440c7db5b546390c9a802f7ddb1396fc626e272d9a5a12ba75cbf2ab4'},
+    {route:'/Matt-s-Apps-/',file:'nav-apps-published.html',sha256:'09f91c412f3865674b82816e0aede36fedc3c14fce713fc4e677af8b735d90b4'},
     ...extraOwnerFixtures,
   ];
   if(consumerFixtures) for(const item of ownerFixtures){
     const url=origin+item.route,body=fs.readFileSync(require('node:path').join(__dirname,'sw2',item.file));
-    assert.equal(require('node:crypto').createHash('sha256').update(body).digest('hex'),item.sha256,'Exact independently built consumer candidate');
+    assert.equal(require('node:crypto').createHash('sha256').update(body).digest('hex'),item.sha256,'Exact consumer header fixture (header and footer as an independently built page carries them): '+item.file);
     const handler=r=>r.fulfill({status:200,contentType:'text/html',body});
     await page.route(url,handler);overrides.push([url,handler]);
   }
@@ -158,7 +158,9 @@ exports.verify=async({page,origin,javaScriptEnabled,consumerFixtures=false})=>{
         await page.evaluate(values=>[document.documentElement,document.body].forEach((e,i)=>values[i]===null?e.removeAttribute('data-theme'):e.setAttribute('data-theme',values[i])),savedThemes);
         await check();
         const selector=route==='/Lessons/'?'#scards .icon svg.fd-icon':route==='/resources/'?'#pillars svg.fd-icon':route==='/tools/'?'.ci svg.fd-icon':route==='/Matt-s-Apps-/'?'#groups .ci svg.fd-icon':['/','/main/'].includes(route)?'#subjects a.home-subject-tile .home-subject-icon svg':null;
-        if(selector){
+        // A consumer fixture carries the header and footer only, so the card icons of a route it
+        // stands in for are measured in the pass that loads the built page itself.
+        if(selector&&!(consumerFixtures&&ownerFixtures.some(item=>item.route===route))){
         await page.locator(selector).first().waitFor({state:'visible'});
         assert((await page.locator(selector).count())>0,'Visible line icons');
         // J93: the SW2 tile icons (.fd-symbol) are replaced by the J93 subject-tile icons, one per tile.

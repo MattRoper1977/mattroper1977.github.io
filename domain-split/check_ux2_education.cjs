@@ -334,6 +334,13 @@ async function suite(browser, mutation) {
       const arriving = u => { const p = new URL(u).pathname; if (!p.startsWith('/Lessons/')) return false;
         const rel = decodeURIComponent(p.slice('/Lessons/'.length)), row = ADMISSION.trees['education-lessons'][rel.endsWith('/') || rel === '' ? rel + 'index.html' : rel];
         return Array.isArray(row) && row.includes('ARRIVING'); };
+      // Controls: the allowance covers a row whose registry state is ARRIVING and nothing else.
+      // TEMPORARY: remove this allowance in the change that moves the Lessons pin past /Lessons/help/.
+      { const rows = ADMISSION.trees['education-lessons'], settled = Object.keys(rows).find(k => k.endsWith('.html') && !(Array.isArray(rows[k]) && rows[k].includes('ARRIVING')));
+        assert(settled, 'MEASUREMENT INVALID: no settled Lessons row to plant against');
+        assert.equal(arriving(origin + '/Lessons/' + settled), false, 'A settled Lessons row never has the allowance');
+        assert.equal(arriving(origin + '/Lessons/no-such-page-planted.html'), false, 'A route with no registry row never has the allowance');
+        assert.equal(arriving(origin + '/resources/'), false, 'A route outside Lessons never has the allowance'); }
       for (const u of same) { const r = await page.request.get(u); if (!r.ok() && !(r.status() === 404 && arriving(u))) failed.push(u + ' → ' + r.status()); }
       assert.deepEqual(failed, [], 'Same-origin hrefs that do not resolve on ' + route);
       const external = [...new Set(anchors.filter(a => new URL(a.abs).origin !== origin).map(a => a.abs))];

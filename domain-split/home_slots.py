@@ -14,8 +14,9 @@ Where each slot comes from (uz-6 (b)):
   the draft (the spec section 6 masthead string). They are confirmed, never
   retyped: title equals og:title, description equals og:description equals the
   h1. seo.canonical and seo.ogUrl are origin + '/', as the legacy render wrote.
-* brand.credit is confirmed equal to the <strong> credit of the chrome's
-  published-education header fragment (tools/chrome/header.html), ignoring case.
+* brand.credit is confirmed against the strings of record: the <strong> credit of
+  the chrome's published-education header fragment (tools/chrome/header.html) is
+  exactly CHROME_CREDIT, and the homepage's two credits are exactly HOME_CREDIT.
 * audiences.doors.{0..3}: data/audience-homepages.json by key (pupils,
   teachers, parents, schools), as subject_slots.py reads it.
 * flagship: Science, Autumn 2 Week 6, one Lessons registry row (resources.json)
@@ -111,6 +112,9 @@ TEMPLATE_SHA256 = '82a7150fcf90496e36ffcf94b11a60312fa1e80de9c3fda26b573248e6640
 NODE_SCRIPT = HERE / 'home_hub_counts.cjs'
 RECORD = 'data/audience-homepages.json'
 HEADER = 'tools/chrome/header.html'
+# The wordmark as the one-row header writes it, and as the homepage (the owner's words) writes it.
+CHROME_CREDIT = 'Made by Matt'
+HOME_CREDIT = 'MADE BY MATT'
 TOOLS_PAGE = 'tools/index.html'
 SPINE = 'data/calendar-spine.json'
 
@@ -386,10 +390,11 @@ def confirm(text, sources):
     if len(described) != 2 or len(masthead) != 1 or set(described) != {html.unescape(masthead[0])}:
         raise ValueError('seo.description and seo.ogDescription are not the masthead string')
     credits = re.findall(r'<strong data-slot="brand.credit">([^<]*)</strong>', text)
-    # The header wordmark is written in sentence case since November 2026 and the homepage keeps
-    # the owner's capitals, so the two are the same words compared without regard to case (as the
-    # title's brand line already is below); the two homepage credits must still be one string.
-    if len(credits) != 2 or len(set(credits)) != 1 or html.unescape(credits[0]).casefold() != sources['credit'].casefold():
+    # Exact, both ways: the header wordmark is the sentence-case string of record (November 2026),
+    # and the homepage's two credits are the owner's capitals of record.
+    if sources['credit'] != CHROME_CREDIT:
+        raise ValueError('The chrome header credit is not the wordmark of record')
+    if len(credits) != 2 or {html.unescape(c) for c in credits} != {HOME_CREDIT}:
         raise ValueError('brand.credit is not the chrome header credit')
 
 
