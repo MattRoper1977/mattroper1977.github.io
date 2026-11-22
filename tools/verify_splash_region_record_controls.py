@@ -53,9 +53,10 @@ PAGE = "<!doctype html>\n<html><head><title>fixture</title></head><body>\n<main>
 
 APPLIED = "/Games/Fixture_Applied.html"
 DECLINED = "/Games/Fixture_Declined.html"
+OWN_SCREEN = "/Games/Fixture_OwnScreen.html"
 VARIANT = "/Games/Fixture_Variant.html"
 HELD = "/Games/Fixture_Held.html"
-ROUTES = (APPLIED, DECLINED, VARIANT, HELD)
+ROUTES = (APPLIED, DECLINED, OWN_SCREEN, VARIANT, HELD)
 
 
 def run(root: Path, mode: str) -> subprocess.CompletedProcess:
@@ -98,14 +99,20 @@ def build(tmp: Path) -> dict:
     for route in (DECLINED, VARIANT):
         target = tmp / route.lstrip("/")
         target.write_text(REGION_RE.sub("", target.read_text(encoding="utf-8"), count=1).replace("\n\n\n", "\n"), encoding="utf-8")
-    return {"makerSplash": {
+    ledger = {"makerSplash": {
         "applied": [APPLIED],
         "declined-with-reason": [{"route": DECLINED, "reason": "fixture: declined for this control"}],
+        "declined-own-screen": [{"route": OWN_SCREEN, "selector": "#splash", "reason": "fixture: own Made by Matt screen for this control"}],
         "variant-retained-with-reason": [{"route": VARIANT, "reason": "fixture: variant retained for this control"}],
         "held-at-previous-region-with-reason": [
             {"route": HELD, "reason": "fixture: held for this control", "region_sha256": held_sha}
         ],
     }}
+    ledger_path.write_text(json.dumps(ledger, indent=2) + "\n", encoding="utf-8")
+    stripped = run(tmp, "--write")
+    if stripped.returncode != 0:
+        raise SystemExit("fixture: --write did not strip declined-own-screen\n" + stripped.stdout + stripped.stderr)
+    return ledger
 
 
 def write_ledger(root: Path, ledger: dict) -> None:
@@ -154,12 +161,16 @@ def part_a() -> int:
 
         case("a declined route that grows the region back is caught",
              lambda _: regrow_region(root, DECLINED, donor))
+        case("an own-screen route that grows the region back is caught",
+             lambda _: regrow_region(root, OWN_SCREEN, donor))
         case("a variant-retained route that grows the region back is caught",
              lambda _: regrow_region(root, VARIANT, donor))
         case("a held route whose pinned region drifts is caught",
              lambda _: regrow_region(root, HELD, donor))
         case("a declined route stripped of its reason is caught",
              lambda l: l["makerSplash"]["declined-with-reason"][0].__setitem__("reason", ""))
+        case("an own-screen route stripped of its reason is caught",
+             lambda l: l["makerSplash"]["declined-own-screen"][0].__setitem__("reason", ""))
         case("a variant-retained route stripped of its reason is caught",
              lambda l: l["makerSplash"]["variant-retained-with-reason"][0].__setitem__("reason", ""))
         case("a held route stripped of its pinned digest is caught",
@@ -169,9 +180,12 @@ def part_a() -> int:
         case("a route recorded in two classes at once is caught",
              lambda l: l["makerSplash"]["declined-with-reason"].append(
                  {"route": APPLIED, "reason": "fixture: also declined"}))
+        case("a route recorded in both applied and declined-own-screen is caught",
+             lambda l: l["makerSplash"]["declined-own-screen"].append(
+                 {"route": APPLIED, "reason": "fixture: also own-screen"}))
 
     print("")
-    print(f"{8 - len(failures)} of 8 ledger-record controls fired; clean fixture green")
+    print(f"{11 - len(failures)} of 11 ledger-record controls fired; clean fixture green")
     for name in failures:
         print("  DID NOT FIRE  " + name)
     return 1 if failures else 0

@@ -70,12 +70,14 @@ const EXIT_BYTES = 3222;      // block plus its trailing newline
 // dragging it back to the start control, so a focus move the page did not
 // originate -- which is how a screen reader or switch access reaches the exit --
 // can settle there and Tab onward; before it, a Tab pressed on the exit returned
-// focus to the exit, two runs in three). The pin tracks the estate value; it is
-// not a target the route gets to pick. Proved by the generator itself, which
-// reports "14 applied target(s); 0 written; 0 divergent" across every route
-// carrying the block, /cyberpulse/ included, after regeneration (the four
-// clip-bearing routes are held at the earlier region by declaration).
-const SPLASH_BYTES = 20559;
+// focus to the exit, two runs in three), and 22669 after L1 (2026-11-21:
+// universal Made by Matt loader — opaque from frame 0, once-per-day full with
+// 4 h floor, quick loader on other visits, ?splash=quick). The pin tracks the
+// estate value; it is not a target the route gets to pick. Proved by the
+// generator itself, which reports "10 applied target(s); 0 written; 0
+// divergent" across every applied route carrying the block, /cyberpulse/
+// included, after regeneration.
+const SPLASH_BYTES = 22669;
 const ENGINE_VERSION = 'v1.5';
 const RELEASE_VERSION = '6.0.2';
 // Re-pinned 2026-09-02 for build 6.0.1: the authority block gained the

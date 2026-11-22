@@ -47,10 +47,14 @@ jobs:
       # checkout itself, as <site>/.sources/Lessons when that exists and <site>/../Lessons
       # otherwise, and validate_report then compares HEADs. Under any other path both candidates
       # are absent on a runner and the step dies after build_publications.py has already succeeded.
+      #
+      # Re-pinned 2026-11-22 (loader L2) to 357d841f, the Lessons commit the Play publication pins.
+      # b54c9006 no longer builds: the Play catalogue now lists a Lessons game that commit lacks,
+      # so prepare.py failed before this job's check ran. The result here is unchanged by the move.
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          ref: b54c9006e311f151ee53fe268846fab12fbc3e44
+          ref: 357d841fbb3e7da9fb6bde1eab2e18e0650637b4
           path: .sources/Lessons
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
@@ -108,10 +112,14 @@ jobs:
       # commit, not to whatever Lessons main happens to be mid-flight. It moves when
       # a Lessons re-stamp is reviewed and the coverage record is rewritten, in the
       # same change, never on its own.
+      #
+      # Re-pinned 2026-11-22 to 357d841f in the loader L2 change, which rewrites the coverage
+      # record from that checkout in the same pull request. 357d841f is the Lessons commit
+      # the Play publication pins, so the rows gated here are the rows that are published.
       - uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          ref: b54c9006e311f151ee53fe268846fab12fbc3e44
+          ref: 357d841fbb3e7da9fb6bde1eab2e18e0650637b4
           path: .sources/Lessons
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}

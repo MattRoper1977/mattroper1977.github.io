@@ -182,21 +182,42 @@ async function browserGates(browser, origin) {
   }
   // SG4 splash.
   {
-    const init = () => { window.__splashSeen = []; try { const mo = new MutationObserver(l => { for (const rr of l) for (const n of rr.addedNodes) if (n.nodeType === 1 && n.matches && n.matches('[data-mbm-maker-splash]')) window.__splashSeen.push(performance.now()); }); mo.observe(document, { childList: true, subtree: true }); } catch (e) {} };
+    const init = () => {
+      window.__splashSeen = [];
+      try {
+        const mo = new MutationObserver(l => {
+          for (const rr of l) for (const n of rr.addedNodes) {
+            if (n.nodeType === 1 && n.matches && n.matches('[data-mbm-maker-splash]')) {
+              const cs = getComputedStyle(n);
+              const beforeCs = getComputedStyle(n, '::before');
+              const line = n.querySelector('.mbm-splash-line');
+              const lineCs = line ? getComputedStyle(line) : null;
+              window.__splashSeen.push({
+                t: performance.now(),
+                quick: n.hasAttribute('data-mbm-quick'),
+                fullAnim: cs.animationName === 'mbmSplash' || beforeCs.animationName === 'mbmSweep' || (lineCs ? lineCs.animationName === 'mbmLine' : false),
+              });
+            }
+          }
+        });
+        mo.observe(document, { childList: true, subtree: true });
+      } catch (e) {}
+    };
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } }); const page = await ctx.newPage(); const errs = []; page.on('pageerror', e => errs.push(String(e.message)));
     await page.addInitScript(init); await page.goto(origin + '/skybreak/'); await page.waitForTimeout(300);
-    const a = await page.evaluate(() => ({ seen: window.__splashSeen.length, present: !!document.querySelector('[data-mbm-maker-splash]') }));
+    const a = await page.evaluate(() => ({ seen: window.__splashSeen, present: !!document.querySelector('[data-mbm-maker-splash]') }));
     await page.waitForTimeout(3200);
     const b = await page.evaluate(() => ({ present: !!document.querySelector('[data-mbm-maker-splash]'), key: localStorage.getItem('mbm_splash_last'), focus: document.activeElement && document.activeElement.id }));
-    gate('SG4a', 'generated splash shows on first load, stands down, writes the shared key', a.seen === 1 && a.present && !b.present && /^\d{13}$/.test(String(b.key)), `seen=${a.seen}, at 3.5s present=${b.present}, key=${b.key}`);
+    gate('SG4a', 'generated splash shows full on first load, stands down, writes the shared key', a.seen.length === 1 && a.seen[0].quick === false && a.present && !b.present && /^\d{13}$/.test(String(b.key)), `seen=${JSON.stringify(a.seen)}, at 3.5s present=${b.present}, key=${b.key}`);
     say(`      SG4a observation: active element after the splash stands down = ${JSON.stringify(b.focus)} (the estate picker's choice; verify_maker_splash.mjs owns that contract)`);
-    await page.goto(origin + '/skybreak/'); await page.waitForTimeout(1000);
-    const c = await page.evaluate(() => ({ seen: window.__splashSeen.length, present: !!document.querySelector('[data-mbm-maker-splash]') }));
-    gate('SG4b', 'splash suppressed within 24 h on the shared key', c.seen === 0 && !c.present, `second load seen=${c.seen}`);
+    await page.goto(origin + '/skybreak/');
+    await page.waitForFunction(() => !document.querySelector('[data-mbm-maker-splash]'), null, { timeout: 2200 }).catch(() => {});
+    const c = await page.evaluate(() => ({ seen: window.__splashSeen, present: !!document.querySelector('[data-mbm-maker-splash]'), key: localStorage.getItem('mbm_splash_last') }));
+    gate('SG4b', 'second load within the same day shows quick loader ([data-mbm-quick], no full animation, key unchanged)', c.seen.length === 1 && c.seen[0].quick === true && c.seen[0].fullAnim === false && !c.present && c.key === b.key, `second load seen=${JSON.stringify(c.seen)}, present=${c.present}, key=${c.key} (was ${b.key})`);
     await page.evaluate(() => localStorage.setItem('mbm_splash_last', String(Date.now() - 25 * 3600 * 1000)));
     await page.goto(origin + '/skybreak/'); await page.waitForTimeout(400);
-    const d = await page.evaluate(() => window.__splashSeen.length);
-    gate('SG4b-ctl', 'control: a 25 h-old key lets the splash show again', d === 1, `seen=${d}`);
+    const d = await page.evaluate(() => window.__splashSeen);
+    gate('SG4b-ctl', 'control: a 25 h-old key brings back the full splash', d.length === 1 && d[0].quick === false && d[0].fullAnim === true, `seen=${JSON.stringify(d)}`);
     gate('SG4d', 'no page errors across the splash loads', errs.length === 0, errs.slice(0, 2).join(' | ') || 'clean');
     await ctx.close();
     const timing = async rm => { const cx = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: rm }); const p = await cx.newPage(); await p.goto(origin + '/skybreak/'); await p.waitForTimeout(700); const v = await p.evaluate(() => { const e = document.querySelector('[data-mbm-maker-splash]'); return e ? getComputedStyle(e).opacity : 'gone'; }); await cx.close(); return v; };
