@@ -360,7 +360,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          ref: 1a8e3b29ee4c5d306b9ce0fe0f601dacf3443a98
+          # Moved 2026-11-22 (Block_Builder pin fix, ruling thread 22 November): the pin 1a8e3b29 -> 357d841fbb3e7da9fb6bde1eab2e18e0650637b4,
+          # the merge of Lessons #810 and the Lessons commit Games/play-publication.json selects. The Play manifest has named
+          # Games/Block_Builder.html since the 6 Nov rename, and the old pin predates that file, so the build stopped at
+          # 'Required file missing'. Only this value moves: no assertion, threshold or allow-list. A planted missing manifest
+          # file still fails the build. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: 357d841fbb3e7da9fb6bde1eab2e18e0650637b4
           path: .sources/Previous-Lessons
           persist-credentials: false
       # J93 (B1): this control proves Play output only, and its checker reads only build-report.json and
@@ -377,7 +382,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: MattRoper1977/Lessons
-          ref: 95146202d7f876800605b489de4231efe28928b9
+          # Moved 2026-11-22 (Block_Builder pin fix, ruling thread 22 November): the pin 95146202 -> 357d841fbb3e7da9fb6bde1eab2e18e0650637b4,
+          # the merge of Lessons #810 and the Lessons commit Games/play-publication.json selects. The Play manifest has named
+          # Games/Block_Builder.html since the 6 Nov rename, and the old pin predates that file, so the build stopped at
+          # 'Required file missing'. Only this value moves: no assertion, threshold or allow-list. A planted missing manifest
+          # file still fails the build. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: 357d841fbb3e7da9fb6bde1eab2e18e0650637b4
           path: .sources/Receiver-Lessons
           persist-credentials: false
       # J93 (B1): this control proves Play output only, and its checker reads only build-report.json and
