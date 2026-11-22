@@ -19,7 +19,12 @@ jobs:
         with:
           repository: MattRoper1977/Lessons
           # Lessons source baseline pinned on 2026-09-11 for reproducible AS1 verification.
-          ref: aad04718c11a2396ecf323a662f55bf0e0c2441b
+          # Moved 2026-11-22 (Block_Builder pin fix, ruling thread 22 November): the pin aad04718 -> 357d841fbb3e7da9fb6bde1eab2e18e0650637b4,
+          # the merge of Lessons #810 and the Lessons commit Games/play-publication.json selects. The Play manifest has named
+          # Games/Block_Builder.html since the 6 Nov rename, and the old pin predates that file, so the build stopped at
+          # 'Required file missing'. Only this value moves: no assertion, threshold or allow-list. A planted missing manifest
+          # file still fails the build. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: 357d841fbb3e7da9fb6bde1eab2e18e0650637b4
           path: .sources/Lessons
       - uses: actions/setup-python@v5
         with:
