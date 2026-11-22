@@ -22,9 +22,9 @@
   <meta http-equiv="Content-Security-Policy" content="connect-src 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark light">
-  <meta name="description" content="Offline Arts Award evidence, assessment and moderation preparation workspace for Discover, Explore, Bronze, Silver and Gold.">
-  <title>Arts Award Evidence Studio</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%230f766e%27/%3E%3Cpath d=%27M15 47 27 15h10l12 32h-9l-2-7H26l-2 7zm14-15h6l-3-10z%27 fill=%27white%27/%3E%3C/svg%3E">
+  <meta name="description" content="Offline arts evidence, assessment and moderation preparation workspace for every award level.">
+  <title>Arts evidence studio · Made by Matt</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='rgb(15,118,110)'/><path d='M15 47 27 15h10l12 32h-9l-2-7H26l-2 7zm14-15h6l-3-10z' fill='white'/></svg>">
   <style>
 :root {
   --bg: #07111f;
@@ -1879,7 +1879,7 @@ textarea:focus-visible,
         <div class="brand-mark" aria-hidden="true">AA</div>
         <div>
           <div class="eyebrow">Independent centre workspace</div>
-          <h1>Arts Award Evidence Studio</h1>
+          <h1>Arts evidence studio</h1>
           <div class="brand-subline">
             <span id="activeCentreLabel">Local offline workspace</span>
             <span aria-hidden="true">•</span>
@@ -2781,7 +2781,7 @@ textarea:focus-visible,
     </main>
 
     <footer class="app-footer">
-      <span>Arts Award Evidence Studio <strong id="appVersionLabel">v4.1.1</strong></span>
+      <span>Arts evidence studio <strong id="appVersionLabel">v4.1.1</strong></span>
       <span>Independent tool · not affiliated with or endorsed by Trinity College London</span>
       <span>Made by Matt</span>
     </footer>
@@ -2866,7 +2866,7 @@ textarea:focus-visible,
 (() => {
   'use strict';
 
-  const APP_NAME = 'Arts Award Evidence Studio';
+  const APP_NAME = 'Arts evidence studio';
   const APP_VERSION = '4.1.1';
   const SCHEMA_VERSION = 4;
   const STORAGE_KEY = 'aaes_state_v4';
@@ -4867,7 +4867,7 @@ textarea:focus-visible,
       body: `
         <div class="modal-section">
           <p class="muted">Enter one candidate per line. You can use <strong>Name</strong>, <strong>Name | reference</strong>, or <strong>Name | reference | art form</strong>.</p>
-          <label class="field"><span>Candidate lines</span><textarea id="bulkCandidateLines" rows="12" placeholder="Taylor Morgan | AA-001 | Photography&#10;Jamie Reed | AA-002 | Drama"></textarea></label>
+          <label class="field"><span>Candidate lines</span><textarea id="bulkCandidateLines" rows="12" placeholder="Learner one | AA-001 | Photography&#10;Learner two | AA-002 | Drama"></textarea></label>
           <div class="form-grid two">
             <label class="field"><span>Award level</span><select id="bulkCandidateLevel">${levelOptions}</select></label>
             <label class="field"><span>Cohort / group</span><input id="bulkCandidateCohort" type="text" placeholder="e.g. Year 10 Bronze"></label>
@@ -7704,7 +7704,7 @@ textarea:focus-visible,
     media.play?.().catch(() => {});
   }
 
-  function formatMediaTime(seconds){const total=Math.max(0,Math.floor(Number(seconds||0)));return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;}
+  function formatMediaTime(seconds){const total=Math.max(0,Math.floor(Number(seconds||0)));return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total % 60).padStart(2,'0')}`;}
 
 
   // ---------------------------------------------------------------------------
@@ -8689,7 +8689,7 @@ textarea:focus-visible,
 
   function openScribeAuthenticationFixV4(candidate, logId = '') {
     const affected = state.logs.filter(log => log.candidateId === candidate.id && ['scribed', 'supported'].includes(log.responseMethod) && (!String(log.staffName || '').trim() || !String(log.supportNote || '').trim()) && (!logId || log.id === logId));
-    openModal({ eyebrow: `${candidate.level} · Supported response authentication`, title: `Authenticate ${affected.length} pupil log entr${affected.length === 1 ? 'y' : 'ies'}`, body: `<div class="blocker-action-shell">${blockerBanner('error', 'Named staff authentication is incomplete', 'Scribed verbatim and supported-conversation records require the staff member and the exact support context. This is not a substitute for an official witness form where one is required.')}<section class="blocker-fix-card"><label class="field"><span>Authenticating staff member *</span><input id="scribeFixStaff" value="${escapeAttr(state.settings.adviserName || candidate.adviser || '')}" placeholder="e.g. M. Roper · trained adviser"></label><label class="field"><span>Support context *</span><textarea id="scribeFixNote" rows="3" placeholder="Candidate responded verbally; words were scribed verbatim. Prompt was repeated once and no artistic ideas were supplied."></textarea></label></section></div>`, buttons: [{ label: 'Cancel', style: 'ghost', onClick: closeModal }, { label: `Authenticate ${affected.length || ''} ${affected.length === 1 ? 'entry' : 'entries'}`, style: 'primary', onClick: () => { const staff = document.getElementById('scribeFixStaff')?.value.trim(); const note = document.getElementById('scribeFixNote')?.value.trim(); if (!affected.length) { toast('No affected log entries remain.', 'warning'); return; } if (!staff || !note) { toast('Enter both the staff member and specific support context.', 'warning'); return; } affected.forEach(log => { log.staffName = staff; log.supportNote = note; log.authStatement = buildAuthenticationStatement(log.responseMethod, staff, log.createdAt || nowIso(), note); log.updatedAt = nowIso(); }); candidate.updatedAt = nowIso(); addAudit('Supported responses authenticated', `${candidate.name} · ${affected.length} log(s)`); saveState(); closeModal(); renderAll(); toast('Supported response authentication completed.', 'success'); } }] });
+    openModal({ eyebrow: `${candidate.level} · Supported response authentication`, title: `Authenticate ${affected.length} pupil log entr${affected.length === 1 ? 'y' : 'ies'}`, body: `<div class="blocker-action-shell">${blockerBanner('error', 'Named staff authentication is incomplete', 'Scribed verbatim and supported-conversation records require the staff member and the exact support context. This is not a substitute for an official witness form where one is required.')}<section class="blocker-fix-card"><label class="field"><span>Authenticating staff member *</span><input id="scribeFixStaff" value="${escapeAttr(state.settings.adviserName || candidate.adviser || '')}" placeholder="e.g. your name · trained adviser"></label><label class="field"><span>Support context *</span><textarea id="scribeFixNote" rows="3" placeholder="Candidate responded verbally; words were scribed verbatim. Prompt was repeated once and no artistic ideas were supplied."></textarea></label></section></div>`, buttons: [{ label: 'Cancel', style: 'ghost', onClick: closeModal }, { label: `Authenticate ${affected.length || ''} ${affected.length === 1 ? 'entry' : 'entries'}`, style: 'primary', onClick: () => { const staff = document.getElementById('scribeFixStaff')?.value.trim(); const note = document.getElementById('scribeFixNote')?.value.trim(); if (!affected.length) { toast('No affected log entries remain.', 'warning'); return; } if (!staff || !note) { toast('Enter both the staff member and specific support context.', 'warning'); return; } affected.forEach(log => { log.staffName = staff; log.supportNote = note; log.authStatement = buildAuthenticationStatement(log.responseMethod, staff, log.createdAt || nowIso(), note); log.updatedAt = nowIso(); }); candidate.updatedAt = nowIso(); addAudit('Supported responses authenticated', `${candidate.name} · ${affected.length} log(s)`); saveState(); closeModal(); renderAll(); toast('Supported response authentication completed.', 'success'); } }] });
   }
 
   function openPendingReviewFixV4(candidate, evidence) {
@@ -8992,11 +8992,11 @@ textarea:focus-visible,
     state = emptyState();
     state.settings = keepSettings;
     state.candidates = [
-      demoCandidate({ id: 'demo-discover', name: 'Avery Lane', preferredName: 'Avery', reference: 'DEMO-D-01', level: 'Discover', cohort: 'Discovery Group', artForm: 'Drama and collage', progress: 1, assessment: 'pass', requested: false }),
-      demoCandidate({ id: 'demo-explore', name: 'Riley Morgan', preferredName: 'Riley', reference: 'DEMO-E-02', level: 'Explore', cohort: 'Year 8 Explore', artForm: 'Photography and music', progress: 0.78, assessment: 'not_assessed', requested: false }),
-      demoCandidate({ id: 'demo-bronze', name: 'Sam Taylor', preferredName: 'Sam', reference: 'DEMO-B-03', level: 'Bronze', cohort: 'Year 9 Bronze', artForm: 'Ceramics and sculpture', progress: 0.94, assessment: 'pass', requested: true }),
-      demoCandidate({ id: 'demo-silver', name: 'Casey Jones', preferredName: 'Casey', reference: 'DEMO-S-04', level: 'Silver', cohort: 'Post-14 Silver', artForm: 'Digital photography', progress: 0.58, assessment: 'not_assessed', requested: false }),
-      demoCandidate({ id: 'demo-gold', name: 'Morgan Ellis', preferredName: 'Morgan', reference: 'DEMO-G-05', level: 'Gold', cohort: 'Sixth Form Gold', artForm: 'Music production and live events', progress: 0.36, assessment: 'not_assessed', requested: false })
+      demoCandidate({ id: 'demo-discover', name: 'Demo learner A', preferredName: 'Learner A', reference: 'DEMO-D-01', level: 'Discover', cohort: 'Discovery Group', artForm: 'Drama and collage', progress: 1, assessment: 'pass', requested: false }),
+      demoCandidate({ id: 'demo-explore', name: 'Demo learner B', preferredName: 'Learner B', reference: 'DEMO-E-02', level: 'Explore', cohort: 'Year 8 Explore', artForm: 'Photography and music', progress: 0.78, assessment: 'not_assessed', requested: false }),
+      demoCandidate({ id: 'demo-bronze', name: 'Demo learner C', preferredName: 'Learner C', reference: 'DEMO-B-03', level: 'Bronze', cohort: 'Year 9 Bronze', artForm: 'Ceramics and sculpture', progress: 0.94, assessment: 'pass', requested: true }),
+      demoCandidate({ id: 'demo-silver', name: 'Demo learner D', preferredName: 'Learner D', reference: 'DEMO-S-04', level: 'Silver', cohort: 'Year 10 Silver', artForm: 'Film and photography', progress: 0.58, assessment: 'not_assessed', requested: false }),
+      demoCandidate({ id: 'demo-gold', name: 'Demo learner E', preferredName: 'Learner E', reference: 'DEMO-G-05', level: 'Gold', cohort: 'Sixth Form Gold', artForm: 'Music production and live events', progress: 0.36, assessment: 'not_assessed', requested: false })
     ];
     state.evidence = [];
     state.logs = [];
@@ -10884,7 +10884,7 @@ textarea:focus-visible,
       objects[contentId] = `<< /Length ${new TextEncoder().encode(stream).length} >>\nstream\n${stream}\nendstream`;
     });
 
-    let pdf = '%PDF-1.4\n%AAES\n';
+    let pdf = '%PDF-1.4\n%MBM\n';
     const offsets = [0];
     for (let id = 1; id < objects.length; id++) {
       if (!objects[id]) continue;
@@ -11349,8 +11349,8 @@ textarea:focus-visible,
       <path d="M76 20l2.6 5.6L84 28l-5.4 2.4L76 36l-2.6-5.6L68 28l5.4-2.4z" fill="#F2A24A"/>
     </svg>
     <p class="mbm-word">Made by Matt</p>
-    <p class="mbm-sub">Arts Award Evidence Studio</p>
-    <p class="mbm-tag">Built in a Teesside classroom. Free, offline-first, and your candidates' evidence stays in this browser. An independent tool — Trinity's own forms and your adviser's judgement remain authoritative.</p>
+    <p class="mbm-sub">Arts evidence studio</p>
+    <p class="mbm-tag">Built in a real classroom. Free, offline-first, and your candidates' evidence stays in this browser. An independent tool — Trinity's own forms and your adviser's judgement remain authoritative.</p>
     <button class="mbm-skip" id="mbm-splash-skip" type="button">Open the Studio</button>
   </div>
 </div>

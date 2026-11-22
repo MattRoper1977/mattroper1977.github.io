@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "scope": "Exact all-file publication admission; semantic route classification remains a separate gate",
   "reviewSources": [
+    "Names flight N1 (Site claude/names-fix-n1 c7ef9897, Lessons claude/names-fix-n1 fa17a668, 2026-11-22), gated by the ruling thread (rev 2, landing sums eff757fd, private names scan passed). The place leaves the maker's note in the home template (index.html and main/index.html), the root and Lessons missing pages get a neutral title, readable links and a visible focus ring, and the tracker tools get neutral titles, headers and demo labels. The Apps half follows as its own flight. Eleven rows move; no row is added or removed. Each row becomes [what the Site publication builds (this Site head with the carrier Lessons 09fcdbe0), what the Lessons publication builds after its pin move (this Site head with the N1 Lessons branch)]. The two home rows differ between those sides because the home page reads its counts from the Lessons catalogue, so both entries are new and the live carrier builds (7a39951a, 5e34a93c) leave the rows. The root missing page and the seven tracker tool pages do not read Lessons, so both sides build the same bytes and the live bytes stay as the rollback side. The Lessons missing page row becomes [carrier and Lessons main digest, N1 digest]. Every digest was measured by the Lessons served digest census: run 44965519477 (builder c7ef9897, Lessons fa17a668) listed exactly these eleven paths as not yet admitted and no recorded path left unbuilt; run 44964610778 (builder c7ef9897, carrier 09fcdbe0) listed only the ten Site paths; run 44965525092 (builder 2fbd54d1, Lessons main 38576fbd) listed nothing pending and passed all seven publisher checks. Live digests were read from the live site before the cut. Registry baseline 5eeb5e9b held.",
     "Search fix flight (Site claude/search-fix 167ba6c0, Lessons claude/search-fix 11c0ed21, 2026-11-21), gated by the ruling thread (search fix sums c48fa07b). Two code changes and no lesson page changes: the search boxes on the resources page and on the Lessons front page keep the spaces a visitor types, and the first tap on a search result opens it (assets/domain-site.js is built from domain-split/site-runtime.js). Three rows move. The two Site rows become [live digest as built at Site main dead00bd, digest this branch builds]: the carrier and the branch build the same new bytes for these two Site files, so the live bytes stay as the rollback side (the SW2 Part R pattern). The Lessons front page row becomes [digest the carrier Lessons 09fcdbe0 builds, digest the fix branch builds]. Every digest was measured by the Lessons served digest census job: run 44960805381 (builder 167ba6c0, Lessons 11c0ed21) listed exactly these three paths as not yet admitted and no recorded path left unbuilt; run 44960811475 (builder 167ba6c0, carrier 09fcdbe0) listed only the two Site paths; run 44960817895 (builder dead00bd, Lessons main 6244d479) listed nothing pending and passed all seven publisher checks. Registry baseline 5eeb5e9b (4321 rows) held in every run. The standalone games publication also copies site-runtime.js, so the next Games pin after this flight must show live /assets/domain-site.js at 116d1d7b.",
     "Lesson swap batch 64 (Lessons claude/lesson-swap-batch64, 2026-11-21): no lesson page changes. The flight carries the help pages upgrade L3 for three help pages under kits/help/ (source.html, record.html and answer.html), gated by the help pages thread (landing sums 0b9f0c43, private names scan passed). Each page differs from its live L2 copy only in its pathway JSON block, now written from the real lessons. Three rows move. These help rows, which the carrier does not build, move from [Lessons main digest, ARRIVING] to [batch digest, ARRIVING] (cut_rows limb (a), ruled 21 Nov 2026, 17:45Z). Every digest was measured by the Lessons served digest census job with the Site builder at 169e41a2: run 44952850561 (Lessons 0f2a89ef) listed exactly these three paths as not yet admitted and no recorded path left unbuilt; run 44952857249 (carrier 09fcdbe0) passed all seven publisher checks; run 44952863712 (Lessons main 31ed4d68) gave what main builds today and passed all seven. The retained usage registry measures 5eeb5e9b, held by the Site baselines. No lesson, record, index or class tools row moves.",
     "Lesson swap batch 63 (Lessons claude/lesson-swap-batch63, 2026-11-21): no lesson page changes. The flight carries two ruled kits: the help pages upgrade L2 (all 18 help pages under kits/help/ and their list page kits/help/index.html, gated by the help pages thread, landing sums fcae25fe; additions only on every page) and class tools E3 (kits/class_tools/My_tools.html takes the E3 build, and the new unlisted kits/class_tools/Pupil_overview.html arrives beside it, gated by the adaptations thread). The class tools store nothing online and carry no pupil data. Twenty-one rows move. My_tools becomes [digest the carrier Lessons 09fcdbe0 builds, digest the batch branch builds]. The 19 help rows, which the carrier does not build, move from [Lessons main digest, ARRIVING] to [batch digest, ARRIVING]. Pupil_overview enters as [batch digest, ARRIVING] (cut_rows limbs ruled 21 Nov 2026, 17:45Z). Every digest was measured by the Lessons served digest census job with the Site builder at 69ac1a8f: run 44943197743 (Lessons adb62d8f) listed exactly these twenty-one paths as not yet admitted, one of them (Pupil_overview) without a row, and no recorded path left unbuilt; run 44943205013 (carrier 09fcdbe0) gave the first entry of the My_tools row and passed all seven publisher checks; run 44943211493 (Lessons main 0fc7c975) gave what main builds today and passed all seven. The retained usage registry measures 5eeb5e9b, held by the Site baselines. No lesson, record or index row moves.",
@@ -211,7 +212,10 @@
   "trees": {
     "education-site": {
       ".nojekyll": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "404.html": "e233ebd9ef7e910bb3c2535c6e781c3dc6b195a2f1cac0f3ccb50a5d877c60e8",
+      "404.html": [
+        "e233ebd9ef7e910bb3c2535c6e781c3dc6b195a2f1cac0f3ccb50a5d877c60e8",
+        "8ccbb8fe19ca4e9a12271fb642c46e8ba308874720b04c97601c5c5662aff012"
+      ],
       "CNAME": "38eeec9532218670688a1fc02e47c667555af157ead892675243fc63bfa5a2fd",
       "Games/index.html": "750311eeda5ed1c37313b4f13d694a2712af50a30a7ce6ed428cafb655440014",
       "Lessons/Games/Block_Builder.html": [
@@ -278,19 +282,22 @@
       "app.js": "7e00d0cc16ba16beecc9d642f0a05ee9beeb35c381c2c72c32bc08930b192a2c",
       "apple-touch-icon.png": "d5468e03a243f4922b19f260417357cde47282cc06e475dd491dcfe13200a9f9",
       "artsaward/index.html": [
-        "28c47fa25e573e6d59963cffb21b558a9a8ce219bd1cfd772bea387109610b8b",
-        "5c44c6d71deb8db5b030e339fb147861925d0d43ce488de9dcaac042bfd44a86"
+        "5c44c6d71deb8db5b030e339fb147861925d0d43ce488de9dcaac042bfd44a86",
+        "756dd92ae4a86b421422cd2f1ebdf4dca7b0d31573fc32c9a67e4b1b71c955d7"
       ],
       "asdan/ASDAN_Programme_Playbook.pdf": "76440fc626cb35d26be1dd362a287251865a1f680e0c08a9718998d8b7a9c0b6",
       "asdan/ASDAN_Register_Staff_Guide.pdf": "963496e2d5f84cc302d8db8f5e6e0af1c9f5c39cb50161a84050ff13af4621f0",
-      "asdan/app.html": "eada529137dbb35f5764896282c523e8b2b24c47a6d3bfa7b887315655c1c755",
+      "asdan/app.html": [
+        "eada529137dbb35f5764896282c523e8b2b24c47a6d3bfa7b887315655c1c755",
+        "418fcdafcc63eaaa30796a58b373912788d9d343e1ed85908ce77a95a94b2c79"
+      ],
       "asdan/index.html": [
-        "e467e7584c2c1c8358790b7d9036215fde107f5653ed65b976593b68dc151c7e",
-        "962aab7781310ae883628dec4d67404abb8443578bca41f861da149a5c96513a"
+        "962aab7781310ae883628dec4d67404abb8443578bca41f861da149a5c96513a",
+        "27e103c60a4ea0213ec1931bfb0bd6592697bf6480f2ceb878279e7289281d0f"
       ],
       "asdan/moderation-lab/index.html": [
-        "261957b82bf661a9951605a267face6c2cb744beecff36b0f407a75ef840cf66",
-        "50f43e4ba12ae5ffe33d53d425490ea80a8979d525b9114de94928024123b1e0"
+        "50f43e4ba12ae5ffe33d53d425490ea80a8979d525b9114de94928024123b1e0",
+        "d5fd53b2803376b7c13ae40cdc8e2891c3115c79229a8862d94e845335e117d0"
       ],
       "assets/added-this-half-term.js": "8b8d063c4de574203053a00ae33e41bec1b5712f958ab73bbf1e3e3303b3d83b",
       "assets/audience-discovery.css": [
@@ -539,8 +546,8 @@
       ],
       "emberwild/index.html": "39db5efec5622c6249bead334ef31598109a888a1c075ab4940e678a2f551226",
       "evidence-binder/moderator-pro/index.html": [
-        "0d6f411ed7a9dfc3f16313db7ff4ee8f977659b03bedb0f7761527665b143261",
-        "7157e066a3c85bcf49698b5f416ed4f0322c445c3c10a4e1de789704a035f92d"
+        "7157e066a3c85bcf49698b5f416ed4f0322c445c3c10a4e1de789704a035f92d",
+        "57de264c5d10fc9e63dccb2ff587153ac0f3f225a4d11c08824263e0ad65a739"
       ],
       "experiences/medevac-frontier/index.html": "0d28274ad1d83858c8065866f5fec52c3777c08415736d6031d62eceedab5d06",
       "favicon.svg": "c6b5d0660b7a97b7f680b844498b38b4cbd4cb42f3989bc46555e4d36d7bdfe7",
@@ -621,8 +628,8 @@
       "images/lesson-hub-card.webp": "c6345f962b6f253be7a9934c1b352acaa065d5e11941514672e7781c920a9ea0",
       "images/lessonhub-art.jpg": "cdaaf492228f2f84723745835204df0138c83fccd3ecfc41ae51ed5e3c673c7f",
       "index.html": [
-        "7a39951a0542994c3bd28d4ac0ea0e1f2ac8a0c09c24b0edc47c36b784025c97",
-        "aa0681bca2054e96c61b0d06fa0e92f1d05c11c384774c4640ee8dbe3bcc0ec3"
+        "18e30ea76b25afb3c102fe2d13118ada93db92fdcae658c18296385ac5d30226",
+        "c129bd6fc0e9ce82e2827a1f14175c3a9ea4786a4ebd8c94eae7693754c115f2"
       ],
       "layerpress/index.html": "5ad206cb52c0e77f70911b0ec6b461a74d47b86560ba742d8b5e64f276fbbc54",
       "magnetmates/index.html": "8326fb17e5e24257fab5cdd64cafde8c608fddb47a65262cba8e83e759673c8d",
@@ -633,8 +640,8 @@
         "6e83dc852185a6ed0e9670a8b82802d59bbe5864b773185a0a2da249fd6da9e7"
       ],
       "main/index.html": [
-        "5e34a93c77a7514ecbddc28b7ed87268afbac1c04fce11857801a0aebb1c96be",
-        "2c35bf46c50d0d244d8683bc83452340e0c892485558f446549c78d7f7a1ad63"
+        "b121160fa4faa97e0fa97a6fc81a25738eada9e75e60552a4dd5b9d8693049ba",
+        "ad0a13c13047b51eec9b0819647c6b2b981bdd399e41ebc5111b474a44f60be7"
       ],
       "medevac/MedevacFrontier_v1.html": "d9aca33a1c52d12744cf2c3b32e7861f9be6a2d87e50d0d88151e8a3716abe81",
       "medevac/index.html": "0d28274ad1d83858c8065866f5fec52c3777c08415736d6031d62eceedab5d06",
@@ -710,10 +717,13 @@
       "touchline/index.html": "0d1512fb7fc5c7361cbc72c698012614b00e0d2831acd405cf253a66438638c1",
       "townlife/index.html": "52c7d72263852441e58265d5aa5389032b01cd772821dda6a0f0020c33a72e2c",
       "trailrunner/index.html": "8c269f598476bdbc5e8e648e03d08a0e61c60e9b17767b7e14e27238cec9d58c",
-      "uas/app.html": "5fa6b939e8b95cb06c8699b088d3669e6a7ee7b6027c62f8e74f6ccdb509c120",
+      "uas/app.html": [
+        "5fa6b939e8b95cb06c8699b088d3669e6a7ee7b6027c62f8e74f6ccdb509c120",
+        "885ba4b481cd680b96e1ed52bd4dca315e4cb6e77e49eebf3849081942140e9f"
+      ],
       "uas/index.html": [
-        "289102e64c31170ca8dadeea0f4af47fe744ea3cc56d5c1036fc2a5d6ebcfd6c",
-        "14432c1f8a1e6bd089c88fec98d176bda4c779a3ddcd3eb5f0b55222f514a29c"
+        "14432c1f8a1e6bd089c88fec98d176bda4c779a3ddcd3eb5f0b55222f514a29c",
+        "deb97763c8fc5eabff9d7421a254760fbd21acb1fb0140a4f162c3cfd7276d52"
       ],
       "uas/vendor/MANIFEST.md": "c145062727249736a6b6de1b4cec9afdd4d917bdefb41dd0487f767d2181cc35",
       "uas/vendor/jspdf/jspdf.umd.min.js": "98ccf17aa10c20bb1301762618fcc9b6ab3a4e7f26b6071d64d0b41154df3875",
@@ -757,8 +767,8 @@
       "2 Physics 10/Waves/L4c_Energy_Transfer.html": "61398c609bd4d67ff63344787827ebe012803e0ad9f776885addbfdd2561e033",
       "2 Physics 10/current_rush.html": "2375242fbb11a172bbf099dd4b8c31ea6cff5a6c4f471290272ac43e3bee5e96",
       "404.html": [
-        "76317224995745e291321865ec08c3fbae17af3aefcaee21c9bc1db766378efd",
-        "a58b5722ed36f7b713b67636fdb8ccdc7d7f6103d202af9843dc6a975f596690"
+        "a58b5722ed36f7b713b67636fdb8ccdc7d7f6103d202af9843dc6a975f596690",
+        "6131d2a867c1b9b489788bc6592d8afaf02d11f9abf09dcc110a19dc0ecf7047"
       ],
       "5 Intervention 10/InterventionA_Battle_Arena (1).html": "f302127b6f9ebb0bf61a38d987b4af40e6c44cea1fd22056635ceb7866db1253",
       "5 Intervention 10/InterventionB_Escape_Room.html": "52c8c984a9be0e6f4faaa715b1482ce76bbaa707988a19eccbdb87568ce93f13",
