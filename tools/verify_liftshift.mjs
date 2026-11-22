@@ -42,7 +42,8 @@ const PREFIX = 'mbm_liftshift_';
 const ESTATE_KEYS = new Set(['mbm_audience_view']);
 const RAW_BUDGET = 409600;
 const VIEWPORTS = [[390, 844], [768, 1024], [1366, 768]];
-const HUD_VIEWPORTS = [[390, 844], [839, 412], [768, 1024], [1280, 720], [1366, 768], [1920, 1080]];
+// 360x740 is the narrowest phone the ruling thread asked these gates to measure.
+const HUD_VIEWPORTS = [[360, 740], [390, 844], [839, 412], [768, 1024], [1280, 720], [1366, 768], [1920, 1080]];
 const FLOOR = 44;
 // Calibrated from the shipped file in play at 1366 and from the never-drawn control.
 const SHAFT_MIN_COLOURS = 40;

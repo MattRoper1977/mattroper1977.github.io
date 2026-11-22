@@ -42,7 +42,8 @@ const PREFIX = 'mbm_skyseeder_';
 const ESTATE_KEYS = new Set(['mbm_audience_view']);
 const RAW_BUDGET = 409600;
 const VIEWPORTS = [[390, 844], [768, 1024], [1366, 768]];
-const HUD_VIEWPORTS = [[390, 844], [839, 412], [768, 1024], [1280, 720], [1366, 768], [1920, 1080]];
+// 360x740 is the narrowest phone the ruling thread asked these gates to measure.
+const HUD_VIEWPORTS = [[360, 740], [390, 844], [839, 412], [768, 1024], [1280, 720], [1366, 768], [1920, 1080]];
 const FLOOR = 44;
 // Calibrated below from the shipped file in flight at 1366 and from the no-WebGL control.
 const SKY_MIN_COLOURS = 40;
@@ -315,7 +316,8 @@ async function selftest(html, browser) {
     { gate: 'SSG6a', why: 'throw at boot', mutate: s => s.replace(BOOT, BOOT + '\n  throw new Error("boom");') },
     { gate: 'SSG6b', why: 'unwire the Launch button', mutate: s => s.replace('document.getElementById("btnStartFlight").addEventListener("click",', 'document.getElementById("btnStartFlight").addEventListener("dblclick",') },
     { gate: 'SSG6c', why: 'read storage without the guard', mutate: s => s.replace(BOOT, BOOT + '\n  window.localStorage.getItem("mbm_skyseeder_calm");') },
-    { gate: 'SSG6d', why: 'never draw the sky', mutate: s => s.replace('const gl = canvas.getContext("webgl", { antialias: true, alpha: false, powerPreference: "high-performance" }) ||', 'const gl = null && canvas.getContext("webgl", { antialias: true, alpha: false, powerPreference: "high-performance" }) ||') },
+    // Both context requests go, so no fallback context can draw the sky.
+    { gate: 'SSG6d', why: 'never draw the sky', mutate: s => s.replace('const gl = canvas.getContext("webgl", { antialias: true, alpha: false, powerPreference: "high-performance" }) ||\n             canvas.getContext("experimental-webgl", { antialias: true, alpha: false });', 'const gl = null;') },
   ];
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ss-self-'));
   let vacuous = 0;
