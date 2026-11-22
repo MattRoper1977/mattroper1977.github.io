@@ -25,6 +25,15 @@ def exists(root,relative):
     p=root/relative
     return p.is_file() or (p/'index.html').is_file()
 
+# TEMPORARY (November 2026): a Lessons route that the newest Lessons revision publishes, but which this
+# build's older pinned checkout predates, is an ARRIVING row in the admission registry. Only a link to
+# exactly such a row may be absent from the Lessons tree. Remove this in the change that moves the
+# Lessons pin past /Lessons/help/.
+ADMISSION=json.loads((HERE/'education-publication-admission.json').read_text())['trees']['education-lessons']
+def arriving(relative):
+    row=ADMISSION.get(relative+'index.html' if relative=='' or relative.endswith('/') else relative)
+    return isinstance(row,list) and 'ARRIVING' in row
+
 def main():
     games=OUT/'games';site=OUT/'education-site';lessons=OUT/'education-lessons';apps=OUT/'education-apps'
     report=json.loads((OUT/'build-report.json').read_text());education=json.loads((OUT/'education-build-report.json').read_text())
@@ -71,6 +80,8 @@ def main():
     assert len(game_data['staff'])==1
     for item in game_data['games']+game_data['activities']+game_data['staff']:
         assert exists(games,unquote(urlparse(item['route']).path).lstrip('/')),item['route']
+    settled=next(k for k,v in ADMISSION.items() if k.endswith('.html') and not (isinstance(v,list) and 'ARRIVING' in v))
+    assert not arriving(settled) and not arriving('no-such-page-planted.html') and not arriving('no-such-folder-planted/'),'the ARRIVING allowance control did not hold'
     tested=0
     for page in ['index.html','main/index.html','for/teachers/index.html','for/pupils/index.html','commission/index.html']:
         text=(site/page).read_text();parser=Refs();parser.feed(text)
@@ -88,7 +99,7 @@ def main():
             root=site
             if path.startswith('Lessons/'):root=lessons;path=path[len('Lessons/'):]
             if path.startswith('Matt-s-Apps-/'):root=apps;path=path[len('Matt-s-Apps-/'):]
-            assert exists(root,path),(page,ref)
+            assert exists(root,path) or (root is lessons and arriving(path)),(page,ref)
         tested+=1
     for root in [site,lessons,apps]:
         for p in root.rglob('*.html'):
