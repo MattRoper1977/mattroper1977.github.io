@@ -314,6 +314,32 @@
     "SHG6 the game boots without a page error and a started run reaches the playing screen"
    ],
    "note": "Declared at launch. Signal Heist is a single-file canvas stealth runner: one inline script, zero external references, so a <script src=\"/hud.js\"> tag would retract the promise the file makes and the generated inline exit region carries the way out instead. Its save keys were renamed to the mbm_signalheist_ prefix before first publication, so no player save predates the rename."
+  },
+  {
+   "route": "/skyseeder/",
+   "verifier": "tools/verify_skyseeder.mjs",
+   "gates": [
+    "SSG1 single file: no script src, no stylesheet link, no remote URL in the source, and zero non-same-origin requests while a flight is played",
+    "SSG2 storage goes only through the safe storage helpers and the mbm_skyseeder_ prefix, and every key written while played carries the prefix, observed at runtime",
+    "SSG3 generated inline exit: region byte-identical to the generator, rendered at 44 px or more, on top and reachable by keyboard; the top HUD clears the exit at every measured width",
+    "SSG4 every visible title-screen and in-flight button is 44 px or more at 390, 768 and 1366 wide",
+    "SSG5 reduced motion turns Calm Mode on by default, proven against a no-preference control",
+    "SSG6 the game boots without a page error, renders the 3D sky islands, and keeps working with storage blocked"
+   ],
+   "note": "Declared at launch. Sky Seeder is a single-file WebGL glider game: one inline script, zero external references, so a <script src=\"/hud.js\"> tag would retract the promise the file makes and the generated inline exit region carries the way out instead. Its save keys carry the mbm_skyseeder_ prefix from first publication."
+  },
+  {
+   "route": "/liftshift/",
+   "verifier": "tools/verify_liftshift.mjs",
+   "gates": [
+    "LSG1 single file: no script src, no stylesheet link, no remote URL in the source, and zero non-same-origin requests while a shift is played",
+    "LSG2 storage goes only through the safe storage helpers and the mbm_liftshift_ prefix, and every key written while played carries the prefix, observed at runtime",
+    "LSG3 generated inline exit: region byte-identical to the generator, rendered at 44 px or more, on top and reachable by keyboard; the top HUD clears the exit at every measured width",
+    "LSG4 every visible title-screen and in-play button is 44 px or more at 390, 768 and 1366 wide",
+    "LSG5 reduced motion turns Calm Mode on by default, proven against a no-preference control",
+    "LSG6 the game boots without a page error, draws the lift shaft, and keeps working with storage blocked"
+   ],
+   "note": "Declared at launch. Lift Shift is a single-file canvas lift-balancing puzzle: one inline script, zero external references, so a <script src=\"/hud.js\"> tag would retract the promise the file makes and the generated inline exit region carries the way out instead. Its save keys carry the mbm_liftshift_ prefix from first publication."
   }
  ],
  "_amendedWhy": "THE LEDGER HAD TWO CATEGORIES AND NEEDED THREE. It measured the games it DECLINED to wire and listed them under `excluded`. It did not check whether any of the ten it DID wire carried the same single-file contract. apexgolf did: verify_apexgolf.js G17 asserted `no <script src> at all`, so the Stage 2B line broke it on 10 August 2026 and it stayed red for fifteen days - invisible, because a `grep | wc -l` step under `pipefail` in apexgolf-verify.yml died before the verifier ever ran, and the workflow is pull_request-only and filtered. Two faults, one day, and the noisy one hid the real one. Found by Order T's estate census, 25 August 2026. This list is the third category: wired, contract retained, verifier amended to say so.",
