@@ -219,16 +219,16 @@ def moved_page(route):
     if any(route in (m['old_route'], m['route'], m['old_route'].removesuffix('/'), m['route'].removesuffix('/')) for m in RENAMES):
         destination = destination.replace('https://madebymatt-play.uk/', 'https://www.madebymatt-play.uk/')
         return ('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="robots" content="noindex">'
-                '<meta http-equiv="refresh" content="0; url='+escape(destination, quote=True)+'"><title>Game moved</title>'
-                '<body data-game-moved><p>Made by Matt</p><p><a id="play-game" href="'+escape(destination, quote=True)+'">Open the game</a></p></body></html>')
+                '<meta http-equiv="refresh" content="0; url='+escape(destination, quote=True)+'"><title>Page moved</title>'
+                '<body data-game-moved><p>Made by Matt</p><p><a id="play-game" href="'+escape(destination, quote=True)+'">Open it on Made by Matt Play</a></p></body></html>')
     return ('<!doctype html><html lang="en-GB"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
-            '<meta name="robots" content="noindex"><title>This game has moved · Made by Matt</title>'
+            '<meta name="robots" content="noindex"><title>This page has moved · Made by Matt</title>'
             '<link rel="canonical" href="'+escape(destination, quote=True)+'">'
             '<style>body{font:1.1rem/1.65 system-ui;max-width:42rem;margin:4rem auto;padding:0 1.25rem;color:#161d3d}a{color:#174e45}li{margin:1rem 0}a:focus-visible{outline:3px solid #e39129;outline-offset:4px}</style>'
-            '</head><body data-game-moved><main><h1>This game has moved</h1>'
-            '<p>Made by Matt games now have their own website.</p>'
-            '<p><a id="play-game" href="'+escape(destination, quote=True)+'">Open the game</a></p></main>'
+            '</head><body data-game-moved><main><h1>This page has moved</h1>'
+            '<p>It now lives on Made by Matt Play, a separate website.</p>'
+            '<p><a id="play-game" href="'+escape(destination, quote=True)+'">Open it on Made by Matt Play</a></p></main>'
             '<script>const a=document.getElementById("play-game");const u=new URL(a.href);u.search=location.search;u.hash=location.hash;a.href=u.href;</script>'
             '</body></html>')
 
