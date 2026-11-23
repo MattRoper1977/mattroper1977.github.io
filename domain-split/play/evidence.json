@@ -1904,28 +1904,39 @@
         "Creative",
         "Sport"
       ],
-      "description": "Explore Meridian Bay by car and take on deliveries, checkpoints and circuit runs.",
+      "description": "Explore Meridian Bay by car or on foot and take on deliveries, checkpoint runs and circuit races from the Jobs board.",
       "audience": "general",
       "controls": [
-        "keyboard"
+        "keyboard",
+        "touch"
       ],
       "modes": [],
       "instructions": "Player modes have not yet been verified for this entry.",
       "evidence": [
         {
           "control": "keyboardMouse",
-          "needle": "WASD / arrows",
-          "line": 114,
-          "excerpt": "b>City seed</b> MERIDIAN-260811</span><span><b>Controls</b> WASD / arrows</span><span><b>Build</b> EVOLVED</span></div></div></section> <div id=\"hud\" class=\"hidden\"><div id=\"topbar\"><div class="
+          "needle": "WASD · J Jobs · F Foot/Ride · C Chase · G Garage",
+          "line": 691,
+          "excerpt": "seed</b> MERIDIAN-260811</span>       <span><b>Controls</b> WASD · J Jobs · F Foot/Ride · C Chase · G Garage</span>       <span><b>Build</b> R1</span>     </div>   </div> </section>  <div id=\"hud\" class=\"hidden\">   <div id=\"topb"
+        },
+        {
+          "control": "touch",
+          "needle": "<button class=\"roundtouch accent-touch\" id=\"touchJobs\" type=\"button\">JOBS</button>",
+          "line": 1035,
+          "excerpt": "touch-drive-group\">       <div class=\"touch-stack\">         <button class=\"roundtouch accent-touch\" id=\"touchJobs\" type=\"button\">JOBS</button>         <button class=\"roundtouch\" id=\"touchFoot\" type=\"button\">FOOT</button>         <button class=\"roundtouch\" id=\"to"
         }
       ],
       "source": {
         "repository": "Site",
         "path": "neonmeridian/index.html",
-        "sha256": "9fd50adc65edc04641d4ab70ac1ab9ce88f4ac56da3ff185ae515942f689439f",
-        "published_sha256": "ed8dfffb1a1aa1ac8fa7e00227c200e713fe863bc50742e0dcf7ff88c4b4acb9"
+        "sha256": "e201bfe6d6e055b61d7eaa406b885cde3f62ffb9dc5e1ef4599383d5ef276e51",
+        "published_sha256": "6edc123394b04e2d8cab9cf061ddab7017fecbcc78681b89d26828d4e14c765d"
       },
-      "updated": null
+      "updated": {
+        "date": "2026-11-23",
+        "description": "Upgraded build with a Jobs board, on-foot exploring and touch controls; display name now Meridian Bay: Open Drive.",
+        "commit": "8790bfe11a67656bf6b89fc4c5f7c798459cc6fb"
+      }
     },
     "/rallyvector3d": {
       "genre": "Sport",
