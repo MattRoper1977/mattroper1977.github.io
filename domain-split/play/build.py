@@ -14,6 +14,7 @@ play.js; nothing is typed into the template.
 from __future__ import annotations
 import argparse
 from collections import Counter, OrderedDict
+from datetime import date
 import hashlib
 import html
 import json
@@ -504,6 +505,7 @@ def refresh(output, review=False, source_revisions=None):
     (target/'assets/play2/covers').mkdir(parents=True, exist_ok=True)
     for name in discovery['covers']:
         shutil.copyfile(COVERS/name, target/'assets/play2/covers'/name)
+    hero = hero_week_join(games, discovery['rows'], target)
     template = (HERE/'index.html').read_text()
     # Use the exact supplied mark approved by the user, with a checked file hash.
     brand = read('brand.json', {})
@@ -529,13 +531,18 @@ def refresh(output, review=False, source_revisions=None):
                               + '"><span class="mood-ic" aria-hidden="true">' + icon_svg(m['id']) + '</span><span class="mood-label">' + esc(m['label'])
                               + '</span><span class="mood-count" aria-hidden="true">' + str(mood_counts[m['id']]) + '</span></button>' for m in discovery['moods']))
     classroom = ''.join(activity_item(r) for r in activities)
+    hero_data = {'id': hero['row']['id'], 'slug': hero['slug']}
+    if hero['video']:
+        hero_data.update(video=hero['video'], poster=hero['poster'])
     data = {'counts': counts, 'catalogue': len(games), 'genres': [{'name': g, 'count': genre_counts[g]} for g in genres],
             'bandLabels': {b: band_labels[b] for b in sorted({r['sessionBand'] for r in games if r.get('sessionBand')})},
             'series': series, 'moods': [{'id': m['id'], 'label': m['label'], 'icon': m['icon'], 'count': mood_counts[m['id']]} for m in discovery['moods']],
             'allLabel': discovery['all_label'], 'allIcon': discovery['all_icon'], 'packs': discovery['packs'], 'todayPool': discovery['today_pool'],
             'synonyms': discovery['synonyms'], 'eager': EAGER_CARDS, 'collapsed': COLLAPSED_CARDS,
+            'hero': hero_data,
             'games': [{**slim(r), **({'discovery': discovery['rows'][r['id']]} if r['group'] == 'games' else {})} for r in pupil_rows]}
-    substitutions = {'@@SPRITE@@': sprite(discovery), '@@LOGO@@': logo, '@@FOOTERLOGO@@': footer_logo, '@@MOODS@@': mood_buttons, '@@ALLTITLE@@': esc(discovery['all_label']) + ' games',
+    substitutions = {'@@SPRITE@@': sprite(discovery), '@@LOGO@@': logo, '@@FOOTERLOGO@@': footer_logo, '@@HERO@@': hero_section(hero),
+                     '@@MOODS@@': mood_buttons, '@@ALLTITLE@@': esc(discovery['all_label']) + ' games',
                      '@@COUNT@@': str(len(games)) + ' games', '@@SHOWALL@@': 'Show all ' + str(len(games)), '@@GRID@@': ''.join(cards),
                      '@@CLASSROOM@@': classroom, '@@ACTIVITIES@@': str(len(activities)), '@@NOSCRIPT@@': noscript_list(pupil_rows),
                      '@@DATA@@': json.dumps(data, ensure_ascii=False).replace('<', '\\u003c')}
@@ -560,6 +567,7 @@ def refresh(output, review=False, source_revisions=None):
             'staff_on_page':0,
             'updated_rail':[r['id'] for r in sorted([r for r in rows if r.get('updated')], key=lambda r: r['updated']['date'], reverse=True)],
             'line_sources':dict(Counter(r['lineSource'] for r in rows)),
+            'hero':{'slug':hero['slug'],'id':hero['row']['id'],'has_clip':bool(hero['video'])},
             'changed_game_payloads':0,'canonical_origin':ORIGIN,'shared_runtime_changed':False,
             'omitted_discovery':omitted_discovery}
     (Path(output)/'play-discovery-report.json').write_text(json.dumps(report,indent=2)+'\n')
@@ -569,6 +577,12 @@ def refresh(output, review=False, source_revisions=None):
 # --- PLAY-D2 front page helpers -----------------------------------------------
 COVERS = HERE / 'covers'
 DISCOVERY = HERE / 'discovery-moods.json'
+HERO_WEEK = HERE / 'hero-week.json'
+HERO_LINE_MAX = 90
+HERO_DATE_RE = re.compile(
+    r'\b(?:20\d{2}|(?:19|20)\d{2}-\d{2}-\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*)\b',
+    re.I,
+)
 MOOD_IDS = ('fast', 'race', 'sport', 'solve', 'plan', 'explore', 'chill', 'mates')
 EAGER_CARDS = 8       # the first eight A-Z pictures load eagerly, the rest lazily
 COLLAPSED_CARDS = 12  # the A-Z grid shows this many until "Show all"
@@ -715,6 +729,98 @@ def game_card(row, d, eager, moods):
 def activity_item(row):
     return ('<li class="activity-item" data-activity="' + esc(row['id']) + '"><a class="activity-link" data-play="' + esc(row['id']) + '" href="' + esc(row['route']) + '">'
             '<span class="activity-name">' + esc(shown_title(row)) + '</span><span class="activity-sub">Lesson activity</span></a></li>')
+
+
+def hero_week_join(games, discovery_rows, target, path=None):
+    """Validate hero-week.json against the live Play catalogue and emitted covers/clips."""
+    spec_path = Path(path) if path is not None else HERO_WEEK
+    if not spec_path.is_file():
+        raise ValueError('hero-week.json is missing')
+    raw = json.loads(spec_path.read_text(encoding='utf-8'))
+    if not isinstance(raw, dict):
+        raise ValueError('hero-week.json must be a JSON object')
+    week = raw.get('week')
+    if not isinstance(week, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', week):
+        raise ValueError('hero-week.json week must be an ISO YYYY-MM-DD date')
+    try:
+        date.fromisoformat(week)
+    except ValueError as err:
+        raise ValueError('hero-week.json week is not a valid calendar date: ' + week) from err
+    slug = raw.get('slug')
+    if not isinstance(slug, str) or not slug.strip():
+        raise ValueError('hero-week.json slug must be a non-empty string')
+    slug = slug.strip()
+    live_games = [r for r in games if r.get('group', 'games') == 'games']
+    matches = []
+    for r in live_games:
+        rk = key(r['route'])
+        top_slug = rk.lstrip('/')
+        if (r['id'] == slug
+                or r['id'].removeprefix('game-') == slug
+                or rk == key(slug)
+                or ('/' not in top_slug and top_slug == slug)):
+            matches.append(r)
+    if not matches:
+        for r in live_games:
+            pic = (discovery_rows.get(r['id']) or {}).get('picture', '')
+            if pic.startswith('/assets/play2/covers/') and Path(pic).stem == slug:
+                matches.append(r)
+    if len(matches) != 1:
+        raise ValueError('hero-week.json slug is not a live Play game: ' + slug)
+    row = matches[0]
+    line = raw.get('line')
+    if not isinstance(line, str) or not line.strip():
+        raise ValueError('hero-week.json line must be a non-empty string')
+    line = line.strip()
+    if len(line) > HERO_LINE_MAX:
+        raise ValueError(f'hero-week.json line is over {HERO_LINE_MAX} characters ({len(line)}): ' + line)
+    if '<' in line or '>' in line:
+        raise ValueError('hero-week.json line must be plain text: ' + line)
+    if HERO_DATE_RE.search(line):
+        raise ValueError('hero-week.json line must not contain date text: ' + line)
+    d = discovery_rows.get(row['id']) or {}
+    cover = (d.get('picture') or '').strip()
+    if not cover or not (target / cover.lstrip('/')).is_file():
+        raise ValueError('hero-week.json game has no cover: ' + slug)
+    m = row.get('media') or {}
+    video = m.get('video') or ''
+    poster = m.get('poster') or ''
+    has_clip = bool(video and poster and (target / video.lstrip('/')).is_file() and (target / poster.lstrip('/')).is_file())
+    if has_clip:
+        still, still_kind = poster, 'poster'
+    else:
+        still, video, poster = cover, '', ''
+        still_kind = d.get('pictureKind') or 'cover'
+    return {
+        'slug': slug, 'row': row, 'discovery': d, 'line': line,
+        'cover': cover, 'still': still, 'still_kind': still_kind,
+        'video': video, 'poster': poster,
+    }
+
+
+def hero_section(hero):
+    """Render the static PLAY-D5 Game-of-the-week hero block as the first child of <main>."""
+    row = hero['row']
+    d = hero['discovery']
+    title = shown_title(row)
+    if hero['still_kind'] == 'poster':
+        alt = title + ' gameplay preview'
+    elif hero['still_kind'] == 'cover':
+        alt = title + ' cover'
+    else:
+        alt = title + ' game screen'
+    media_attrs = (' data-hero-video="' + esc(hero['video']) + '" data-hero-poster="' + esc(hero['poster']) + '"') if hero['video'] else ''
+    return ('<section class="sec hero-sec" id="hero-section" aria-labelledby="hero-title" tabindex="-1">'
+            '<div class="hero-card" data-hero="' + esc(row['id']) + '" data-mood="' + esc(d.get('primary', '')) + '">'
+            '<div class="hero-media" id="hero-media"' + media_attrs + '>'
+            '<img src="' + esc(hero['still']) + '" alt="' + esc(alt) + '" width="640" height="360" loading="eager" fetchpriority="high" decoding="async">'
+            '<span class="thumb-title" aria-hidden="true">' + esc(title) + '</span></div>'
+            '<div class="hero-body">'
+            '<p class="hero-label" id="hero-label">Game of the week</p>'
+            '<h1 class="hero-title" id="hero-title">' + esc(title) + '</h1>'
+            '<p class="hero-line" id="hero-line">' + esc(hero['line']) + '</p>'
+            '<div class="hero-actions"><a class="btn btn-primary hero-play" id="hero-play" href="' + esc(row['route']) + '" data-play="' + esc(row['id']) + '" aria-label="Play ' + esc(title) + '">' + TRI + '<span>Play</span></a></div>'
+            '</div></div></section>')
 
 if __name__ == '__main__':
     ap=argparse.ArgumentParser();ap.add_argument('--output',required=True,type=Path);ap.add_argument('--review',action='store_true');args=ap.parse_args()

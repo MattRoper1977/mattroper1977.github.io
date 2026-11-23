@@ -53,11 +53,15 @@ class Page(HTMLParser):
         self.activities = []     # {'id','hrefs'}
         self.moods = []          # {'id','aria','count'}
         self.hrefs = []          # every a[href] outside noscript
-        self.in_grid = self.in_class = 0
+        self.in_grid = self.in_class = self.in_main = self.in_hero = 0
         self.noscript = 0
         self.mood_count = None
         self.data = None
         self.in_data = False
+        self.main_first_id = None
+        self.h1_count = 0
+        self.skip_href = None
+        self.hero = {'hrefs': [], 'img_alt': None, 'text': ''}
 
     def inside(self, attr, value=None):
         return any(attr in at and (value is None or at.get(attr) == value) for _, at in self.stack)
@@ -70,13 +74,25 @@ class Page(HTMLParser):
             self.stack.append((tag, a))
         if self.noscript:
             return
+        if self.in_main and self.main_first_id is None and ((tag in self.VOID and len(self.stack) == self.in_main) or (tag not in self.VOID and len(self.stack) == self.in_main + 1)):
+            self.main_first_id = a.get('id', '')
+        if tag == 'main' and not self.in_main:
+            self.in_main = len(self.stack)
+        if tag == 'a' and 'skip-link' in a.get('class', '').split() and self.skip_href is None:
+            self.skip_href = a.get('href')
+        if tag == 'h1':
+            self.h1_count += 1
         if tag == 'script' and a.get('id') == 'play-data':
             self.in_data = True
             self.data = ''
+        if a.get('id') == 'hero-section':
+            self.in_hero = len(self.stack)
         if a.get('id') == 'game-grid':
             self.in_grid = len(self.stack)
         if a.get('id') == 'classroom':
             self.in_class = len(self.stack)
+        if self.in_hero and tag == 'img' and self.hero['img_alt'] is None:
+            self.hero['img_alt'] = a.get('alt')
         if 'data-card' in a and self.in_grid:
             self.cards.append({'id': a['data-card'], 'games': a.get('data-games', ''), 'mood': a.get('data-mood', ''), 'hrefs': []})
         if 'data-activity' in a:
@@ -88,6 +104,8 @@ class Page(HTMLParser):
         if tag == 'a' and 'href' in a:
             self.hrefs.append(a['href'])
             if 'data-play' in a:
+                if self.in_hero:
+                    self.hero['hrefs'].append(a['href'])
                 if self.in_grid and self.cards and self.inside('data-card'):
                     self.cards[-1]['hrefs'].append(a['href'])
                 elif self.activities and self.inside('data-activity'):
@@ -96,6 +114,8 @@ class Page(HTMLParser):
     def handle_data(self, text):
         if self.in_data:
             self.data += text
+        if self.in_hero and not self.noscript:
+            self.hero['text'] += text
         if self.mood_count is not None:
             self.mood_count += text
 
@@ -112,6 +132,10 @@ class Page(HTMLParser):
             return
         while self.stack:
             t, _ = self.stack.pop()
+            if self.in_main and len(self.stack) < self.in_main:
+                self.in_main = 0
+            if self.in_hero and len(self.stack) < self.in_hero:
+                self.in_hero = 0
             if self.in_grid and len(self.stack) < self.in_grid:
                 self.in_grid = 0
             if self.in_class and len(self.stack) < self.in_class:
@@ -124,7 +148,8 @@ def parse(html: str) -> dict:
     p = Page()
     p.feed(html)
     return {'cards': p.cards, 'activities': p.activities, 'moods': p.moods, 'hrefs': p.hrefs,
-            'data': json.loads(p.data) if p.data else {}, 'html': html}
+            'main_first_id': p.main_first_id, 'h1_count': p.h1_count, 'skip_href': p.skip_href,
+            'hero': p.hero, 'data': json.loads(p.data) if p.data else {}, 'html': html}
 
 
 def on_disk(out: Path, href: str) -> bool:
@@ -226,6 +251,49 @@ def limbs(page: dict, out: Path, manifest: list, discovery: dict, moods: dict) -
             errors.append('a mood holds no games: ' + m['id'])
         if not b or b['count'] != str(n) or b['aria'] != m['label'] + ', ' + str(n) + ' games':
             errors.append('mood count is not derived: ' + m['id'])
+
+    # 5. Hero of the week: hero-week.json valid, first in <main>, single <h1>, skip target, alt text, no date
+    hero_spec_path = Path(__file__).resolve().with_name('hero-week.json')
+    hero_spec = json.loads(hero_spec_path.read_text(encoding='utf-8')) if hero_spec_path.is_file() else None
+    hero = page.get('hero') or {}
+    if not isinstance(hero_spec, dict):
+        errors.append('hero-week.json missing or invalid')
+    else:
+        slug = str(hero_spec.get('slug') or '').strip()
+        line = str(hero_spec.get('line') or '').strip()
+        week = str(hero_spec.get('week') or '').strip()
+        if not line or len(line) > 90:
+            errors.append('hero-week.json line is empty or over 90 characters')
+        hero_matches = [
+            g for g in catalogue if slug and (
+                g['id'] == slug or g['id'].removeprefix('game-') == slug
+                or key(g['route']) == key(slug)
+                or ('/' not in key(g['route']).lstrip('/') and key(g['route']).lstrip('/') == slug)
+            )
+        ]
+        if not hero_matches:
+            hero_matches = [
+                g for g in catalogue if slug and spec.get(key(g['route']), {}).get('picture', '').startswith('/assets/play2/covers/')
+                and Path(spec[key(g['route'])]['picture']).stem == slug
+            ]
+        hero_row = hero_matches[0] if len(hero_matches) == 1 else None
+        if not hero_row:
+            errors.append('hero-week.json slug is not a live Play game: ' + slug)
+        if page.get('main_first_id') != 'hero-section':
+            errors.append('hero section is not the first child in <main>')
+        if page.get('h1_count') != 1:
+            errors.append('page does not have exactly one <h1>')
+        if page.get('skip_href') != '#hero-section':
+            errors.append('skip link does not target #hero-section')
+        hero_hrefs = hero.get('hrefs') or []
+        if len(hero_hrefs) != 1 or not on_disk(out, hero_hrefs[0]):
+            errors.append('hero section does not hold one valid Play href on disk')
+        elif hero_row and key(hero_hrefs[0]) != key(hero_row['route']):
+            errors.append('hero Play href does not match hero-week.json slug')
+        if not (hero.get('img_alt') or '').strip():
+            errors.append('hero image is missing alt text')
+        if week and week in (hero.get('text') or ''):
+            errors.append('hero section leaks week date text')
     return {'errors': errors, 'cards': len(page['cards']), 'activities': len(page['activities']), 'moods': counts,
             'packs': len(packs), 'todayPool': len(pool), 'hrefsChecked': len(hrefs)}
 
@@ -263,6 +331,11 @@ def self_test(page, out, manifest, discovery, moods):
     bites('invented-mood', lambda p, m: p['cards'][-1].__setitem__('mood', 'top-picks'), 'invented')
     bites('mood-drift', lambda p, m: p['cards'][0].__setitem__('mood', next(x['id'] for x in p['data']['moods'] if x['id'] != p['cards'][0]['mood'])), 'committed primary')
     bites('count-drift', lambda p, m: p['moods'][1].__setitem__('count', str(int(p['moods'][1]['count']) + 1)), 'not derived')
+    bites('hero-not-first', lambda p, m: p.__setitem__('main_first_id', 'pick-section'), 'not the first child')
+    bites('two-h1s', lambda p, m: p.__setitem__('h1_count', 2), 'exactly one <h1>')
+    bites('hero-broken-href', lambda p, m: p['hero']['hrefs'].__setitem__(0, '/no-such-game/'), 'valid Play href')
+    bites('hero-missing-alt', lambda p, m: p['hero'].__setitem__('img_alt', ''), 'missing alt text')
+    bites('hero-date-leak', lambda p, m: p['hero'].__setitem__('text', '2026-11-23'), 'leaks week date')
     return plants
 
 

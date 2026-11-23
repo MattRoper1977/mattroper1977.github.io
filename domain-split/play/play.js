@@ -44,10 +44,12 @@
   let favourites = readList('favourites'), recent = readList('recent');
 
   /* ---- Calm: its own key, on by default under reduced motion ---- */
+  let heroSync = () => {}, heroTeardown = () => {};
   function applyCalm(on, persist) {
     document.documentElement.classList.toggle('calm', on);
     $('calm-btn').setAttribute('aria-pressed', String(on));
     if (persist) { try { localStorage.setItem(keys.calm, on ? '1' : '0'); } catch (_) { durable = false; storageNotice(); } }
+    heroSync();
   }
   function initCalm() {
     let saved = null;
@@ -71,9 +73,9 @@
       + '<button type="button" class="fav-btn" data-favourite="' + esc(g.id) + '" aria-pressed="' + String(favourites.includes(g.id)) + '" aria-label="Save ' + esc(title(g)) + '">' + HEART + '</button></article>';
   }
   function bindImages(root) {
-    root.querySelectorAll('.card-media img, .thumb img').forEach(img => {
+    root.querySelectorAll('.card-media img, .thumb img, .hero-media img').forEach(img => {
       if (img.dataset.bound) return; img.dataset.bound = '1';
-      const failed = () => { const box = img.closest('.card-media, .thumb'); if (box) box.classList.add('failed'); img.hidden = true; };
+      const failed = () => { const box = img.closest('.card-media, .thumb, .hero-media'); if (box) box.classList.add('failed'); img.hidden = true; };
       img.addEventListener('error', failed); if (img.complete && !img.naturalWidth && img.src) failed();
     });
   }
@@ -98,11 +100,84 @@
   window.__playSchedule = iso => { const [Y, M, D] = iso.split('-').map(Number), s = schedule(new Date(Y, M - 1, D), null); return {date: iso, week: s.week, pack: s.pack.slug, packGames: [...s.pack.games], today: s.today}; };
   function renderPick() {
     const now = new Date(), s = schedule(now, forcedPack()), y = schedule(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1), null);
+    const heroId = data.hero && data.hero.id;
     $('pack-tag').textContent = 'This week: ' + s.pack.name;
-    const slots = [...s.pack.games, s.today].map(id => byId.get(id)).filter(Boolean);
+    const pool = data.todayPool || [], n = pool.length, di = dayIndex(now.getFullYear(), now.getMonth(), now.getDate());
+    const packIds = [...new Set(s.pack.games.filter(id => id !== heroId && byId.has(id)))];
+    let todayId = s.today !== heroId && byId.has(s.today) && !packIds.includes(s.today) ? s.today : null;
+    for (let step = 0; packIds.length < 3 && step < n; step++) {
+      const cid = pool[(((di + step * 5) % n) + n) % n];
+      if (cid !== heroId && cid !== todayId && !packIds.includes(cid) && byId.has(cid)) packIds.push(cid);
+    }
+    if (!todayId) {
+      for (let step = 0; step < n; step++) {
+        const cid = pool[(((di + step * 5) % n) + n) % n];
+        if (cid !== heroId && !packIds.includes(cid) && byId.has(cid)) { todayId = cid; break; }
+      }
+    }
+    const slots = [...packIds.slice(0, 3), ...(todayId ? [todayId] : [])].map(id => byId.get(id)).filter(Boolean);
     paint($('pick-grid'), slots.map((g, i) => cardHTML(g, 'lg', {eager: true, today: i === 3})).join(''));
     const yg = byId.get(y.today);
     $('yesterday-bar').innerHTML = yg ? '<span>Yesterday’s pick:</span> <a class="yesterday-link" href="' + esc(yg.route) + '" data-play="' + esc(yg.id) + '">' + esc(title(yg)) + '</a>' : '';
+  }
+
+  /* ---- hero clip motion: muted, visible-only, off for reduced motion / Calm / low-tier ---- */
+  const isLowTier = () => {
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (conn && (conn.saveData || /(^|-)2g$/i.test(conn.effectiveType || ''))) return true;
+    if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-data: reduce)').matches) return true;
+    if (typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 2) return true;
+    if (coarse() && typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency <= 4) return true;
+    return false;
+  };
+  function initHeroMotion() {
+    const media = $('hero-media');
+    if (!media) return;
+    const videoSrc = media.dataset.heroVideo, posterSrc = media.dataset.heroPoster || '';
+    if (!videoSrc) return;
+    let inView = false, video = null;
+    const canPlay = () => !reducedMotion() && !document.documentElement.classList.contains('calm') && !isLowTier();
+    heroTeardown = () => {
+      if (!video) return;
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      video.remove();
+      video = null;
+    };
+    heroSync = () => {
+      if (!canPlay()) { heroTeardown(); return; }
+      if (!inView || document.hidden) { if (video) video.pause(); return; }
+      if (!video) {
+        video = document.createElement('video');
+        video.muted = true;
+        video.defaultMuted = true;
+        video.loop = true;
+        video.playsInline = true;
+        video.preload = 'metadata';
+        if (posterSrc) video.poster = posterSrc;
+        video.setAttribute('aria-hidden', 'true');
+        video.setAttribute('tabindex', '-1');
+        video.addEventListener('error', heroTeardown, {once: true});
+        video.src = videoSrc;
+        media.append(video);
+      }
+      video.play().catch(() => {});
+    };
+    if (typeof IntersectionObserver === 'function') {
+      new IntersectionObserver(entries => {
+        for (const entry of entries) inView = entry.isIntersecting && entry.intersectionRatio >= 0.25;
+        heroSync();
+      }, {threshold: [0, 0.25, 0.5]}).observe(media);
+    } else {
+      inView = true;
+      heroSync();
+    }
+    document.addEventListener('visibilitychange', heroSync);
+    if (typeof matchMedia === 'function') {
+      const mq = matchMedia('(prefers-reduced-motion: reduce)');
+      if (typeof mq.addEventListener === 'function') mq.addEventListener('change', heroSync);
+    }
   }
 
   /* ---- moods: primary matches first, then secondary; kept in #mood= ---- */
@@ -372,14 +447,15 @@
   });
   window.addEventListener('hashchange', () => { activeMood = moodFromHash(); renderMoods(); });
   window.addEventListener('popstate', () => { if (dialog.open) closeInfo(); activeMood = moodFromHash(); renderMoods(); });
-  window.addEventListener('pagehide', () => { rememberPosition(); stopMedia(); });
-  window.addEventListener('pageshow', event => { if (durable) { favourites = readList('favourites'); recent = readList('recent'); } renderAll(); restorePosition(event); });
+  window.addEventListener('pagehide', () => { rememberPosition(); stopMedia(); heroTeardown(); });
+  window.addEventListener('pageshow', event => { if (durable) { favourites = readList('favourites'); recent = readList('recent'); } renderAll(); restorePosition(event); heroSync(); });
   window.addEventListener('storage', e => { if (e.key === keys.favourites || e.key === keys.recent) { favourites = readList('favourites'); recent = readList('recent'); renderAll(); } });
 
   /* ---- first paint ---- */
   document.querySelectorAll('.js-only[hidden]').forEach(el => { el.hidden = false; });
   if (coarse()) document.querySelectorAll('[data-needs-keyboard]').forEach(b => { b.hidden = false; });
   initCalm();
+  initHeroMotion();
   const params = new URLSearchParams(location.search);
   if (params.get('q')) query.value = params.get('q').slice(0, 100);
   renderPick();
