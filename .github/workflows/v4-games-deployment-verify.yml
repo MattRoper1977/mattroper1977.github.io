@@ -26,6 +26,7 @@ on:
       - 'tools/build_mbm_search_index.py'
       - 'tools/verify_curation_keys.mjs'
       - 'tools/verify_v4_games_deployment.mjs'
+      - 'tools/verify_housegames_board_privacy.mjs'
       - 'tools/benchmark_v4_games_deployment.mjs'
       - '.github/workflows/v4-games-deployment-verify.yml'
   push:
@@ -53,6 +54,7 @@ on:
       - 'tools/build_mbm_search_index.py'
       - 'tools/verify_curation_keys.mjs'
       - 'tools/verify_v4_games_deployment.mjs'
+      - 'tools/verify_housegames_board_privacy.mjs'
       - 'tools/benchmark_v4_games_deployment.mjs'
       - '.github/workflows/v4-games-deployment-verify.yml'
   workflow_dispatch:
@@ -160,6 +162,11 @@ jobs:
         run: |
           node tools/verify_curation_keys.mjs
           node tools/verify_pupil_genres.mjs
+
+      - name: House Games board privacy (planted-name test)
+        # Typed names and class names travel in Sync Codes; the projected
+        # teacher board must show only callsigns. Includes a negative control.
+        run: node tools/verify_housegames_board_privacy.mjs
 
       - name: Exact browser matrix
         env:
