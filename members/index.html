@@ -16,7 +16,7 @@
 <main id="main">
 <section class="ma-hero"><p class="ma-eyebrow">Made by Matt Members</p><h1>Your useful bits, wherever you sign in</h1><p>Save the Made by Matt areas you use most. These member choices belong to your real account and can be restored in a clean browser after you sign in.</p></section>
 <div class="ma-wrap">
-<noscript><div class="ma-panel"><h2>Account features need JavaScript</h2><p>Games, lessons, apps, tools and resources stay public. Only account-backed member features need JavaScript and a connection.</p></div></noscript>
+<noscript><div class="ma-panel"><h2>Account features need JavaScript</h2><p>Lessons, apps, tools and resources stay public. Only account-backed member features need JavaScript and a connection.</p></div></noscript>
 
 <section class="ma-panel" id="membersLoading" aria-live="polite"><h2>Checking your account…</h2><p>The public site remains available while this loads.</p></section>
 <section class="ma-panel" id="membersUnavailable" hidden><p class="ma-kicker">Members</p><h2>Secure account setup is not active yet</h2><p>The Members page will not invent a local-password account. The cloud account project must be configured before registration or sign-in is offered.</p><div class="ma-actions"><a class="ma-btn secondary" href="/main/">Back to Made by Matt</a></div></section>
@@ -33,10 +33,10 @@
 
 <div class="ma-grid" style="margin-top:1rem">
 <div class="ma-panel"><h2>Saved to your account</h2><div id="savedList"><p>No saved shortcuts yet.</p></div></div>
-<div class="ma-panel"><h2>What stays local</h2><p>Not every browser setting belongs in an account. Reading-background choice remains a device preference. Pupil registers, marks, evidence and other classroom records are not swept into member sync.</p><p>Existing offline games and lessons continue to work independently of sign-in.</p></div>
+<div class="ma-panel"><h2>What stays local</h2><p>Not every browser setting belongs in an account. Reading-background choice remains a device preference. Pupil registers, marks, evidence and other classroom records are not swept into member sync.</p><p>Existing offline lessons continue to work independently of sign-in.</p></div>
 </div>
 
-<div class="ma-panel" id="localNotice" style="margin-top:1rem" hidden><h2>Existing local profile preserved</h2><p id="localNoticeText"></p><p>Your old local password record is not uploaded. Existing local game saves are not deleted. You can manage the old profile from <a href="/account/">Account settings</a>.</p></div>
+<div class="ma-panel" id="localNotice" style="margin-top:1rem" hidden><h2>Existing local profile preserved</h2><p id="localNoticeText"></p><p>Your old local password record is not uploaded. Existing local saved progress is not deleted. You can manage the old profile from <a href="/account/">Account settings</a>.</p></div>
 </section>
 </div>
 </main>
@@ -47,7 +47,6 @@
 'use strict';
 var $=function(s){return document.querySelector(s)};
 var hubs=[
- {href:'/games/',destination:'https://www.madebymatt-play.uk/',title:'Made by Matt Play',desc:'Open the Made by Matt games website.'},
  {href:'/Lessons/',title:'Lessons',desc:'BUILD, GROW and LAUNCH learning.'},
  {href:'/Matt-s-Apps-/',title:'Apps',desc:'Creative browser studios and apps.'},
  {href:'/tools/',title:'Tools',desc:'Practical Made by Matt utilities.'},

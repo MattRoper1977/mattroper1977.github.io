@@ -427,7 +427,7 @@
     var notice = d.createElement('p');
     notice.id = 'adultAccountNotice';
     notice.className = 'ma-account-audience';
-    notice.innerHTML = '<b>Adult and teacher accounts.</b> Made by Matt accounts are intended for adults and teachers. Pupils can use public Games, Lessons, Apps, Tools and Resources without creating an account.';
+    notice.innerHTML = '<b>Adult and teacher accounts.</b> Made by Matt accounts are intended for adults and teachers. Pupils can use public Lessons, Apps, Tools and Resources without creating an account.';
     form.insertBefore(notice, form.firstChild);
   }
 

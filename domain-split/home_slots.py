@@ -61,7 +61,7 @@ Where each slot comes from (uz-6 (b)):
 * owner.makerNote and the door and pathway bylines (uz-6 (g), vb-3 (h)) are
   the owner's words of spec section 6, verbatim; each is confirmed by digest,
   never retyped.
-* PLAY_ROOT/ (masthead and footer) becomes shared_navigation.PLAY, the Play
+* PLAY_ROOT/ (footer only since the 23 Nov no-games rule) becomes shared_navigation.PLAY, the Play
   root the stamped menu already links (lane decision LD5).
 * SEO-1 (vd-1 (b), which rules the README section 10 block that uz-6 (g) had
   left out): one JSON-LD block, a WebSite and a Person, stamped before </head>.
@@ -107,7 +107,10 @@ TEMPLATE = HERE / 'home' / 'home.html'
 # home.html r6, the accepted draft of record (J93 revision 1, ruling vj-1).
 # Pinned: the sha256 of home.html r6 (35,244 B), the file of record in ruling vj-1 (r5 was 32f53a11, uz-6 and vb-3).
 # 21 Nov 2026, names flight N1 (ruling thread): only the place leaves the maker's note; this pin moves with it.
-TEMPLATE_SHA256 = '82a7150fcf90496e36ffcf94b11a60312fa1e80de9c3fda26b573248e6640f3f'
+# 23 Nov 2026, no-games rule (ruling thread, Matt 10:07Z): "real games" leaves the masthead and SEO,
+# "or a game" leaves the pupils door, the masthead Play button goes; the template, masthead and
+# first door-byline pins move with it. The footer keeps the one Play link.
+TEMPLATE_SHA256 = '71837debfee2610c03cfe455296ab1b1bf9aefc6041e3f75f24521a310dda6f6'
 NODE_SCRIPT = HERE / 'home_hub_counts.cjs'
 RECORD = 'data/audience-homepages.json'
 HEADER = 'tools/chrome/header.html'
@@ -128,8 +131,8 @@ TOOL_LABELS = {'resources': 'Resources', 'apps': 'Apps & tools', 'tools': 'Tools
 # Pinned: the sha256 of each owner-word string as home.html r6 types it (unchanged from r5), in page order (masthead 1, door
 # bylines 4, pathway bylines 3, maker's note 1): spec b3d3df9b section 6, an input of record under uz-6.
 OWNER_WORDS = {
-    'masthead': ['945b7adcfbc710f3444046127d91a4d07553a3763a378acfea51b9ec40eb8b47'],
-    'door bylines': ['918c9a19dcd444e40528c54d693575bd51cb31bb5ff41a74436ab0e74cc3389d',
+    'masthead': ['99430eaeb5f88364df1988e01c527a5936f2fe0e9e168a95d54109dd600ba3e0'],
+    'door bylines': ['cf588dc7913034ba792da89707c20e4dd413ba805278140127335548e4b58efd',
                      '3af663135ec09ce91d65f807afaeb4fd0758820a654b2f2008baadab2d8f1890',
                      'efc1930059d2b78aeb1189bd84a85b0fb7471701bce6215b9f71c3698dff9f21',
                      '5246e29e2bfa47995508bb98803643cb92398d1fadf60636112776c6053dec53'],
@@ -571,8 +574,8 @@ def bind(template, sources, check_digest=True):
             if key not in used:
                 raise ValueError('Unresolved slot: ' + key)
     # LD5: the Play root the stamped chrome already links.
-    if text.count(PLAY_ROOT) != 2:
-        raise ValueError('The draft does not carry PLAY_ROOT/ twice (masthead and footer)')
+    if text.count(PLAY_ROOT) != 1:
+        raise ValueError('The draft does not carry PLAY_ROOT/ once (footer only, no-games rule)')
     text = text.replace(PLAY_ROOT, sources['play'])
     for needle, why in ((SAMPLE, 'an unfilled data-sample'), ('data-sample', 'a data-sample'),
                         ('id="whats-new"', "the What's new section"), ('application/ld+json', 'JSON-LD of its own'),
@@ -708,8 +711,8 @@ def self_test(lessons_root=None):
         play_titles = re.findall(r'data-slot="manifest\.updated\.\d\.title">([^<]+)<', whats_new)
         control('Play data is never bound: none of the draft Play update titles reaches the page',
                 len(play_titles) == 6 and not any(t in page for t in play_titles))
-        control('PLAY_ROOT/ becomes shared_navigation.PLAY twice; no data-sample is left',
-                page.count('href="' + play + '"') == 2 and 'data-sample' not in page and 'PLAY_ROOT' not in page)
+        control('PLAY_ROOT/ becomes shared_navigation.PLAY once (footer); no data-sample is left',
+                page.count('href="' + play + '"') == 1 and 'data-sample' not in page and 'PLAY_ROOT' not in page)
         control('no mailing link (vd-1 (c))', 'data-mailing-link' not in page)
         control('vj-4: LD10 retired: home.css is linked once and no correction stylesheet is linked',
                 page.count(HOME_CSS_LINK) == 1 and 'home-corrections' not in page)
