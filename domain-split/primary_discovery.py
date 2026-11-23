@@ -171,7 +171,7 @@ def render(catalogue):
 <div class="primary-actions"><output id="primary-count" aria-live="polite">'''+str(counts['units'])+' units · '+str(counts['lessons'])+' lessons · '+str(counts['word_downloads'])+''' Word downloads</output><button id="primary-clear" type="button">Clear filters</button></div></form>
 <p class="primary-empty" id="primary-empty" hidden>No matching Primary resources. Try fewer words or clear the filters.</p>
 <div class="primary-results">'''+''.join(cards)+'''</div>
-<footer class="primary-footer"><p class="primary-tiers"><strong>Primary support:</strong> Seedling, Sapling and Oak are the existing lesson tiers. BUILD, GROW and LAUNCH remain separate learning pathways.</p>
+<footer class="primary-footer"><p class="primary-tiers"><strong>Primary support:</strong> Seedling, Sapling and Oak are the existing lesson tiers. BASE, TRACK and SUMMIT remain separate learning pathways.</p>
 <p>Available now: Year 4–6 Science, Autumn 1.1 and 1.2. Spring, Summer, other subjects and further year groups are not yet included.</p>
 <p>Renewable energy is an existing sustainability unit. These six units are a teaching collection, not a complete Primary curriculum.</p></footer></main>
 <script id="primary-data" type="application/json">'''+data+'</script>'+CORE_SCRIPT+SCRIPT+'</body></html>\n'

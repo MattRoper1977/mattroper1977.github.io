@@ -52,7 +52,7 @@ SEARCH_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="1
 # audience data file.
 TEACHER_TASKS = [
     ("teach-a-lesson", "#2F6B4D", "Teach a lesson", "Go straight to classroom-ready lessons and teaching sequences."),
-    ("plan-a-sequence", "#405FA8", "Plan a sequence", "Find BUILD, GROW, LAUNCH and other pathway or scheme material."),
+    ("plan-a-sequence", "#405FA8", "Plan a sequence", "Find BASE, TRACK, SUMMIT and other pathway or scheme material."),
     ("assess-understanding", "#9A6332", "Assess understanding", "Open quick checks, exit tickets and feedback tools."),
     ("capture-evidence", "#6E58B8", "Capture evidence", "Use evidence-aware resources and the Evidence Binder."),
     ("manage-learner-information", "#0E7490", "Manage learner information", "Reach registers, cohort tools and local data workflows."),

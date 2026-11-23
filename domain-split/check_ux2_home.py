@@ -22,7 +22,7 @@ are kept unchanged.
              counts are computed by that checkout's hub.js); the default is the
              CI checkout .sources/Lessons beside this repository.
 """
-import argparse, json, os, sys, tempfile
+import argparse, json, os, re, sys, tempfile
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote
@@ -231,7 +231,15 @@ def j93_self_test(root, lessons_root, tmp):
     assert all(len(badge_files(lessons_root, f)) >= 1 for f in files), 'a flagship card with no pack files proves nothing'
     by_file = {r.get('file'): r for r in rows}
     for card, f in zip(real.cards, files):
-        assert f in by_file and card['outcome'] == ' '.join(str(by_file[f]['desc']).split()), 'flagship outcome is not the registry row'
+        # Public pathway words (owner, 22 and 23 Nov 2026): the outcome is the registry row with each whole-word
+        # record pathway name shown as its public display name, and nothing else changed. The map is typed here,
+        # independently of home_slots and of the record, so a binder that drifts reds.
+        want = re.sub(r'(?<![A-Za-z0-9_])(BUILD|GROW|LAUNCH)(?![A-Za-z0-9_])',
+                      lambda m: {'BUILD': 'BASE', 'GROW': 'TRACK', 'LAUNCH': 'SUMMIT'}[m.group(1)],
+                      ' '.join(str(by_file[f]['desc']).split()))
+        assert f in by_file and card['outcome'] == want, 'flagship outcome is not the registry row under the public pathway words'
+        assert not re.search(r'(?<![A-Za-z0-9_])(BUILD|GROW|LAUNCH)(?![A-Za-z0-9_])', ' '.join((card['outcome'], card['title'], card['pathway'], card['week']))), \
+            'a flagship card shows a record pathway name'
     hub_route = '/Lessons/subject.html?subject=' + home_slots.FLAGSHIP[0]
     with tempfile.TemporaryDirectory() as t:  # vb-3 (a): the lesson page leaves the tree -> the badge links the subject hub
         L = overlay(t, lessons_root, {files[0]: None})

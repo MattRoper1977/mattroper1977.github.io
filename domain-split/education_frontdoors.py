@@ -189,6 +189,9 @@ def pathways(bp):
 HERO_MANIFEST = 'education-hero.json'
 FEATURE_MANIFEST = 'homepage-feature.json'
 PATHWAYS = {'BUILD', 'GROW', 'LAUNCH'}
+# Public pathway words (owner, 22 and 23 Nov 2026): what a page shows for each record pathway name.
+# The record names stay as keys (classes, data attributes, search picks); they are never visible text.
+PUBLIC_PATHWAY = {'BUILD': 'BASE', 'GROW': 'TRACK', 'LAUNCH': 'SUMMIT'}
 
 
 def hero_art(bp, kind):
@@ -264,8 +267,8 @@ def try_lesson_slide(feature, index, total, first):
     label = str(index + 1) + ' of ' + str(total) + ': ' + feature['displayTitle']
     return ('<li class="fd-try-slide" data-try-slide="' + esc(feature['packId']) + '" aria-roledescription="slide" aria-label="' + esc(label) + '"' + ('' if first else ' hidden') + '>'
             + '<div class="fd-pack-copy"><h2>' + esc(feature['displayTitle']) + '</h2><p>' + esc(feature['description']) + '</p>'
-            + '<div class="fd-chips"><span class="fd-chip ' + feature['pathway'].lower() + '">' + esc(feature['pathway']) + '</span>'
-            # tm-4(c): a screen reader hears "BUILD · Science", not "BUILDScience".
+            + '<div class="fd-chips"><span class="fd-chip ' + feature['pathway'].lower() + '">' + esc(PUBLIC_PATHWAY.get(feature['pathway'], feature['pathway'])) + '</span>'
+            # tm-4(c): a screen reader hears "BASE · Science", not "BASEScience".
             + '<span class="fd-sep"> · </span><span class="fd-feature-meta">' + esc(feature['subject']) + ' · ' + esc(feature['duration']) + '</span></div>'
             + '<p class="fd-muted">Reference: ' + esc(feature['reference']) + '</p>'
             + action(feature['lessonRoute'], 'Try this lesson →')
@@ -354,7 +357,7 @@ def render(kind, origin, bp):
         body += '<section class="fd-maker" id="about"><div class="wrap">' + line_icon('person') + '<h2>Made by a teacher. For real classrooms.</h2><a href="/commission/#about-matt">Meet Matt →</a>' + mailing_link() + '</div></section>'
         body += '<script type="application/json" id="home-preview-data">' + json.dumps(preview_data(bp), ensure_ascii=True).replace('<', '\\u003c') + '</script>'
     elif kind == 'teachers':
-        teacher_picks = ''.join('<button type="button" class="fd-topic-btn" data-search-pick="' + esc(t) + '" aria-pressed="false">' + esc(t) + '</button>'
+        teacher_picks = ''.join('<button type="button" class="fd-topic-btn" data-search-pick="' + esc(t) + '" aria-pressed="false">' + esc(PUBLIC_PATHWAY.get(t, t)) + '</button>'
                                 for t in ('Science', 'Humanities', 'Lifeskills', 'Art', 'BUILD', 'GROW', 'LAUNCH'))
         body = ('<section class="fd-hero wrap"><div><p class="fd-eyebrow">TEACHERS</p><h1>Ready for your next lesson?</h1>'
                 '<p class="fd-lead">Find a lesson, gather your resources and get ready to teach.</p>'
@@ -391,9 +394,9 @@ def render(kind, origin, bp):
             '<span class="fd-tier-pill ' + esc(k) + '">' + esc(label) + '</span>'
             '<p>' + esc(desc) + '</p></article>'
             for k, label, desc in [
-                ('build', 'BUILD', 'Short, clear steps with visual prompts and steady support.'),
-                ('grow', 'GROW', 'Everyday topics with helpful hints as you work more independently.'),
-                ('launch', 'LAUNCH', 'Deeper challenges for independent study and planning what comes next.'),
+                ('build', 'BASE', 'Short, clear steps with visual prompts and steady support.'),
+                ('grow', 'TRACK', 'Everyday topics with helpful hints as you work more independently.'),
+                ('launch', 'SUMMIT', 'Deeper challenges for independent study and planning what comes next.'),
             ]
         )
         body = ('<section class="fd-hero wrap"><div><p class="fd-eyebrow">PUPILS</p><h1>What are you learning today?</h1>'
@@ -407,7 +410,7 @@ def render(kind, origin, bp):
                 '<section class="fd-section wrap"><h2>Choose your subject</h2>' + subjects + '</section>'
                 '<section class="fd-section wrap" id="pupil-pathways" aria-labelledby="pupil-pathways-title">'
                 '<h2 id="pupil-pathways-title">Which pathway do I pick?</h2>'
-                '<p class="fd-muted">Your teacher will tell you whether to open BUILD, GROW or LAUNCH inside your subject.</p>'
+                '<p class="fd-muted">Your teacher will tell you whether to open BASE, TRACK or SUMMIT inside your subject.</p>'
                 '<div class="fd-pupil-pathway-grid">' + pupil_pathway_cards + '</div></section>')
     route = '/' if kind == 'home' else record[kind]['route']
     title = {'home': 'Big on ideas. Light on prep.', 'teachers': 'Teachers', 'pupils': 'Pupils'}[kind]
