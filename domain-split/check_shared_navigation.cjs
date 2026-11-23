@@ -118,9 +118,10 @@ async function chromeFocus(control,surface,label,redProof=false) {
           else assert.deepEqual(account, ['/privacy/'], 'Undeclared = privacy-only account group: ' + route);
           const hrefs = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => new URL(a.getAttribute('href'), location.href).pathname === '/Lessons/' ? '/Lessons/' : a.getAttribute('href')));
           assert.deepEqual(hrefs.filter(h => /[?]|\.html$|#/.test(h)), [], 'No deep links in the menu: ' + route);
-          const last = page.locator(panel + ' a').last();
-          assert.equal(await last.innerText(), 'Made by Matt Play ↗', 'Play is last: ' + route);
-          assert.equal(await last.getAttribute('href'), 'https://www.madebymatt-play.uk/', 'Play is a link: ' + route);
+          // No-games rule (23 Nov 2026): the education menu names no games and links no Play site.
+          const menuText = await page.locator(panel).innerText();
+          assert(!/\bgames?\b|Made by Matt Play/i.test(menuText), 'No games wording in the menu: ' + route);
+          assert.equal(await page.locator(panel + ' a[href*="madebymatt-play"]').count(), 0, 'No Play link in the menu: ' + route);
           const short = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => a.getBoundingClientRect().height).filter(h => h > 0 && h < 48));
           assert.deepEqual(short, [], 'Every menu row is at least 48px: ' + route);
           // EDU-HEADER-BRAND-20260915: the tagline sits beneath the wordmark, inside the brand lock-up, and nowhere else in the header.

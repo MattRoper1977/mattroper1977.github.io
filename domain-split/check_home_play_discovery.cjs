@@ -125,9 +125,14 @@ async function educationOnly(page, requests, start) {
         const start = requests.length; await goto(page, home);
         assert.equal(await page.locator('.mbm-explore-nav').count(), 0, 'No explore bar on the homepage');
         const menu = page.locator('.mbm-unified-menu > summary'); await menu.click();
-        for (const [name, href] of [['Primary lessons', '/Lessons/primary/'], ['Made by Matt Play ↗', canonicalPlay + '/']]) {
+        for (const [name, href] of [['Primary lessons', '/Lessons/primary/']]) {
           const link = page.locator('#mbm-navigation-panel').getByRole('link', { name, exact: true }); assert.equal(await link.getAttribute('href'), href); await target(link);
         }
+        // No-games rule (23 Nov 2026): no Play row in the menu, no Play button in the masthead,
+        // no games wording anywhere above the footer. The footer keeps the one Play link.
+        assert.equal(await page.locator('#mbm-navigation-panel a[href*="madebymatt-play"]').count(), 0, 'No Play row in the menu');
+        assert.equal(await page.locator('main a[href*="madebymatt-play"], header a[href*="madebymatt-play"]').count(), 0, 'No Play link above the footer');
+        assert(!/\bgames?\b/i.test(await page.locator('main').innerText()), 'No games wording on the homepage');
         // J93: the institutional audience routes are not doors; they stay menu rows, each a clear target.
         for (const route of audienceRoutes) await target(page.locator(`#mbm-navigation-panel a[href="${route}"]`));
         await page.keyboard.press('Escape');
@@ -183,16 +188,15 @@ async function educationOnly(page, requests, start) {
           await page.locator('.mbm-unified-menu > summary').click();
           const panel = page.locator('#mbm-navigation-panel');
           await target(panel.getByRole('link', { name: 'Primary lessons', exact: true }));
-          const menuPlay = panel.getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
-          assert.equal(await menuPlay.getAttribute('href'), canonicalPlay + '/'); await target(menuPlay);
+          assert.equal(await panel.locator('a[href*="madebymatt-play"]').count(), 0, 'No Play row in the menu on ' + route);
           await page.keyboard.press('Escape');
-          // SW2 U keeps Play in the native menu; the pupil footer is the approved learning subset.
+          // No-games rule (23 Nov 2026): Play left the menu; the pupil footer is the approved learning subset.
           await noOverflow(page);
           // J93: the homepage anchor is #doors; no page relies on the retired #audiences anchor.
           assert.equal((await page.request.get(url('/#doors'))).status(), 200);
           assert.equal(await page.locator('a[href$="#audiences"]').count(), 0, 'No link to the retired /#audiences anchor on ' + route);
         }
-        return { routes: ['/for/teachers/', '/for/pupils/'], visibleEntrances: ['Primary', 'Working with schools and organisations', 'Made by Matt Play'] };
+        return { routes: ['/for/teachers/', '/for/pupils/'], visibleEntrances: ['Primary', 'Working with schools and organisations'] };
       }, page);
       await check(`${width}-preserved-play-media-native-control-fixture`, async () => {
         // The former Education preview UI is intentionally absent. Preserve
