@@ -125,7 +125,7 @@ async function educationOnly(page, requests, start) {
         const start = requests.length; await goto(page, home);
         assert.equal(await page.locator('.mbm-explore-nav').count(), 0, 'No explore bar on the homepage');
         const menu = page.locator('.mbm-unified-menu > summary'); await menu.click();
-        for (const [name, href] of [['Primary lessons', '/Lessons/primary/'], ['Made by Matt Play ↗', canonicalPlay + '/']]) {
+        for (const [name, href] of [['Primary science (Years 4 to 6)', '/Lessons/primary/'], ['Made by Matt Play ↗', canonicalPlay + '/']]) {
           const link = page.locator('#mbm-navigation-panel').getByRole('link', { name, exact: true }); assert.equal(await link.getAttribute('href'), href); await target(link);
         }
         // J93: the institutional audience routes are not doors; they stay menu rows, each a clear target.
@@ -182,7 +182,7 @@ async function educationOnly(page, requests, start) {
           assert.equal(await page.locator('.mbm-explore-nav').count(), 0, 'No explore bar on ' + route);
           await page.locator('.mbm-unified-menu > summary').click();
           const panel = page.locator('#mbm-navigation-panel');
-          await target(panel.getByRole('link', { name: 'Primary lessons', exact: true }));
+          await target(panel.getByRole('link', { name: 'Primary science (Years 4 to 6)', exact: true }));
           const menuPlay = panel.getByRole('link', { name: 'Made by Matt Play ↗', exact: true });
           assert.equal(await menuPlay.getAttribute('href'), canonicalPlay + '/'); await target(menuPlay);
           await page.keyboard.press('Escape');

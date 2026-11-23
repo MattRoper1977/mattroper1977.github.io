@@ -296,7 +296,7 @@ def measure(overrides: dict[str, bytes] | None = None) -> tuple[list[str], int]:
 
 DRAWER_PROBE = """(() => {
   const groups = Array.prototype.slice.call(document.querySelectorAll('.mbm-menu-group'))
-    .filter(g => (g.querySelector('h2') || {}).textContent === 'Your account');
+    .filter(g => (g.querySelector('h2') || {}).textContent === 'Site and games');
   const count = h => groups.reduce((n, g) => n + g.querySelectorAll('a[href="' + h + '"]').length, 0);
   return {groups: groups.length, account: count('/account/'), mailing: count('/mailing-list/'),
           privacy: count('/privacy/')};
@@ -367,7 +367,7 @@ def measure_drawer(navigation: str | None = None) -> tuple[list[str], int]:
                 except Exception as err:  # noqa: BLE001
                     ok(False, f"drawer: {route} could not be measured ({str(err)[:70]})")
                     continue
-                ok(dom["groups"] == 1, f"drawer: {route} shows {dom['groups']} 'Your account' groups in the rendered DOM")
+                ok(dom["groups"] == 1, f"drawer: {route} shows {dom['groups']} 'Site and games' groups in the rendered DOM")
                 if d["page"] in declared:
                     ok(dom["account"] >= 1 and dom["mailing"] >= 1,
                        f"drawer: {route} is declared adult but the rendered drawer shows account "

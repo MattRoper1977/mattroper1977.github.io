@@ -25,8 +25,8 @@ PA5  lives in verify_adult_surfaces_browser.mjs, because the defect that
      motivated it is invisible to every static check in this file: the chooser's
      source carries zero /account/ hrefs and passes its gate, while the browser
      shows one, injected after load. A static gate cannot see an injected link.
-PA6  the menu drawer follows the record (ruling tm). The drawer's "Your account"
-     group is written by the publisher (domain-split/shared_navigation.py), not
+PA6  the menu drawer follows the record (ruling tm). The drawer's "Site and games"
+     group (named "Your account" before the November 2026 redesign) is written by the publisher (domain-split/shared_navigation.py), not
      by mbm-platform.js, so PA1-PA5 never saw it: its account and mailing
      entries were on undeclared pages, the homepage and the Learning index among
      them, while every check here stayed green. PA6 runs the publisher's own
@@ -60,7 +60,7 @@ ROOT = Path(__file__).resolve().parent.parent
 RECORD = "data/adult-surfaces.json"
 NAV = "domain-split/shared_navigation.py"
 GENERATED_AT = "publication"
-DRAWER_GROUP = re.compile(r'<section class="mbm-menu-group"><h2>Your account</h2>(.*?)</section>', re.S)
+DRAWER_GROUP = re.compile(r'<section class="mbm-menu-group"><h2>Site and games</h2>(.*?)</section>', re.S)
 PLATFORM = "assets/mbm-platform.js"
 MARKER = "data-mbm-adult-features"
 
@@ -423,7 +423,7 @@ def self_test(baseline: set[str]) -> int:
     )
     control(
         "the Privacy entry dropped from the shared drawer",
-        {NAV: mutate(navigation, "ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]", "ACCOUNT_SHARED = []",
+        {NAV: mutate(navigation, "ACCOUNT_SHARED = [('/privacy/', 'Privacy and data')]", "ACCOUNT_SHARED = []",
                      "privacy entry removal")},
         "Privacy entries; every drawer keeps exactly one",
     )

@@ -62,6 +62,7 @@ async function chromeFocus(control,surface,label,redProof=false) {
       page.on('pageerror', error => pageErrors.push(error.message));
       await require('./check_education_hub_links.cjs').verify({page,origin,javaScriptEnabled});
       await require('./check_education_hub_links.cjs').verify({page,origin,javaScriptEnabled,consumerFixtures:true});
+      await require('./check_education_hub_links.cjs').verifyLegacyHeader({page,origin,javaScriptEnabled});
       for (const route of routes) {
         assert.equal((await page.goto(origin + route)).status(), 200, route);
         assert.equal(await page.locator(header).count(), 1, 'One header: ' + route);
@@ -88,8 +89,9 @@ async function chromeFocus(control,surface,label,redProof=false) {
         const lessonLink=page.locator(panel).getByRole('link',{name:'Lessons',exact:true});
         assert(await lessonLink.isVisible(),'Learning destination: '+route);
         assert.equal(new URL(await lessonLink.getAttribute('href'),page.url()).pathname,'/Lessons/','Keep catalogue return selection: '+route);
-        // UX2 B1 — Appendix A §MENU exactly: title + 44px close, three groups in
-        // order, audience rows from the record, no deep links, rows ≥48px, Play last.
+        // Redesign Phase 1 (merged plan 3.2) on UX2 B1's contract: title + 44px close,
+        // three groups in order, audience rows from the record, one declared deep link
+        // (Saved on this device), rows ≥48px, Play last.
         {
           const record = JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/audience-homepages.json'), 'utf8')).audiences;
           const pupil = route === record.pupils.route;
@@ -97,45 +99,60 @@ async function chromeFocus(control,surface,label,redProof=false) {
           const closeBox = await page.locator(panel + ' .mbm-menu-close').boundingBox();
           assert(closeBox && closeBox.width >= 44 && closeBox.height >= 44, 'Close control is 44px: ' + route + ' ' + JSON.stringify(closeBox));
           const titles = await page.locator(panel + ' .mbm-menu-group h2').evaluateAll(nodes => nodes.map(n => n.textContent.trim()));
-          assert.deepEqual(titles, ['Learning', 'Who are you here for?', 'Your account'], 'Three groups in order: ' + route);
+          assert.deepEqual(titles, ['Find and teach', 'For you', 'Site and games'], 'Three groups in order: ' + route);
           // The Lessons adapter rewrites a[href="/Lessons/"] at runtime to carry the
           // catalogue return selection (asserted above); compare that row by path.
-          const groups = await page.locator(panel + ' .mbm-menu-group').evaluateAll(nodes => nodes.map(n => [...n.querySelectorAll('a')].map(a => { const h = a.getAttribute('href'); return [new URL(h, location.href).pathname === '/Lessons/' ? '/Lessons/' : h, a.textContent.trim()]; })));
-          const learning = pupil ? [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/Lessons/primary/', 'Primary lessons']]
-            : [['/Lessons/', 'Lessons'], ['/resources/', 'Resources'], ['/tools/', 'Tools'], ['/Lessons/primary/', 'Primary lessons']];
-          assert.deepEqual(groups[0], learning, 'Learning group: ' + route);
+          const groups = await page.locator(panel + ' .mbm-menu-group').evaluateAll(nodes => nodes.map(n => [...n.querySelectorAll('a')].map(a => { const h = a.getAttribute('href'); const u = new URL(h, location.href); return [u.pathname === '/Lessons/' && !u.searchParams.has('view') ? '/Lessons/' : h, a.textContent.trim()]; })));
+          const tail = [['/Lessons/primary/', 'Primary science (Years 4 to 6)'], ['/Lessons/?view=saved', 'Saved on this device']];
+          const learning = pupil ? [['/Lessons/', 'Lessons'], ['/resources/', 'Packs'], ['/Lessons/help/', 'Help with my sheet'], ...tail]
+            : [['/Lessons/', 'Lessons'], ['/resources/', 'Packs'], ['/tools/', 'Tools'], ['/Matt-s-Apps-/', 'Studios'], ['/Lessons/help/', 'Help with my sheet'], ...tail];
+          assert.deepEqual(groups[0], learning, 'Find and teach group: ' + route);
           const who = Object.values(record).map(a => [a.route, a.label]);
           if (!who.some(r => r[0] === '/for/governors-trustees/')) who.push(['/for/governors-trustees/', 'Governors & trustees']);
           assert.deepEqual(groups[1], pupil ? who.filter(r => r[0] === record.pupils.route) : who, 'Audience rows come from the record: ' + route);
-          const account = groups[2].map(r => r[0]);
-          assert(account.includes('/privacy/') && groups[2].find(r => r[0] === '/privacy/')[1] === 'Privacy and statistics', 'Privacy row: ' + route);
-          const full = [['/account/', 'Account and members'], ['/mailing-list/', 'Teacher updates'], ['/privacy/', 'Privacy and statistics']];
+          // Ruling tm still holds: the group follows data/adult-surfaces.json. Declared =
+          // the two account-backed rows first; undeclared, pupil or shared = none of them.
+          const play = ['https://www.madebymatt-play.uk/', 'Made by Matt Play ↗'];
+          const shared = [['/privacy/', 'Privacy and data'], play];
+          const full = [['/account/', 'Account and members'], ['/mailing-list/', 'Teacher updates'], ['/privacy/', 'Privacy and data'], ['/commission/', 'Contact and requests'], play];
           const adultPages = new Set(JSON.parse(fs.readFileSync(path.join(siteRoot, 'data/adult-surfaces.json'), 'utf8')).adultSurfaces.map(x => '/' + x.page.replace(/index\.html$/, '')));
-          if (restricted.includes(route)) assert.deepEqual(account, ['/privacy/'], 'Pupil/shared subset of the account group: ' + route);
-          // Ruling tm: the drawer follows data/adult-surfaces.json. Declared = the full
-          // account group; undeclared = privacy-only, with no third answer.
-          else if (adultPages.has(route)) assert.deepEqual(groups[2], full, 'Account group on a declared adult page: ' + route);
-          else assert.deepEqual(account, ['/privacy/'], 'Undeclared = privacy-only account group: ' + route);
-          const hrefs = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => new URL(a.getAttribute('href'), location.href).pathname === '/Lessons/' ? '/Lessons/' : a.getAttribute('href')));
-          assert.deepEqual(hrefs.filter(h => /[?]|\.html$|#/.test(h)), [], 'No deep links in the menu: ' + route);
+          if (restricted.includes(route)) assert.deepEqual(groups[2], shared, 'Pupil/shared subset of the site group: ' + route);
+          else if (adultPages.has(route)) assert.deepEqual(groups[2], full, 'Site group on a declared adult page: ' + route);
+          else assert.deepEqual(groups[2], shared, 'Undeclared = no account rows in the site group: ' + route);
+          // Display options is the first row of that group; it needs the script, so it is shown only with it.
+          const displayRow = page.locator(panel + ' .mbm-menu-group').nth(2).locator('.mbm-menu-display-open');
+          assert.equal(await displayRow.count(), 1, 'One Display options row: ' + route);
+          assert.equal(await displayRow.isVisible(), javaScriptEnabled, 'Display options row is shown only when it can work: ' + route);
+          const hrefs = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => { const u = new URL(a.getAttribute('href'), location.href); return u.pathname === '/Lessons/' && !u.searchParams.has('view') ? '/Lessons/' : a.getAttribute('href'); }));
+          assert.deepEqual(hrefs.filter(h => /[?]|\.html$|#/.test(h)), ['/Lessons/?view=saved'], 'One declared deep link in the menu, the saved view: ' + route);
           const last = page.locator(panel + ' a').last();
           assert.equal(await last.innerText(), 'Made by Matt Play ↗', 'Play is last: ' + route);
           assert.equal(await last.getAttribute('href'), 'https://www.madebymatt-play.uk/', 'Play is a link: ' + route);
           const short = await page.locator(panel + ' a').evaluateAll(nodes => nodes.map(a => a.getBoundingClientRect().height).filter(h => h > 0 && h < 48));
           assert.deepEqual(short, [], 'Every menu row is at least 48px: ' + route);
-          // EDU-HEADER-BRAND-20260915: the tagline sits beneath the wordmark, inside the brand lock-up, and nowhere else in the header.
-          assert.equal(await page.locator(header + ' .mbm-unified-brand small').count(), 1, 'One brand tagline in the header: ' + route);
-          assert.equal((await page.locator(header + ' .mbm-unified-brand small').innerText()).trim(), 'Learn • Build • Explore', 'Brand tagline text: ' + route);
+          // Redesign choice 4 (Matt, 22 November 2026): the header is one row and carries no
+          // tagline; the line lives in the footer. No Saved control in the header either.
+          assert.equal(await page.locator(header + ' .mbm-unified-brand small').count(), 0, 'No tagline element in the header: ' + route);
+          assert.equal(await page.locator(header).evaluate(el => (el.textContent.match(/Learn\s*•\s*Build\s*•\s*Explore/g) || []).length), 0, 'No tagline text in the header: ' + route);
+          assert.equal(await page.locator(header + ' .mbm-unified-saved').count(), 0, 'No Saved control in the header: ' + route);
           const brandGeometry = await page.locator(header + ' .mbm-unified-brand').evaluate(el => {
-            const strong = el.querySelector('strong'), small = el.querySelector('small'), bar = el.closest('.mbm-unified-bar');
-            const s = strong.getBoundingClientRect(), t = small.getBoundingClientRect(), b = bar.getBoundingClientRect();
+            const strong = el.querySelector('strong'), bar = el.closest('.mbm-unified-bar');
+            const s = strong.getBoundingClientRect(), b = bar.getBoundingClientRect(), h = el.closest('header').getBoundingClientRect();
             const lines = node => { const r = document.createRange(); r.selectNodeContents(node); return r.getClientRects().length; };
-            return {wordmarkLines: lines(strong), taglineLines: lines(small), taglineBelow: t.top >= s.bottom - 1,
-                    taglinePx: parseFloat(getComputedStyle(small).fontSize), overflow: s.right > b.right + 1 || t.right > b.right + 1 || el.scrollWidth > el.clientWidth + 1};
+            const tops = [...bar.children].filter(c => c.getBoundingClientRect().height > 0 && getComputedStyle(c).position !== 'absolute').map(c => { const r = c.getBoundingClientRect(); return Math.round(r.top + r.height / 2); });
+            return {wordmark: strong.textContent, wordmarkLines: lines(strong), headerHeight: Math.round(h.height), rowSpread: Math.max(...tops) - Math.min(...tops),
+                    overflow: s.right > b.right + 1 || el.scrollWidth > el.clientWidth + 1 || strong.scrollWidth > strong.clientWidth + 1};
           });
-          assert.equal(brandGeometry.wordmarkLines, 1, 'MADE BY MATT on one line: ' + route + ' ' + JSON.stringify(brandGeometry));
-          assert.equal(brandGeometry.taglineLines, 1, 'Tagline on one line beneath the wordmark: ' + route + ' ' + JSON.stringify(brandGeometry));
-          assert(brandGeometry.taglineBelow && brandGeometry.taglinePx >= 12 && !brandGeometry.overflow, 'Tagline beneath the wordmark, at least 12px, no overflow: ' + route + ' ' + JSON.stringify(brandGeometry));
+          assert.equal(brandGeometry.wordmark, 'Made by Matt', 'Wordmark text: ' + route);
+          assert.equal(brandGeometry.wordmarkLines, 1, 'Made by Matt on one line: ' + route + ' ' + JSON.stringify(brandGeometry));
+          assert(!brandGeometry.overflow, 'Wordmark does not overflow: ' + route + ' ' + JSON.stringify(brandGeometry));
+          assert(brandGeometry.headerHeight >= 56 && brandGeometry.headerHeight <= 58 && brandGeometry.rowSpread <= 2, 'Header is one 56px row at 390px: ' + route + ' ' + JSON.stringify(brandGeometry));
+          assert(!await page.locator(header + ' .mbm-unified-nav').isVisible(), 'The five links live in the Menu on a phone: ' + route);
+          const aa = page.locator(header + ' .mbm-unified-display > summary');
+          assert.equal(await aa.count(), 1, 'One Display options control: ' + route);
+          assert.equal(await aa.getAttribute('aria-label'), 'Display options', 'Display options is named: ' + route);
+          assert.equal(await aa.isVisible(), javaScriptEnabled, 'Display options is shown only when it can work: ' + route);
+          if (javaScriptEnabled) { const aaBox = await aa.boundingBox(); assert(aaBox && aaBox.width >= 44 && aaBox.height >= 44, 'Display options control is 44px: ' + route); }
           const searchLink = page.locator(header + ' .mbm-unified-search');
           const searchBox = await searchLink.boundingBox();
           assert(searchBox && searchBox.width >= 44 && searchBox.height >= 44, 'Header search control is 44px: ' + route);
@@ -254,16 +271,14 @@ async function chromeFocus(control,surface,label,redProof=false) {
         for (const width of [320,390]) for (const route of themeRoutes) {
           await page.setViewportSize({width,height:844});
           await page.goto(origin+route);
-          await page.locator(menu+' > summary').click();
-          await page.locator('.mbm-menu-display > summary').click();
+          await page.locator('.mbm-unified-display > summary').click();
           const blue=page.locator('[data-mbm-theme-slot] button[data-t="blue"]');
           await blue.click();
           assert.equal(await page.locator('html').getAttribute('data-theme'),'blue');
           assert.equal(await blue.getAttribute('aria-pressed'),'true');
           await page.reload();
           assert.equal(await page.locator('html').getAttribute('data-theme'),'blue','Stored theme survives reload');
-          await page.locator(menu+' > summary').click();
-          await page.locator('.mbm-menu-display > summary').click();
+          await page.locator('.mbm-unified-display > summary').click();
           await page.locator('[data-mbm-theme-slot] button[data-t="cream"]').click();
           assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
         }

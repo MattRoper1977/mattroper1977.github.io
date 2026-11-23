@@ -214,7 +214,7 @@ def j93_self_test(root, lessons_root, tmp):
         L = overlay(t, lessons_root, {'resources.json': json.dumps([r for r in rows if bp.card_of(r) != 'art-studio']).encode()})
         assert refused(render_home, record_path, L), 'an empty fixed subject group must be refused, never published as a tile'
     # The full catalogue (replaces "View all" -> /Lessons/): the Resources card is always present at the HUB_LINKS route.
-    resources = dict((label, route) for route, label in shared_navigation.HUB_LINKS)['Resources']
+    resources = dict((route, route) for route, label in shared_navigation.HUB_LINKS)['/resources/']
     assert real.tools[0] == resources and with_plant.tools[0] == resources, 'the Resources card must stay one tap away'
     results['tiles'] = len(real.tiles)
     # Flagship cards (replaces the preview / Try-a-lesson binding): registry rows, lesson file and folder.

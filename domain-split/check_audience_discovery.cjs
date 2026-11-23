@@ -23,6 +23,26 @@ const urlFor = route => new URL(route, origin).href;
 // Appendix A menu, which carries no deep links. Body destinations must survive
 // on the page; a chrome destination the menu no longer offers must be a recorded
 // relocation (domain-split/ux2/menu-relocations.json) — never silently lost.
+// A route the newest Lessons revision publishes, but which this build's older pinned checkout predates,
+// is an ARRIVING row in the admission registry. Only such a route may answer 404 here.
+const ADMISSION = JSON.parse(fs.readFileSync(path.join(__dirname, 'education-publication-admission.json'), 'utf8'));
+function arriving(route) {
+  const p = route.split('?')[0];
+  if (!p.startsWith('/Lessons/')) return false;
+  const rel = decodeURIComponent(p.slice('/Lessons/'.length));
+  const row = ADMISSION.trees['education-lessons'][rel.endsWith('/') || rel === '' ? rel + 'index.html' : rel];
+  return Array.isArray(row) && row.includes('ARRIVING');
+}
+// Controls: the allowance covers a row whose registry state is ARRIVING and nothing else.
+// TEMPORARY: remove this allowance in the change that moves the Lessons pin past /Lessons/help/.
+{
+  const rows = ADMISSION.trees['education-lessons'];
+  const settled = Object.keys(rows).find(k => k.endsWith('.html') && !(Array.isArray(rows[k]) && rows[k].includes('ARRIVING')));
+  assert(settled, 'MEASUREMENT INVALID: no settled Lessons row to plant against');
+  assert.equal(arriving('/Lessons/' + settled), false, 'A settled Lessons row never has the allowance');
+  assert.equal(arriving('/Lessons/no-such-page-planted.html'), false, 'A route with no registry row never has the allowance');
+  assert.equal(arriving('/resources/'), false, 'A route outside Lessons never has the allowance');
+}
 const relocations = JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/menu-relocations.json'), 'utf8')).relocated;
 function hrefsIn(html) {
   return [...new Set([...html.matchAll(/<a\b[^>]*\bhref="([^"]+)"/g)].map(x => x[1].replaceAll('&amp;', '&')))]
@@ -145,6 +165,7 @@ async function check(name, run) {
         await Promise.all(routes.slice(i,i+8).map(async route=>{
           const response=await context.request.get(urlFor(route));
           report.localDestinations.push({route,status:response.status()});
+          if(response.status()===404&&arriving(route)){report.localDestinations.at(-1).arriving=true;return;}
           assert.equal(response.status(),200,route);
         }));
       }

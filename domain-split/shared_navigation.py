@@ -4,8 +4,8 @@ Source activities and downloads are never passed through this transform.
 The disclosure is native HTML: navigation remains usable without JavaScript.
 
 UX2 B1: the component is Appendix A §MENU exactly — a "Menu" title with a
-44px close control, three groups (Learning · Who are you here for? · Your
-account), no deep links, and "Made by Matt Play ↗" last as a plain link (the
+44px close control, three groups (Find and teach · For you · Site and
+games), one declared deep link (Saved on this device), and "Made by Matt Play ↗" last as a plain link (the
 education site links to Play; it never loads it). Audience rows are read from
 data/audience-homepages.json (label and route, record order); the one route
 the record does not hold, /for/governors-trustees/, is the build's own page
@@ -81,18 +81,32 @@ def build_audiences():
 
 PLAY = 'https://www.madebymatt-play.uk/'
 MENU_TITLE = 'Menu'
-GROUP_LEARNING = 'Learning'
-GROUP_WHO = 'Who are you here for?'
-GROUP_ACCOUNT = 'Your account'
+# Redesign Phase 1 (Matt's go-ahead, 22 November 2026; merged plan section 3.2).
+# One header row, one Menu, the same words on every Education page. The three
+# group titles and the link words below are the plan's, in its order.
+GROUP_LEARNING = 'Find and teach'
+GROUP_WHO = 'For you'
+GROUP_ACCOUNT = 'Site and games'
 PLAY_LABEL = 'Made by Matt Play ↗'
-LEARNING = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
-            ('/tools/', 'Tools'), ('/Lessons/primary/', 'Primary lessons')]
-LEARNING_PUPIL = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'), ('/Lessons/primary/', 'Primary lessons')]
-HUB_LINKS = [('/Lessons/', 'Lessons'), ('/resources/', 'Resources'),
-             ('/tools/', 'Tools')]
+STUDIOS = '/Matt-s-Apps-/'
+HELP = '/Lessons/help/'
+LEARNING = [('/Lessons/', 'Lessons'), ('/resources/', 'Packs'),
+            ('/tools/', 'Tools'), (STUDIOS, 'Studios'), (HELP, 'Help with my sheet'),
+            ('/Lessons/primary/', 'Primary science (Years 4 to 6)'),
+            ('/Lessons/?view=saved', 'Saved on this device')]
+# A pupil surface keeps its shorter list: no staff tools row.
+LEARNING_PUPIL = [('/Lessons/', 'Lessons'), ('/resources/', 'Packs'), (HELP, 'Help with my sheet'),
+                  ('/Lessons/primary/', 'Primary science (Years 4 to 6)'),
+                  ('/Lessons/?view=saved', 'Saved on this device')]
+HUB_LINKS = [('/Lessons/', 'Lessons'), ('/resources/', 'Packs'),
+             ('/tools/', 'Tools'), (STUDIOS, 'Studios'), (HELP, 'Help')]
+# Ruling tm still decides which surfaces carry the adult rows: only a surface
+# data/adult-surfaces.json declares gets the account, mailing and contact rows.
+# A pupil or shared page never links the commission page (UX2 money rule), so
+# everyone else gets privacy only, as before.
 ACCOUNT = [('/account/', 'Account and members'), ('/mailing-list/', 'Teacher updates'),
-           ('/privacy/', 'Privacy and statistics')]
-ACCOUNT_SHARED = [('/privacy/', 'Privacy and statistics')]
+           ('/privacy/', 'Privacy and data'), ('/commission/', 'Contact and requests')]
+ACCOUNT_SHARED = [('/privacy/', 'Privacy and data')]
 # The surfaces whose footer never carried the canonical link group (see refresh()).
 SHARED_FOOTER = {'/for/pupils/', '/resources/', '/stats/', '/stats/on-this-device/',
                  '/Lessons/subject.html', '/Lessons/primary/'}
@@ -237,7 +251,9 @@ def audience_rows(site_source):
 def header(route, audiences, adult=False, pupil=False, theme=False, primary=False, search=SEARCH_FALLBACK):
     def link(item, remember=False):
         href, label = item
-        current = ' aria-current="page"' if href == route and '?' not in href else ''
+        # Studios is current on the Studios hub and on every page beneath it.
+        here = href == route or (href == STUDIOS and route.startswith(STUDIOS))
+        current = ' aria-current="page"' if here and '?' not in href else ''
         remember = ' data-primary-global="/Lessons/"' if remember else ''
         return '<a href="' + escape(href, quote=True) + '"' + current + remember + '>' + escape(label) + '</a>'
 
@@ -247,10 +263,13 @@ def header(route, audiences, adult=False, pupil=False, theme=False, primary=Fals
     learning = LEARNING_PUPIL if pupil else LEARNING
     who = [row for row in audiences if row[0] == '/for/pupils/'] if pupil else list(audiences)
     account = ACCOUNT if adult else ACCOUNT_SHARED
-    groups = group(GROUP_LEARNING, learning) + group(GROUP_WHO, who) + group(GROUP_ACCOUNT, account)
-    if theme:
-        groups += '<details class="mbm-menu-display"><summary>Display options</summary><div data-mbm-theme-slot></div></details>'
-    groups += '<a class="mbm-menu-play" href="' + PLAY + '" rel="noopener">' + escape(PLAY_LABEL) + '</a>'
+    # The third group holds Display options first (it has one home, the Aa panel
+    # in the header, and this row opens it) and the Play link last.
+    display_row = '<button type="button" class="mbm-menu-display-open">Display options</button>' if theme else ''
+    play_row = '<a class="mbm-menu-play" href="' + PLAY + '" rel="noopener">' + escape(PLAY_LABEL) + '</a>'
+    site = ('<section class="mbm-menu-group"><h2>' + escape(GROUP_ACCOUNT) + '</h2>' + display_row
+            + ''.join(link(x) for x in account) + play_row + '</section>')
+    groups = group(GROUP_LEARNING, learning) + group(GROUP_WHO, who) + site
     menu = chrome_template('menu-sheet.html', 'published-education', {
         'menu_title': escape(MENU_TITLE), 'groups': groups,
     })
@@ -265,7 +284,7 @@ def header(route, audiences, adult=False, pupil=False, theme=False, primary=Fals
     return chrome_template('header.html', 'published-education', {
         'search': escape(search, quote=True), 'menu': menu,
         'variant': 'adult' if adult else 'pupil', 'navigation': navigation,
-        'saved': chrome_template('nav-row.html', 'published-saved', {}) if adult else '',
+        'display': chrome_template('header.html', 'published-display', {}) if theme else '',
     })
 
 

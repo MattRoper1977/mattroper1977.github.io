@@ -16,10 +16,9 @@ async function run(){
    await page.setViewportSize({width,height:900});
    for(const route of native)for(const [theme,[bg,card]] of Object.entries(themes)){
     assert.equal((await page.goto(origin+route)).status(),200);await page.waitForLoadState('networkidle');
-    await page.locator('.mbm-unified-menu>summary').click();
-    await page.locator('.mbm-menu-display>summary').click();
+    await page.locator('.mbm-unified-display>summary').click();
     await page.locator('[data-mbm-theme-slot] button[data-t="'+theme+'"]').click();
-    await page.locator('.mbm-menu-close').click();await page.reload();await page.waitForLoadState('networkidle');
+    await page.locator('.mbm-display-close').click();await page.reload();await page.waitForLoadState('networkidle');
     assert.equal(await page.locator('html').getAttribute('data-theme'),theme,'Preference survives reload');
     const target=route==='/Lessons/'?'.scard':route==='/Lessons/subject.html'?'#chooser>a':'.card';
     await page.locator(target+':visible').first().waitFor();

@@ -2,12 +2,12 @@
   'use strict';
 
   const THEMES = [
-    ['cream', 'Warm'],
-    ['pink', 'Rose'],
-    ['blue', 'Sky'],
-    ['light', 'Paper'],
-    ['dark', 'Night'],
-    ['highlumen', 'High lumen'],
+    ['cream', 'Cream', '#f6f1e7'],
+    ['pink', 'Pink', '#f9e8ec'],
+    ['blue', 'Blue', '#e7eef7'],
+    ['light', 'White', '#f7f7f4'],
+    ['dark', 'Dark', '#101929'],
+    ['highlumen', 'High contrast', '#ffffff'],
   ];
   const SCALES = [
     ['100', '100%'],
@@ -28,9 +28,9 @@
     humanities: ['history', 'geography', 'religion', 'ethics', 'community'],
     lifeskills: ['money', 'wellbeing', 'careers', 'safety', 'cooking', 'independence'],
     art: ['drawing', 'painting', 'sculpture', 'printmaking', 'sketchbook', 'studio'],
-    base: ['build', 'foundation'],
-    track: ['grow', 'core'],
-    summit: ['launch', 'extension'],
+    base: ['foundation'],
+    track: ['core'],
+    summit: ['extension'],
     timer: ['clock', 'countdown', 'stopwatch', 'toolkit'],
     picker: ['random', 'wheel', 'names', 'toolkit'],
     seating: ['desk', 'room', 'plan'],
@@ -144,36 +144,82 @@
   if (!header || !menu) return;
 
   const summary = menu.querySelector(':scope > summary');
+  const display = header.querySelector('.mbm-unified-display');
+  const displaySummary = display?.querySelector(':scope > summary');
   const closeMenu = returnFocus => {
     menu.open = false;
     menu.querySelectorAll('details[open]').forEach(item => { item.open = false; });
     if (returnFocus && summary) summary.focus();
   };
+  const closeDisplay = returnFocus => {
+    if (!display) return;
+    display.open = false;
+    if (returnFocus && displaySummary) displaySummary.focus();
+  };
 
-  // Ensure Display options carries all 6 themes + scale + dyslexia spacing buttons.
-  const displayBox = header.querySelector('.mbm-menu-display');
+  // Display options: one panel, one tap from the header. Six named reading
+  // backgrounds (a swatch and a word each), three text sizes, extra spacing and
+  // a reset. Stored keys and values are the ones the site has always used.
+  // A page published before this header keeps Display options inside its Menu.
+  const displayBox = display?.querySelector('.mbm-display-panel') || header.querySelector('.mbm-menu-display');
   const themeSlot = displayBox?.querySelector('[data-mbm-theme-slot]');
   const hasNativeTheme = Boolean(
     window.__mbmTheme ||
     [...document.scripts].some(s => /(?:^|\/)(?:mbm-)?theme\.js(?:[?#]|$)/i.test(s.getAttribute('src') || ''))
   );
+  const heading = text => {
+    const h = document.createElement('h3');
+    h.textContent = text;
+    return h;
+  };
+  // The older theme script draws six unlabelled dots. Give each its word.
+  const nameSwatches = () => {
+    if (!themeSlot) return;
+    THEMES.forEach(([id, label, fill]) => {
+      themeSlot.querySelectorAll('[data-t="' + id + '"]').forEach(btn => {
+        btn.setAttribute('aria-label', label + ' reading background');
+        btn.title = label;
+        if (btn.querySelector('.mbm-sw-word')) return;
+        if (!btn.querySelector('i')) {
+          const dot = document.createElement('i');
+          dot.className = 'mbm-sw-dot';
+          btn.textContent = '';
+          btn.appendChild(dot);
+        }
+        btn.querySelector('i').style.background = fill;
+        const word = document.createElement('span');
+        word.className = 'mbm-sw-word';
+        word.textContent = label;
+        btn.appendChild(word);
+      });
+    });
+  };
   if (displayBox && themeSlot) {
+    header.setAttribute('data-mbm-display', 'ready');
+    themeSlot.setAttribute('role', 'group');
+    themeSlot.setAttribute('aria-label', 'Reading background');
+    themeSlot.before(heading('Reading background'));
     if (!hasNativeTheme && !themeSlot.querySelector('[data-t]')) {
       const cur = document.documentElement.getAttribute('data-theme') || 'cream';
-      THEMES.forEach(([id, label]) => {
+      THEMES.forEach(([id]) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'mbm-fallback-theme-btn';
         btn.setAttribute('data-t', id);
         btn.setAttribute('aria-pressed', String(id === cur));
-        btn.textContent = label;
         btn.addEventListener('click', () => applyTheme(id));
         themeSlot.appendChild(btn);
       });
     }
+    nameSwatches();
+    // The theme script may fill the slot after this script has run.
+    document.addEventListener('DOMContentLoaded', nameSwatches);
+    window.addEventListener('load', nameSwatches);
     if (!displayBox.querySelector('.mbm-display-extras')) {
-      const extras = document.createElement('div');
-      extras.className = 'mbm-display-extras';
+      const sizes = document.createElement('div');
+      sizes.className = 'mbm-display-extras';
+      sizes.setAttribute('role', 'group');
+      sizes.setAttribute('aria-label', 'Text size');
       SCALES.forEach(([val, label]) => {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -181,30 +227,55 @@
         btn.setAttribute('aria-pressed', String((document.documentElement.getAttribute('data-edu-scale') || '100') === val));
         btn.textContent = 'Text ' + label;
         btn.addEventListener('click', () => applyScale(val));
-        extras.appendChild(btn);
+        sizes.appendChild(btn);
       });
+      const spacing = document.createElement('div');
+      spacing.className = 'mbm-display-extras';
       const spaceBtn = document.createElement('button');
       spaceBtn.type = 'button';
       spaceBtn.setAttribute('data-edu-spacing', 'dyslexia');
       spaceBtn.setAttribute('aria-pressed', String(document.documentElement.getAttribute('data-edu-spacing') === 'dyslexia'));
-      spaceBtn.textContent = 'Dyslexia spacing';
+      spaceBtn.textContent = 'Extra spacing';
       spaceBtn.addEventListener('click', () => {
         applySpacing(document.documentElement.getAttribute('data-edu-spacing') !== 'dyslexia');
       });
-      extras.appendChild(spaceBtn);
-      displayBox.appendChild(extras);
+      spacing.appendChild(spaceBtn);
+      const reset = document.createElement('div');
+      reset.className = 'mbm-display-extras mbm-display-reset';
+      const resetBtn = document.createElement('button');
+      resetBtn.type = 'button';
+      resetBtn.className = 'mbm-display-reset-btn';
+      resetBtn.textContent = 'Reset to default';
+      resetBtn.addEventListener('click', () => { applyTheme('cream'); applyScale('100'); applySpacing(false); });
+      reset.appendChild(resetBtn);
+      displayBox.append(heading('Text size'), sizes, heading('Spacing'), spacing, reset);
     }
   }
 
+  // Only one of the two panels is open at a time; a tap or focus outside closes it.
+  menu.addEventListener('toggle', () => { if (menu.open) closeDisplay(false); });
+  display?.addEventListener('toggle', () => { if (display.open) closeMenu(false); });
   document.addEventListener('pointerdown', event => {
     if (menu.open && !menu.contains(event.target)) closeMenu(false);
+    if (display?.open && !display.contains(event.target)) closeDisplay(false);
   }, { passive: true });
   document.addEventListener('focusin', event => {
     if (menu.open && !menu.contains(event.target)) closeMenu(false);
+    if (display?.open && !display.contains(event.target)) closeDisplay(false);
   });
   menu.addEventListener('click', event => {
     if (event.target.closest('.mbm-menu-close')) { event.preventDefault(); closeMenu(true); return; }
+    if (event.target.closest('.mbm-menu-display-open') && display) {
+      event.preventDefault();
+      closeMenu(false);
+      display.open = true;
+      displaySummary.focus();
+      return;
+    }
     if (event.target.closest('a')) closeMenu(false);
+  });
+  display?.addEventListener('click', event => {
+    if (event.target.closest('.mbm-display-close')) { event.preventDefault(); closeDisplay(true); }
   });
 
   const search = header.querySelector('.mbm-unified-search');
@@ -273,7 +344,7 @@
       '<div class="edu-cmd-wrap">' +
       '<div class="edu-cmd-top"><h2 id="edu-cmd-title">Quick find</h2>' +
       '<button type="button" class="edu-cmd-close" id="edu-cmd-close">Close</button></div>' +
-      '<label class="sr-only" for="edu-cmd-input">Search lessons, resources and tools</label>' +
+      '<label class="sr-only" for="edu-cmd-input">Search lessons, help, packs and tools</label>' +
       '<input id="edu-cmd-input" class="edu-cmd-input" type="search" autocomplete="off" spellcheck="false" placeholder="Type a topic, week, subject or tool…">' +
       '<div class="edu-cmd-chips" role="group" aria-label="Filter quick find">' +
       '<button type="button" class="edu-cmd-chip" data-cmd-kind="" aria-pressed="true">All</button>' +
@@ -371,6 +442,11 @@
       closeMenu(true);
       return;
     }
+    if (event.key === 'Escape' && display?.open) {
+      event.preventDefault();
+      closeDisplay(true);
+      return;
+    }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
       openCmd(document.activeElement);
@@ -379,7 +455,7 @@
     if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || event.key !== '/') return;
     const active = document.activeElement;
     if (active && (/^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName) || active.isContentEditable)) return;
-    if (document.querySelector('dialog[open]') || menu.open) return;
+    if (document.querySelector('dialog[open]') || menu.open || display?.open) return;
     const localSearch = document.querySelector('#search, #tq, #rxSearch, #teachers-q, #pupils-q, #teach-search, #teach-results-query, #resource-q, #gv-search');
     if (localSearch && localSearch.offsetParent !== null) {
       event.preventDefault();
@@ -414,7 +490,7 @@
       '<a href="/Lessons/subject.html?subject=humanities-re">Humanities &amp; RE</a>' +
       '<a href="/Lessons/subject.html?subject=art-studio">Art Studio</a>' +
       '<a href="/Lessons/subject.html?subject=lifeskills">Lifeskills</a>' +
-      '<a href="/resources/">Resources</a>' +
+      '<a href="/resources/">Packs</a>' +
       '<a href="/tools/">Tools</a>' +
       '<a href="/Matt-s-Apps-/">Studios</a>' +
       '<a href="/teach/">Workspace</a>' +
@@ -456,7 +532,7 @@
       if (segTabs.length) {
         pwSec.hidden = false;
         pwBox.replaceChildren();
-        const names = { BUILD: 'BASE · Build', GROW: 'TRACK · Grow', LAUNCH: 'SUMMIT · Launch', ALL: 'All' };
+        const names = { BUILD: 'BASE', GROW: 'TRACK', SUMMIT: 'SUMMIT', LAUNCH: 'SUMMIT', ALL: 'All' };
         segTabs.forEach(tab => {
           const btn = document.createElement('button');
           btn.type = 'button';
