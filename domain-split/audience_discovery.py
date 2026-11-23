@@ -190,7 +190,6 @@ def make_page(key, page, audience, all_audiences):
 {faq}<section class="gv-next" id="useful-routes"><h2>More from Made by Matt</h2><p>{esc(page["closing"])}</p>{contact}<div class="gv-actions">{link("Professional Education Hub", "/education-hub/")}{related}</div>
 <h3>Useful links</h3><div class="gv-actions">{utilities}{link("Resources", "/resources/")}{link("Tools", "/tools/")}</div>
 <h3 id="choose-homepage">Other starting points</h3><nav class="gv-actions" aria-label="Audience homepages">{others}</nav>
-<p id="audience-play-showcase" class="mbm-external-play">{link("Made by Matt Play — separate games website", PLAY + "/")}</p>
 <p class="gv-small gv-adult-links">{''.join(link(l, h, 'gv-hub-pill') for l, h in ADULT_LINKS)}</p></section>
 </main></body></html>
 '''
@@ -237,6 +236,10 @@ def refresh(output, lessons, apps, site_source):
         # Game links change origin; every other destination the source page's
         # body offered must survive on the rebuilt page.
         missing = {remapped.get(h, h) for h in body_links(original)} - result.hrefs
+        # Education names no games: the Play destination moved from the body to the
+        # shared footer's one quiet link (added later; check_audience_discovery
+        # asserts the footer carries it and nothing above the footer does).
+        missing.discard(PLAY + '/')
         if missing:
             raise ValueError(f'Original audience routes would be lost in {target}: {sorted(missing)}')
         if 'ASDAN' in re.sub(r'<[^>]+>', ' ', document):

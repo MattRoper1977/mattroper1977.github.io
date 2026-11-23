@@ -86,10 +86,10 @@ def refresh(output, lessons, apps, site_source):
     parent_path = site/'for/parents-carers/index.html'
     doc = html.document_fromstring(parent_path.read_text())
     styles(doc)
-    slots = doc.xpath('//*[@id="audience-play-showcase"]')
-    if len(slots) != 1:
-        raise ValueError('Parents page must expose one Play showcase slot')
-    slots[0].getparent().replace(slots[0], fragment('<p id="audience-play-showcase" class="wrap mbm-external-play">Looking for recreational games? <a href="'+PLAY+'/">Made by Matt Play — separate games website</a>.</p>'))
+    # Education names no games (school web filters): the page body carries no Play
+    # link at all. The one quiet Play link is the shared footer's (Matt, 23 Nov 2026).
+    if doc.xpath('//*[@id="audience-play-showcase"]'):
+        raise ValueError('Parents page must not carry a Play showcase in its body')
     save_doc(parent_path, doc)
     # Keep the new audience destination discoverable alongside the old ones.
     for slug, _, _ in AUDIENCES:
