@@ -93,9 +93,11 @@ async function check(name, run) {
           }
           for(const forbidden of ['Any device with a web browser','only steering and throttle','one game that can link','Search one deterministic internal index'])
             assert(!text.includes(forbidden),`Stale claim: ${forbidden}`);
-          assert.equal(await page.locator('#audience-play-showcase').count(),1);
-          assert.equal(await page.locator('#audience-play-showcase video, #audience-play-showcase iframe, .mbm-play-card').count(),0);
-          assert.equal(await page.locator('#audience-play-showcase a').getAttribute('href'),play+'/');
+          // Education names no games: no Play showcase in the body, the only Play link is the footer's.
+          assert.equal(await page.locator('#audience-play-showcase, .mbm-play-card').count(),0);
+          assert.equal(await page.locator(`a[href^="${play}"]:not(footer a)`).count(),0,'Play link outside the footer');
+          assert.equal(await page.locator(`footer a[href="${play}/"]`).count(),1,'Footer must keep one Play link');
+          assert(!/\b(games?|gaming|arcade)\b/i.test(await page.locator('main').first().innerText()),'Games wording in the page body');
           if(key==='parents') {
             assert(await page.locator('main a[href="/Lessons/primary/"]').first().isVisible());
             assert.equal(await page.locator('.gv-faq').count(),7);

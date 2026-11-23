@@ -12,13 +12,13 @@
     });
   }
   function validate(data, rules) {
-    if (!plain(data) || data.format !== FORMAT || data.version !== 1 || !plain(data.localStorage) || !plain(data.sharedProfiles) || !Array.isArray(data.touchline)) throw Error('This is not a supported Made by Matt game-save file.');
+    if (!plain(data) || data.format !== FORMAT || data.version !== 1 || !plain(data.localStorage) || !plain(data.sharedProfiles) || !Array.isArray(data.touchline)) throw Error('This is not a supported Made by Matt save file.');
     for (const [key, value] of Object.entries(data.localStorage)) {
-      if (!allowedKey(key, rules) || typeof value !== 'string' || value.length > 12000000) throw Error('The file contains an unrecognised game-save entry.');
+      if (!allowedKey(key, rules) || typeof value !== 'string' || value.length > 12000000) throw Error('The file contains an unrecognised save entry.');
     }
     for (const [key, games] of Object.entries(data.sharedProfiles)) {
       const rule = rules.sharedGameProfileSubtrees.find(r => r.key === key);
-      if (!rule || !plain(games) || Object.keys(games).some(k => !rule.gameIds.includes(k))) throw Error('The file contains an unrecognised game profile.');
+      if (!rule || !plain(games) || Object.keys(games).some(k => !rule.gameIds.includes(k))) throw Error('The file contains an unrecognised profile.');
     }
     const slots = rules.indexedDB[0].stores[0].allowedKeys;
     if (data.touchline.length > slots.length || new Set(data.touchline.map(x => x.slotId)).size !== data.touchline.length) throw Error('Duplicate career slots.');
@@ -53,7 +53,7 @@
     for (const [key, games] of Object.entries(data.sharedProfiles)) {
       const old = storage.getItem(key);
       let current; try { current = JSON.parse(old || 'null'); } catch (_) {}
-      if (old !== null && !plain(current)) throw Error('An existing game profile is unreadable; export it before replacing it.');
+      if (old !== null && !plain(current)) throw Error('An existing profile is unreadable; export it before replacing it.');
       current = current || { version: 6, schema: 6, games: {} };
       if (!plain(current.games)) current.games = {};
       let changed = false;
@@ -103,7 +103,7 @@
         if (!request.result.objectStoreNames.contains(store.name)) request.result.createObjectStore(store.name, { keyPath: store.keyPath });
       };
       request.onerror = () => absent ? resolve(null) : reject(request.error);
-      request.onblocked = () => reject(Error('Close any open Touchline game tabs and try again.'));
+      request.onblocked = () => reject(Error('Close any other open Made by Matt tabs and try again.'));
       request.onsuccess = () => { request.result.onversionchange = () => request.result.close(); resolve(request.result); };
     });
   }
@@ -145,17 +145,17 @@
     status.textContent = 'Ready. Nothing is transferred until you choose a button.';
     exportButton.addEventListener('click', async () => {
       exportButton.disabled = true;
-      try { const data = await snapshot(); download(data, 'madebymatt-game-saves'); status.textContent = 'Downloaded ' + count(data) + ' game-save entries. Keep this file until your games are working at the new address.'; }
-      catch (_) { status.textContent = 'The browser could not read all game saves. Close game tabs and try again; no saved data was changed.'; }
+      try { const data = await snapshot(); download(data, 'madebymatt-game-saves'); status.textContent = 'Downloaded ' + count(data) + ' saved entries. Keep this file until your progress is working at the new address.'; }
+      catch (_) { status.textContent = 'The browser could not read all saves. Close other Made by Matt tabs and try again; no saved data was changed.'; }
       finally { exportButton.disabled = false; }
     });
     picker.addEventListener('change', async () => {
       candidate = null; importButton.disabled = true;
       try {
         const file = picker.files[0]; if (!file) return;
-        if (file.size > 50000000) throw Error('This file is too large. Use the individual game’s export instead.');
+        if (file.size > 50000000) throw Error('This file is too large. Use each activity’s own export instead.');
         candidate = validate(JSON.parse(await file.text()), rules);
-        status.textContent = 'Ready to import ' + count(candidate) + ' game-save entries. Existing saves will be kept unless you choose replacement.';
+        status.textContent = 'Ready to import ' + count(candidate) + ' saved entries. Existing saves will be kept unless you choose replacement.';
         importButton.disabled = !canImport;
       } catch (error) { status.textContent = error.message || 'This file could not be read.'; }
     });
@@ -169,11 +169,11 @@
         plan = planImport(root.localStorage, candidate, rules, overwrite);
         apply(root.localStorage, plan.writes); written = true;
         const n = await writeCareers(candidate.touchline, overwrite);
-        status.textContent = 'Imported ' + (plan.writes.length + n) + ' entries. Existing entries were kept where replacement was not selected. Open your game to check the save.';
+        status.textContent = 'Imported ' + (plan.writes.length + n) + ' entries. Existing entries were kept where replacement was not selected. Open it to check your progress.';
         candidate = null; picker.value = '';
       } catch (error) {
         if (written) { try { restore(root.localStorage, plan.writes); } catch (_) { status.textContent = 'Import failed and browser storage also blocked recovery. Keep your downloaded backup.'; return; } }
-        status.textContent = 'Import did not complete. Existing saves were preserved. ' + (error.message || 'Try closing your game tabs.');
+        status.textContent = 'Import did not complete. Existing saves were preserved. ' + (error.message || 'Try closing other Made by Matt tabs.');
       } finally { importButton.disabled = !candidate; }
     });
   }).catch(() => { status.textContent = 'Save transfer could not load. Reload this page before continuing.'; });
