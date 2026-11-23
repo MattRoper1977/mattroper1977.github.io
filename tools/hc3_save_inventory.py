@@ -79,6 +79,9 @@ class Scripts(HTMLParser):
     def handle_endtag(self,tag):
         if tag=='script' and self.active is not None:self.scripts.append(self.active);self.active=None
 
+# The HC3 inventory's own route count (2026-09): a fixed historical population, not the shelf size.
+HC3_INVENTORY_ROUTES = 69
+
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--lessons',type=Path);p.add_argument('--built',type=Path);p.add_argument('--output',type=Path);p.add_argument('--self-test',action='store_true');a=p.parse_args()
     if a.self_test:subprocess.run(['node',str(ROOT/'tools/hc3-inventory/analyse.cjs'),'--self-test'],check=True);built_control();identity_control();return
@@ -113,7 +116,7 @@ def main():
         'lineConvention':'Observation lines are local to the named script; script-N identifies its HTML script element in document order.',
         'limitations':['Mutable bindings, dynamic receivers, unsupported syntax and keys remain unresolved.','Bounded wrapper traversal is static evidence, not complete control-flow analysis.','Shared runtime literals do not establish page ownership.','IndexedDB, profile subtrees and native import schemas require the accompanying reviewed registry.'],
         'counts':{'routes':len(routes),'migrationCandidates':sum(x['migrationCandidate'] for x in routes.values()),'routesWithUnresolved':sum(bool(x['unresolved']) for x in routes.values())},'routes':routes}
-    assert result['counts']['routes']==69 and result['counts']['migrationCandidates']==67
+    assert result['counts']['routes']==HC3_INVENTORY_ROUTES and result['counts']['migrationCandidates']==67
     a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n');print(json.dumps(result['counts']))
 
 
