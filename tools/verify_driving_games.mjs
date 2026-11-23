@@ -33,7 +33,7 @@ const ROOT = path.resolve(HERE, '..');
 const { stripPlatformRegions } = require('./mbm_exit_region.js');
 
 const GAMES = [
-  { route: '/neonmeridian/', slug: 'neonmeridian', title: 'Neon Meridian: Open Drive' },
+  { route: '/neonmeridian/', slug: 'neonmeridian', title: 'Meridian Bay: Open Drive' },
   { route: '/rallyvector3d/', slug: 'rallyvector3d', title: 'Rally Vector 3D' },
 ];
 
