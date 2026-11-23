@@ -410,10 +410,10 @@ def refresh(output, review=False, source_revisions=None):
                 else:
                     omitted_discovery.append({'route':row['route'], 'kind':'screen', 'reason':'Different approved game revision'})
             rows.append(row)
-    assert len(rows) == len({key(r['route']) for r in rows}) == 75
+    assert len(rows) == len({key(r['route']) for r in rows}) == 76
     assert len({r['id'] for r in rows}) == len(rows)
     counts = {g:len(catalogue[g]) for g in labels}
-    assert counts == {'games':68,'activities':6,'staff':1}, counts
+    assert counts == {'games':69,'activities':6,'staff':1}, counts
     # Media must be genuinely captured from exactly the output being reviewed.
     for row in rows:
         m = row['media']
