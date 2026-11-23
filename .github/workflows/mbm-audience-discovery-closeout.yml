@@ -470,6 +470,46 @@ jobs:
           git diff --quiet data/mbm-search-index.json || { echo "index was modified"; exit 1; }
           echo "control detected: removal screams on check and only writes under --expect-removed"
 
+      - name: A Teaching_Packs lesson row stays teacher-only, a control lesson stays pupil-eligible
+        id: s07b-teaching-packs-lesson-rows-stay-teacher
+        if: always()
+        run: |
+          set -euo pipefail
+          # Search catch-up 2026-11-23 (ruling A): a lesson row under /Teaching_Packs/ is
+          # indexed as a teacher-only resource; a lesson row anywhere else is a pupil lesson.
+          # Planted records through the real generator function, then the same assertion
+          # against a copy with the rule switched off, which must fail (the control can fire).
+          cat > /tmp/teaching_pack_control.py <<'PY'
+          import importlib.util, json, sys
+          spec = importlib.util.spec_from_file_location("b", sys.argv[1])
+          b = importlib.util.module_from_spec(spec); spec.loader.exec_module(b)
+          rules = b.load_json(b.EDITORIAL)["taskRules"]
+          base = {"subject": "Humanities", "type": "lesson", "family": "Humanities", "year": "2026-27",
+                  "desc": "Planted control lesson.", "added": "2026-11-23"}
+          planted = [dict(base, id="control-teaching-pack", title="Planted teaching pack lesson",
+                          file="Humanities/Teaching_Packs/Control_Pack/BUILD/W01/CONTROL_A.html"),
+                     dict(base, id="control-plain-lesson", title="Planted plain lesson",
+                          file="Humanities/Build/Control/CONTROL_B.html")]
+          out = {e["sourceId"]: e for e in b.build_lessons_and_resources(planted, rules, set(), set())}
+          pack, plain = out["control-teaching-pack"], out["control-plain-lesson"]
+          assert pack["safeForPupils"] is False and pack["category"] == "resource" and "pupils" not in pack["audience"], pack
+          assert plain["safeForPupils"] is True and plain["category"] == "lesson" and "pupils" in plain["audience"], plain
+          print("teaching pack teacher-only, plain lesson pupil-eligible")
+          PY
+          python3 /tmp/teaching_pack_control.py tools/build_mbm_search_index.py
+          # Switch the rule off in the worktree only, as s06 and s07 perturb their sources, then restore.
+          sed -i 's/teaching_pack_lesson = category == "lesson" and /teaching_pack_lesson = False and /' \
+            tools/build_mbm_search_index.py
+          if ! grep -q 'teaching_pack_lesson = False and ' tools/build_mbm_search_index.py; then
+            git checkout -- tools/build_mbm_search_index.py; echo "could not switch the rule off"; exit 1
+          fi
+          if python3 /tmp/teaching_pack_control.py tools/build_mbm_search_index.py; then
+            git checkout -- tools/build_mbm_search_index.py; echo "control passed with the rule off: it cannot fire"; exit 1
+          fi
+          git checkout -- tools/build_mbm_search_index.py
+          git diff --quiet tools/build_mbm_search_index.py || { echo "generator was modified"; exit 1; }
+          echo "control detected: with the rule off a Teaching_Packs lesson becomes pupil-eligible"
+
       # s21 must fire on a planted absolute, and name the phrase. Herestring
       # form throughout: `producer | grep -q` under pipefail kills the producer
       # with SIGPIPE and the control then reports a failure that never happened
