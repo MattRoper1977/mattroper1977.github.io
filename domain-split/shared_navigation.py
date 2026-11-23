@@ -5,8 +5,8 @@ The disclosure is native HTML: navigation remains usable without JavaScript.
 
 UX2 B1: the component is Appendix A §MENU exactly — a "Menu" title with a
 44px close control, three groups (Learning · Who are you here for? · Your
-account), no deep links, and "Made by Matt Play ↗" last as a plain link (the
-education site links to Play; it never loads it). Audience rows are read from
+account), no deep links and no Play row (no-games rule, 23 Nov 2026: the
+footer keeps the one plain Play link). Audience rows are read from
 data/audience-homepages.json (label and route, record order); the one route
 the record does not hold, /for/governors-trustees/, is the build's own page
 and is appended from the same constant that writes it. Pupil surfaces render
@@ -250,7 +250,8 @@ def header(route, audiences, adult=False, pupil=False, theme=False, primary=Fals
     groups = group(GROUP_LEARNING, learning) + group(GROUP_WHO, who) + group(GROUP_ACCOUNT, account)
     if theme:
         groups += '<details class="mbm-menu-display"><summary>Display options</summary><div data-mbm-theme-slot></div></details>'
-    groups += '<a class="mbm-menu-play" href="' + PLAY + '" rel="noopener">' + escape(PLAY_LABEL) + '</a>'
+    # No-games rule (23 Nov 2026): the education menu carries no Play row; the
+    # one Play link left on the education site is the footer's last link.
     menu = chrome_template('menu-sheet.html', 'published-education', {
         'menu_title': escape(MENU_TITLE), 'groups': groups,
     })

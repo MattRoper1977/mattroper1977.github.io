@@ -17,8 +17,8 @@ body[data-theme="dark"]{--pv-cream:#121834;--pv-card:#1B234A;--pv-ink:#E8E2D4;--
 <main id="main"><section class="pv-hero"><p class="pv-eyebrow">Data and privacy</p><h1>What this site sends, stores and keeps local</h1><p>The account and mailing-list work changes what can leave one browser, so this page says which data belongs to which feature and which features remain local.</p></section>
 <section class="pv-sec"><div class="pv-wrap">
 <div class="pv-lead">
-<p><b>Public Made by Matt content does not require an account.</b> Games, Lessons, Apps, Tools and Resources remain public unless a resource was already legitimately restricted for another reason.</p>
-<p><b>Made by Matt accounts are intended for adults and teachers.</b> Pupils can use the public learning, game and tool content without creating an account.</p>
+<p><b>Public Made by Matt content does not require an account.</b> Lessons, Apps, Tools and Resources remain public unless a resource was already legitimately restricted for another reason.</p>
+<p><b>Made by Matt accounts are intended for adults and teachers.</b> Pupils can use the public learning and tool content without creating an account.</p>
 <p><b>The optional account is cloud-backed only when the configured Supabase service is active.</b> The account page does not fall back to a local JavaScript password. If cloud configuration is missing, registration and login stay unavailable rather than pretending to be secure.</p>
 <p><b>The mailing list is separate from the account.</b> Creating an account never subscribes you. Joining the list requires its own unticked consent box and double opt-in through the mailing provider.</p>
 </div>
@@ -32,7 +32,7 @@ body[data-theme="dark"]{--pv-cream:#121834;--pv-card:#1B234A;--pv-ink:#E8E2D4;--
 
 <p><b>Member administration.</b> Authorised site administrators can view account names, email addresses, registration and verification status, latest sign-in dates and recorded session counts to administer membership and troubleshoot access. This view does not expose passwords, session tokens, saved favourites or browsing history. A recorded session does not show whether someone is currently online. Ordinary members retain access only to their own account-backed data.</p>
 <h3>Old on-device accounts</h3>
-<p>An older Made by Matt version created device-local account records in <code>mbm_users</code> and <code>mbm_session</code>. The new cloud account path does <b>not</b> upload the old password record or hash. Existing local data is left in place unless you deliberately remove it. If the old and new account use the same email, local per-account game save slots can keep using the same device-side slot tag.</p>
+<p>An older Made by Matt version created device-local account records in <code>mbm_users</code> and <code>mbm_session</code>. The new cloud account path does <b>not</b> upload the old password record or hash. Existing local data is left in place unless you deliberately remove it. If the old and new account use the same email, local per-account save slots can keep using the same device-side slot tag.</p>
 
 <h3>Account deletion</h3>
 <p>The Account page includes a self-service deletion path when its secure server function is deployed. Deleting an account removes the Auth identity and account-backed profile/member rows through their database relationship. If self-service deletion is temporarily unavailable, request deletion from the account address at <a href="mailto:contactmadebymatt@gmail.com">contactmadebymatt@gmail.com</a>.</p>
@@ -57,8 +57,8 @@ body[data-theme="dark"]{--pv-cream:#121834;--pv-card:#1B234A;--pv-ink:#E8E2D4;--
 <p>Typing in Made by Matt search does not send the query to Google, DfE, Ofsted or another external search provider. The Professional Education Hub uses its local curated data for ordinary filtering. A clearly labelled official-source link or outbound-source search leaves Made by Matt only after the visitor deliberately activates it; the destination then receives the normal web request needed to open that page.</p>
 <div class="pv-note"><p><b>These discovery features remain separate.</b> Audience choice, recent items and internal search do not enrol anyone in an account or mailing list. Account and mailing systems keep their own explicit controls and consent.</p></div>
 
-<h2>Separate encrypted game-save sync</h2>
-<p>The estate also contains an older, separate design for opt-in encrypted game-save sync. It is not the account system. Its configuration remains independent, and it must not be described as account-backed sync unless it is actually connected and proven.</p>
+<h2>Separate encrypted progress sync</h2>
+<p>The estate also contains an older, separate design for opt-in encrypted progress sync. It is not the account system. Its configuration remains independent, and it must not be described as account-backed sync unless it is actually connected and proven.</p>
 
 <h2>Other things that may leave your browser</h2>
 <div class="pv-scroll"><table class="pv-tbl"><thead><tr><th>If you…</th><th>then this may be sent</th><th>to</th></tr></thead><tbody>
@@ -78,7 +78,7 @@ body[data-theme="dark"]{--pv-cream:#121834;--pv-card:#1B234A;--pv-ink:#E8E2D4;--
 <p>Two controls in the register's own <b>Settings</b> panel reach that store directly. <b>Export backup (.json)</b> writes the whole register, photographs included, to a file you keep. <b>Delete all data</b> removes every pupil, unit, mark, session and work example from this device, and names what it is about to delete before it does it. Export before a shared device is handed on, then clear it.</p>
 
 <h2>Children and education use</h2>
-<p>Made by Matt is used in education, but the optional account system is intended for adults and teachers rather than pupil account ownership. Pupils can use the public learning, games, apps, tools and resources without creating an account. The account is deliberately data-minimised and is not a pupil-profile system: do not enter school records, pupil evidence or sensitive personal details into the optional display-name or member-favourite features.</p>
+<p>Made by Matt is used in education, but the optional account system is intended for adults and teachers rather than pupil account ownership. Pupils can use the public learning, apps, tools and resources without creating an account. The account is deliberately data-minimised and is not a pupil-profile system: do not enter school records, pupil evidence or sensitive personal details into the optional display-name or member-favourite features.</p>
 <p>The mailing list is a separate adult marketing choice, uses its own consent action and double opt-in, and is never bundled into account creation.</p>
 
 <h2>Security and secrets</h2>
