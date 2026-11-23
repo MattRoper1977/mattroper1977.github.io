@@ -158,7 +158,9 @@ async function educationOnly(page, requests, start) {
       await check(`${width}-parents-education-only`, async () => {
         const start = requests.length; await goto(page, '/for/parents-carers/');
         const result = await educationOnly(page, requests, start);
-        const external = page.locator('.mbm-external-play a'); assert.equal(await external.getAttribute('href'), canonicalPlay+'/');
+        // Education names no games: no Play line in the page body; the shared footer keeps the one quiet Play link.
+        assert.equal(await page.locator('.mbm-external-play, #audience-play-showcase').count(), 0, 'Play line in the parents page body');
+        assert.equal(await page.locator(`footer a[href="${canonicalPlay}/"]`).count(), 1, 'Footer keeps one Play link');
         return { ...result, screenshot: await shot(page, `${width}-parents-education-only`) };
       }, page);
       await check(`${width}-education-search-excludes-recreational-games`, async () => {
