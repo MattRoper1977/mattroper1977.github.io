@@ -61,7 +61,7 @@ Displayed totals and filters derive from these records. Source instructions supp
 | Medevac Frontier | Catalogue game | Action | keyboard, touch | Unknown | /medevac/ |
 | Lumina Haven | Catalogue game | Creative | keyboard, touch | Unknown | /luminahaven/ |
 | Aurora Links: Northern Lights Tour — AAA V4 | Catalogue game | Sport | keyboard, touch | local | /auroralinks/ |
-| Neon Meridian: Open Drive | Catalogue game | Creative | keyboard | Unknown | /neonmeridian/ |
+| Meridian Bay: Open Drive | Catalogue game | Creative | keyboard, touch | Unknown | /neonmeridian/ |
 | Rally Vector 3D — Championship Edition | Catalogue game | Sport | keyboard, touch, gamepad | Unknown | /rallyvector3d/ |
 | Slipstream GP: Hyperdraft | Catalogue game | Sport | keyboard, touch, gamepad | Unknown | /hyperdraft/ |
 | Apex Curl | Catalogue game | Sport | Unknown | Unknown | /apexcurl/ |

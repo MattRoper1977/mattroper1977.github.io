@@ -119,6 +119,21 @@ const HOME_TRUTH_REGIONS = Object.freeze([
     name: 'device-local-counter-panel',
     pattern: /<section\b(?=[^>]*\bid\s*=\s*["']mbmStats["'])[^>]*>[\s\S]*?<\/section>/i,
     replacement: '__MBM_AUTHORISED_LOCAL_COUNTER_PANEL__'
+  },
+  // Owner-chosen rename, 2026-11-22: the city driving game at /neonmeridian/
+  // takes the display name "Meridian Bay: Open Drive". Its New releases box
+  // names the game twice in visible copy. Each region admits exactly the old
+  // name or the new one inside the otherwise unchanged sentence, so every
+  // other word in the box stays in the preservation comparison.
+  {
+    name: 'city-driving-release-heading-name',
+    pattern: /<h3>NEW &middot; (?:Neon Meridian|Meridian Bay): Open Drive &mdash; a city built for driving\.<\/h3>/,
+    replacement: '<h3>NEW &middot; __MBM_AUTHORISED_CITY_DRIVING_NAME__: Open Drive &mdash; a city built for driving.</h3>'
+  },
+  {
+    name: 'city-driving-release-button-name',
+    pattern: /(<a class="dx-chip dx-main" href="\/neonmeridian\/">)Play (?:Neon Meridian|Meridian Bay) &rarr;(<\/a>)/,
+    replacement: '$1Play __MBM_AUTHORISED_CITY_DRIVING_NAME__ &rarr;$2'
   }
 ]);
 
