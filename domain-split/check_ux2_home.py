@@ -157,6 +157,15 @@ def refused(call, *args):
     return None
 
 
+def badge_files(lessons_root, lesson_file):
+    """Pack files of one lesson as the README_J93 section 4 rule states it, read straight from the folder."""
+    lesson = Path(lessons_root) / Path(*lesson_file.split('/'))
+    stem = lesson.name.rsplit('.', 1)[0] + '_'
+    return sorted(n for n in os.listdir(lesson.parent)
+                  if (lesson.parent / n).is_file() and n.startswith(stem) and n != 'approved-mark.jpg'
+                  and n.rsplit('.', 1)[-1].lower() not in ('jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'))
+
+
 def j93_self_test(root, lessons_root, tmp):
     """The J93 replacements: door cards, subject tiles and flagship cards follow their records."""
     import shared_navigation
@@ -209,8 +218,17 @@ def j93_self_test(root, lessons_root, tmp):
     assert real.tools[0] == resources and with_plant.tools[0] == resources, 'the Resources card must stay one tap away'
     results['tiles'] = len(real.tiles)
     # Flagship cards (replaces the preview / Try-a-lesson binding): registry rows, lesson file and folder.
-    assert [c['key'] for c in real.cards] == list(home_slots.PATHWAYS) and all(c['badges'] in (9, 13) for c in real.cards), [c['badges'] for c in real.cards]
+    assert [c['key'] for c in real.cards] == list(home_slots.PATHWAYS), [c['key'] for c in real.cards]
     files = [unquote(c['lesson'][len('/Lessons/'):]) for c in real.cards]
+    # Badge counts are read from the Lessons tree, card by card, not typed. The typed (9, 13) went red when the
+    # carrier pin moved to Lessons 09fcdbe0 (18 Nov 2026): the GROW and LAUNCH week 6 folders carry five tier packs,
+    # so the measured counts there are [13, 15, 15] (Site job 137449471989). Counted here by listing the folder with
+    # the README_J93 section 4 rule written out again, independently of home_slots.pack_members: 1 lesson badge +
+    # every file named code + "_" that is not an image or the brand mark. Exact per card; a count off by one fails.
+    assert all(c['badges'] == 1 + len(badge_files(lessons_root, f)) for c, f in zip(real.cards, files)), \
+        ('flagship badges are not 1 + the lesson folder pack files', [c['badges'] for c in real.cards],
+         [1 + len(badge_files(lessons_root, f)) for f in files])
+    assert all(len(badge_files(lessons_root, f)) >= 1 for f in files), 'a flagship card with no pack files proves nothing'
     by_file = {r.get('file'): r for r in rows}
     for card, f in zip(real.cards, files):
         assert f in by_file and card['outcome'] == ' '.join(str(by_file[f]['desc']).split()), 'flagship outcome is not the registry row'
