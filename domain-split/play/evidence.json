@@ -2610,6 +2610,48 @@
         "description": "Lift Shift added to the canonical game shelf.",
         "commit": "b87ad0dec228536f8ce543e349c96ca59b1f9dae"
       }
+    },
+    "/rutline": {
+      "genre": "Sport",
+      "genres": [
+        "Sport",
+        "Adventure"
+      ],
+      "description": "Ride a dirt bike around an open valley and take on story chapters, time trials, deliveries and jump jobs in Rutline.",
+      "audience": "general",
+      "controls": [
+        "keyboard",
+        "touch"
+      ],
+      "modes": [
+        "single"
+      ],
+      "instructions": "Single player. Keyboard: W is throttle, S the rear brake and Space the front brake, A and D steer, and Esc opens the menu. Touch: a steer stick on the left and Gas, brake and boost buttons on the right.",
+      "evidence": [
+        {
+          "control": "keyboardMouse",
+          "needle": "<kbd>W / S / Space</kbd><span>Throttle / Rear Brake / Front Brake</span>",
+          "line": 961,
+          "excerpt": "c\">Main Menu</button>     <div class=\"controls-grid\">       <kbd>W / S / Space</kbd><span>Throttle / Rear Brake / Front Brake</span>       <kbd>A / D</kbd><span>Steer · Counter-Steer · Air Whip</span>       <kbd>Shift / C</kbd><span>Lean Back (Wheelie)"
+        },
+        {
+          "control": "touch",
+          "needle": "<button class=\"tbtn gas\" data-tact=\"throttle\">GAS</button>",
+          "line": 728,
+          "excerpt": "\"tbtn brake\" data-tact=\"fbrake\">FRONT<br>BRAKE</button>     <button class=\"tbtn gas\" data-tact=\"throttle\">GAS</button>   </div> </div>  <!-- TITLE OVERLAY (STORY MODE FIRST + GHOST RUN PLAYABLE FROM START!) --> <div id=\"titleOverlay\" clas"
+        }
+      ],
+      "source": {
+        "repository": "Site",
+        "path": "rutline/index.html",
+        "sha256": "09e9fa21ad031d287f8ea7135b826e53734ad52e85fc6d03d429ee2a32d9b9c2",
+        "published_sha256": "aff61f4bd51dce18e12e16a72ba296245f233e48a71a86cf17c09d8dfb6352e4"
+      },
+      "updated": {
+        "date": "2026-11-23",
+        "description": "Rutline added to the canonical game shelf.",
+        "commit": "4d8d20c9a2d8adb1e740ed682c1fd265268a52da"
+      }
     }
   }
 }
