@@ -345,7 +345,7 @@ TEACH_SECTIONS = [
     (
         "interactive-learning",
         "Interactive learning",
-        "Games and interactive activities you can put in front of a class.",
+        "Interactive activities you can put in front of a class.",
         ["page-games-hub", "page-education-hub"],
     ),
 ]
