@@ -708,7 +708,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     <div class="toolbar">
       <button class="iconbtn jobs-cta" id="jobsBtn" aria-label="Coastal Jobs and Progress" title="Jobs &amp; Progress (J)">JOBS</button>
       <button class="iconbtn" id="footBtn" aria-label="Step out or enter vehicle" title="On Foot / Vehicle (F)">F</button>
-      <button class="iconbtn compact-hide" id="wheelBtn" aria-label="Gear Wheel" title="Gear Wheel (Tab)">◎</button>
+      <button class="iconbtn compact-hide" id="wheelBtn" aria-label="Gear Wheel" title="Gear Wheel (Q)">◎</button>
       <button class="iconbtn compact-hide" id="chaseBtn" aria-label="Start Patrol Chase" title="Patrol Chase (C)">★</button>
       <button class="iconbtn" id="mapBtn" aria-label="City Map" title="Map (M)">M</button>
       <button class="iconbtn" id="garageBtn" aria-label="Garage" title="Garage (G)">G</button>
@@ -805,7 +805,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   <div id="toastStack"></div>
 </div>
 
-<!-- School-Safe Gear & Actions Wheel (Tab / Q) -->
+<!-- School-Safe Gear & Actions Wheel (Q) -->
 <section id="gearWheel" class="hidden" role="dialog" aria-modal="true" aria-label="Gear and Actions Wheel">
   <div class="wheel-shell">
     <div class="wheel-center">
@@ -820,7 +820,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     <button class="wheel-slot" data-pos="3" data-action="repair" type="button"><b>🔧 Field Tune</b><span>Restore ride to 100%</span></button>
     <button class="wheel-slot" data-pos="4" data-action="jobs" type="button"><b>📋 Jobs Board</b><span>Near, med &amp; far runs</span></button>
     <button class="wheel-slot" data-pos="5" data-action="photo" type="button"><b>📷 Photo Cam</b><span>Free scenic camera</span></button>
-    <div class="wheel-close-hint">Click an action or press Tab / Esc to close</div>
+    <div class="wheel-close-hint">Click an action or press Q / Esc to close</div>
   </div>
 </section>
 
@@ -4027,7 +4027,8 @@ function detectDeviceTier() {
   return { tier, gpuName: 'WebGL2 Device', score, isMobile };
 }
 const detectedDevice = detectDeviceTier();
-let autoStepTier = detectedDevice.tier;
+// Auto starts at Standard (or Lite on clearly low-spec hardware) until the ~2s load FPS sample picks the starting tier.
+let autoStepTier = detectedDevice.tier === 'Lite' ? 'Lite' : 'Standard';
 const qualityCfg = {
   Lite:           { label: 'Lite',         radius: 2, dpr: 1.0,  traffic: 8,  fog: 420, shadow: 0,    shadowSpan: 48, highTier: 0, lite: 1, bloom: false, msaa: 0, godRays: 0 },
   Standard:       { label: 'Standard',     radius: 3, dpr: 1.25, traffic: 14, fog: 560, shadow: 1024, shadowSpan: 60, highTier: 0, lite: 0, bloom: true,  msaa: 2, godRays: 0 },
@@ -4278,7 +4279,7 @@ function toggleOnFoot() {
   } else {
     const target = nearbyVehicle || currentVehicle;
     if (Math.hypot(player.x - target.x, player.z - target.z) > 6.5) {
-      return toast('NO RIDE NEARBY', 'Walk close to a car/bike or press Tab → Call Ride');
+      return toast('NO RIDE NEARBY', 'Walk close to a car/bike or press Q → Call Ride');
     }
     currentVehicle = target;
     const sp = VEHICLE_SPECS[currentVehicle.type] || VEHICLE_SPECS.suv;
@@ -4809,9 +4810,9 @@ let camMode = 0, wheelieTime = 0;
 
 window.addEventListener('keydown', e => {
   const activeModal = getOpenModal();
-  if (activeModal && e.key === 'Tab' && !wheelOpen) { trapModalFocus(activeModal, e); return; }
+  if (activeModal && e.key === 'Tab') { trapModalFocus(activeModal, e); return; }
   keys[e.code] = true;
-  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab'].includes(e.code)) e.preventDefault();
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
   if (e.code === 'Escape') {
     if (document.pointerLockElement === canvas) { try { document.exitPointerLock?.(); } catch (_) {} return; }
     if (wheelOpen) { closeWheel(); return; }
@@ -4819,7 +4820,7 @@ window.addEventListener('keydown', e => {
     if (photoMode) { exitPhoto(); return; }
     if (running) { openPause(); return; }
   }
-  if (e.code === 'Tab' || e.code === 'KeyQ') { if (running && !photoMode && (!activeModal || wheelOpen)) toggleWheel(); return; }
+  if (e.code === 'KeyQ') { if (running && !photoMode && (!activeModal || wheelOpen)) toggleWheel(); return; }
   if (activeModal) return;
   if (e.code === 'KeyF' || e.code === 'KeyE') toggleOnFoot();
   else if (e.code === 'KeyL') togglePointerLock();
@@ -6367,12 +6368,25 @@ function focusModal(modal) {
   const f = modal.querySelector('button:not([disabled]):not(.hidden),select:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])');
   if (f) requestAnimationFrame(() => { try { f.focus({ preventScroll: true }); } catch (_) { f.focus(); } });
 }
+function isFocusableVisible(el) {
+  if (!el || !el.isConnected || el.disabled) return false;
+  const cs = getComputedStyle(el);
+  if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+  const r = el.getBoundingClientRect();
+  return r.width > 0 && r.height > 0;
+}
 function trapModalFocus(modal, e) {
-  const els = [...modal.querySelectorAll('button:not([disabled]):not(.hidden),select:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(el => el.offsetParent !== null);
+  const modalEls = [...modal.querySelectorAll('a[href],button:not([disabled]):not(.hidden),select:not([disabled]),input:not([disabled]):not(.hidden),[tabindex]:not([tabindex="-1"])')].filter(isFocusableVisible);
+  const exits = [...document.querySelectorAll('#mbmexit-back,#mbmexit-home')].filter(isFocusableVisible);
+  const els = [...exits, ...modalEls];
   if (!els.length) { e.preventDefault(); return; }
-  const first = els[0], last = els[els.length - 1];
-  if (e.shiftKey && (document.activeElement === first || !modal.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
-  else if (!e.shiftKey && (document.activeElement === last || !modal.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+  const idx = els.indexOf(document.activeElement);
+  e.preventDefault();
+  if (idx === -1) {
+    (e.shiftKey ? els[els.length - 1] : els[0]).focus();
+  } else {
+    els[(idx + (e.shiftKey ? -1 : 1) + els.length) % els.length].focus();
+  }
 }
 function syncModalState() {
   const m = getOpenModal(); setBackgroundInert(m);
@@ -6573,7 +6587,11 @@ $('#weather').value = (setting.weather === 'dry' || setting.weather === 'clear')
 $('#shake').value = setting.shake; $('#lookSpeed').value = setting.lookSpeed; $('#calmMotion').value = setting.motion === false ? 'on' : 'off';
 $('#touchMode').value = setting.touch; $('#muteBtn').textContent = setting.mute ? 'Audio: Muted' : 'Audio: On';
 
-$('#quality').onchange = e => { setting.quality = e.target.value; applyQuality(); saveSettings(); };
+$('#quality').onchange = e => {
+  setting.quality = e.target.value;
+  if (setting.quality === 'Auto') resetAutoGraphics();
+  applyQuality(); saveSettings();
+};
 $('#units').onchange = e => { setting.units = e.target.value; saveSettings(); updateHUD(); };
 $('#tod').onchange = e => { setting.tod = e.target.value; streamCell = ''; saveSettings(); };
 $('#weather').onchange = e => { setting.weather = e.target.value; WeatherSystem.override = (setting.weather === 'dry' || setting.weather === 'clear') ? 0 : setting.weather === 'rain' ? 1 : null; saveSettings(); toast('WEATHER SYSTEM', setting.weather === 'dynamic' ? 'Dynamic coastal weather' : setting.weather === 'rain' ? 'Heavy rain selected' : 'Dry coastal skies'); };
@@ -6593,6 +6611,8 @@ document.addEventListener('visibilitychange', () => {
   } else {
     if (audio?.ac && !setting.mute && audio.ac.state === 'suspended') audio.ac.resume().catch(() => {});
     if (RadioSystem.playing && audio) { RadioSystem.next = audio.ac.currentTime + 0.05; RadioSystem.start(); }
+    fpsWinStart = 0; fpsWinFrames = 0; lowFpsSince = 0;
+    if (!autoSampleDone) { autoSampleWarm = false; autoSampleStart = 0; autoSampleFrames = 0; }
   }
 });
 
@@ -7012,13 +7032,91 @@ function render(dt) {
   }
 }
 
-// ---------- main loop ----------
-let last = performance.now(), acc = 0, frames = 0, fpsTimer = 0, fpsAvg = 60, qualityCooldown = 0, lastMapPaint = 0;
+// ---------- main loop (real wall-clock ~2s load FPS sample + <=5s Auto step-down) ----------
+let last = performance.now(), acc = 0, fpsAvg = 60, lastMapPaint = 0;
+let autoSampleInited = false, autoSampleDone = (setting.quality !== 'Auto'), autoSampleWarm = false;
+let autoSampleStart = 0, autoSampleFrames = 0;
+let fpsWinStart = 0, fpsWinFrames = 0, lowFpsSince = 0, qualityCooldownUntil = 0;
+function resetAutoGraphics(startTier = null) {
+  autoStepTier = startTier || (detectedDevice.tier === 'Lite' ? 'Lite' : 'Standard');
+  autoSampleDone = (setting.quality !== 'Auto') || (startTier !== null);
+  autoSampleWarm = false; autoSampleStart = 0; autoSampleFrames = 0;
+  fpsWinStart = 0; fpsWinFrames = 0; lowFpsSince = 0; qualityCooldownUntil = 0;
+}
+function recordAutoFrame(now) {
+  if (setting.quality !== 'Auto') return;
+  if (!autoSampleDone) {
+    if (!autoSampleWarm) { autoSampleWarm = true; autoSampleStart = now; autoSampleFrames = 0; return; }
+    autoSampleFrames++;
+    const elapsed = (now - autoSampleStart) / 1000;
+    if (elapsed >= 2.0 || (elapsed >= 1.5 && (autoSampleFrames / elapsed) < 15)) {
+      const sampleFps = autoSampleFrames / Math.max(elapsed, 0.001);
+      fpsAvg = sampleFps;
+      let picked = 'Standard';
+      if (sampleFps < 25) picked = 'Lite';
+      else if (sampleFps >= 48 && detectedDevice.score >= 3 && !detectedDevice.isMobile) picked = 'High-Powered';
+      autoSampleDone = true;
+      fpsWinStart = now; fpsWinFrames = 0; lowFpsSince = 0; qualityCooldownUntil = now + 1500;
+      if (picked !== autoStepTier) {
+        autoStepTier = picked;
+        applyQuality();
+        if (running) toast('AUTO GRAPHICS', `Selected ${autoStepTier} mode (${Math.round(sampleFps)} FPS)`);
+      } else {
+        syncTierBadge();
+      }
+    }
+    return;
+  }
+  if (!fpsWinStart) { fpsWinStart = now; fpsWinFrames = 0; return; }
+  fpsWinFrames++;
+  const winElapsed = (now - fpsWinStart) / 1000;
+  if (winElapsed >= 1.0) {
+    const prevWinStart = fpsWinStart;
+    fpsAvg = fpsWinFrames / winElapsed;
+    fpsWinFrames = 0; fpsWinStart = now;
+    if (autoStepTier !== 'Lite') {
+      if (fpsAvg < 25) {
+        if (!lowFpsSince) lowFpsSince = prevWinStart;
+        const lowSecs = (now - lowFpsSince) / 1000;
+        if (now >= qualityCooldownUntil) {
+          if (fpsAvg < 12 && lowSecs >= 2.0) {
+            autoStepTier = 'Lite';
+            lowFpsSince = 0; qualityCooldownUntil = now + 2500;
+            applyQuality();
+            toast('AUTO GRAPHICS', 'Stepped down to Lite mode for smoother frames');
+          } else if (lowSecs >= 3.0) {
+            autoStepTier = autoStepTier === 'High-Powered' ? 'Standard' : 'Lite';
+            lowFpsSince = 0; qualityCooldownUntil = now + 2500;
+            applyQuality();
+            toast('AUTO GRAPHICS', `Stepped down to ${autoStepTier} mode for smoother frames`);
+          }
+        }
+      } else {
+        lowFpsSince = 0;
+      }
+    }
+  }
+}
 const FIX = 1 / 120;
 function loop(now) {
   requestAnimationFrame(loop);
   const dt = Math.min((now - last) / 1000, 0.05); last = now;
-  if (!running || document.hidden) return;
+  if (document.hidden) return;
+  if (!running) {
+    // Run the ~2s real WebGL2 frame-rate sample at load while on the boot screen (Auto only)
+    if (setting.quality === 'Auto' && !autoSampleDone) {
+      if (!autoSampleInited) {
+        autoSampleInited = true;
+        const f = { x: Math.sin(player.yaw), z: -Math.cos(player.yaw) };
+        cam.pos = V(player.x - f.x * 8.2, player.y + 2.7, player.z - f.z * 8.2);
+        cam.look = V(player.x + f.x * 5, player.y + 0.9, player.z + f.z * 5);
+        applyQuality();
+      }
+      render(0.016);
+      recordAutoFrame(performance.now());
+    }
+    return;
+  }
   if (!mapOpen && !photoMode && !garageOpen && !paused && !settingsOpen && !wheelOpen && !jobsOpen && !jobResultOpen) {
     acc += dt; let steps = 0;
     while (acc >= FIX && steps < 6) {
@@ -7028,15 +7126,7 @@ function loop(now) {
   }
   if (mapOpen && now - lastMapPaint > 50) { drawFullMap(); lastMapPaint = now; }
   updateCamera(dt); updateAudio(); render(dt); updateHUD();
-  frames++; fpsTimer += dt; qualityCooldown -= dt;
-  if (fpsTimer > 2.5) {
-    fpsAvg = frames / fpsTimer; frames = 0; fpsTimer = 0;
-    if (setting.quality === 'Auto' && fpsAvg < 25 && qualityCooldown <= 0 && autoStepTier !== 'Lite') {
-      autoStepTier = autoStepTier === 'High-Powered' ? 'Standard' : 'Lite';
-      applyQuality(); qualityCooldown = 8;
-      toast('AUTO GRAPHICS', `Stepped down to ${autoStepTier} mode for smoother frames`);
-    }
-  }
+  recordAutoFrame(performance.now());
 }
 requestAnimationFrame(loop);
 
@@ -7067,7 +7157,7 @@ window.__NM = {
   mapsReady() { return surfaceMapsReady; },
   tier() { return effectiveTier(); },
   detected() { return detectedDevice; },
-  setTier(t) { setting.quality = pick(t, ['Auto', 'Lite', 'Standard', 'High-Powered'], 'Auto'); if (setting.quality === 'Auto') autoStepTier = detectedDevice.tier; if ($('#quality')) $('#quality').value = setting.quality; applyQuality(); return effectiveTier(); },
+  setTier(t) { setting.quality = pick(t, ['Auto', 'Lite', 'Standard', 'High-Powered'], 'Auto'); if (setting.quality === 'Auto') resetAutoGraphics(); if ($('#quality')) $('#quality').value = setting.quality; applyQuality(); saveSettings(); return effectiveTier(); },
   openJobs, closeJobs, launchJob(id) { MissionSystem.launchById(id); }, setPace(p) { setting.jobPace = pick(p, ['relaxed','easy','standard'], 'easy'); saveSettings(); },
   motionOn,
   toggleOnFoot,
@@ -7110,7 +7200,7 @@ function start() {
   syncTouchUI(); initAudio(); syncAudioGain();
   if (!setting.mute) audio?.ac.resume?.();
   spawnTraffic(getQualityCfg().traffic, player.x, player.z);
-  applyQuality(); rebuildStream(true);
+  if (!autoSampleInited) { autoSampleInited = true; applyQuality(); } else { syncTierBadge(); rebuildStream(true); }
   const f = { x: Math.sin(player.yaw), z: -Math.cos(player.yaw) };
   cam.pos = V(player.x - f.x * 8.2, player.y + 2.7, player.z - f.z * 8.2);
   cam.look = V(player.x + f.x * 5, player.y + 0.9, player.z + f.z * 5);
