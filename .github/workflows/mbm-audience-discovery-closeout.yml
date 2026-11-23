@@ -497,14 +497,17 @@ jobs:
           print("teaching pack teacher-only, plain lesson pupil-eligible")
           PY
           python3 /tmp/teaching_pack_control.py tools/build_mbm_search_index.py
-          sed 's/teaching_pack_lesson = category == "lesson" and /teaching_pack_lesson = False and /' \
-            tools/build_mbm_search_index.py > /tmp/rule_off.py
-          grep -q 'teaching_pack_lesson = False and ' /tmp/rule_off.py || { echo "could not switch the rule off"; exit 1; }
-          cp /tmp/rule_off.py tools/_rule_off_probe.py
-          if python3 /tmp/teaching_pack_control.py tools/_rule_off_probe.py; then
-            rm -f tools/_rule_off_probe.py; echo "control passed with the rule off: it cannot fire"; exit 1
+          # Switch the rule off in the worktree only, as s06 and s07 perturb their sources, then restore.
+          sed -i 's/teaching_pack_lesson = category == "lesson" and /teaching_pack_lesson = False and /' \
+            tools/build_mbm_search_index.py
+          if ! grep -q 'teaching_pack_lesson = False and ' tools/build_mbm_search_index.py; then
+            git checkout -- tools/build_mbm_search_index.py; echo "could not switch the rule off"; exit 1
           fi
-          rm -f tools/_rule_off_probe.py
+          if python3 /tmp/teaching_pack_control.py tools/build_mbm_search_index.py; then
+            git checkout -- tools/build_mbm_search_index.py; echo "control passed with the rule off: it cannot fire"; exit 1
+          fi
+          git checkout -- tools/build_mbm_search_index.py
+          git diff --quiet tools/build_mbm_search_index.py || { echo "generator was modified"; exit 1; }
           echo "control detected: with the rule off a Teaching_Packs lesson becomes pupil-eligible"
 
       # s21 must fire on a planted absolute, and name the phrase. Herestring
