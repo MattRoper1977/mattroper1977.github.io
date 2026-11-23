@@ -292,8 +292,17 @@ def build_lessons_and_resources(records, rules, reclassify: set[str], dropped: s
         category = "game" if record["id"] in reclassify else spec["category"]
         text = content_text(record)
         route_text = text + " " + (record.get("file") or "").lower()
+        # Search catch-up 2026-11-23 (ruling A): everything under /Teaching_Packs/ is a teacher
+        # surface, lesson rows included. A lesson row there is indexed as a teacher-only resource,
+        # never as a pupil lesson, so it neither enters pupil search nor adds a lesson_open record
+        # beside the reviewed pack's own registry rows. Derived from the route, never listed.
+        teaching_pack_lesson = category == "lesson" and "/Teaching_Packs/" in lessons_route(record)
 
-        if category == "lesson":
+        if teaching_pack_lesson:
+            category = "resource"
+            content_type, audience, safe = "Lesson", ["teachers", "schools-semh"], False
+            action = f"Open lesson: {record['title']}"
+        elif category == "lesson":
             content_type, audience, safe = "Lesson", ["teachers", "pupils"], True
             action = f"Open lesson: {record['title']}"
         elif category == "game":
