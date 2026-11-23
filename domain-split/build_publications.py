@@ -447,8 +447,8 @@ def main():
         '</style></head>'
     )
     put(games, 'game-saves/index.html', (games / 'game-saves/index.html').read_text().replace(
-        '<title>Move your game saves · Made by Matt</title>',
-        '<link rel="canonical" href="'+PLAY_CANONICAL_ORIGIN+'/game-saves/"><title>Move your game saves · Made by Matt</title>',
+        '<title>Move your saved progress · Made by Matt</title>',
+        '<link rel="canonical" href="'+PLAY_CANONICAL_ORIGIN+'/game-saves/"><title>Move your saved progress · Made by Matt</title>',
         1,
     ).replace('</head>', play_saves_css, 1).replace('https://madebymatt-play.uk/game-saves/', PLAY_CANONICAL_ORIGIN+'/game-saves/'))
     # Preserve the canonical shelf bytes for existing mirror consumers.
