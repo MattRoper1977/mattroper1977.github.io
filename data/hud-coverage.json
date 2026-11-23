@@ -340,6 +340,19 @@
     "LSG6 the game boots without a page error, draws the lift shaft, and keeps working with storage blocked"
    ],
    "note": "Declared at launch. Lift Shift is a single-file canvas lift-balancing puzzle: one inline script, zero external references, so a <script src=\"/hud.js\"> tag would retract the promise the file makes and the generated inline exit region carries the way out instead. Its save keys carry the mbm_liftshift_ prefix from first publication."
+  },
+  {
+   "route": "/rutline/",
+   "verifier": "tools/verify_rutline.mjs",
+   "gates": [
+    "RLG1 single file: no script src, no stylesheet link, no remote URL in the source beyond its own canonical address, and zero non-same-origin requests while a ride is played",
+    "RLG2 storage goes only through the Storage helper and the mbm_rutline_ prefix, and every key written while played carries the prefix, observed at runtime",
+    "RLG3 generated inline exit: region byte-identical to the generator, rendered at 44 px or more, on top and reachable by keyboard; the title card and the top HUD clear the exit at every measured width",
+    "RLG4 every visible title-screen and in-ride button is 44 px or more at 390, 768 and 1366 wide",
+    "RLG5 Rider Assist is on by default and the first story chapter is the short warm-up ride",
+    "RLG6 the game boots without a page error, renders the 3D valley, and keeps working with storage blocked"
+   ],
+   "note": "Declared at launch. Rutline is a single-file WebGL2 motocross sandbox: one inline script, zero external references, so a <script src=\"/hud.js\"> tag would retract the promise the file makes and the generated inline exit region carries the way out instead. Its save keys carry the mbm_rutline_ prefix from first publication; a one-time read copies keys a play-test build wrote under an older prefix."
   }
  ],
  "_amendedWhy": "THE LEDGER HAD TWO CATEGORIES AND NEEDED THREE. It measured the games it DECLINED to wire and listed them under `excluded`. It did not check whether any of the ten it DID wire carried the same single-file contract. apexgolf did: verify_apexgolf.js G17 asserted `no <script src> at all`, so the Stage 2B line broke it on 10 August 2026 and it stayed red for fifteen days - invisible, because a `grep | wc -l` step under `pipefail` in apexgolf-verify.yml died before the verifier ever ran, and the workflow is pull_request-only and filtered. Two faults, one day, and the noisy one hid the real one. Found by Order T's estate census, 25 August 2026. This list is the third category: wired, contract retained, verifier amended to say so.",
