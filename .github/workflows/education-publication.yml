@@ -225,7 +225,12 @@ jobs:
           # Lessons #901 on Lessons main. Every published path that moved between the two commits is already admitted by a row holding both
           # digests or by an ARRIVING row (the lesson swap admissions Site #692 and #693), so this move changes
           # no admission row. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '09fcdbe027adb2a3462d5a40a396f89a35edaedf' }}
+          # Moved again 2026-11-24 (sixth lesson swap carrier move, ruling thread 24 November) WITH the two other EQUAL pins (education-publication.yml,
+          # published-completion-verify.yml, domain-split-verify.yml) and WITH the Apps pin below, per L31: the Lessons pin 09fcdbe0 -> 1611f8f40521ad59b7638b49abf5c1744a77ac6d, the merge of
+          # Lessons #955 on Lessons main. Every published path that moved between the two commits is already admitted: Lessons main builds
+          # with pending 0 against this record (served-digest census on this branch), so this move changes no admission row.
+          # It retires the stale carrier whose catalogue evidence failed check_catalogue_static.py. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Lessons' && github.sha || '1611f8f40521ad59b7638b49abf5c1744a77ac6d' }}
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -331,7 +336,11 @@ jobs:
           # Moved 2026-10-27 (M1, ruling wf-3) WITH the Lessons pin above, per STANDING RULE L31: the Apps pin 49708f6d -> dd908441664339a27dc59f5bd0364024c7a1c231,
           # the squash merge of Apps #223, M1's gate-copy companion, which moves no published path. Both gate copies byte-identical there.
           # Derived with git rev-parse on the Apps checkout, never typed.
-          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'dd908441664339a27dc59f5bd0364024c7a1c231' }}
+          # Moved 2026-11-24 (sixth lesson swap carrier move, ruling thread 24 November) WITH the Lessons pin above, per STANDING RULE L31: the Apps pin
+          # dd908441 -> f16d1bc1639171e1cd304afc7f8843f45afebb9f, the merge of Apps #248 on Apps main. The one published Apps path that moved
+          # (education-apps/index.html) is already admitted at both digests, so this move changes no admission row.
+          # Derived with git rev-parse on the Apps checkout, never typed.
+          ref: ${{ github.repository == 'MattRoper1977/Matt-s-Apps-' && github.sha || 'f16d1bc1639171e1cd304afc7f8843f45afebb9f' }}
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
