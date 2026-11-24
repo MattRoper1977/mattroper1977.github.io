@@ -62,6 +62,10 @@ class Page(HTMLParser):
         self.h1_count = 0
         self.skip_href = None
         self.hero = {'hrefs': [], 'img_alt': None, 'text': ''}
+        self.in_start = self.in_trust = 0
+        self.start = []          # Start here cards: {'id','hrefs'}
+        self.trust_hrefs = []    # Play links inside the Safe for schools strip (there must be none)
+        self.main_ids = []       # ids of <main>'s direct children, in page order
 
     def inside(self, attr, value=None):
         return any(attr in at and (value is None or at.get(attr) == value) for _, at in self.stack)
@@ -74,8 +78,10 @@ class Page(HTMLParser):
             self.stack.append((tag, a))
         if self.noscript:
             return
-        if self.in_main and self.main_first_id is None and ((tag in self.VOID and len(self.stack) == self.in_main) or (tag not in self.VOID and len(self.stack) == self.in_main + 1)):
-            self.main_first_id = a.get('id', '')
+        if self.in_main and ((tag in self.VOID and len(self.stack) == self.in_main) or (tag not in self.VOID and len(self.stack) == self.in_main + 1)):
+            if self.main_first_id is None:
+                self.main_first_id = a.get('id', '')
+            self.main_ids.append(a.get('id', ''))
         if tag == 'main' and not self.in_main:
             self.in_main = len(self.stack)
         if tag == 'a' and 'skip-link' in a.get('class', '').split() and self.skip_href is None:
@@ -89,6 +95,12 @@ class Page(HTMLParser):
             self.in_hero = len(self.stack)
         if a.get('id') == 'game-grid':
             self.in_grid = len(self.stack)
+        if a.get('id') == 'start-section':
+            self.in_start = len(self.stack)
+        if a.get('id') == 'trust-strip':
+            self.in_trust = len(self.stack)
+        if 'data-start' in a and self.in_start:
+            self.start.append({'id': a['data-start'], 'hrefs': []})
         if a.get('id') == 'classroom':
             self.in_class = len(self.stack)
         if self.in_hero and tag == 'img' and self.hero['img_alt'] is None:
@@ -106,6 +118,10 @@ class Page(HTMLParser):
             if 'data-play' in a:
                 if self.in_hero:
                     self.hero['hrefs'].append(a['href'])
+                if self.in_trust:
+                    self.trust_hrefs.append(a['href'])
+                if self.in_start and self.start and self.inside('data-start'):
+                    self.start[-1]['hrefs'].append(a['href'])
                 if self.in_grid and self.cards and self.inside('data-card'):
                     self.cards[-1]['hrefs'].append(a['href'])
                 elif self.activities and self.inside('data-activity'):
@@ -138,6 +154,10 @@ class Page(HTMLParser):
                 self.in_hero = 0
             if self.in_grid and len(self.stack) < self.in_grid:
                 self.in_grid = 0
+            if self.in_start and len(self.stack) < self.in_start:
+                self.in_start = 0
+            if self.in_trust and len(self.stack) < self.in_trust:
+                self.in_trust = 0
             if self.in_class and len(self.stack) < self.in_class:
                 self.in_class = 0
             if t == tag:
@@ -149,7 +169,7 @@ def parse(html: str) -> dict:
     p.feed(html)
     return {'cards': p.cards, 'activities': p.activities, 'moods': p.moods, 'hrefs': p.hrefs,
             'main_first_id': p.main_first_id, 'h1_count': p.h1_count, 'skip_href': p.skip_href,
-            'hero': p.hero, 'data': json.loads(p.data) if p.data else {}, 'html': html}
+            'hero': p.hero, 'start': p.start, 'trust_hrefs': p.trust_hrefs, 'main_ids': p.main_ids, 'data': json.loads(p.data) if p.data else {}, 'html': html}
 
 
 def on_disk(out: Path, href: str) -> bool:
@@ -294,7 +314,30 @@ def limbs(page: dict, out: Path, manifest: list, discovery: dict, moods: dict) -
             errors.append('hero image is missing alt text')
         if week and week in (hero.get('text') or ''):
             errors.append('hero section leaks week date text')
-    return {'errors': errors, 'cards': len(page['cards']), 'activities': len(page['activities']), 'moods': counts,
+
+    # 6. Start here and the Safe for schools strip (23 Nov): the strip sits straight under the
+    # game of the week and launches nothing; Start here sits after More to play and before the
+    # moods, and holds the committed games minus the game of the week (four to six), each card
+    # one Play link to its own touch-ready game, resolving on disk.
+    order = [i for i in page.get('main_ids') or [] if i]
+    if order[:3] != ['hero-section', 'trust-strip', 'pick-section']:
+        errors.append('the Safe for schools strip is not straight under the game of the week: ' + json.dumps(order[:4]))
+    if 'start-section' not in order or 'mood-section' not in order or not order.index('pick-section') < order.index('start-section') < order.index('mood-section'):
+        errors.append('Start here is not between More to play and the moods')
+    if page.get('trust_hrefs'):
+        errors.append('the Safe for schools strip carries a Play link')
+    hero_id = ((page.get('data') or {}).get('hero') or {}).get('id')
+    want_start = [by_route[key(r)]['id'] if key(r) in by_route else r for r in moods.get('start_here') or []]
+    shown_start = [c['id'] for c in page.get('start') or []]
+    if not 4 <= len(want_start) <= 6 or shown_start != [i for i in want_start if i != hero_id] or not 4 <= len(shown_start) <= 6:
+        errors.append('Start here differs from the committed list minus the game of the week: ' + json.dumps(shown_start))
+    for c in page.get('start') or []:
+        g = by_route.get(key(c['hrefs'][0])) if len(c['hrefs']) == 1 else None
+        if not g or g['id'] != c['id'] or not on_disk(out, c['hrefs'][0]):
+            errors.append('a Start here card does not hold exactly one valid Play link to its own game: ' + c['id'])
+        elif not ready(c['id']):
+            errors.append('a Start here game is not touch-ready: ' + c['id'])
+    return {'errors': errors, 'cards': len(page['cards']), 'start': len(page.get('start') or []), 'activities': len(page['activities']), 'moods': counts,
             'packs': len(packs), 'todayPool': len(pool), 'hrefsChecked': len(hrefs)}
 
 
@@ -336,6 +379,13 @@ def self_test(page, out, manifest, discovery, moods):
     bites('hero-broken-href', lambda p, m: p['hero']['hrefs'].__setitem__(0, '/no-such-game/'), 'valid Play href')
     bites('hero-missing-alt', lambda p, m: p['hero'].__setitem__('img_alt', ''), 'missing alt text')
     bites('hero-date-leak', lambda p, m: p['hero'].__setitem__('text', '2026-11-23'), 'leaks week date')
+    bites('trust-strip-moved', lambda p, m: p.__setitem__('main_ids', [i for i in p['main_ids'] if i != 'trust-strip']), 'straight under the game of the week')
+    bites('trust-strip-play-link', lambda p, m: p['trust_hrefs'].append(p['cards'][0]['hrefs'][0]), 'carries a Play link')
+    bites('start-after-moods', lambda p, m: p.__setitem__('main_ids', [i for i in p['main_ids'] if i != 'start-section'] + ['start-section']), 'between More to play')
+    bites('start-dropped', lambda p, m: p['start'].pop(), 'committed list')
+    bites('start-shows-hero', lambda p, m: p['start'].insert(0, {'id': p['data']['hero']['id'], 'hrefs': list(p['hero']['hrefs'])}), 'committed list')
+    bites('start-broken-href', lambda p, m: p['start'][0]['hrefs'].__setitem__(0, '/no-such-game/'), 'one valid Play link')
+    bites('start-second-link', lambda p, m: p['start'][0]['hrefs'].append(p['start'][1]['hrefs'][0]), 'one valid Play link')
     return plants
 
 
