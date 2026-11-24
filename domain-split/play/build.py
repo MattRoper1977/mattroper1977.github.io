@@ -506,6 +506,10 @@ def refresh(output, review=False, source_revisions=None):
     for name in discovery['covers']:
         shutil.copyfile(COVERS/name, target/'assets/play2/covers'/name)
     hero = hero_week_join(games, discovery['rows'], target)
+    start_ids = [gid for gid in discovery['start_here'] if gid != hero['row']['id']]
+    if len(start_ids) < START_MIN: raise ValueError('Start here shows fewer than four games once the game of the week is left out')
+    by_id = by_id_of(games)
+    start_cards = [start_card(by_id[gid], discovery['rows'][gid], mood_by_id) for gid in start_ids]
     template = (HERE/'index.html').read_text()
     # Use the exact supplied mark approved by the user, with a checked file hash.
     brand = read('brand.json', {})
@@ -541,7 +545,7 @@ def refresh(output, review=False, source_revisions=None):
             'synonyms': discovery['synonyms'], 'eager': EAGER_CARDS, 'collapsed': COLLAPSED_CARDS,
             'hero': hero_data,
             'games': [{**slim(r), **({'discovery': discovery['rows'][r['id']]} if r['group'] == 'games' else {})} for r in pupil_rows]}
-    substitutions = {'@@SPRITE@@': sprite(discovery), '@@LOGO@@': logo, '@@FOOTERLOGO@@': footer_logo, '@@HERO@@': hero_section(hero),
+    substitutions = {'@@SPRITE@@': sprite(discovery), '@@LOGO@@': logo, '@@FOOTERLOGO@@': footer_logo, '@@HERO@@': hero_section(hero), '@@START@@': ''.join(start_cards), '@@STARTCOUNT@@': str(len(start_cards)),
                      '@@MOODS@@': mood_buttons, '@@ALLTITLE@@': esc(discovery['all_label']) + ' games',
                      '@@COUNT@@': str(len(games)) + ' games', '@@SHOWALL@@': 'Show all ' + str(len(games)), '@@GRID@@': ''.join(cards),
                      '@@CLASSROOM@@': classroom, '@@ACTIVITIES@@': str(len(activities)), '@@NOSCRIPT@@': noscript_list(pupil_rows),
@@ -568,6 +572,7 @@ def refresh(output, review=False, source_revisions=None):
             'updated_rail':[r['id'] for r in sorted([r for r in rows if r.get('updated')], key=lambda r: r['updated']['date'], reverse=True)],
             'line_sources':dict(Counter(r['lineSource'] for r in rows)),
             'hero':{'slug':hero['slug'],'id':hero['row']['id'],'has_clip':bool(hero['video'])},
+            'start_here':start_ids,
             'changed_game_payloads':0,'canonical_origin':ORIGIN,'shared_runtime_changed':False,
             'omitted_discovery':omitted_discovery}
     (Path(output)/'play-discovery-report.json').write_text(json.dumps(report,indent=2)+'\n')
@@ -587,6 +592,7 @@ MOOD_IDS = ('fast', 'race', 'sport', 'solve', 'plan', 'explore', 'chill', 'mates
 EAGER_CARDS = 8       # the first eight A-Z pictures load eagerly, the rest lazily
 COLLAPSED_CARDS = 12  # the A-Z grid shows this many until "Show all"
 HOOK_WORDS = 8
+START_MIN, START_MAX = 4, 6   # Start here: four to six easy first games
 COVER_LIMIT = 20 * 1024
 COVER_FORBIDDEN = re.compile(r'<\s*(script|image|text|foreignObject|use|a)\b|href\s*=|url\s*\(\s*(?!#)|@import|on[a-z]+\s*=', re.I)
 # One sprite per page: every card repeats only a <use> reference, so 66 cards stay small.
@@ -688,11 +694,18 @@ def discovery_join(games, target):
     bad = [m for m in pool if not ready(m)]
     if bad: raise ValueError('Today pool games must be touch-ready and not whole-class: ' + json.dumps(bad))
     if len(pool) < 7 + 3: raise ValueError('Today pool too small to avoid the week pack and repeats')
+    # Start here (23 Nov): four to six easy first games, committed in order. Each one is a
+    # catalogue game that works by touch, is not whole-class, is not keys-only and has a
+    # picture; the page leaves the game of the week out, so six names keep four or more.
+    start = ids(spec.get('start_here') or [], 'start_here')
+    if not START_MIN <= len(start) <= START_MAX: raise ValueError('start_here holds four to six games')
+    bad = [m for m in start if not ready(m) or out[m]['keysOnly'] or not out[m]['picture']]
+    if bad: raise ValueError('start_here games must be touch-ready, not whole-class, not keys-only and pictured: ' + json.dumps(bad))
     synonyms = spec['synonyms']
     if not all(isinstance(v, list) and all(isinstance(s, str) for s in v) for v in synonyms.values()): raise ValueError('synonyms must map a word to a list of words')
     all_label = spec['all_label'].replace('{n}', str(len(games)))
     return {'rows': out, 'counts': {m: counts[m] for m in MOOD_IDS}, 'moods': moods, 'all_label': all_label, 'all_icon': spec['all_icon'],
-            'packs': packs, 'today_pool': pool, 'synonyms': synonyms, 'covers': covers}
+            'packs': packs, 'today_pool': pool, 'start_here': start, 'synonyms': synonyms, 'covers': covers}
 
 def by_id_of(rows):
     return {r['id']: r for r in rows}
@@ -725,6 +738,20 @@ def game_card(row, d, eager, moods):
             '<span class="card-body"><span class="card-head"><span class="card-title">' + esc(title) + '</span><span class="play-tri" aria-hidden="true">' + TRI + '</span></span>'
             '<span class="card-hook">' + esc(d['hook']) + '</span></span></a>'
             '<button type="button" class="fav-btn" data-favourite="' + esc(row['id']) + '" aria-pressed="false" aria-label="Save ' + esc(title) + '" hidden>' + HEART + '</button></article>')
+
+def start_card(row, d, moods):
+    """Start here card: the grid card's picture, title and hook as ONE Play link, with no
+    heart and no Updated ribbon (the grid card keeps the one release marker per game).
+    data-start, not data-card, so the grid stays exactly one card per catalogue game."""
+    title = shown_title(row)
+    mood = d['primary']
+    return ('<article class="card card-sm start-card" data-start="' + esc(row['id']) + '" data-mood="' + esc(mood) + '">'
+            '<a class="card-link" href="' + esc(row['route']) + '" data-play="' + esc(row['id']) + '" aria-label="Play ' + esc(title) + '">'
+            '<span class="card-media thumb"><img src="' + esc(d['picture']) + '" alt="" width="640" height="360" loading="lazy" decoding="async">'
+            '<span class="thumb-title" aria-hidden="true">' + esc(title) + '</span>'
+            '<span class="media-tags"><span class="mood-chip" aria-hidden="true">' + icon_svg(mood) + '<span>' + esc(moods[mood]['label']) + '</span></span></span></span>'
+            '<span class="card-body"><span class="card-head"><span class="card-title">' + esc(title) + '</span><span class="play-tri" aria-hidden="true">' + TRI + '</span></span>'
+            '<span class="card-hook">' + esc(d['hook']) + '</span></span></a></article>')
 
 def activity_item(row):
     return ('<li class="activity-item" data-activity="' + esc(row['id']) + '"><a class="activity-link" data-play="' + esc(row['id']) + '" href="' + esc(row['route']) + '">'
