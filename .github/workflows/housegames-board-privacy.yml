@@ -1,0 +1,52 @@
+name: House Games board privacy
+
+# The House Games teacher board is projected in class. A name or class typed
+# into a pupil's Passport travels inside the Sync Code, so the board must show
+# only callsigns. This runs the planted-name test, which includes a negative
+# control (a board that shows typed names must be caught).
+#
+# It is its own workflow so it runs even while the eight-game V4 static job is
+# red for an unrelated reason.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'housegames/**'
+      - 'tools/verify_housegames_board_privacy.mjs'
+      - '.github/workflows/housegames-board-privacy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'housegames/**'
+      - 'tools/verify_housegames_board_privacy.mjs'
+      - '.github/workflows/housegames-board-privacy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: housegames-board-privacy-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  planted-name:
+    name: Typed names never reach the teacher board
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Install pinned Playwright and Chromium
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock playwright@1.62.1
+          npx playwright install --with-deps chromium
+
+      - name: Planted-name test
+        run: node tools/verify_housegames_board_privacy.mjs
