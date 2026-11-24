@@ -38,8 +38,8 @@ Where each slot comes from (uz-6 (b)):
 * subjects.hubs.{0..3}: route and name from build_publications.SUBJECT_CARDS;
   the half-term labels from Lessons data/calendar-spine.json (they must be the
   hub's HALF_TERMS); liveCount is each hub's own distinctLessons over its card,
-  computed by hub.js. pathwaySplit (vj-3 (c)) is one line, "BUILD 91 · GROW 92
-  · LAUNCH 91", from the same rule per pathway (the subject page's tab counts);
+  computed by hub.js. pathwaySplit (vj-3 (c)) is one line of the three public
+  display names with their counts, from the same rule per pathway (the subject page's tab counts);
   a pathway with no lessons is left out, and the line is empty when no lesson
   of the card carries a pathway. The current half-term (vj-3 (d)) is the
   half-term of the bound flagship week (its week label before " · ", which
@@ -110,7 +110,9 @@ TEMPLATE = HERE / 'home' / 'home.html'
 # 23 Nov 2026, no-games rule (ruling thread, Matt 10:07Z): "real games" leaves the masthead and SEO,
 # "or a game" leaves the pupils door, the masthead Play button goes; the template, masthead and
 # first door-byline pins move with it. The footer keeps the one Play link.
-TEMPLATE_SHA256 = '71837debfee2610c03cfe455296ab1b1bf9aefc6041e3f75f24521a310dda6f6'
+# 24 Nov 2026, public pathway words (ruling thread; owner 22 and 23 Nov): the switch buttons, the chip and draft
+# card text and the three pack-list labels show the public display names; the data-pathway keys are unchanged.
+TEMPLATE_SHA256 = 'a24f765684d18213bcb7994fc17b446232dcbda29e0e3cd1437d4b0d74ce0de7'
 NODE_SCRIPT = HERE / 'home_hub_counts.cjs'
 RECORD = 'data/audience-homepages.json'
 HEADER = 'tools/chrome/header.html'
@@ -119,6 +121,25 @@ SPINE = 'data/calendar-spine.json'
 
 DOOR_KEYS = ('pupils', 'teachers', 'parents', 'schools')
 PATHWAYS = ('BUILD', 'GROW', 'LAUNCH')
+# The public display name of each pathway, read from the one record (pathway-definitions.json).
+# The record names stay the keys the registry rows and the data-pathway attributes carry; no
+# visible text or label on the page shows them.
+PATHWAY_RECORD = HERE / 'pathway-definitions.json'
+
+
+def pathway_display():
+    rows = json.loads(PATHWAY_RECORD.read_text(encoding='utf-8'))['pathways']
+    display = {str(r.get('name')): str(r.get('display') or '').strip() for r in rows}
+    if tuple(display) != PATHWAYS or not all(display.values()) or len(set(display.values())) != len(PATHWAYS) \
+            or set(display.values()) & set(PATHWAYS):
+        raise ValueError('pathway-definitions.json must give each pathway one distinct public display name that is not a record name')
+    return display
+
+
+def public_words(text, display=None):
+    """Visible text with every whole-word record pathway name replaced by its public display name."""
+    display = display or pathway_display()
+    return re.sub(r'(?<![A-Za-z0-9_])(' + '|'.join(PATHWAYS) + r')(?![A-Za-z0-9_])', lambda m: display[m.group(1)], str(text))
 # Spec section 6: the flagship week, and the spec's fallback. (query, term, week)
 FLAGSHIP = ('science', 'Aut2', 6)
 FALLBACK = ('humanities-re', 'Aut2', 1)
@@ -208,7 +229,8 @@ def size_label(size):
 
 def pathway_split(counts):
     """vj-3 (c): "BUILD 91 · GROW 92 · LAUNCH 91" from the per-pathway counts; empty where none are held."""
-    return ' · '.join(f'{p} {counts[p]}' for p in PATHWAYS if isinstance(counts.get(p), int) and counts[p] > 0)
+    display = pathway_display()
+    return ' · '.join(f'{display[p]} {counts[p]}' for p in PATHWAYS if isinstance(counts.get(p), int) and counts[p] > 0)
 
 
 # --------------------------------------------------------------- sources --
@@ -394,10 +416,11 @@ def slot_values(sources):
     for i, (route, label) in enumerate(sources['doors']):
         v[f'audiences.doors.{i}.route'], v[f'audiences.doors.{i}.label'] = route, label
     fl = sources['flagship']
+    display = pathway_display()
     v['flagship.subject.name'], v['flagship.flagshipWeek'] = fl['name'], fl['weekLabel']
     for i, card in enumerate(fl['cards']):
         for field in ('pathway', 'week', 'title', 'outcome'):
-            v[f'flagship.{i}.{field}'] = card[field]
+            v[f'flagship.{i}.{field}'] = public_words(card[field], display)
         v[f'flagship.{i}.lessonPath'] = (card['lessonHref'], card['badges'][0])
         for k, badge in enumerate(card['badges'][1:]):
             v[f'flagship.{i}.packMembers.{k}.path'] = (card['memberHrefs'][k], badge)
@@ -731,8 +754,15 @@ def self_test(lessons_root=None):
                 [size_label(n) for n in (0, 511, 512, 1536, 146000, 1047040, 1048064, 1468006)] == ['1 KB', '1 KB', '1 KB', '2 KB', '143 KB', '1023 KB', '1.0 MB', '1.4 MB'],
                 ', '.join(size_label(n) for n in (0, 146000, 1468006)))
         splits = re.findall(r'data-slot="subjects\.hubs\.(\d)\.pathwaySplit">([^<]*)<', page)
-        control('vj-3 (c): each tile carries one pathway line, BUILD n · GROW n · LAUNCH n, from its counts',
-                [x for _, x in splits] == [f'BUILD {4 + j} · GROW {3 + j} · LAUNCH {5 + j}' for j in range(4)], splits[0][1] if splits else '')
+        control('vj-3 (c): each tile carries one pathway line, in pathway order, from its counts, under the public display names',
+                [x for _, x in splits] == [f'BASE {4 + j} · TRACK {3 + j} · SUMMIT {5 + j}' for j in range(4)], splits[0][1] if splits else '')
+        control('public words: no tile line shows a record pathway name',
+                bool(splits) and not any(re.search(r'\b(' + '|'.join(PATHWAYS) + r')\b', x) for _, x in splits))
+        control('public words: the bound flagship chips, titles and outcomes show no record pathway name',
+                not any(re.search(r'\b(' + '|'.join(PATHWAYS) + r')\b', x)
+                        for x in re.findall(r'data-slot="flagship\.\d\.(?:pathway|week|title|outcome)">([^<]*)<', page)))
+        control('public words: public_words maps whole words only and leaves keys inside longer tokens alone',
+                public_words('BUILD Science, GROW_SCI_A2, LAUNCH.') == 'BASE Science, GROW_SCI_A2, SUMMIT.')
         bare_split = bind(template, fake_sources(no_pathways=(2,)))
         control('vj-3 (c): a hub with no pathway counts gets an empty line, never a typed one',
                 'data-slot="subjects.hubs.2.pathwaySplit"></p>' in bare_split)

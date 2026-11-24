@@ -92,7 +92,7 @@
       }
       t = String(r.title || '').match(/^(BUILD|GROW|LAUNCH)(?![A-Za-z])/); return t ? t[1] : null;
     }
-    function chips(tiers) { return tiers.map(function (p) { return '<span class="fd-chip ' + p.toLowerCase() + '">' + p + '</span>'; }).join(''); }
+    function chips(tiers) { return tiers.map(function (p) { return '<span class="fd-chip ' + p.toLowerCase() + '">' + (({ BUILD: 'BASE', GROW: 'TRACK', LAUNCH: 'SUMMIT' })[p] || p) + '</span>'; }).join(''); }
     rail.innerHTML = recent.map(function (r) {
       var path = r.file || r.url || '', pathway = tier(r), description = r.desc || r.description || '';
       var images = previewFor(r);

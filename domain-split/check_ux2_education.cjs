@@ -365,7 +365,9 @@ async function suite(browser, mutation) {
     const rows = new Map(catalogue.filter(r => String(r.type || '').toLowerCase() === 'lesson').map(r => [decodeURIComponent('/Lessons/' + (r.file || r.url || '')), r]));
     const rules = fixtures.relocations.lessonRows; const subjects = new Set(); const onHub = []; let order = null;
     for (const [i, c] of cards.entries()) {
-      assert.equal(c.badge, names[i], 'pathway badge for ' + c.key);
+      // Public pathway words (owner, 22 and 23 Nov 2026): the badge shows the display name, typed here, never the record name.
+      assert.equal(c.badge, ['BASE', 'TRACK', 'SUMMIT'][i], 'pathway badge for ' + c.key + ' is its public display name');
+      assert.notEqual(c.badge, names[i], 'pathway badge for ' + c.key + ' must not show the record name');
       assert.equal(c.byline, record[i].byline, 'byline for ' + c.key + ' is byte-equal to the owner words of record');
       assert.ok(c.painted, 'flagship card ' + c.key + ' and its byline are painted');
       assert.ok(!c.overflow, 'flagship card ' + c.key + ' does not overflow');

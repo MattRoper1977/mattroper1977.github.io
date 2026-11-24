@@ -134,7 +134,7 @@
           if (item.tier) {
             const pill = document.createElement('span');
             pill.className = 'fd-tier-pill ' + item.tier;
-            pill.textContent = item.tier.toUpperCase();
+            pill.textContent = ({ BUILD: 'BASE', GROW: 'TRACK', LAUNCH: 'SUMMIT' })[item.tier.toUpperCase()] || item.tier.toUpperCase();
             cardLink.appendChild(pill);
           }
           const h3 = document.createElement('h3');
