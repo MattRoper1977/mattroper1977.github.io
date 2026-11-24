@@ -245,7 +245,11 @@ jobs:
           # Lessons #955 on Lessons main. Every published path that moved between the two commits is already admitted: Lessons main builds
           # with pending 0 against this record (served-digest census on this branch), so this move changes no admission row.
           # It retires the stale carrier whose catalogue evidence failed check_catalogue_static.py. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: 1611f8f40521ad59b7638b49abf5c1744a77ac6d
+          # Moved again 2026-11-24 (Apps BASE v4 Site-tree step, ruling thread) WITH the two other EQUAL pins (education-publication.yml,
+          # published-completion-verify.yml, domain-split-verify.yml) and WITH the Apps pin below, per L31: the Lessons pin 1611f8f4 -> e6fdd516d940db060bfadd7ce611fa3f3b201e8e, the merge of
+          # Lessons #958 on Lessons main (a publisher pin move only; no published Lessons path moved), so this move changes no admission row.
+          # Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: e6fdd516d940db060bfadd7ce611fa3f3b201e8e
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -350,7 +354,11 @@ jobs:
           # dd908441 -> f16d1bc1639171e1cd304afc7f8843f45afebb9f, the merge of Apps #248 on Apps main. The one published Apps path that moved
           # (education-apps/index.html) is already admitted at both digests, so this move changes no admission row.
           # Derived with git rev-parse on the Apps checkout, never typed.
-          ref: f16d1bc1639171e1cd304afc7f8843f45afebb9f
+          # Moved 2026-11-24 (Apps BASE v4 Site-tree step, ruling thread) WITH the Lessons pin above, per STANDING RULE L31: the Apps pin
+          # f16d1bc1 -> b7f1a86d7d93a0b660e2535412a85d6d25194746, the merge of Apps #250 on Apps main (the BASE v4 card title). The Apps page, apps.json and the five Site
+          # files that carry the card title are admitted at their BASE v4 digests by Site #778, so this pin publishes them on the Site tree.
+          # Derived with git rev-parse on the Apps checkout, never typed.
+          ref: b7f1a86d7d93a0b660e2535412a85d6d25194746
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
