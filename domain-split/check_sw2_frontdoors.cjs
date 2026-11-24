@@ -16,6 +16,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
 // J93: the records the homepage is bound from, read from the repo (never retyped here).
 const PATHWAYS = ['BUILD', 'GROW', 'LAUNCH'];
+// Public pathway words (owner, 22 and 23 Nov 2026): what each chip shows. Typed here, independently of the builder.
+const PUBLIC_PATHWAYS = ['BASE', 'TRACK', 'SUMMIT'];
+const RECORD_WORD = /(?<![A-Za-z0-9_])(?:BUILD|GROW|LAUNCH)(?![A-Za-z0-9_])/;
 const DOOR_KEYS = ['pupils', 'teachers', 'parents', 'schools']; // home_slots.DOOR_KEYS
 const HOME_DRAFT = fs.readFileSync(path.join(__dirname, 'home/home.html'), 'utf8');
 const CHROME_HEADER = fs.readFileSync(path.join(__dirname, '..', 'tools/chrome/header.html'), 'utf8');
@@ -139,7 +142,10 @@ exports.verify = async ({page, origin, rules, record}) => {
           link:e.querySelector('a.home-card-link')?.getAttribute('href'),start:e.querySelector('a.home-start-btn')?.getAttribute('href')||null,linkName:t('a.home-card-link [data-slot="flagship.subject.name"]'),
           badges:[...e.querySelectorAll('ul.home-pack-badges > li')].map(li=>({cls:li.className,fixed:li.getAttribute('data-fixed'),href:li.querySelector('a')?.getAttribute('href')||null,title:li.querySelector('a')?.getAttribute('title')||null,ext:li.querySelector('[data-derive="ext"]')?.textContent.trim(),label:li.querySelector('[data-derive="label"]')?.textContent.trim()}))};}));
       assert.deepEqual(cards.map(c=>c.key),PATHWAYS,'Three flagship cards, BUILD, GROW, LAUNCH in order');
-      assert.deepEqual(cards.map(c=>c.chip),PATHWAYS,'Each flagship card names its pathway');
+      assert.deepEqual(cards.map(c=>c.chip),PUBLIC_PATHWAYS,'Each flagship card names its pathway by its public display name');
+      for(const c of cards) assert.ok(!RECORD_WORD.test([c.chip,c.week,c.title,c.outcome].join(' ')),'No record pathway name is visible on flagship card '+c.key);
+      assert.ok(!RECORD_WORD.test(await page.locator('main #pathways').innerText()),'No record pathway name is visible in the flagship strip');
+      assert.deepEqual(await page.locator('main #pathways ul.home-pack-badges').evaluateAll(n=>n.map(e=>e.getAttribute('aria-label'))),PUBLIC_PATHWAYS.map(p=>'Pack files for '+p),'Each pack list is labelled by its public display name');
       assert.deepEqual(cards.map(c=>c.byline),draft.pathwayBylines,'The pathway bylines are the owner words of the draft of record');
       const kicker=await page.locator('main #pathways .home-kicker').evaluate(e=>({name:e.querySelector('[data-slot="flagship.subject.name"]')?.textContent.trim(),week:e.querySelector('[data-slot="flagship.flagshipWeek"]')?.textContent.trim()}));
       const hubRoute='/Lessons/subject.html?subject='+flagshipSlug;

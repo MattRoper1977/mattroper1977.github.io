@@ -9,8 +9,10 @@ screen (the R11 list carried in domain-split/pathway-definitions.json) is kept,
 now over the whole flagship strip.
 
 --self-test  renders the real homepage through build_publications.render_page and asserts
-             that the strip carries exactly BUILD, GROW and LAUNCH in that order (the
-             record's keys), that each chip is the record's pathway name, that each
+             that the strip carries exactly the three pathways in the record's order (its
+             keys), that the record's display names are exactly BASE, TRACK and SUMMIT,
+             that each chip is its pathway's display name, that no record pathway name
+             is visible in the strip's text or labels, that each
              byline is present and is the owner's words of record (by digest, as
              home_slots confirms them — never retyped here), that no forbidden term
              appears anywhere in the strip, and that the retired band is absent.
@@ -21,6 +23,8 @@ now over the whole flagship strip.
                4. a rendered page with one byline blanked     -> this check reds
                5. a rendered page with a forbidden term added -> this check reds
                6. a rendered page with two cards swapped      -> this check reds
+               7. a record whose display name is a record name -> this check reds, the binder refuses
+               8. a record name in a chip, a pack-list label or card text -> this check reds
              (and the legacy band helper, still in the builder until it is retired,
              keeps its three manifest refusals), and finally re-renders the real
              page and requires it green again, so a plant can never leak into the verdict.
@@ -42,6 +46,8 @@ import home_slots  # noqa: E402
 from check_ux2_home import render_home, parse_home, DEFAULT_LESSONS  # noqa: E402
 
 BYLINE = re.compile(home_slots.OWNER_PATTERNS['pathway bylines'])
+# Typed here, independently of the record and of home_slots, so a record or binder that drifts reds.
+PUBLIC_NAMES = ('BASE', 'TRACK', 'SUMMIT')
 
 
 class Strip(HTMLParser):
@@ -55,9 +61,12 @@ class Strip(HTMLParser):
         self.found = 0
         self.band = 0
         self.text = ''
+        self.labels = []
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
+        if self.depth:
+            self.labels += [str(a[k]) for k in ('aria-label', 'title', 'alt') if a.get(k)]
         if tag == 'section' and 'fd-pathways' in (a.get('class') or '').split():
             self.band += 1
         if self.depth == 0 and tag == 'section' and a.get('id') == 'pathways':
@@ -88,8 +97,12 @@ def strip_errors(page_html, record):
     keys = [c['key'] for c in cards]
     if [k.lower() for k in keys] != [r['key'] for r in record['pathways']]:
         errors.append('strip does not carry exactly build, grow, launch in order: ' + repr(keys))
+    # Public pathway words (owner, 22 and 23 Nov 2026): the three display names are exactly these, the
+    # chips show them, and no record pathway name is visible anywhere in the strip or its labels.
+    if [r.get('display') for r in record['pathways']] != list(PUBLIC_NAMES):
+        errors.append('the record display names are not exactly ' + ', '.join(PUBLIC_NAMES) + ' in order')
     for r, card in zip(record['pathways'], cards):
-        if card['pathway'] != r['name']:
+        if card['pathway'] != r.get('display'):
             errors.append('chip label differs for ' + r['key'] + ': ' + repr(card['pathway']))
         if not card['byline']:
             errors.append('byline is empty for ' + r['key'])
@@ -97,6 +110,13 @@ def strip_errors(page_html, record):
     digests = [hashlib.sha256(m.encode('utf-8')).hexdigest() for m in BYLINE.findall(page_html)]
     if digests != home_slots.OWNER_WORDS['pathway bylines']:
         errors.append('the pathway bylines are not the owner words of record, in order')
+    record_names = [r['name'] for r in record['pathways']]
+    seen = strip.text + ' \n ' + ' \n '.join(strip.labels)
+    shown = sorted({m for m in re.findall(r'(?<![A-Za-z0-9_])(' + '|'.join(map(re.escape, record_names)) + r')(?![A-Za-z0-9_])', seen)})
+    if shown:
+        errors.append('record pathway names are visible in the flagship strip or its labels: ' + str(len(shown)))
+    if not all(seen.count(name) for name in PUBLIC_NAMES):
+        errors.append('the flagship strip does not show every public display name')
     low = strip.text.lower()
     hits = [w for w in record['forbidden'] if str(w).lower() in low]
     if hits:
@@ -154,7 +174,24 @@ def self_test(lessons_root):
             finally:
                 home_slots.TEMPLATE = saved
         planted.append({'plant': name, 'observedRed': bool(refusal) and bool(built), 'binderRefusal': (refusal or '')[:60]})
+    display_first = record['pathways'][0]['display']
+    record_first = record['pathways'][0]['name']
+    drifted = json.loads(json.dumps(record))
+    drifted['pathways'][1]['display'] = drifted['pathways'][1]['name']
+    planted.append({'plant': 'record whose display name is its record name', 'observedRed': any('display names are not exactly' in e for e in strip_errors(real, drifted))})
+    with tempfile.TemporaryDirectory() as tmp:  # and the binder refuses that record
+        bad_record = Path(tmp) / 'pathway-definitions.json'
+        bad_record.write_text(json.dumps(drifted))
+        saved_record = home_slots.PATHWAY_RECORD
+        home_slots.PATHWAY_RECORD = bad_record
+        try:
+            planted.append({'plant': 'binder given a display name that is a record name', 'observedRed': bool(binder_refusal(template, sources))})
+        finally:
+            home_slots.PATHWAY_RECORD = saved_record
     for name, page, needle in (
+        ('rendered page with a record name in a chip', real.replace('>' + display_first + '</span>', '>' + record_first + '</span>', 1), 'record pathway names are visible'),
+        ('rendered page with a record name in a pack-list label', real.replace('aria-label="Pack files for ' + display_first + '"', 'aria-label="Pack files for ' + record_first + '"', 1), 'record pathway names are visible'),
+        ('rendered page with a record name in card text', re.sub(r'(<p class="home-unit-outcome"[^>]*>)', lambda m: m.group(1) + record_first + ' ', real, count=1), 'record pathway names are visible'),
         ('rendered page with one byline blanked', re.sub(r'(<p class="home-pathway-byline">)[^<]*(</p>)', r'\1\2', real, count=1), 'byline is empty'),
         ('rendered page with a forbidden term added', re.sub(r'(<p class="home-pathway-byline">[^<]*)(</p>)', lambda m: m.group(1) + ' ' + forbidden + m.group(2), real, count=1), 'forbidden terms present'),
         ('rendered page with two cards swapped', real.replace('data-pathway-card="GROW"', 'data-pathway-card="§"', 1)

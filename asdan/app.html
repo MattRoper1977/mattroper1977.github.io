@@ -226,13 +226,13 @@ table.list tr:last-child td{border-bottom:none}
       <div class="field"><label for="pw-select">Pathway quick-start</label>
         <select id="pw-select">
           <option value="">— choose a pathway —</option>
-          <option value="build">BUILD ASDAN</option>
-          <option value="grow">GROW ASDAN</option>
-          <option value="launch">LAUNCH ASDAN</option>
+          <option value="build">BASE ASDAN</option>
+          <option value="grow">TRACK ASDAN</option>
+          <option value="launch">SUMMIT ASDAN</option>
         </select></div>
       <button class="btn ghost" id="pw-seed">Set up this pathway's strands &amp; slots</button>
     </div>
-    <p class="hint" id="pw-info" style="margin:6px 0">New for 2026–27: pick BUILD, GROW or LAUNCH to seed its strands as Short Courses and a lesson slot for each — real strand names and lesson minutes from the schemes of work. No pupils, credit values or unit codes are added.</p>
+    <p class="hint" id="pw-info" style="margin:6px 0">New for 2026–27: pick BASE, TRACK or SUMMIT to seed its strands as Short Courses and a lesson slot for each — real strand names and lesson minutes from the schemes of work. No pupils, credit values or unit codes are added.</p>
     <div id="pw-active"></div>
     <div class="row" style="margin-top:6px">
       <button class="btn" id="new-peq">＋ New PEQ unit</button>
@@ -295,7 +295,7 @@ table.list tr:last-child td{border-bottom:none}
     <h2>How to use ASDAN Register</h2>
     <p class="hint" style="margin-bottom:10px">One app, two ASDAN shapes. PEQ units track criteria, logged hours and milestones. Short Courses track challenges, banked hours and the closing documents that gate every certificate.</p>
     <h3>0 · Pick a pathway (optional)</h3>
-    <p>On the <b>Programmes</b> page, <b>Pathway quick-start</b> seeds BUILD, GROW or LAUNCH — the strand names and lesson minutes come straight from the schemes of work (79 lessons across the three: BUILD 31, GROW 18, LAUNCH 30). Each pathway names what a learner is working toward — an <b>Award</b> (BUILD), an <b>Extended Award</b> (GROW) or a <b>Level 1 Certificate</b> (LAUNCH). That target, and any unit or level, is <b>provisional</b>: it is the centre coordinator's decision, and nothing is promised to a learner until the ASDAN registration is confirmed.</p>
+    <p>On the <b>Programmes</b> page, <b>Pathway quick-start</b> seeds BASE, TRACK or SUMMIT — the strand names and lesson minutes come straight from the schemes of work (79 lessons across the three: BASE 31, TRACK 18, SUMMIT 30). Each pathway names what a learner is working toward — an <b>Award</b> (BASE), an <b>Extended Award</b> (TRACK) or a <b>Level 1 Certificate</b> (SUMMIT). That target, and any unit or level, is <b>provisional</b>: it is the centre coordinator's decision, and nothing is promised to a learner until the ASDAN registration is confirmed.</p>
     <h3>1 · Pupils (once)</h3>
     <p>Add your class, or press <b>Import pupils from a UAS Register backup</b> to bring them over from the AQA app in one click.</p>
     <h3>2 · Create a programme</h3>
@@ -1200,7 +1200,7 @@ document.querySelector("#load-starter").addEventListener("click",loadStarterTemp
 window.loadStarterTemplate=loadStarterTemplate;
 
 /* =====================================================================
-   v2.6 · Three-pathway awareness (BUILD · GROW · LAUNCH)
+   v2.6 · Three-pathway awareness (BASE · TRACK · SUMMIT)
    Strand names and lesson minutes are DERIVED from the real schemes of
    work (all three share the v5 studio-deck chassis: ~53 min of timed
    activity per lesson). No unit codes, criterion codes, credit values or
@@ -1210,13 +1210,13 @@ window.loadStarterTemplate=loadStarterTemplate;
 const PROVISIONAL_LINE="Unit and level attribution is provisional and remains the centre coordinator's decision. Nothing is promised to a learner until the ASDAN registration is confirmed. This is a worked example from a real SEMH classroom, not an ASDAN-endorsed mapping.";
 const PATHWAY_MINS=53; /* v5 studio deck: I-Do → We-Do → Independent (15:00) phase timers sum to 53 min, identical across all 79 lessons */
 const PATHWAYS={
-  build:{key:"build",name:"BUILD ASDAN",lessons:31,ceiling:"Short Course certificates + AQA UAS — no PEQ qualification",
+  build:{key:"build",name:"BASE ASDAN",lessons:31,ceiling:"Short Course certificates + AQA UAS — no PEQ qualification",
     ceilingNote:"Foundational pathway — banks ASDAN Short Courses, AQA UAS and Capable Kids challenges; no PEQ registration.",
     strands:["Careers","Vocational · Community Upcycling","Living Independently","FoodWise","Community Project","Duke & Social Enterprise"]},
-  grow:{key:"grow",name:"GROW ASDAN",lessons:18,ceiling:"Extended Award",
+  grow:{key:"grow",name:"TRACK ASDAN",lessons:18,ceiling:"Extended Award",
     ceilingNote:"PEQ Level 1 with an Entry 3 floor. Autumn 1 completes Communication skills (ComSk1).",
     strands:["Personal Effectiveness (PEQ Level 1)","Community Project","Community & Enterprise"]},
-  launch:{key:"launch",name:"LAUNCH ASDAN",lessons:30,ceiling:"Level 1 Certificate",
+  launch:{key:"launch",name:"SUMMIT ASDAN",lessons:30,ceiling:"Level 1 Certificate",
     ceilingNote:"Full-year scheme of work homes all six Level 1 PEQ units, so the year's ceiling is an L1 Certificate. Autumn 1 completes Communication skills (ComSk1). Hospitality here is the ASDAN Hospitality Vocational Taster — withdrawal announced: register/buy books by 31 Dec 2026, final certification 31 Aug 2027.",
     strands:["Personal Effectiveness (PEQ Level 1)","Careers & Experiencing Work","Living Independently","Vocational Skills (Hospitality & Gardening)","Community Project & Enterprise"]}
 };
@@ -1230,12 +1230,12 @@ function renderPathwayPreview(){
   const sel=$("#pw-select");if(!sel)return;
   const el=$("#pw-info");if(!el)return;
   const pw=PATHWAYS[sel.value];
-  if(!pw){el.innerHTML="New for 2026–27: pick BUILD, GROW or LAUNCH to seed its strands as Short Courses and a lesson slot for each — real strand names and lesson minutes from the schemes of work. No pupils, credit values or unit codes are added.";return}
+  if(!pw){el.innerHTML="New for 2026–27: pick BASE, TRACK or SUMMIT to seed its strands as Short Courses and a lesson slot for each — real strand names and lesson minutes from the schemes of work. No pupils, credit values or unit codes are added.";return}
   el.innerHTML=`<b>${esc(pw.name)}</b> · ${pw.strands.length} strands · ${PATHWAY_MINS} min each: ${pw.strands.map(s=>esc(s)).join(" · ")}.<br><b>Working toward: ${esc(pw.ceiling)}.</b> ${esc(pw.ceilingNote)}<br><i>${esc(PROVISIONAL_LINE)}</i>`;
 }
 async function seedPathway(key){
   const pw=PATHWAYS[key];
-  if(!pw){toast("Choose BUILD, GROW or LAUNCH first");return}
+  if(!pw){toast("Choose BASE, TRACK or SUMMIT first");return}
   if(S.progs.some(p=>p.pathway===key)){
     V25.pathway=key;await v25Save();renderProgs();toast(pw.name+" strands are already set up");return;
   }
