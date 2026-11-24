@@ -23,12 +23,8 @@ const childProcess = require('child_process');
 const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
-// Release acceptance for the user-supplied 3.5.1 attachment: 1,013,599 raw bytes,
-// SHA-256 285629fb3ca26fdf07467010218d747b428ffae456cd1e5693064f84e3f700e3.
-// Games round 2 batch 7 (gated 24 Nov 2026) adds battle medals through EWStore
-// (r2meta), a shared-computer reminder and drops the build number from the
-// title: 1,016,901 raw bytes, SHA-256
-// 1df017195da3f2af5a0ccf5a0b3afadfd4ed75b852af85f50c63feae5cff7f2c.
+// Release acceptance for 3.5.1 with games round 2 batch 7 (24 Nov 2026): 1,016,901 raw bytes,
+// SHA-256 1df017195da3f2af5a0ccf5a0b3afadfd4ed75b852af85f50c63feae5cff7f2c.
 // The former 400 KiB limit described 2.0.1. Keep a bounded 1 MiB raw-file
 // ceiling for this release; functional, furniture and accessibility gates stay.
 const RELEASE_VERSION = '3.5.1';
