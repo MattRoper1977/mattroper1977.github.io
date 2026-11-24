@@ -16,6 +16,8 @@ PDF_DESCRIPTION = ('Create a PDF from a blank page, annotate an existing documen
 PDF_KEYWORDS = ['PDF', 'PDF generator', 'PDF Studio', 'merge', 'split', 'extract', 'annotate']
 ASDAN = '/Lessons/?subject=ASDAN%20%26%20life%20skills&year=all'
 PATHWAYS = ['BUILD', 'GROW', 'LAUNCH']
+# Public pathway words (owner, 22 and 23 Nov 2026): visible titles use these; routes and search tags keep the record names.
+PUBLIC_PATHWAY = {'BUILD': 'BASE', 'GROW': 'TRACK', 'LAUNCH': 'SUMMIT'}
 # UX2 B4 pre-gate: kind scored below 18/20 — the one sentence /resources/ and the teacher page use.
 KIND_NOTE = json.loads((Path(__file__).resolve().parent/'ux2/appendix-a-site.json').read_text())['derivedNotes']['kindDiscarded']
 
@@ -62,16 +64,16 @@ def pdf_feature():
 
 
 def collections():
-    asdan_links = ''.join('<a href="/Lessons/'+p+'_ASDAN/'+p+'_ASDAN_Hub.html">'+p+' ASDAN collection</a>' for p in PATHWAYS)
+    asdan_links = ''.join('<a href="/Lessons/'+p+'_ASDAN/'+p+'_ASDAN_Hub.html">'+PUBLIC_PATHWAY[p]+' life skills collection</a>' for p in PATHWAYS)
     return ('<section class="discovery-collections" id="resource-collections"><div class="wrap">'
             '<p class="eyebrow">Start with a collection</p><h2>Resources for every part of teaching.</h2>'
             '<p>Browse learning activities, worksheets, teaching packs and downloads from all years.</p>'
             '<div class="collection-grid"><article class="collection-card" id="asdan-learning">'
-            '<h3>ASDAN learning resources</h3><p>Practical learning, life skills and evidence activities. '
+            '<h3>Life skills learning resources</h3><p>Practical learning, life skills and evidence activities. '
             'Browse the existing pathway collections, including older resources.</p>'+asdan_links+
-            '<a href="'+escape(ASDAN, quote=True)+'">Find ASDAN resources · all years</a>'
+            '<a href="'+escape(ASDAN, quote=True)+'">Find life skills resources · all years</a>'
             '<p class="collection-note">For recording evidence and progress, use the separate '
-            '<a href="/asdan/">ASDAN Register</a>.</p></article>'
+            '<a href="/asdan/">Course credits register</a>.</p></article>'
             '<article class="collection-card"><h3>Worksheets, packs &amp; downloads</h3>'
             '<p>Open a subject collection for its existing teaching sheets and downloads.</p>'
             '<a href="/Lessons/Humanities/David_Cover_Autumn1_W3-W7/index.html">Humanities &amp; RE teaching packs</a>'
@@ -119,8 +121,8 @@ def refresh(output, lessons, apps, site_source):
     for pathway in PATHWAYS:
         route = '/Lessons/'+pathway+'_ASDAN/'+pathway+'_ASDAN_Hub.html'
         if not local_file(output, route).is_file(): raise ValueError('Missing existing ASDAN collection: '+route)
-        extras.append({'title': pathway+' ASDAN learning collection', 'description': 'Existing '+pathway+' ASDAN learning activities, worksheets and evidence routines.',
-                       'subject': 'ASDAN learning resources', 'type': 'Resource', 'path': route,
+        extras.append({'title': PUBLIC_PATHWAY[pathway]+' life skills learning collection', 'description': 'Existing '+PUBLIC_PATHWAY[pathway]+' life skills learning activities, worksheets and evidence routines.',
+                       'subject': 'Life skills learning resources', 'type': 'Resource', 'path': route,
                        'tags': ['ASDAN', pathway, 'learning', 'worksheets', 'older resources'], 'status': 'Published'})
     save(site/'data/resource-collections.json', extras)
 
