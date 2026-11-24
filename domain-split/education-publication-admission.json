@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "scope": "Exact all-file publication admission; semantic route classification remains a separate gate",
   "reviewSources": [
+    "Lesson swap batch 77 (Lessons claude/lesson-swap-batch77, 2026-11-24): Humanities shelf fix. The Humanities shelf data (assets/catalogue/humanities-shelf.json) and the shelf page built from it (Humanities/index.html) are re-derived from the reviewed selection, and data/resource-sizes.json follows the page by one line. 60 of 263 cards change only their style, term and batch label: 41 gain the Autumn 2 term, 42 become recommended and 18 alternative. No card is added, removed, retitled or reordered, and the old batch label that carried a place name leaves the public shelf. The hub row in the reviewed selection drops a place name at its source so it matches the shelf title. Site main moved to 55be34e6 (Site #772, sweep B course credits app pages) before this PR merged, so it was re-measured there and this PR is the Site PR before the next Lessons pin move: as ruled by v17 (24 Nov 06:32Z, A1 pattern), it also re-cuts the usage registry row to [0062789b, 510a5c45] and adds the retained usage registry baseline c6a681fa (4324 rows, Lessons main). Runs 45343061107 (batch branch eead335a: exactly these four paths not yet admitted, registry c6a681fa), 45343070346 (carrier 09fcdbe0: first entry of each row, nothing pending, registry 8cb82fe1 held), 45343080214 (Lessons main 1c4f9d01: only the usage registry, 510a5c45, with c6a681fa, which follow the pin move).",
     "Sweep B, course credits app pages (Site claude/sweep-b-awards-app-words fa7feb58, 2026-11-24), the owner's naming rule of 22 Nov 2026: the app page and its index show the public pathway display names in place of the school-copy words; values, addresses and scripts do not change. Three rows move by the A1 pattern, each to [digest a Lessons-triggered publication builds today with the publisher pin 48363fb9, digest a Site-triggered publication builds with this branch]. The two pages build the same digest under the carrier and under Lessons main. The usage registry does not: with this branch it builds 0062789b on the carrier and 510a5c45 on Lessons main 1c4f9d01, so the Site PR that comes before the next Lessons pin move re-cuts that row to 510a5c45. Registry move ruled by v17, 24 Nov 06:3xZ, A1 pattern: the retained usage registry measures 8cb82fe1 (4295 rows, the same count as 2d4eda13) on the carrier and joins the baselines here; c6a681fa (4324 rows, on Lessons main) joins with that re-cut. Measured by the Lessons served digest census job: runs 45338088227 (this branch, carrier 09fcdbe0: exactly these three paths not yet admitted), 45338098055 (this branch, Lessons main), 45338110031 and 45338120711 (Site main 48363fb9 on the carrier and on Lessons main: nothing pending, registry held).",
     "Public words sweep A2 (Lessons claude/sweep-a2-public-words, 2026-11-24): seventy Lessons hub, start-here, scheme-of-work and pack pages show the public pathway display names in visible text and titles; addresses, attributes and scripts do not change. The resource size table follows them. Seventy-one rows move, each to the pair [digest the carrier Lessons 09fcdbe0 builds, digest the sweep branch builds]; any other digest leaves its row. Every digest was measured by the Lessons served digest census job with the Site builder at 7540f22b: run 45324742475 (Lessons c1644680) listed exactly these seventy-one paths as not yet admitted, none without a row and no recorded path left unbuilt; run 45324753615 (carrier 09fcdbe0) gave the first entry of each row and passed all seven publisher checks; run 45324763394 (Lessons main db21153f) passed all seven with nothing pending. The retained usage registry measures b3c36a9d, held by the Site baselines.",
     "Lesson swap batch 76 (Lessons claude/lesson-swap-batch76, 2026-11-23): My tools IEDP targets step 2. The one page kits/class_tools/My_tools.html takes the build gated by the adaptations thread (sha256 e1975de3, on the live 5872878f): each Room brief pupil card gains a target chip, a step can be ticked Partly or Met with a byte-exact Undo, a tally can nudge a step, and Paperwork gains an auto Review and Evidence list with plain Copy. It reads the Class record store and never writes it. Nothing is sent anywhere; pupil data never leaves the device.",
@@ -560,8 +561,8 @@
       ],
       "data/usage-config.json": "1fec49241cb40120129e65ffe06a59203bdc50af29e1000156270d642dbdf12d",
       "data/usage-registry.json": [
-        "fdf37c9e2023010eba8c0e54be62a2e595d893bc2d245a546e0ecc5003fa5a45",
-        "0062789b468b6c20226c203f1581ed01f51392c34dfe811a406c4cf841870cbd"
+        "0062789b468b6c20226c203f1581ed01f51392c34dfe811a406c4cf841870cbd",
+        "510a5c452c64b86c804d4277a2c854fe003bb4b39536cb2a96180f2f33d111b9"
       ],
       "echovault/index.html": "f1c92b911b9fed9656da7fa562cacb8d278f564bb5b20132962b27796583ad12",
       "education-hub/index.html": "3d42c3877b19698aa3cdbb8f15f65c062b3901bf082dc35f17fc3bc82ce8fe17",
@@ -21214,7 +21215,7 @@
       "Humanities/Teaching_Packs/web-slides.html": "dbf557a41b4f58c0a1f8be9447bc082dea6251f6fa3c3ac9dff590659b5c7f04",
       "Humanities/index.html": [
         "c4a6213a9dc6e2f95a297bd6b34687164634d8678ae5599c420a8843d60c1bfa",
-        "eec6cb3c407019a01659773ef7bb561789e5839bab5859dd51622fa13c2a8866"
+        "2a7caa09fd8b0799b69e635af7b03156db9abfcc609036e5bfde75bc0666ce9e"
       ],
       "Humanities_Teesside/BUILD_Printable_Pack.html": "f1b64964cbf7ca3aee6f27e346187192f01ae9640422b2f9d7d22f0abed15070",
       "Humanities_Teesside/BUILD_Scheme_of_Work.html": "a17037dfe79beac809fa3ec1389831cfd9713522c5c7586b571b1e80cc93251d",
@@ -39419,7 +39420,7 @@
       ],
       "assets/catalogue/humanities-shelf.json": [
         "f0a730012b8ec6c0835b3220e17a9c482c025bd1e05ce469005cca5072d81af2",
-        "d45b8cd6e999a39fe865100740f7324978561d35d437b88b08c793975137c1ca"
+        "c6601c6bc7416fb023b9679cd19dae258776ec997036c4126a78168d04fe3220"
       ],
       "assets/catalogue/lesson-navigation.js": "620210e3f6f91e5db758ac4f010d1b94456ced4803bfeb3030e5a13ce938f2d3",
       "assets/catalogue/lesson-order.json": [
@@ -39575,7 +39576,7 @@
       "data/planning-keys.json": "5d1944f5dba42aea2e203f667e6b1b23bdf08157c3c451b0a22757132076c56e",
       "data/resource-sizes.json": [
         "4422074d5be36c7fc874cc94a24d144708d77ab738f70dbd89bb031918c604cd",
-        "3ae91b2fec80e76f245e470b70832dba6c6cf395cdee20361eb01f8240451c16"
+        "a2d32e25142c86565f38b019bb5e90bc348cf1f5e2209d73a5990df000418fb2"
       ],
       "grow-anim/README.md": "131b5159f2b9da63291126da0cee13f7548bd4a9a0511eb8bf2e13b2633dcde0",
       "grow-anim/compat-build-anim.js": "ce4fd029211cf449c86d759909fa19e0b03d5c45094c5206ec3ba226e0caa951",
