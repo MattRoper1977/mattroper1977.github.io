@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "scope": "Exact all-file publication admission; semantic route classification remains a separate gate",
   "reviewSources": [
+    "Sweep B, staff walk logger (Lessons #955, claude/sweep-b-logger-words b879afff, 2026-11-24), the owner's naming rule of 22 Nov 2026: the logger page shows the public pathway display names in place of the school-copy words; addresses, attributes and scripts do not change. Its size table line follows the page. Two rows move to [carrier pin digest, branch digest]: the logger page [51239faf, bc236256] and data/resource-sizes.json [4422074d, 1203875c]; the logger row drops fe133c1b, which neither the carrier nor Lessons main builds, and the size table drops 6c4d624f, which Lessons main builds today and which stays served until the Lessons PR lands. Measured by the Lessons served digest census job with the Site builder at bb0c7d7e: run 45381074556 (branch b879afff, Lessons main cba1dcbf merged in) listed exactly these two paths, registry c6a681fa held; run 45381087632 (carrier 09fcdbe0) gave the first entries with nothing pending, registry 8cb82fe1 held; run 45381100956 (Lessons main cba1dcbf) nothing pending.",
     "Lesson swap batch 78 (Lessons claude/lesson-swap-batch78, 2026-11-24): print engine v3.8.1, the coloured paper fix, gated by the adaptations thread and approved by the ruling thread at 08:58Z. The same 80 Autumn 2 lesson pages as flights 72 and 75 take engine_v3_8_1.js (sha256 c15d8f9b) in place of the live v3.8 (b5775519). Only the engine block changes; every byte outside it is identical on all 80 pages (patch.log, and a separate confinement check before landing). Tinted packs print visibly coloured (blue d6e8f7, pink f8dce6, green dcefe0, cream faf0cc), and page 1 of a tinted pack carries a small adult print instruction; teacher copies stay white. Lowest text contrast on the tinted paper 6.7:1. gate_anypage PASS 80 of 80; engine names scan PASS.",
     "Catalogue pin tool reconcile (Lessons #953, claude/pin-tool-reconcile 34805956, 2026-11-24, naming thread): assets/catalogue/lesson-order.json is rebuilt by tools/catalogue/build_lesson_order.py, because an earlier edit to five lesson pages left it stale; tools/catalogue/pin_catalogue_contract.py names the hand-pinned help pages so it runs again. Neither page bytes nor any other published file change. One row moves to [carrier pin digest f7261627, branch digest 1e8e3b31]; the stale bbff3241 that Lessons main builds today leaves. Measured by the Lessons served digest census job with the Site builder at 51cb8a07: run 45352305033 (branch 34805956) listed exactly this one path, registry c6a681fa held; run 45349231699 (carrier 09fcdbe0) gave the first entry with nothing pending, registry 8cb82fe1 held; run 45352317197 (Lessons main f6e3c78a) builds bbff3241 with nothing pending.",
     "Lesson swap batch 77 (Lessons claude/lesson-swap-batch77, 2026-11-24): Humanities shelf fix. The Humanities shelf data (assets/catalogue/humanities-shelf.json) and the shelf page built from it (Humanities/index.html) are re-derived from the reviewed selection, and data/resource-sizes.json follows the page by one line. 60 of 263 cards change only their style, term and batch label: 41 gain the Autumn 2 term, 42 become recommended and 18 alternative. No card is added, removed, retitled or reordered, and the old batch label that carried a place name leaves the public shelf. The hub row in the reviewed selection drops a place name at its source so it matches the shelf title. Site main moved to 55be34e6 (Site #772, sweep B course credits app pages) before this PR merged, so it was re-measured there and this PR is the Site PR before the next Lessons pin move: as ruled by v17 (24 Nov 06:32Z, A1 pattern), it also re-cuts the usage registry row to [0062789b, 510a5c45] and adds the retained usage registry baseline c6a681fa (4324 rows, Lessons main). Runs 45343061107 (batch branch eead335a: exactly these four paths not yet admitted, registry c6a681fa), 45343070346 (carrier 09fcdbe0: first entry of each row, nothing pending, registry 8cb82fe1 held), 45343080214 (Lessons main 1c4f9d01: only the usage registry, 510a5c45, with c6a681fa, which follow the pin move).",
@@ -32857,8 +32858,8 @@
         "370244385320b77fdc0b21f09122b948e8f77a31a9064c5802fb5aa55e7ae124"
       ],
       "LundyLoop/2_leadership/Loop_Walk_Logger.html": [
-        "fe133c1b6489e0a258f8c178bf9c663a0c68a55a2be0754d50b01320f6881500",
-        "51239faf379c60b2911c1b9e1a877d17a4113a949311184a846079a1b294f806"
+        "51239faf379c60b2911c1b9e1a877d17a4113a949311184a846079a1b294f806",
+        "bc236256f9eab640095f5b4530e23997aac9e6241067bd0e2713ad989a7cfd27"
       ],
       "LundyLoop/2_leadership/Ofsted_LAUNCH_Loop_Sheet.html": [
         "6fc5f81a86aaac03a3aee3db5370a522437a6f5b76a0e7aeee86d0f65b31fe5e",
@@ -39578,7 +39579,7 @@
       "data/planning-keys.json": "5d1944f5dba42aea2e203f667e6b1b23bdf08157c3c451b0a22757132076c56e",
       "data/resource-sizes.json": [
         "4422074d5be36c7fc874cc94a24d144708d77ab738f70dbd89bb031918c604cd",
-        "6c4d624fb339ceeff82770c6023de4ceb0a1846a3c16eef4ea70cafc06ddd6e9"
+        "1203875c7a3efb0e4cd01df0f764dcbf05f1b7c62b6332e4fb0de17ecc6d4500"
       ],
       "grow-anim/README.md": "131b5159f2b9da63291126da0cee13f7548bd4a9a0511eb8bf2e13b2633dcde0",
       "grow-anim/compat-build-anim.js": "ce4fd029211cf449c86d759909fa19e0b03d5c45094c5206ec3ba226e0caa951",
