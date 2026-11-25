@@ -245,12 +245,19 @@ async function responsiveChecks(browser) {
           await page.locator('#tq').scrollIntoViewIfNeeded();
           searches.push({ query, screenshot: await shot(page, `${width}-tools-${query}`) });
         }
+        // Card wording v2 (Apps #251) took the awards word off the register card, so the register is found by
+        // its own new name and the learning collection, which still carries the awards word, by that word.
+        // One query became two; each assertion is unchanged.
         await page.locator('#tq').fill('Course Credits Register'); await settle(page);
-        const asdan = await visibleLinks(page, '.tcard a[href]');
-        assert(asdan.some(a => routeOf(a.href) === '/asdan'), 'ASDAN search lost the existing register');
-        assert(asdan.some(a => new URL(a.href).hash === '#asdan-learning' || /\/(?:BUILD|GROW|LAUNCH)_ASDAN\//.test(new URL(a.href).pathname)), 'ASDAN search hides its distinct learning collection');
+        const register = await visibleLinks(page, '.tcard a[href]');
+        assert(register.some(a => routeOf(a.href) === '/asdan'), 'ASDAN search lost the existing register');
         await page.locator('#tq').scrollIntoViewIfNeeded();
         searches.push({ query: 'Course Credits Register', screenshot: await shot(page, `${width}-tools-course-credits-register`) });
+        await page.locator('#tq').fill('ASDAN'); await settle(page);
+        const asdan = await visibleLinks(page, '.tcard a[href]');
+        assert(asdan.some(a => new URL(a.href).hash === '#asdan-learning' || /\/(?:BUILD|GROW|LAUNCH)_ASDAN\//.test(new URL(a.href).pathname)), 'ASDAN search hides its distinct learning collection');
+        await page.locator('#tq').scrollIntoViewIfNeeded();
+        searches.push({ query: 'ASDAN', screenshot: await shot(page, `${width}-tools-ASDAN`) });
         await page.locator('#tq').fill(''); await settle(page);
         return { searches };
       });
