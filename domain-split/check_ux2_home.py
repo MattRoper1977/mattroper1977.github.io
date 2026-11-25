@@ -371,6 +371,9 @@ def self_test(lessons_root):
         lessons2 = tmp / 'lessons2'; lessons2.mkdir()
         (lessons2 / 'resources.json').write_text(json.dumps([{'subject': 'Zeta', 'type': 'lesson'}, {'subject': 'Alpha', 'type': 'lesson'}]))
         assert [n for _, n in bp.extra_subject_tiles(lessons2)] == ['Alpha', 'Zeta']
+        # ...ignoring case, as the hub's localeCompare does: 'Rivers' sorts before 'RSE'
+        (lessons2 / 'resources.json').write_text(json.dumps([{'subject': n, 'type': 'lesson'} for n in ('RSE', 'Rivers', 'Alpha')]))
+        assert [n for _, n in bp.extra_subject_tiles(lessons2)] == ['Alpha', 'Rivers', 'RSE']
     print(json.dumps({'result': 'PASS', 'plantedDoorAppears': True, 'extraRecordKeyIgnored': True, 'plantedSubjectKeptOffHomepage': True,
                       'gameRowIgnored': True, 'emptyGroupRefused': True, 'recordOrderKept': True, 'j93': j93}))
 

@@ -138,7 +138,9 @@ def extra_subject_tiles(lessons):
         if str(row.get('type', '')).lower() == 'game': continue
         key = card_of(row)
         if key.startswith('x-') and key not in names: names[key] = str(row.get('subject') or key)
-    return sorted(names.items(), key=lambda kv: kv[1])
+    # The hub orders these with localeCompare, which ignores case ('Rivers' before 'RSE'); a plain code-unit
+    # sort put capitals first and the teacher and pupil tiles drifted from the hub's card order.
+    return sorted(names.items(), key=lambda kv: (kv[1].casefold(), kv[1]))
 
 
 AUDIENCE_RECORD = ROOT / 'data/audience-homepages.json'  # s16: audience routes come from the record, never a literal
