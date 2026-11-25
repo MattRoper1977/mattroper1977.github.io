@@ -36,7 +36,14 @@ jobs:
     # indistinguishable from outside: one job, one clock, one conclusion. Split, the admission
     # verdict stays fast and legible, and the mount can have whatever clock it needs without
     # hiding behind it.
-    timeout-minutes: 60
+    #
+    # RAISED 2026-11-25, 60 -> 90, on the owner's written word, as a CONFIG-ONLY change: no step,
+    # check, threshold or scope moves. Measured on Site #782, job 138768275560 (the first run since
+    # 18 Nov to reach the browser mount): 34m to the mount, then the mount was cut at the 60m
+    # ceiling with the ux2 red-proof at 5 of 9 mutations (each about 2m08s); about 72m in all. The
+    # refused local connections in that log are the cancellation itself, 0.1s before "The
+    # operation was canceled", not a server fault. The split above is still the real fix.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
         with:
