@@ -463,6 +463,18 @@ jobs:
           python3 tools/count_marker.py --describe /tmp/kofi-real.html /tmp/kofi-control.html
           echo "configured $url -> HTTP $real_code, handle '$handle' appears $real_hits time(s)"
           echo "control   -> HTTP $ctrl_code, handle appears $ctrl_hits time(s)"
+          # 25 Nov 2026, owner's decision (ruling thread decision card): the host puts
+          # a bot wall in front of this runner on some days. When BOTH the page and
+          # the control come back 403 carrying the wall's own title, nothing about
+          # the link was measured, so the step warns and passes. One walled answer
+          # on its own, any other status, or a real page without the handle still
+          # fails below exactly as before.
+          real_wall=$(python3 tools/count_marker.py "<title>Just a moment" /tmp/kofi-real.html)
+          ctrl_wall=$(python3 tools/count_marker.py "<title>Just a moment" /tmp/kofi-control.html)
+          if [ "$real_code" = "403" ] && [ "$ctrl_code" = "403" ] && [ "$real_wall" -ge 1 ] && [ "$ctrl_wall" -ge 1 ]; then
+            echo "::warning::NOT CHECKED TODAY: the donation host walled both the configured page and the control (HTTP 403, bot interstitial). The link was not measured on this run."
+            exit 0
+          fi
           if [ "$real_code" != "200" ] || [ "$real_hits" -lt 1 ]; then echo "::error::the configured Ko-fi URL did not resolve to a page carrying the account handle"; exit 1; fi
           if [ "$ctrl_hits" -ge 1 ]; then echo "::error::the control page carries the handle too - this measurement cannot tell the account page from any other"; exit 1; fi
       - name: Verify shared usage database and service controls without production traffic
