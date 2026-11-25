@@ -27,7 +27,43 @@ const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 // G1 (gates review F1): the flagship of record and its spec fallback, pinned in the fixture (never taken from the page).
 const FLAGSHIP_OF_RECORD = JSON.parse(fs.readFileSync(path.join(__dirname, 'ux2/appendix-a-site.json'), 'utf8')).homeFlagship;
 const squash = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+// v17 ruling (25 Nov 2026, 17:20Z, Site #782 "Pupil empty state fits"): a text-entry control scrolls its own value,
+// so its scrollWidth measures the typed text, not the layout. For those controls only, overflow is the control's
+// box: its right and left edges stay within the viewport and within its parent's box, at every width.
+// Every other element keeps the scrollWidth test. Self-tested in measureSelfTest below.
+function measureInPage() {
+  const TEXT_ENTRY='input:not([type]),input[type="text"],input[type="search"],textarea';
+  const boxFits=e=>{const b=e.getBoundingClientRect(),vw=document.documentElement.clientWidth,p=e.parentElement&&e.parentElement.getBoundingClientRect();
+    return b.left>=-1&&b.right<=vw+1&&(!p||(b.left>=p.left-1&&b.right<=p.right+1));};
+  return ({
+    overflow:[document.documentElement,...document.querySelectorAll('main *')].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=='inline'&&e.clientWidth>0&&(e.matches(TEXT_ENTRY)?!boxFits(e):e.scrollWidth>e.clientWidth+1)).filter(e=>{const s=getComputedStyle(e);return !(e.matches('#added-rail .acard p')&&s.textOverflow==='ellipsis'&&s.overflowX==='hidden'&&s.whiteSpace==='nowrap'&&e.getBoundingClientRect().height<=parseFloat(s.lineHeight)+1)}).filter(e=>{const s=getComputedStyle(e),b=e.getBoundingClientRect();return !(s.position==='absolute'&&s.overflowX==='hidden'&&s.clipPath==='inset(50%)'&&b.width<=1&&b.height<=1)}).map(e=>e.id||e.className||e.tagName),
+    small:[...document.querySelectorAll('main a[href],main button,main summary,main input')].filter(e=>e.getClientRects().length&&!e.disabled).filter(e=>{const b=e.getBoundingClientRect();return b.width<44||b.height<44}).map(e=>e.textContent.trim().slice(0,45)),
+    broken:[...document.images].filter(i=>i.getClientRects().length&&(!i.complete||!i.naturalWidth)).map(i=>i.src),
+    // Search asset references, not encoded JPEG bytes: a real PDF preview's
+    // base64 can contain "owl" by chance. Inline images are independently
+    // required below to carry verified PDF provenance and decode correctly.
+    owl:[...document.querySelectorAll('[src],[href]')].filter(e=>{
+      const value=e.getAttribute('src')||e.getAttribute('href')||'';
+      // r6 (vj-1): the pack badges link lesson files, and "Knowledge" (as in Knowledge_Organiser) spells owl inside it.
+      return !/^data:image\/jpeg;base64,/i.test(value)&&/owl/i.test(value.replace(/knowledge/gi,''));
+    }).length
+  });
+}
+async function measureSelfTest(browser) {
+  const ctx = await browser.newContext({viewport: {width: 390, height: 900}});
+  try {
+    const p = await ctx.newPage(), run = async html => { await p.setContent(html); return (await p.evaluate(measureInPage)).overflow; };
+    const q = 'sw2-no-such-activity-zzqx'; assert.equal(q.length, 25);
+    assert.deepEqual(await run('<main><input id="fits" style="width:120px;box-sizing:border-box" value="'+q+'"></main>'), [],
+      'measure self-test: a 25-character query in an input that fits is not overflow');
+    assert.ok((await run('<body style="margin:0"><main><div id="wrap" style="width:390px"><input id="wide" style="width:600px"></div></main></body>')).includes('wide'),
+      'measure self-test: an input wider than the viewport is still overflow');
+    assert.ok((await run('<body style="margin:0"><main><div id="box" style="width:200px;overflow:hidden"><input id="spill" style="width:300px"></div></main></body>')).includes('spill'),
+      'measure self-test: an input wider than its parent box is still overflow, even when the parent clips it');
+  } finally { await ctx.close(); }
+}
 exports.verify = async ({page, origin, rules, record}) => {
+  await measureSelfTest(page.context().browser());
   const rows = await (await page.request.get(origin+'/Lessons/resources.json')).json();
   const response = await page.request.get(origin+'/Lessons/assets/catalogue/display-titles.json');
   const titleMap = response.ok() ? await response.json() : null;
@@ -91,19 +127,7 @@ exports.verify = async ({page, origin, rules, record}) => {
     await page.setViewportSize({width,height:900}); await page.goto(origin+route); await page.waitForLoadState('networkidle');
     // A visually hidden element (absolute, 1px box, clipped to nothing, e.g. the card separator .fd-sep) paints
     // nothing, so its scroll width is not overflow anyone can see; everything else is still measured.
-    const measure = async () => page.evaluate(() => ({
-      overflow:[document.documentElement,...document.querySelectorAll('main *')].filter(e=>e.getClientRects().length&&getComputedStyle(e).display!=='inline'&&e.clientWidth>0&&e.scrollWidth>e.clientWidth+1).filter(e=>{const s=getComputedStyle(e);return !(e.matches('#added-rail .acard p')&&s.textOverflow==='ellipsis'&&s.overflowX==='hidden'&&s.whiteSpace==='nowrap'&&e.getBoundingClientRect().height<=parseFloat(s.lineHeight)+1)}).filter(e=>{const s=getComputedStyle(e),b=e.getBoundingClientRect();return !(s.position==='absolute'&&s.overflowX==='hidden'&&s.clipPath==='inset(50%)'&&b.width<=1&&b.height<=1)}).map(e=>e.id||e.className||e.tagName),
-      small:[...document.querySelectorAll('main a[href],main button,main summary,main input')].filter(e=>e.getClientRects().length&&!e.disabled).filter(e=>{const b=e.getBoundingClientRect();return b.width<44||b.height<44}).map(e=>e.textContent.trim().slice(0,45)),
-      broken:[...document.images].filter(i=>i.getClientRects().length&&(!i.complete||!i.naturalWidth)).map(i=>i.src),
-      // Search asset references, not encoded JPEG bytes: a real PDF preview's
-      // base64 can contain "owl" by chance. Inline images are independently
-      // required below to carry verified PDF provenance and decode correctly.
-      owl:[...document.querySelectorAll('[src],[href]')].filter(e=>{
-        const value=e.getAttribute('src')||e.getAttribute('href')||'';
-        // r6 (vj-1): the pack badges link lesson files, and "Knowledge" (as in Knowledge_Organiser) spells owl inside it.
-        return !/^data:image\/jpeg;base64,/i.test(value)&&/owl/i.test(value.replace(/knowledge/gi,''));
-      }).length
-    }));
+    const measure = async () => page.evaluate(measureInPage);
     assert.deepEqual(await measure(),{overflow:[],small:[],broken:[],owl:0},'H/U geometry, images and targets: '+route+' at '+width+' '+JSON.stringify(await measure()));
     // EDU-HERO-20260915: the artwork is one of the approved crops (source digest + served digest), decorative, and phones get the simplified crop.
     const heroManifest=JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname,'education-hero.json'),'utf8'));
@@ -225,9 +249,9 @@ exports.verify = async ({page, origin, rules, record}) => {
       const data=await(await page.request.get(origin+'/data/domain-catalogue.json')).json();assert(data.pupils.length);
       await page.locator('#pupils-q').fill(data.pupils[0].title);await page.getByRole('button',{name:'Find it',exact:true}).click();
       assert(await page.locator('#pupils-results .result:visible').count());
-      assert.deepEqual(await measure(),{overflow:[],small:[],broken:[],owl:0},'Pupil search results keep 44px and fit');
+      assert.deepEqual(await measure(),{overflow:[],small:[],broken:[],owl:0},'Pupil search results keep 44px and fit at '+width+' '+JSON.stringify(await measure()));
       await page.locator('#pupils-q').fill('sw2-no-such-activity-zzqx');await page.getByRole('button',{name:'Find it',exact:true}).click();assert.equal(await page.locator('#pupils-results .result').count(),0);assert.match(await page.locator('#pupils-status').innerText(),/No matches/);
-      assert.deepEqual(await measure(),{overflow:[],small:[],broken:[],owl:0},'Pupil empty state fits');
+      assert.deepEqual(await measure(),{overflow:[],small:[],broken:[],owl:0},'Pupil empty state fits at '+width+' '+JSON.stringify(await measure()));
     }
     if(route==='/for/teachers/'){
       const text=await page.locator('#teacher-note').innerText();assert(text.includes(record.audiences.teachers.noteTitle));assert(text.includes(record.audiences.teachers.note));
