@@ -21,23 +21,69 @@
 
   <section class="home-masthead" aria-labelledby="home-title">
     <div class="home-wrap home-masthead-inner">
-      <div class="home-brand-row">
-        <img class="home-emblem" src="/assets/brand/approved-mark.jpg" width="64" height="64" alt="">
-        <div class="home-brand-copy">
-          <span class="home-brand-credit"><strong data-slot="brand.credit">MADE BY MATT</strong></span>
-          <h1 id="home-title" class="home-descriptor">Real lessons, real packs, real tools — by a teacher, for every pathway · Free • No login • Works offline</h1>
+      <div class="home-hero-main">
+        <div class="home-brand-row">
+          <img class="home-emblem" src="/assets/brand/approved-mark.jpg" width="64" height="64" alt="">
+          <div class="home-brand-copy">
+            <div class="home-brand-meta">
+              <span class="home-brand-credit"><strong data-slot="brand.credit">MADE BY MATT</strong></span>
+              <span class="home-craft-tag">Teacher-built classroom kit</span>
+            </div>
+            <h1 id="home-title" class="home-descriptor">Real lessons, real packs, real tools — by a teacher, for every pathway · Free • No login • Works offline</h1>
+          </div>
+        </div>
+        <p class="home-hero-lead">Plain-spoken lessons, printable packs and classroom tools — written clearly enough for teachers, support staff, cover teachers, tutors and parents to pick up cold across <strong>BASE · TRACK · SUMMIT</strong>.</p>
+        <ul class="home-trust-pills" aria-label="Classroom essentials">
+          <li class="home-trust-pill">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg>
+            <span>Free to use &amp; print</span>
+          </li>
+          <li class="home-trust-pill">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg>
+            <span>No login needed</span>
+          </li>
+          <li class="home-trust-pill">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg>
+            <span>Works offline</span>
+          </li>
+          <li class="home-trust-pill home-trust-pill-accent">
+            <span>Unit award evidence</span>
+          </li>
+        </ul>
+        <div class="home-masthead-actions">
+          <a class="home-btn home-btn-primary" href="#doors">Get Started</a>
+          <a class="home-btn home-btn-outline" href="#pathways">Explore pathways</a>
         </div>
       </div>
-      <div class="home-masthead-actions">
-        <a class="home-btn home-btn-primary" href="#doors">Get Started</a>
-      </div>
+
+      <aside class="home-hero-card" aria-label="Pathway overview">
+        <div class="home-hero-card-head">
+          <p class="home-hero-card-kicker">Pathway structure</p>
+          <p class="home-hero-card-title">Matched levels on the same topic</p>
+        </div>
+        <ul class="home-hero-tiers">
+          <li class="home-hero-tier">
+            <span class="home-pathway-badge home-chip-build">BASE</span>
+            <p>Clear start, visual prompts and steady step-by-step support.</p>
+          </li>
+          <li class="home-hero-tier">
+            <span class="home-pathway-badge home-chip-grow">TRACK</span>
+            <p>Guided scaffolds kept on the page as independence grows.</p>
+          </li>
+          <li class="home-hero-tier">
+            <span class="home-pathway-badge home-chip-launch">SUMMIT</span>
+            <p>Extended depth, source work and structured written tasks.</p>
+          </li>
+        </ul>
+      </aside>
     </div>
   </section>
 
   <section class="home-section" id="doors" aria-labelledby="doors-heading">
     <div class="home-wrap">
-      <div class="home-section-head">
+      <div class="home-section-head home-section-head-row">
         <h2 id="doors-heading">Choose your door</h2>
+        <p class="home-section-note">For classrooms, cover lessons and kitchen tables — no login needed</p>
       </div>
       <div class="home-doors-grid" data-slot-each="audiences.doors">
         <a class="home-door-card" data-slot-attr="href:audiences.doors.0.route" href="/for/pupils/">
@@ -87,103 +133,142 @@
     </div>
   </section>
 
+  <section class="home-section home-classroom-strip" id="real-classrooms" aria-labelledby="standout-heading">
+    <div class="home-wrap">
+      <div class="home-section-head">
+        <p class="home-kicker">Designed for everyday teaching</p>
+        <h2 id="standout-heading">Built for real classrooms</h2>
+      </div>
+      <div class="home-bento-grid">
+        <article class="home-bento-card home-bento-forest">
+          <div class="home-bento-copy">
+            <p class="home-bento-kicker">Preparation for adulthood</p>
+            <h3>Small steps that build real outcomes</h3>
+            <p>Practical independent living, employment, community and health topics designed to build clear evidence for accredited routes and unit awards — paired with local classroom trackers.</p>
+          </div>
+          <a class="home-bento-link" href="/Lessons/subject.html?subject=lifeskills"><span>Explore Lifeskills</span><span aria-hidden="true">→</span></a>
+        </article>
+
+        <article class="home-bento-card home-bento-base">
+          <div class="home-bento-copy">
+            <p class="home-bento-kicker">Calm classroom pace</p>
+            <h3>Holds the room without overwhelm</h3>
+            <p>Predictable lesson flow, clear board print, built-in catch-up prompts when days are missed, a calm reset routine, and respectful tasks across BASE, TRACK and SUMMIT.</p>
+          </div>
+          <a class="home-bento-link" href="/for/teachers/"><span>Open teacher guide</span><span aria-hidden="true">→</span></a>
+        </article>
+
+        <article class="home-bento-card home-bento-summit">
+          <div class="home-bento-copy">
+            <p class="home-bento-kicker">Self-contained kit</p>
+            <h3>Board lesson, print pack and classroom tools</h3>
+            <p>No login needed and no worksheet hunting — units bring together an interactive board lesson, printable pupil sheets, staff notes and offline classroom tools.</p>
+          </div>
+          <a class="home-bento-link" href="/tools/"><span>Open classroom tools</span><span aria-hidden="true">→</span></a>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <section class="home-section home-flagship" id="pathways" aria-labelledby="pathways-heading">
     <div class="home-wrap">
-      <div class="home-section-head home-flagship-head">
-        <div>
-          <p class="home-kicker">
-            <span data-slot="flagship.subject.name">Science</span>
-            <span aria-hidden="true"> · </span>
-            <span data-slot="flagship.flagshipWeek">Autumn 2 · Week 6</span>
-          </p>
-          <h2 id="pathways-heading">One topic, three pathways</h2>
+      <div class="home-flagship-board">
+        <div class="home-section-head home-flagship-head">
+          <div>
+            <p class="home-kicker">
+              <span data-slot="flagship.subject.name">Science</span>
+              <span aria-hidden="true"> · </span>
+              <span data-slot="flagship.flagshipWeek">Autumn 2 · Week 6</span>
+            </p>
+            <h2 id="pathways-heading">One topic, three pathways</h2>
+          </div>
+          <div class="home-pathway-switch" role="group" aria-label="Filter flagship unit by pathway" data-pathway-switch hidden>
+            <button type="button" class="home-switch-btn" data-pathway-btn="ALL" aria-pressed="true">All pathways</button>
+            <button type="button" class="home-switch-btn home-chip-build" data-pathway-btn="BUILD" aria-pressed="false">BASE</button>
+            <button type="button" class="home-switch-btn home-chip-grow" data-pathway-btn="GROW" aria-pressed="false">TRACK</button>
+            <button type="button" class="home-switch-btn home-chip-launch" data-pathway-btn="LAUNCH" aria-pressed="false">SUMMIT</button>
+          </div>
         </div>
-        <div class="home-pathway-switch" role="group" aria-label="Filter flagship unit by pathway" data-pathway-switch hidden>
-          <button type="button" class="home-switch-btn" data-pathway-btn="ALL" aria-pressed="true">All pathways</button>
-          <button type="button" class="home-switch-btn home-chip-build" data-pathway-btn="BUILD" aria-pressed="false">BASE</button>
-          <button type="button" class="home-switch-btn home-chip-grow" data-pathway-btn="GROW" aria-pressed="false">TRACK</button>
-          <button type="button" class="home-switch-btn home-chip-launch" data-pathway-btn="LAUNCH" aria-pressed="false">SUMMIT</button>
+
+        <div class="home-flagship-grid" data-slot-each="flagship.cards">
+          <article class="home-pathway-card" data-pathway-card="BUILD">
+            <div class="home-pathway-top">
+              <span class="home-pathway-badge home-chip-build" data-slot="flagship.0.pathway">BASE</span>
+              <span class="home-pathway-week" data-slot="flagship.0.week">Autumn 2 · Week 6</span>
+            </div>
+            <p class="home-pathway-byline">Small steps, big support: short tasks, a clear start, success you can see.</p>
+            <h3 class="home-unit-title" data-slot="flagship.0.title">BASE · Keep a rock test fair</h3>
+            <p class="home-unit-outcome" data-slot="flagship.0.outcome">BASE Science · Autumn 2 · Week 6. I am learning to keep a rock test the same each time.</p>
+            <a class="home-btn home-btn-primary home-start-btn" data-slot-attr="href:flagship.0.lessonPath" data-sample="none">Start lesson <span aria-hidden="true">→</span></a>
+            <div class="home-pack-box">
+              <p class="home-pack-label">Inspect the box</p>
+              <ul class="home-pack-badges" aria-label="Pack files for BASE" data-slot-each="flagship.0.packMembers">
+                <li class="home-pack-badge home-format-html" data-fixed="true"><a data-slot-attr="href:flagship.0.lessonPath" data-sample="none"><span data-slot="flagship.0.lessonPath" data-derive="ext">HTML</span> <span data-slot="flagship.0.lessonPath" data-derive="label">Interactive Lesson</span></a></li>
+                <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.0.packMembers.0.path;title:flagship.0.packMembers.0.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.0.path" data-derive="ext">DOCX</span> <span data-slot="flagship.0.packMembers.0.path" data-derive="label">Editable Pack</span></a></li>
+                <li class="home-pack-badge home-format-pptx"><a data-slot-attr="href:flagship.0.packMembers.1.path;title:flagship.0.packMembers.1.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.1.path" data-derive="ext">PPTX</span> <span data-slot="flagship.0.packMembers.1.path" data-derive="label">Editable Slides</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.0.packMembers.2.path;title:flagship.0.packMembers.2.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.2.path" data-derive="ext">PDF</span> <span data-slot="flagship.0.packMembers.2.path" data-derive="label">Knowledge Organiser</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.0.packMembers.3.path;title:flagship.0.packMembers.3.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.3.path" data-derive="ext">PDF</span> <span data-slot="flagship.0.packMembers.3.path" data-derive="label">Pupil Resources</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.0.packMembers.4.path;title:flagship.0.packMembers.4.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.4.path" data-derive="ext">PDF</span> <span data-slot="flagship.0.packMembers.4.path" data-derive="label">TA Brief</span></a></li>
+                <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.0.packMembers.5.path;title:flagship.0.packMembers.5.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.5.path" data-derive="ext">DOCX</span> <span data-slot="flagship.0.packMembers.5.path" data-derive="label">Teacher Notes</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.0.packMembers.6.path;title:flagship.0.packMembers.6.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.6.path" data-derive="ext">PDF</span> <span data-slot="flagship.0.packMembers.6.path" data-derive="label">Teacher Notes</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.0.packMembers.7.path;title:flagship.0.packMembers.7.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.7.path" data-derive="ext">PDF</span> <span data-slot="flagship.0.packMembers.7.path" data-derive="label">Word Page</span></a></li>
+              </ul>
+            </div>
+            <a class="home-card-link" data-slot-attr="href:subjects.hubs.0.route" href="/Lessons/subject.html?subject=science">Open in <span data-slot="flagship.subject.name">Science</span> hub <span aria-hidden="true">→</span></a>
+          </article>
+
+          <article class="home-pathway-card" data-pathway-card="GROW">
+            <div class="home-pathway-top">
+              <span class="home-pathway-badge home-chip-grow" data-slot="flagship.1.pathway">TRACK</span>
+              <span class="home-pathway-week" data-slot="flagship.1.week">Autumn 2 · Week 6</span>
+            </div>
+            <p class="home-pathway-byline">The same learning with the scaffolds still on the page — independence, built step by step.</p>
+            <h3 class="home-unit-title" data-slot="flagship.1.title">TRACK · Investigating a science question</h3>
+            <p class="home-unit-outcome" data-slot="flagship.1.outcome">TRACK Science · Autumn 2 · Week 6. I am learning to plan a fair investigation, record a result and explain a limit.</p>
+            <a class="home-btn home-btn-primary home-start-btn" data-slot-attr="href:flagship.1.lessonPath" data-sample="none">Start lesson <span aria-hidden="true">→</span></a>
+            <div class="home-pack-box">
+              <p class="home-pack-label">Inspect the box</p>
+              <ul class="home-pack-badges" aria-label="Pack files for TRACK" data-slot-each="flagship.1.packMembers">
+                <li class="home-pack-badge home-format-html" data-fixed="true"><a data-slot-attr="href:flagship.1.lessonPath" data-sample="none"><span data-slot="flagship.1.lessonPath" data-derive="ext">HTML</span> <span data-slot="flagship.1.lessonPath" data-derive="label">Interactive Lesson</span></a></li>
+                <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.1.packMembers.0.path;title:flagship.1.packMembers.0.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.0.path" data-derive="ext">DOCX</span> <span data-slot="flagship.1.packMembers.0.path" data-derive="label">Editable Pack</span></a></li>
+                <li class="home-pack-badge home-format-pptx"><a data-slot-attr="href:flagship.1.packMembers.1.path;title:flagship.1.packMembers.1.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.1.path" data-derive="ext">PPTX</span> <span data-slot="flagship.1.packMembers.1.path" data-derive="label">Editable Slides</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.1.packMembers.2.path;title:flagship.1.packMembers.2.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.2.path" data-derive="ext">PDF</span> <span data-slot="flagship.1.packMembers.2.path" data-derive="label">Knowledge Organiser</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.1.packMembers.3.path;title:flagship.1.packMembers.3.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.3.path" data-derive="ext">PDF</span> <span data-slot="flagship.1.packMembers.3.path" data-derive="label">Pupil Resources</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.1.packMembers.4.path;title:flagship.1.packMembers.4.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.4.path" data-derive="ext">PDF</span> <span data-slot="flagship.1.packMembers.4.path" data-derive="label">TA Brief</span></a></li>
+                <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.1.packMembers.5.path;title:flagship.1.packMembers.5.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.5.path" data-derive="ext">DOCX</span> <span data-slot="flagship.1.packMembers.5.path" data-derive="label">Teacher Notes</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.1.packMembers.6.path;title:flagship.1.packMembers.6.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.6.path" data-derive="ext">PDF</span> <span data-slot="flagship.1.packMembers.6.path" data-derive="label">Teacher Notes</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.1.packMembers.7.path;title:flagship.1.packMembers.7.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.7.path" data-derive="ext">PDF</span> <span data-slot="flagship.1.packMembers.7.path" data-derive="label">Word Page</span></a></li>
+              </ul>
+            </div>
+            <a class="home-card-link" data-slot-attr="href:subjects.hubs.0.route" href="/Lessons/subject.html?subject=science">Open in <span data-slot="flagship.subject.name">Science</span> hub <span aria-hidden="true">→</span></a>
+          </article>
+
+          <article class="home-pathway-card" data-pathway-card="LAUNCH">
+            <div class="home-pathway-top">
+              <span class="home-pathway-badge home-chip-launch" data-slot="flagship.2.pathway">SUMMIT</span>
+              <span class="home-pathway-week" data-slot="flagship.2.week">Autumn 2 · Week 6</span>
+            </div>
+            <p class="home-pathway-byline">Full depth and real sources, to the standard the qualification asks for.</p>
+            <h3 class="home-unit-title" data-slot="flagship.2.title">SUMMIT · Researching a genetic condition</h3>
+            <p class="home-unit-outcome" data-slot="flagship.2.outcome">SUMMIT Science · Autumn 2 · Week 6. I am learning to use a named source to present careful facts about a genetic condition.</p>
+            <a class="home-btn home-btn-primary home-start-btn" data-slot-attr="href:flagship.2.lessonPath" data-sample="none">Start lesson <span aria-hidden="true">→</span></a>
+            <div class="home-pack-box">
+              <p class="home-pack-label">Inspect the box</p>
+              <ul class="home-pack-badges" aria-label="Pack files for SUMMIT" data-slot-each="flagship.2.packMembers">
+                <li class="home-pack-badge home-format-html" data-fixed="true"><a data-slot-attr="href:flagship.2.lessonPath" data-sample="none"><span data-slot="flagship.2.lessonPath" data-derive="ext">HTML</span> <span data-slot="flagship.2.lessonPath" data-derive="label">Interactive Lesson</span></a></li>
+                <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.2.packMembers.0.path;title:flagship.2.packMembers.0.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.0.path" data-derive="ext">DOCX</span> <span data-slot="flagship.2.packMembers.0.path" data-derive="label">Editable Pack</span></a></li>
+                <li class="home-pack-badge home-format-pptx"><a data-slot-attr="href:flagship.2.packMembers.1.path;title:flagship.2.packMembers.1.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.1.path" data-derive="ext">PPTX</span> <span data-slot="flagship.2.packMembers.1.path" data-derive="label">Editable Slides</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.2.packMembers.2.path;title:flagship.2.packMembers.2.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.2.path" data-derive="ext">PDF</span> <span data-slot="flagship.2.packMembers.2.path" data-derive="label">Knowledge Organiser</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.2.packMembers.3.path;title:flagship.2.packMembers.3.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.3.path" data-derive="ext">PDF</span> <span data-slot="flagship.2.packMembers.3.path" data-derive="label">Pupil Resources</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.2.packMembers.4.path;title:flagship.2.packMembers.4.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.4.path" data-derive="ext">PDF</span> <span data-slot="flagship.2.packMembers.4.path" data-derive="label">TA Brief</span></a></li>
+                <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.2.packMembers.5.path;title:flagship.2.packMembers.5.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.5.path" data-derive="ext">DOCX</span> <span data-slot="flagship.2.packMembers.5.path" data-derive="label">Teacher Notes</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.2.packMembers.6.path;title:flagship.2.packMembers.6.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.6.path" data-derive="ext">PDF</span> <span data-slot="flagship.2.packMembers.6.path" data-derive="label">Teacher Notes</span></a></li>
+                <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.2.packMembers.7.path;title:flagship.2.packMembers.7.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.7.path" data-derive="ext">PDF</span> <span data-slot="flagship.2.packMembers.7.path" data-derive="label">Word Page</span></a></li>
+              </ul>
+            </div>
+            <a class="home-card-link" data-slot-attr="href:subjects.hubs.0.route" href="/Lessons/subject.html?subject=science">Open in <span data-slot="flagship.subject.name">Science</span> hub <span aria-hidden="true">→</span></a>
+          </article>
         </div>
-      </div>
-
-      <div class="home-flagship-grid" data-slot-each="flagship.cards">
-        <article class="home-pathway-card" data-pathway-card="BUILD">
-          <div class="home-pathway-top">
-            <span class="home-pathway-badge home-chip-build" data-slot="flagship.0.pathway">BASE</span>
-            <span class="home-pathway-week" data-slot="flagship.0.week">Autumn 2 · Week 6</span>
-          </div>
-          <p class="home-pathway-byline">Small steps, big support: short tasks, a clear start, success you can see.</p>
-          <h3 class="home-unit-title" data-slot="flagship.0.title">BASE · Keep a rock test fair</h3>
-          <p class="home-unit-outcome" data-slot="flagship.0.outcome">BASE Science · Autumn 2 · Week 6. I am learning to keep a rock test the same each time.</p>
-          <a class="home-btn home-btn-primary home-start-btn" data-slot-attr="href:flagship.0.lessonPath" data-sample="none">Start lesson <span aria-hidden="true">→</span></a>
-          <div class="home-pack-box">
-            <p class="home-pack-label">Inspect the box</p>
-            <ul class="home-pack-badges" aria-label="Pack files for BASE" data-slot-each="flagship.0.packMembers">
-              <li class="home-pack-badge home-format-html" data-fixed="true"><a data-slot-attr="href:flagship.0.lessonPath" data-sample="none"><span data-slot="flagship.0.lessonPath" data-derive="ext">HTML</span> <span data-slot="flagship.0.lessonPath" data-derive="label">Interactive Lesson</span></a></li>
-              <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.0.packMembers.0.path;title:flagship.0.packMembers.0.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.0.path" data-derive="ext">DOCX</span> <span data-slot="flagship.0.packMembers.0.path" data-derive="label">Editable Pack</span></a></li>
-              <li class="home-pack-badge home-format-pptx"><a data-slot-attr="href:flagship.0.packMembers.1.path;title:flagship.0.packMembers.1.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.1.path" data-derive="ext">PPTX</span> <span data-slot="flagship.0.packMembers.1.path" data-derive="label">Editable Slides</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.0.packMembers.2.path;title:flagship.0.packMembers.2.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.2.path" data-derive="ext">PDF</span> <span data-slot="flagship.0.packMembers.2.path" data-derive="label">Knowledge Organiser</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.0.packMembers.3.path;title:flagship.0.packMembers.3.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.3.path" data-derive="ext">PDF</span> <span data-slot="flagship.0.packMembers.3.path" data-derive="label">Pupil Resources</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.0.packMembers.4.path;title:flagship.0.packMembers.4.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.4.path" data-derive="ext">PDF</span> <span data-slot="flagship.0.packMembers.4.path" data-derive="label">TA Brief</span></a></li>
-              <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.0.packMembers.5.path;title:flagship.0.packMembers.5.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.5.path" data-derive="ext">DOCX</span> <span data-slot="flagship.0.packMembers.5.path" data-derive="label">Teacher Notes</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.0.packMembers.6.path;title:flagship.0.packMembers.6.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.6.path" data-derive="ext">PDF</span> <span data-slot="flagship.0.packMembers.6.path" data-derive="label">Teacher Notes</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.0.packMembers.7.path;title:flagship.0.packMembers.7.sizeLabel" data-sample="none"><span data-slot="flagship.0.packMembers.7.path" data-derive="ext">PDF</span> <span data-slot="flagship.0.packMembers.7.path" data-derive="label">Word Page</span></a></li>
-            </ul>
-          </div>
-          <a class="home-card-link" data-slot-attr="href:subjects.hubs.0.route" href="/Lessons/subject.html?subject=science">Open in <span data-slot="flagship.subject.name">Science</span> hub <span aria-hidden="true">→</span></a>
-        </article>
-
-        <article class="home-pathway-card" data-pathway-card="GROW">
-          <div class="home-pathway-top">
-            <span class="home-pathway-badge home-chip-grow" data-slot="flagship.1.pathway">TRACK</span>
-            <span class="home-pathway-week" data-slot="flagship.1.week">Autumn 2 · Week 6</span>
-          </div>
-          <p class="home-pathway-byline">The same learning with the scaffolds still on the page — independence, built step by step.</p>
-          <h3 class="home-unit-title" data-slot="flagship.1.title">TRACK · Investigating a science question</h3>
-          <p class="home-unit-outcome" data-slot="flagship.1.outcome">TRACK Science · Autumn 2 · Week 6. I am learning to plan a fair investigation, record a result and explain a limit.</p>
-          <a class="home-btn home-btn-primary home-start-btn" data-slot-attr="href:flagship.1.lessonPath" data-sample="none">Start lesson <span aria-hidden="true">→</span></a>
-          <div class="home-pack-box">
-            <p class="home-pack-label">Inspect the box</p>
-            <ul class="home-pack-badges" aria-label="Pack files for TRACK" data-slot-each="flagship.1.packMembers">
-              <li class="home-pack-badge home-format-html" data-fixed="true"><a data-slot-attr="href:flagship.1.lessonPath" data-sample="none"><span data-slot="flagship.1.lessonPath" data-derive="ext">HTML</span> <span data-slot="flagship.1.lessonPath" data-derive="label">Interactive Lesson</span></a></li>
-              <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.1.packMembers.0.path;title:flagship.1.packMembers.0.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.0.path" data-derive="ext">DOCX</span> <span data-slot="flagship.1.packMembers.0.path" data-derive="label">Editable Pack</span></a></li>
-              <li class="home-pack-badge home-format-pptx"><a data-slot-attr="href:flagship.1.packMembers.1.path;title:flagship.1.packMembers.1.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.1.path" data-derive="ext">PPTX</span> <span data-slot="flagship.1.packMembers.1.path" data-derive="label">Editable Slides</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.1.packMembers.2.path;title:flagship.1.packMembers.2.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.2.path" data-derive="ext">PDF</span> <span data-slot="flagship.1.packMembers.2.path" data-derive="label">Knowledge Organiser</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.1.packMembers.3.path;title:flagship.1.packMembers.3.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.3.path" data-derive="ext">PDF</span> <span data-slot="flagship.1.packMembers.3.path" data-derive="label">Pupil Resources</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.1.packMembers.4.path;title:flagship.1.packMembers.4.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.4.path" data-derive="ext">PDF</span> <span data-slot="flagship.1.packMembers.4.path" data-derive="label">TA Brief</span></a></li>
-              <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.1.packMembers.5.path;title:flagship.1.packMembers.5.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.5.path" data-derive="ext">DOCX</span> <span data-slot="flagship.1.packMembers.5.path" data-derive="label">Teacher Notes</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.1.packMembers.6.path;title:flagship.1.packMembers.6.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.6.path" data-derive="ext">PDF</span> <span data-slot="flagship.1.packMembers.6.path" data-derive="label">Teacher Notes</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.1.packMembers.7.path;title:flagship.1.packMembers.7.sizeLabel" data-sample="none"><span data-slot="flagship.1.packMembers.7.path" data-derive="ext">PDF</span> <span data-slot="flagship.1.packMembers.7.path" data-derive="label">Word Page</span></a></li>
-            </ul>
-          </div>
-          <a class="home-card-link" data-slot-attr="href:subjects.hubs.0.route" href="/Lessons/subject.html?subject=science">Open in <span data-slot="flagship.subject.name">Science</span> hub <span aria-hidden="true">→</span></a>
-        </article>
-
-        <article class="home-pathway-card" data-pathway-card="LAUNCH">
-          <div class="home-pathway-top">
-            <span class="home-pathway-badge home-chip-launch" data-slot="flagship.2.pathway">SUMMIT</span>
-            <span class="home-pathway-week" data-slot="flagship.2.week">Autumn 2 · Week 6</span>
-          </div>
-          <p class="home-pathway-byline">Full depth and real sources, to the standard the qualification asks for.</p>
-          <h3 class="home-unit-title" data-slot="flagship.2.title">SUMMIT · Researching a genetic condition</h3>
-          <p class="home-unit-outcome" data-slot="flagship.2.outcome">SUMMIT Science · Autumn 2 · Week 6. I am learning to use a named source to present careful facts about a genetic condition.</p>
-          <a class="home-btn home-btn-primary home-start-btn" data-slot-attr="href:flagship.2.lessonPath" data-sample="none">Start lesson <span aria-hidden="true">→</span></a>
-          <div class="home-pack-box">
-            <p class="home-pack-label">Inspect the box</p>
-            <ul class="home-pack-badges" aria-label="Pack files for SUMMIT" data-slot-each="flagship.2.packMembers">
-              <li class="home-pack-badge home-format-html" data-fixed="true"><a data-slot-attr="href:flagship.2.lessonPath" data-sample="none"><span data-slot="flagship.2.lessonPath" data-derive="ext">HTML</span> <span data-slot="flagship.2.lessonPath" data-derive="label">Interactive Lesson</span></a></li>
-              <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.2.packMembers.0.path;title:flagship.2.packMembers.0.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.0.path" data-derive="ext">DOCX</span> <span data-slot="flagship.2.packMembers.0.path" data-derive="label">Editable Pack</span></a></li>
-              <li class="home-pack-badge home-format-pptx"><a data-slot-attr="href:flagship.2.packMembers.1.path;title:flagship.2.packMembers.1.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.1.path" data-derive="ext">PPTX</span> <span data-slot="flagship.2.packMembers.1.path" data-derive="label">Editable Slides</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.2.packMembers.2.path;title:flagship.2.packMembers.2.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.2.path" data-derive="ext">PDF</span> <span data-slot="flagship.2.packMembers.2.path" data-derive="label">Knowledge Organiser</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.2.packMembers.3.path;title:flagship.2.packMembers.3.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.3.path" data-derive="ext">PDF</span> <span data-slot="flagship.2.packMembers.3.path" data-derive="label">Pupil Resources</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.2.packMembers.4.path;title:flagship.2.packMembers.4.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.4.path" data-derive="ext">PDF</span> <span data-slot="flagship.2.packMembers.4.path" data-derive="label">TA Brief</span></a></li>
-              <li class="home-pack-badge home-format-docx"><a data-slot-attr="href:flagship.2.packMembers.5.path;title:flagship.2.packMembers.5.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.5.path" data-derive="ext">DOCX</span> <span data-slot="flagship.2.packMembers.5.path" data-derive="label">Teacher Notes</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.2.packMembers.6.path;title:flagship.2.packMembers.6.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.6.path" data-derive="ext">PDF</span> <span data-slot="flagship.2.packMembers.6.path" data-derive="label">Teacher Notes</span></a></li>
-              <li class="home-pack-badge home-format-pdf"><a data-slot-attr="href:flagship.2.packMembers.7.path;title:flagship.2.packMembers.7.sizeLabel" data-sample="none"><span data-slot="flagship.2.packMembers.7.path" data-derive="ext">PDF</span> <span data-slot="flagship.2.packMembers.7.path" data-derive="label">Word Page</span></a></li>
-            </ul>
-          </div>
-          <a class="home-card-link" data-slot-attr="href:subjects.hubs.0.route" href="/Lessons/subject.html?subject=science">Open in <span data-slot="flagship.subject.name">Science</span> hub <span aria-hidden="true">→</span></a>
-        </article>
       </div>
     </div>
   </section>
@@ -324,6 +409,7 @@
   <section class="home-section home-maker" id="about" aria-labelledby="maker-heading">
     <div class="home-wrap home-maker-inner">
       <div class="home-maker-copy">
+        <p class="home-kicker">Behind the resources</p>
         <h2 id="maker-heading">Meet Matt</h2>
         <p class="home-maker-note" data-slot="owner.makerNote">I'm a science teacher in an alternative provision. Everything here was built for my own classroom first — for pupils who need lessons that start quickly, stay short and still reach the real standard. I make it free because the next teacher shouldn't have to build it all again. If it works for your pupils, use it; if it doesn't, <a href="/commission/">tell me</a>.</p>
         <p class="home-maker-credit"><strong data-slot="brand.credit">MADE BY MATT</strong></p>
