@@ -367,6 +367,38 @@
       "poster": "/assets/play/media/apexkick-v10-3.webp",
       "reviewed_at": "2026-11-22",
       "review_evidence": "Recapture for Apex Kick after loader L2 (apexkick/index.html 35a72b3c2ead…, published the same; the only byte change is the re-rendered generated splash region), asked for by the games upgrade thread on 22 Nov 2026 as ruled for batch 03: fresh clip from the new bytes, this row rebound, media names kept. The CI capture script domain-split/play/capture.cjs, its Apex Kick routine unchanged, re-run locally in headless Chromium with the CI launch flags (no chrome channel) against the built Play tree (Lessons 357d841f) from this branch at 9721b346, which holds these Apex Kick bytes. Keeper Glove Mode chosen in the hub, then the game's own A/D/S dive keys pressed as each strike lands: AI run-ups, dives and genuine results (\"BEAT AT THE POST!\"), with the shot radar. 0 errors; storage keys mbm_apexkick_v10_save and mbm_splash_last only. Every frame reviewed at 1 per second by Claude: game UI text only, no real person, place or organisation name; no loader frame in the clip; the stadium board is out of frame."
+    },
+    {
+      "id": "lumins-current-2026-11-25",
+      "title": "Lumins",
+      "route": "/Lessons/Games/Lumins.html",
+      "status": "accepted",
+      "viewport": {
+        "width": 960,
+        "height": 540
+      },
+      "device": "Headless Chromium (Playwright), local re-run of the CI capture script; fresh isolated context",
+      "captured_at": "2026-11-25T15:35:01.961Z",
+      "source_commit": "d5c750b9e6598107aca6b7d6f9012ba65e1225fe",
+      "lessons_commit": "3e77198424a8df35f8c5c250ae38dfb715c37900",
+      "published_sha256": "7da1f46c60fd0675a2f4a04f8641b789d9e0eebad09d695bde6f89214c81b898",
+      "description": "Build two bridge sections across the first gap and guide Lumins toward the rescue portal.",
+      "storage_keys": [
+        "lumins_run",
+        "lumins_total",
+        "lumins_afterlight_journal"
+      ],
+      "errors": [],
+      "source_recording": "lumins/page@40e38a095684f3576cfc19e7770d2972.webm",
+      "duration_seconds": 19.88,
+      "codec": "h264",
+      "bytes": 375129,
+      "video_sha256": "2156dbbbf83c59ae17afde5b9863b095b091efd796485930a7661cc1a793f89e",
+      "poster_sha256": "305a296638e3e8e16fe6d41066fbb1e038abd898a80bf66d1a82d2b64e69f62b",
+      "video": "/assets/play/media/lumins-current-2026-11-25.mp4",
+      "poster": "/assets/play/media/lumins-current-2026-11-25.webp",
+      "reviewed_at": "2026-11-25",
+      "review_evidence": "Recapture of Lumins at the published Play source (Games/Lumins.html 7da1f46c60fd...) with the CI capture script's own inputs (key 4, two cell clicks) re-run locally in headless Chromium, so the review's capture source can move past the game renames. Frames at 2, 10 and 18 s reviewed by Claude: two bridge sections placed across the first gap and Lumins crossing toward the portal (HUD 2/3 with 3 left at 10 s); recorded after-state \"You saved 5 of 5 - target was 3 ... 2 world interventions\", no seeded completion, storage keys lumins_run, lumins_total, lumins_afterlight_journal only, 0 errors."
     }
   ]
 }
