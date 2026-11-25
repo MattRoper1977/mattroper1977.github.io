@@ -260,7 +260,11 @@ jobs:
           # published-completion-verify.yml, domain-split-verify.yml) and WITH the Apps pin below, per L31: the Lessons pin e6fdd516 -> d22855f95824379c6fa6e6e4862ad83fde8d416a, the merge of
           # Lessons #961 on Lessons main. It carries batches 79 and 80 (admitted by Site #780 and #781, Lessons main builds pending 0 against this record)
           # and the gate-copy fix #960, so this move changes no admission row. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: d22855f95824379c6fa6e6e4862ad83fde8d416a
+          # Moved again 2026-11-25 (lesson swap flight 81, ruling thread) WITH the two other EQUAL pins (education-publication.yml,
+          # published-completion-verify.yml, domain-split-verify.yml), per L31: the Lessons pin d22855f9 -> df533f2dbb521da435486927ee1e770aaabaa5a1, the merge of
+          # Lessons #962 on Lessons main. It carries batch 81 (admitted by Site #786, which replaced the d22855f9 rows of the lesson order and the
+          # resource size table), so this move changes no admission row. Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: df533f2dbb521da435486927ee1e770aaabaa5a1
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
