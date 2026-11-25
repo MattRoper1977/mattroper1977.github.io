@@ -31,7 +31,10 @@ exports.verify = async ({page, origin, rules, record}) => {
   const rows = await (await page.request.get(origin+'/Lessons/resources.json')).json();
   const response = await page.request.get(origin+'/Lessons/assets/catalogue/display-titles.json');
   const titleMap = response.ok() ? await response.json() : null;
-  const displayTitle = r => {const e=titleMap?.schema===1&&titleMap.entries?.[r.file||r.url];return e&&e.id===(r.id||'')&&e.originalTitle===r.title?e.displayTitle:r.title;};
+  // Lessons #819 (merge aa82caf3, 7 Nov 2026): the hub's displayTitle() relabels record pathway words to their public
+  // names (hub.js relabel: /\b(BUILD|GROW|LAUNCH)\b/ -> BASE/TRACK/SUMMIT). The display-titles rule here mirrors that.
+  const relabel = s => String(s).replace(/\b(BUILD|GROW|LAUNCH)\b/g, m => PUBLIC_PATHWAYS[PATHWAYS.indexOf(m)]);
+  const displayTitle = r => {const e=titleMap?.schema===1&&titleMap.entries?.[r.file||r.url];return relabel(e&&e.id===(r.id||'')&&e.originalTitle===r.title?e.displayTitle:r.title);};
   const report = {cases:[], previews:0, brokenImages:0, otherAudienceBodies:'checked separately by exact output comparison'};
   // J93: the draft's typed owner words (masthead, door and pathway bylines, credit), parsed by the browser.
   await page.goto(origin+'/'); await page.waitForLoadState('networkidle');
