@@ -371,7 +371,7 @@ def render(kind, origin, bp):
                  '<div class="fd-recent-grid" id="teacher-recent-list"></div></section>')
         fast_steps = [
             ('Step 1', 'fd-bento-top-summit', 'Pick a subject and pathway',
-             'Choose BASE (supported), TRACK (guided) or SUMMIT (extended) in Lessons. Self-contained lesson pages keep running smoothly if classroom Wi-Fi drops.'),
+             'Choose BASE (supported), TRACK (guided) or SUMMIT (extended) in Lessons.'),
             ('Step 2', 'fd-bento-top-track', 'Check the plain-English adult notes',
              'Review the core learning point, worked answers, common slip-ups and calm classroom prompts on screen — no specialist subject background needed.'),
             ('Step 3', 'fd-bento-top-base', 'Print one pathway or teach from the board',
@@ -442,11 +442,10 @@ def render(kind, origin, bp):
             ('/Matt-s-Apps-/Classroom_Toolkit.html', '', 'Timers & classroom transitions'),
             ('/Matt-s-Apps-/Evidence_Binder.html', '', 'Portfolio & evidence binder'),
             ('/Matt-s-Apps-/Rubric_Studio.html', '', 'Rubric & feedback builder'),
-            ('/for/parents-carers/', 'fd-action-accent', 'Share the Parents & carers guide'),
         ]
         body += ('<section class="fd-section wrap" id="teacher-directory" aria-labelledby="teacher-directory-heading">'
                  '<div class="fd-section-head fd-section-head-stack"><p class="fd-kicker">Packs &amp; local tools</p>'
-                 '<h2 id="teacher-directory-heading">Packs, preparation for adulthood &amp; offline tools</h2></div>'
+                 '<h2 id="teacher-directory-heading">Packs, preparation for adulthood &amp; classroom tools</h2></div>'
                  '<div class="fd-bento-grid fd-bento-two">'
                  '<article class="fd-bento-card fd-bento-top-track"><div class="fd-bento-copy">'
                  '<h3>Curriculum, preparation for adulthood &amp; unit award evidence</h3>'
@@ -456,7 +455,7 @@ def render(kind, origin, bp):
                  + '</ul></article>'
                  '<article class="fd-bento-card fd-bento-top-summit"><div class="fd-bento-copy">'
                  '<h3>No-pupil-account classroom &amp; portfolio tools</h3>'
-                 '<p>Browser studios and classroom trackers run locally on your device with no pupil accounts needed:</p></div>'
+                 '<p>Browser studios and classroom trackers, with no pupil accounts needed:</p></div>'
                  '<ul class="fd-action-stack">'
                  + ''.join('<li><a class="fd-action-link' + (' ' + c if c else '') + '" href="' + esc(h) + '"><span>' + esc(lbl) + '</span><span aria-hidden="true">→</span></a></li>' for h, c, lbl in tool_links)
                  + '</ul></article></div></section>')
@@ -488,7 +487,7 @@ def render(kind, origin, bp):
              'Check the opening arrival screen of your lesson for a short catch-up summary before the main task begins.',
              '/Lessons/', 'fd-action-accent', 'Open Lessons'),
             ('fd-bento-top-base', 'Head busy or need a breather?',
-             'Take a quiet pause in our calm reset space — everything stays on your own screen with nothing saved online.',
+             'Take a quiet pause in the calm reset space, then come back when you are ready.',
              '/Matt-s-Apps-/Regulation_Station.html', 'fd-action-warm', 'Open calm reset space'),
         ]
         pupil_ways_html = ''.join(
@@ -507,8 +506,8 @@ def render(kind, origin, bp):
         )
         body = ('<section class="fd-hero fd-door-hero fd-hero-pupils wrap"><div class="fd-hero-panel"><p class="fd-eyebrow">PUPILS</p><h1>What are you learning today?</h1>'
                 '<p class="fd-lead">Choose your subject. Your teacher will help you find your pathway and lesson.</p>'
-                '<p class="fd-hero-sub">Lessons and studios on <strong>Made by Matt</strong> open straight away — no login needed, no pupil accounts and no scoreboards. Clear steps show what you are doing now and when you are finished across <strong class="fd-path-word fd-path-base">BASE</strong>, <strong class="fd-path-word fd-path-track">TRACK</strong> and <strong class="fd-path-word fd-path-summit">SUMMIT</strong>.</p>'
-                '<ul class="fd-trust-pills" aria-label="How this page works"><li>No login needed</li><li>No pupil accounts</li><li>No scoreboards</li></ul>'
+                '<p class="fd-hero-sub">Lessons and studios on <strong>Made by Matt</strong> open straight away — no login needed and no pupil accounts. Clear steps show what you are doing now and when you are finished across <strong class="fd-path-word fd-path-base">BASE</strong>, <strong class="fd-path-word fd-path-track">TRACK</strong> and <strong class="fd-path-word fd-path-summit">SUMMIT</strong>.</p>'
+                '<ul class="fd-trust-pills" aria-label="How this page works"><li>No login needed</li><li>No pupil accounts</li></ul>'
                 '</div></section>'
                 '<section class="fd-section wrap" id="pupil-search"><div class="fd-search-card"><h2>Find your activity</h2>' + search(kind)
                 + '<div class="fd-topic-picks" role="group" aria-label="Try a topic">' + pupil_picks + '</div>'
