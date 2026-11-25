@@ -59,7 +59,8 @@
 //
 // Red proofs (--red-proof): each planted mutation below is applied through page.route
 // and the run must fail on the case it targets, or the gate is MEASUREMENT INVALID:
-//   drop-relocated-target   strips the Lessons hub's #view-recommended control → reachability
+//   drop-relocated-target   strips data-pathway from the subject page's tab templates, so the recorded
+//                           Science pathway-tab control is not on its destination → reachability
 //   inject-kofi             plants a Ko-fi anchor on /                     → money
 //   inject-third-party      plants an off-origin script on /              → third-party
 //   break-copy              rewrites the J93 homepage h1 (the masthead of record) → copy
@@ -140,7 +141,9 @@ const bodyText = page => page.evaluate(() => document.body.innerText || '');
 
 // ---------- planted mutations for the red proofs ----------
 const MUTATIONS = {
-  'drop-relocated-target': { target: 'reachability', route: '/Lessons/', apply: html => html.replace(/id="view-recommended"/g, 'id="view-recommended-removed"') },
+  // Site #650 (merge 536aeb74, 15 Nov 2026) linked /Lessons/?view=recommended from /for/teachers/ ("Recommended shelf"),
+  // so that ledger entry was stale and is gone; the plant now removes a control another recorded relocation names.
+  'drop-relocated-target': { target: 'reachability', route: '/Lessons/subject.html', apply: html => html.split('data-pathway="${esc(p)}"').join('data-pathway-removed="${esc(p)}"') },
   'inject-kofi': { target: 'money', route: '/', apply: html => html.replace('</footer>', '<p><a href="https://ko-fi.com/madebymattuk">Support Made by Matt</a></p></footer>') },
   'inject-third-party': { target: 'third-party', route: '/', apply: html => html.replace('</head>', '<script src="https://cdn.example.net/planted.js"></script></head>') },
   // J93: the one h1 is the masthead of record; drop its last character.
@@ -371,7 +374,9 @@ async function suite(browser, mutation) {
       assert.equal(c.byline, record[i].byline, 'byline for ' + c.key + ' is byte-equal to the owner words of record');
       assert.ok(c.painted, 'flagship card ' + c.key + ' and its byline are painted');
       assert.ok(!c.overflow, 'flagship card ' + c.key + ' does not overflow');
-      assert.ok([fixtures.appendix.homeFlagship.badgesPerCard, 13].includes(c.badges), 'badge count of record on ' + c.key + ': ' + c.badges);
+      // Lessons #805 (merge cd1101b0, 6 Nov 2026) added the stretch and independent packs to the TRACK and SUMMIT
+      // flagship lessons, so those cards carry 15 badges of record; 13 stays the count for BASE. Same rule, newer record.
+      assert.ok([fixtures.appendix.homeFlagship.badgesPerCard, 13, 15].includes(c.badges), 'badge count of record on ' + c.key + ': ' + c.badges);
       assert.ok(c.lessonFirst, 'the lesson badge comes first on ' + c.key);
       assert.equal((await page.request.get(origin + c.lesson)).status(), 200, 'the lesson badge of ' + c.key + ' answers 200');
       if (c.lesson === c.link) {
