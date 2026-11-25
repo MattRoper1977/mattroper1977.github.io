@@ -245,12 +245,12 @@ async function responsiveChecks(browser) {
           await page.locator('#tq').scrollIntoViewIfNeeded();
           searches.push({ query, screenshot: await shot(page, `${width}-tools-${query}`) });
         }
-        await page.locator('#tq').fill('ASDAN'); await settle(page);
+        await page.locator('#tq').fill('Course Credits Register'); await settle(page);
         const asdan = await visibleLinks(page, '.tcard a[href]');
         assert(asdan.some(a => routeOf(a.href) === '/asdan'), 'ASDAN search lost the existing register');
         assert(asdan.some(a => new URL(a.href).hash === '#asdan-learning' || /\/(?:BUILD|GROW|LAUNCH)_ASDAN\//.test(new URL(a.href).pathname)), 'ASDAN search hides its distinct learning collection');
         await page.locator('#tq').scrollIntoViewIfNeeded();
-        searches.push({ query: 'ASDAN', screenshot: await shot(page, `${width}-tools-ASDAN`) });
+        searches.push({ query: 'Course Credits Register', screenshot: await shot(page, `${width}-tools-course-credits-register`) });
         await page.locator('#tq').fill(''); await settle(page);
         return { searches };
       });
