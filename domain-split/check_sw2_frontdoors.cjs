@@ -161,13 +161,16 @@ exports.verify = async ({page, origin, rules, record}) => {
         assert.equal(rules.tierOf(r),c.key,'Flagship lesson is on its pathway (hub tierOf): '+c.key);
         assert.equal(rules.cardOf(r),flagshipSlug,'Flagship lesson is on the flagship subject hub (hub cardOf): '+c.key);
         assert.equal(c.title,squash(f.title),'Flagship title is the hub display title: '+c.key);assert.equal(c.title,squash(displayTitle(r)),'Flagship title follows the display-titles rule: '+c.key);
-        assert.equal(c.outcome,squash(r.desc),'Flagship outcome is the registry row description: '+c.key);
+        // Site #763 (merge 1aab65af, 24 Nov 2026, sweep A1): home_slots binds the outcome through public_words, so the
+        // registry description shows its pathway words by their public names.
+        assert.equal(c.outcome,squash(relabel(r.desc)),'Flagship outcome is the registry row description: '+c.key);
         assert.equal(c.week,weekLabel,'Each flagship card shows the one flagship week');
         assert.equal(c.link,hubRoute,'The card link is the flagship subject hub');assert.equal(c.linkName,tileName.trim());
         // vb-3 (a): a lesson missing from the tree links the subject hub instead.
         const lessonHref=f.served?f.href:hubRoute;
         assert.equal(c.start,lessonHref,'r6 (vj-1): the Start lesson button opens the flagship lesson: '+c.key);
-        assert([9,13].includes(c.badges.length),'Each flagship card has 9 or 13 badges (the lesson + 8 or 12 pack members): '+c.key+' ('+c.badges.length+')');
+        // Lessons #805 (merge cd1101b0, 6 Nov 2026): Week 8 model packs carry five tier packs, so 14 members (15 badges).
+        assert([9,13,15].includes(c.badges.length),'Each flagship card has 9, 13 or 15 badges (the lesson + 8, 12 or 14 pack members): '+c.key+' ('+c.badges.length+')');
         const [lesson,...members]=c.badges;
         assert.deepEqual([lesson.fixed,lesson.href,lesson.ext,lesson.label],['true',lessonHref,'HTML','Interactive Lesson'],'The first badge is the fixed lesson badge and links the lesson: '+c.key);
         assert(lesson.cls.split(' ').includes('home-format-html'));
@@ -203,7 +206,8 @@ exports.verify = async ({page, origin, rules, record}) => {
       assert.deepEqual(subjects.map(s=>s.href.split('subject=')[1]),['science','humanities-re','art-studio','lifeskills'].filter(slug=>rows.some(r=>rules.cardOf(r)===slug)),'Homepage features the four actual subject groups');
       for(const s of subjects){const slug=s.href.split('subject=')[1];assert.equal(s.icons,1,'Each featured subject has a vector icon');assert(s.width<=page.viewportSize().width,'Subject tile fits the viewport');
         assert.equal(s.count,String(hub.counts[slug]),'Tile count is the hub distinctLessons: '+slug);assert.deepEqual(s.terms,hub.terms,'Tile half-terms are the hub HALF_TERMS: '+slug);
-        assert.equal(s.split,hub.splits[slug].filter(([,n])=>n>0).map(([t,n])=>t+' '+n).join(' · '),'vj-3 (c): the tile pathway split is the hub distinct lessons per tier: '+slug);
+        // Site #763 (merge 1aab65af, sweep A1): the split line names each tier by its public name.
+        assert.equal(s.split,hub.splits[slug].filter(([,n])=>n>0).map(([t,n])=>PUBLIC_PATHWAYS[PATHWAYS.indexOf(t)]+' '+n).join(' · '),'vj-3 (c): the tile pathway split is the hub distinct lessons per tier: '+slug);
         assert.deepEqual(s.current,[[weekLabel.split(' · ')[0],'true','step']],'vj-3 (d): the one current half-term is the flagship week\'s, marked data-current-term and aria-current=step: '+slug);}
       // J93 (previews / "no unproven pictures"): the one picture is the approved emblem at its provenance bytes.
       const imgs=await page.locator('main img').evaluateAll(es=>es.map(e=>({src:e.getAttribute('src'),alt:e.getAttribute('alt'),complete:e.complete,w:e.naturalWidth})));
@@ -250,7 +254,7 @@ exports.verify = async ({page, origin, rules, record}) => {
     const staticPage=await staticContext.newPage();await staticPage.goto(origin+'/');
     assert.deepEqual(await staticPage.locator('main article.home-pathway-card[data-pathway-card]:visible').evaluateAll(es=>es.map(e=>e.getAttribute('data-pathway-card'))),PATHWAYS,'The three flagship cards render without JavaScript');
     const cardBadgeCounts=await staticPage.locator('main article.home-pathway-card').evaluateAll(es=>es.map(e=>e.querySelectorAll('ul.home-pack-badges > li').length));
-    assert(cardBadgeCounts.length===3&&cardBadgeCounts.every(n=>n===9||n===13),'Without JavaScript every card keeps its 9 or 13 badges: '+JSON.stringify(cardBadgeCounts));
+    assert(cardBadgeCounts.length===3&&cardBadgeCounts.every(n=>n===9||n===13||n===15),'Without JavaScript every card keeps its 9, 13 or 15 badges (Lessons #805 cd1101b0): '+JSON.stringify(cardBadgeCounts));
     assert.equal(await staticPage.locator('main [data-pathway-switch]:visible').count(),0,'No pathway switch without the script');
     assert.equal(await staticPage.locator('main a.home-subject-tile').count(),4,'Static subject browsing remains available');
     assert.deepEqual(await staticPage.locator('main a.home-door-card').evaluateAll(es=>es.map(e=>e.getAttribute('href'))),DOOR_KEYS.map(k=>record.audiences[k].route),'Static door cards remain available');
