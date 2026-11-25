@@ -73,6 +73,21 @@ def load_pages():
             raise ValueError(f'The {key} page must list the three publisher groups in order')
         if len(page['prompts']) != 4:
             raise ValueError(f'The {key} page needs four conversation prompts')
+        if 'homeGuide' in page:
+            guide = page['homeGuide']
+            if not isinstance(guide, dict) or not guide.get('ways') or len(guide.get('levels', ())) != 3:
+                raise ValueError(f'Invalid homeGuide on {key}')
+            if [lvl.get('key') for lvl in guide['levels']] != ['base', 'track', 'summit']:
+                raise ValueError(f'homeGuide levels on {key} must use public keys base, track, summit')
+            for way in guide['ways']:
+                if not way.get('title') or not way.get('tag') or not way.get('body'):
+                    raise ValueError(f'Incomplete homeGuide way on {key}')
+                if way.get('linkHref') and (not way['linkHref'].startswith('/') or way['linkHref'].startswith('//')):
+                    raise ValueError(f'homeGuide way link must use a site route on {key}')
+            if guide.get('levelsLink'):
+                _, lhref = guide['levelsLink']
+                if not lhref.startswith('/') or lhref.startswith('//'):
+                    raise ValueError(f'homeGuide levelsLink must use a site route on {key}')
     return pages
 
 
@@ -87,6 +102,48 @@ def card(row):
             '<dl>' + ''.join(f'<div><dt>{esc(k)}</dt><dd>{esc(v)}</dd></div>' for k, v in metadata) + '</dl>'
             f'<a class="gv-open" href="{esc(row["url"])}">{action}<span class="gv-sr">: {esc(row["title"])}</span>'
             '<span aria-hidden="true"> →</span></a></article>')
+
+
+def home_guide(page):
+    guide = page.get('homeGuide')
+    if not guide:
+        return ''
+    ways_rows = ''.join(
+        '<details class="aud-way-item" open>'
+        f'<summary><span>{esc(w["title"])}</span><span class="aud-way-tag">{esc(w["tag"])}</span></summary>'
+        f'<div class="aud-way-body"><p>{esc(w["body"])}</p>'
+        + (f'<p class="aud-way-action"><a class="aud-action-link" href="{esc(w["linkHref"])}"><span>{esc(w["linkLabel"])}</span><span aria-hidden="true">→</span></a></p>'
+           if w.get('linkHref') and w.get('linkLabel') else '')
+        + '</div></details>'
+        for w in guide['ways']
+    )
+    ways_sec = (
+        f'<section id="{esc(guide["waysId"])}" class="gv-group aud-ways" aria-labelledby="{esc(guide["waysId"])}-title">'
+        f'<div class="aud-ways-shell"><p class="aud-kicker">{esc(guide["waysKicker"])}</p>'
+        f'<h2 id="{esc(guide["waysId"])}-title">{esc(guide["waysTitle"])}</h2>'
+        f'<p class="aud-ways-lead">{esc(guide["waysLead"])}</p>'
+        f'<div class="aud-ways-list">{ways_rows}</div></div></section>'
+    )
+    lvl_link = ''
+    if guide.get('levelsLink'):
+        llabel, lhref = guide['levelsLink']
+        lvl_link = f'<a class="aud-action-link" href="{esc(lhref)}"><span>{esc(llabel)}</span><span aria-hidden="true">→</span></a>'
+    lvl_rows = ''.join(
+        f'<article class="aud-level-card aud-level-{esc(lvl["key"])}" data-pathway-level="{esc(lvl["key"])}">'
+        f'<div class="aud-level-head"><strong class="aud-path-word aud-path-{esc(lvl["key"])}">{esc(lvl["name"])}</strong>'
+        f'<span class="aud-level-role">{esc(lvl["role"])}</span></div>'
+        f'<p>{esc(lvl["description"])}</p></article>'
+        for lvl in guide['levels']
+    )
+    levels_sec = (
+        f'<section id="{esc(guide["levelsId"])}" class="gv-group aud-levels" aria-labelledby="{esc(guide["levelsId"])}-title">'
+        f'<div class="aud-levels-shell"><div class="aud-levels-top"><div>'
+        f'<p class="aud-kicker">{esc(guide["levelsKicker"])}</p>'
+        f'<h2 id="{esc(guide["levelsId"])}-title">{esc(guide["levelsTitle"])}</h2>'
+        f'<p class="aud-levels-lead">{esc(guide["levelsLead"])}</p></div>{lvl_link}</div>'
+        f'<div class="aud-levels-grid">{lvl_rows}</div></div></section>'
+    )
+    return ways_sec + levels_sec
 
 
 def family_faq(audience):
@@ -156,6 +213,8 @@ def make_page(key, page, audience, all_audiences):
     # education_expansion appends the governors row to this menu.
     others = ''.join(link(a['label'], a['route']) for a in all_audiences.values())
     utilities = ''.join(link(u['title'], u['href']) for u in audience.get('utilities', []))
+    guide_html = home_guide(page)
+    guide_css = '<link rel="stylesheet" href="/assets/audience-discovery.css">' if guide_html else ''
     faq = family_faq(audience) if key == 'parents' else ''
     contact = ('' if key == 'parents' else
                '<p>Questions about the work? '+link('Email Matt', 'mailto:contactmadebymatt@gmail.com')+'.</p>')
@@ -165,7 +224,7 @@ def make_page(key, page, audience, all_audiences):
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(audience["label"])} · Made by Matt</title><meta name="description" content="{esc(description)}">
 <meta name="theme-color" content="#161d3d"><link rel="canonical" href="{esc(canonical)}">
-<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/assets/governors-discovery.css">
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/assets/governors-discovery.css">{guide_css}
 <script defer src="/assets/governors-discovery.js"></script></head><body class="gv-page" data-mbm-audience-page="{esc(key)}">
 <a class="gv-skip" href="#main">Skip to content</a><header class="gv-header"><div class="gv-wrap gv-header-inner">
 <a class="gv-brand" href="/"><img src="/assets/brand/micro_mark.svg" width="60" height="60" alt=""><span>MADE BY MATT<small>Learn · Build · Explore</small></span></a>
@@ -178,7 +237,7 @@ def make_page(key, page, audience, all_audiences):
 <section id="{esc(page["promptsId"])}" class="gv-prompts" aria-labelledby="gv-prompts-title"><h2 id="gv-prompts-title">{esc(page["promptsTitle"])}</h2><div class="gv-prompt-grid">
 {prompts}
 </div>{small}</section>
-<section id="audience-resources" class="gv-finder" aria-labelledby="gv-finder-title"><h2 id="gv-finder-title">Find the support you need</h2>
+{guide_html}<section id="audience-resources" class="gv-finder" aria-labelledby="gv-finder-title"><h2 id="gv-finder-title">Find the support you need</h2>
 <form id="gv-search-form" role="search"><div class="gv-search-field"><label for="gv-search">{esc(page["finderLabel"])}</label><input id="gv-search" type="search" placeholder="{esc(page["finderPlaceholder"])}" autocomplete="off"></div>
 <div><label for="gv-origin">Publisher group</label><select id="gv-origin"><option value="">All resources</option>{''.join(f'<option value="{g}">{esc(t)}</option>' for g, t, _ in page["groups"])}</select></div>
 <div><label for="gv-topic">Topic</label><select id="gv-topic"><option value="">All topics</option>{''.join('<option>'+esc(t)+'</option>' for t in topics)}</select></div><button type="reset">Clear filters</button></form>

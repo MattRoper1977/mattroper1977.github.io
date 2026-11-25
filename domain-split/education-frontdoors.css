@@ -267,3 +267,351 @@ html[data-theme="dark"] body[data-sw2-frontdoor] .fd-acc-wellbeing,body[data-sw2
 html[data-theme="highlumen"] body[data-sw2-frontdoor] :is(.fd-subject,.fd-pack,.fd-shortcut,.acard,.result,.fd-recent-card,.fd-pupil-pathway,.fd-extra-subjects){border-color:#000;border-width:1.5px;border-top-width:5px}
 html[data-theme="highlumen"] body[data-sw2-frontdoor][data-page="teachers"] .fd-shortcut{border-left-width:5px;border-top-width:1.5px;--sc-accent:#000;--sc-soft:#fff}
 html[data-theme="highlumen"] body[data-sw2-frontdoor][data-page="teachers"] :is(.fd-shortcut-icon,.fd-shortcut-arrow),html[data-theme="highlumen"] body[data-sw2-frontdoor] .fd-subject .fd-arrow{border:1.5px solid #000}
+
+/* L2 body refresh: Teachers & Pupils editorial studio layout (token-pure, >=16px, >=44px, print-open) */
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+body[data-sw2-frontdoor][data-mbm-palette="education"]:is([data-page="teachers"],[data-page="pupils"]) .fd-eyebrow,
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) :is(.fd-eyebrow,.fd-kicker,.fd-bento-kicker,.fd-topic-btn,.fd-subject-cue,.fd-extra-count,.fd-shortcut p,.fd-saved-count,.fd-recent-card p,.fd-pupil-pathway p,.fd-tier-pill,.fd-safety,.result small,.result p,.fd-playbook-badge,.fd-trust-pills li) {
+  font-size: 1rem !important;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-door-hero {
+  padding-block: 1.75rem 1.25rem;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-hero-panel {
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 1.5px solid var(--fd-border);
+  border-top: 5px solid var(--fd-accent);
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+  padding: 1.5rem;
+  min-width: 0;
+}
+body[data-sw2-frontdoor][data-page="pupils"] .fd-hero-panel {
+  border-top-color: var(--mbm-subject-science);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-hero-sub {
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 62ch;
+  color: var(--edu-muted, var(--fd-muted));
+  margin: 0 0 1.2rem;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-path-word {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-path-base {
+  background-color: var(--mbm-pathway-build-bg);
+  color: var(--mbm-pathway-build-ink);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-path-track {
+  background-color: var(--mbm-pathway-grow-bg);
+  color: var(--mbm-pathway-grow-ink);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-path-summit {
+  background-color: var(--mbm-pathway-launch-bg);
+  color: var(--mbm-pathway-launch-ink);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-trust-pills {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding: 0;
+  margin: 0;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-trust-pills li {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background-color: var(--fd-soft-tint);
+  color: var(--fd-accent);
+  border: 1px solid var(--fd-border);
+  font-weight: 750;
+}
+body[data-sw2-frontdoor][data-page="pupils"] .fd-search-card {
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 1.5px solid var(--fd-border);
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+  padding: 1.35rem;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-section-head-stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-kicker,
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-bento-kicker {
+  margin: 0 0 0.25rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fd-accent);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-bento-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+@media (min-width: 768px) {
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-bento-two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 960px) {
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-bento-three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-bento-card {
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 1.5px solid var(--fd-border);
+  border-top: 5px solid var(--fd-accent);
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-bento-top-base {
+  border-top-color: var(--mbm-pathway-build-ink);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-bento-top-track {
+  border-top-color: var(--fd-accent);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-bento-top-summit {
+  border-top-color: var(--mbm-subject-humanities);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-bento-copy h3 {
+  margin: 0 0 0.45rem;
+  font-size: 1.15rem;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-bento-copy p {
+  margin: 0;
+  color: var(--edu-muted, var(--fd-muted));
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-action-stack {
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+  padding: 0;
+  margin: 0;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-action-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  min-height: var(--mbm-tap, 44px);
+  min-width: var(--mbm-tap, 44px);
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--fd-border);
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  font-size: 1rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-action-link:hover {
+  border-color: var(--fd-accent);
+  text-decoration: underline;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-action-solid {
+  background-color: var(--fd-accent);
+  border-color: var(--fd-accent);
+  color: var(--fd-accent-ink);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-action-accent {
+  background-color: var(--fd-soft-tint);
+  border-color: var(--fd-accent);
+  color: var(--fd-accent);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-action-warm {
+  background-color: var(--mbm-pathway-build-bg);
+  border-color: var(--mbm-pathway-build-ink);
+  color: var(--mbm-pathway-build-ink);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-playbook-shell {
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 2px solid var(--fd-border);
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+  padding: 1.35rem;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-playbook-lead {
+  max-width: 68ch;
+  color: var(--edu-muted, var(--fd-muted));
+  margin: 0.45rem 0 1rem;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-playbook-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-playbook-item {
+  border: 1.5px solid var(--fd-border);
+  border-left: 5px solid var(--fd-accent);
+  border-radius: 10px;
+  background-color: var(--edu-bg);
+  overflow: hidden;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-playbook-item[open] {
+  background-color: var(--mbm-card);
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-playbook-item > summary {
+  list-style: none;
+  min-height: 48px;
+  min-width: var(--mbm-tap, 44px);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--mbm-primary);
+  cursor: pointer;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-playbook-item > summary::-webkit-details-marker {
+  display: none;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-playbook-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background-color: var(--fd-soft-tint);
+  color: var(--fd-accent);
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-playbook-body {
+  padding: 0 1rem 1rem;
+  color: var(--edu-muted, var(--fd-muted));
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-playbook-body p {
+  margin: 0;
+}
+body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-playbook-actions {
+  margin-top: 0.75rem;
+  max-width: 24rem;
+}
+body[data-sw2-frontdoor][data-page="teachers"] .fd-maker-card {
+  border-radius: var(--mbm-card-radius);
+  padding: 0.5rem 0;
+}
+body[data-sw2-frontdoor][data-page="teachers"] .fd-maker-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin-top: 0.6rem;
+}
+body[data-sw2-frontdoor][data-page="teachers"] .fd-safety-card {
+  background-color: var(--mbm-card);
+  border: 1px solid var(--fd-border);
+  border-left: 5px solid var(--fd-accent);
+  border-radius: var(--mbm-card-radius);
+  padding: 1.15rem 1.25rem;
+}
+body[data-sw2-frontdoor][data-page="teachers"] .fd-safety-card p {
+  margin: 0.4rem 0 0;
+}
+body[data-sw2-frontdoor][data-page="pupils"] .fd-support-shell {
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 2px solid var(--fd-accent);
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+  padding: 1.35rem;
+  display: grid;
+  gap: 1rem;
+}
+body[data-sw2-frontdoor][data-page="pupils"] .fd-support-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+body[data-sw2-frontdoor][data-page="pupils"] .fd-support-head p {
+  margin: 0.35rem 0 0;
+  max-width: 58ch;
+}
+body[data-sw2-frontdoor][data-page="pupils"] .fd-support-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.65rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--fd-border);
+}
+@media (min-width: 860px) {
+  body[data-sw2-frontdoor][data-page="pupils"] .fd-support-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+body[data-sw2-frontdoor][data-page="pupils"] .fd-support-item {
+  display: flex;
+  align-items: center;
+  min-height: var(--mbm-tap, 44px);
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--fd-border);
+  background-color: var(--fd-soft-tint);
+  color: var(--mbm-primary);
+  font-size: 1rem;
+  font-weight: 750;
+}
+@media (max-width: 420px) {
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .wrap {
+    width: calc(100% - 1.5rem);
+  }
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) :is(.fd-hero-panel,.fd-playbook-shell,.fd-search-card,.fd-support-shell) {
+    padding: 1.05rem;
+  }
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-search-row {
+    flex-wrap: wrap;
+  }
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-search-row .fd-button {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) *,
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) *::before,
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) *::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+@media print {
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) details:not([open])::details-content {
+    display: block !important;
+    content-visibility: visible !important;
+  }
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) details:not([open]) > *:not(summary) {
+    display: block !important;
+  }
+  body[data-sw2-frontdoor]:is([data-page="teachers"],[data-page="pupils"]) .fd-extra-subjects:not([open]) > .fd-extra-grid {
+    display: grid !important;
+  }
+}

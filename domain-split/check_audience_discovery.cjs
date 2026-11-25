@@ -105,6 +105,18 @@ async function check(name, run) {
               assert.equal(await page.locator(`#trusted-resources a[href="/education-hub/?origin=external&source=${name}"]`).count(),1);
             assert.equal(await page.locator(`#parent-tips a[href="${eef}"]`).count(),1);
             assert((await page.locator('#parent-tips').innerText()).includes('7 December 2018'));
+            if(spec.homeGuide) {
+              const ways=page.locator(`#${spec.homeGuide.waysId} details.aud-way-item`);
+              assert.equal(await ways.count(),spec.homeGuide.ways.length,'Five calm ways in rendered');
+              for(const item of await ways.all()) {
+                assert.equal(await item.getAttribute('open'),'','Calm way in starts open');
+                assert(await item.locator('.aud-way-body').isVisible(),'Calm way in body is visible');
+              }
+              const levels=page.locator(`#${spec.homeGuide.levelsId} [data-pathway-level]`);
+              assert.deepEqual(await levels.evaluateAll(ns=>ns.map(n=>n.getAttribute('data-pathway-level'))),['base','track','summit'],'Plain three-levels guide uses public pathway keys');
+              assert.deepEqual(await levels.locator('.aud-path-word').allInnerTexts(),['BASE','TRACK','SUMMIT'],'Plain three-levels guide names BASE, TRACK, SUMMIT');
+              assert(!/\b(BUILD|GROW|LAUNCH)\b/.test(await page.locator(`#${spec.homeGuide.waysId}, #${spec.homeGuide.levelsId}`).allInnerTexts().then(xs=>xs.join(' '))),'No record pathway word in parent homeGuide');
+            }
           } else {
             for(const name of ['BUILD','GROW','LAUNCH'])
               assert.equal(await page.locator(`[data-governance-card] a[href="/Lessons/${name}_ASDAN/${name}_ASDAN_Hub.html"]`).count(),1);
