@@ -113,7 +113,7 @@ TEMPLATE = HERE / 'home' / 'home.html'
 # 24 Nov 2026, public pathway words (ruling thread; owner 22 and 23 Nov): the switch buttons, the chip and draft
 # card text and the three pack-list labels show the public display names; the data-pathway keys are unchanged.
 # 25 Nov 2026, homepage body refresh R1
-TEMPLATE_SHA256 = 'c1646ded40c2580bc8725be7d55576ac3ce069de48eefe744195a4d0e4894cd4'
+TEMPLATE_SHA256 = '24fd438724acf13dbe1f458f43ab45ea393f424b9548d2e43765a82b73cb1fbc'
 NODE_SCRIPT = HERE / 'home_hub_counts.cjs'
 RECORD = 'data/audience-homepages.json'
 HEADER = 'tools/chrome/header.html'
