@@ -141,7 +141,9 @@ fs.mkdirSync(output, { recursive: true });
       await page.waitForFunction(() => document.querySelectorAll('.scard[data-card]').length > 0);
       const scienceCard = page.locator('.scard[data-card="science"]');
       assert.equal(await scienceCard.count(), 1);
-      assert.equal(await scienceCard.locator('.chips .tier').filter({hasText: /^BUILD$/}).count(), 1, 'BUILD chip on the Science card');
+      // Lessons #819 (merge aa82caf3, 7 Nov 2026, ruled public pathway words) shows the chip as its public
+      // name; the record key stays in the class. Same chip, same count, now pinned by key and label.
+      assert.equal(await scienceCard.locator('.chips .tier.BUILD').filter({hasText: /^BASE$/}).count(), 1, 'BASE chip (record key BUILD) on the Science card');
       assert.equal(new URL(await scienceCard.locator('a.browse').getAttribute('href'), page.url()).searchParams.get('subject'), 'science');
       assert.equal(await page.locator('nav,h1,h2,h3').filter({hasText: /David[’']s/}).count(), 0);
       await scienceCard.screenshot({path: path.join(output, `lesson-shortcuts-${width}.png`)});

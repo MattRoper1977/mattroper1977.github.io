@@ -66,12 +66,15 @@ exports.verify = async ({page, origin, rules, record}) => {
         ((entries[r._path] && entries[r._path].weeks) || []).filter(w => w && w.term === s.term && w.week === s.week).map(w => ({file: r._path, label: w.label})))))};
   }, {slugs: ['science','humanities-re','art-studio','lifeskills'], flagshipSlug, weekLabel, pathways: PATHWAYS, specs: [FLAGSHIP_OF_RECORD.ofRecord, FLAGSHIP_OF_RECORD.fallback]});
   assert(hub, 'MEASUREMENT INVALID: the Lessons hub (window.MBM_HUB) did not load');
-  assert.deepEqual(hub.flagship.map(f => f.length), [1, 1, 1], 'The flagship week resolves to exactly one registry lesson per pathway on the hub');
+  // A2-LIST (Lessons #828, merge 81858b3c, 8 Nov 2026): a taught week holds its first lesson and its second and third
+  // lessons (L2/L3, P2) as registry rows, and home_slots.flagship() binds the FIRST lesson of each pathway in the hub's
+  // own order. Every pathway must still have a registry lesson in the week; the card is held to that first lesson below.
+  assert.ok(hub.flagship.length === 3 && hub.flagship.every(f => f.length >= 1), 'The flagship week resolves to at least one registry lesson per pathway on the hub: ' + JSON.stringify(hub.flagship.map(f => f.length)));
   const flagship = hub.flagship.map(f => f[0]);
   assert.equal(new Set(flagship.map(f => f.term + ':' + f.week)).size, 1, 'The three flagship lessons are one week of the lesson order');
   // G1: the homepage flagship is the week of record (Science, Autumn 2 Week 6) whenever that week resolves on the hub to
   // one registry lesson per pathway under one label; only otherwise the spec fallback (Humanities & RE, Autumn 2 Week 1).
-  const resolves = weeks => weeks.every(p => p.length === 1) && new Set(weeks.map(p => p[0].label)).size === 1;
+  const resolves = weeks => weeks.every(p => p.length >= 1) && new Set(weeks.map(p => p[0].label)).size === 1;  // A2-LIST rule, as home_slots.flagship()
   const due = resolves(hub.ofRecord[0]) ? 0 : resolves(hub.ofRecord[1]) ? 1 : -1;
   assert(due >= 0, 'Neither the flagship of record nor its spec fallback resolves on the Lessons hub');
   const spec = due === 0 ? FLAGSHIP_OF_RECORD.ofRecord : FLAGSHIP_OF_RECORD.fallback;
