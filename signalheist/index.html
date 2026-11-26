@@ -1141,7 +1141,7 @@
     const packed = g.pts.slice(0, MAX_GHOST_SAMPLES)
       .map(pt => Math.max(0, Math.round(pt[0])).toString(36) + '.' + Math.max(0, Math.round(pt[1])).toString(36))
       .join(';');
-    const sec = Math.max(1, Math.min(5, Number(g.sector) || 1));
+    const sec = Math.max(1, Math.min(99, Number(g.sector) || 1));
     const score = Math.max(0, Math.round(Number(g.score) || 0));
     const dur10 = Math.max(1, Math.round((Number(g.dur) || 0.1) * 10));
     return `SHG1:${sanitizeSeed(g.seed)}:${sec}:${score}:${dur10}:${packed}`;
@@ -1152,7 +1152,7 @@
     const parts = str.split(':');
     if (parts.length < 6) return null;
     const seed = sanitizeSeed(parts[1]);
-    const sector = Math.max(1, Math.min(5, parseInt(parts[2], 10) || 1));
+    const sector = Math.max(1, Math.min(99, parseInt(parts[2], 10) || 1));
     const score = Math.max(0, parseInt(parts[3], 10) || 0);
     const dur10 = Math.max(1, parseInt(parts[4], 10) || 1);
     const rawPts = parts.slice(5).join(':').split(';').filter(Boolean);
@@ -1398,14 +1398,14 @@
         } else if (ch === 'T') {
           turrets.push({ id: 'ct_' + c + '_' + r, c, r, angle: 0, targetAngle: 0, telegraph: 0 });
         } else if (ch === 'H') {
-          hunters.push({ id: 'ch_' + c + '_' + r, dockC: c, dockR: r, x: c + 0.5, y: r + 0.5, angle: Math.PI, active: false, targetC: c, targetR: r, path: [], repathTimer: 0, baseSpeed: 3.6 });
+          hunters.push({ id: 'ch_' + c + '_' + r, dockC: c, dockR: r, x: c + 0.5, y: r + 0.5, angle: Math.PI, active: false, armTimer: 0, targetC: c, targetR: r, path: [], repathTimer: 0, baseSpeed: 3.6 });
         } else if (ch === 'P' && portals.length < 2) {
           portals.push({ id: portals.length === 0 ? 'pA' : 'pB', c, r, pairIdx: portals.length === 0 ? 1 : 0, color: portals.length === 0 ? '#22d3ee' : '#c084fc', label: portals.length === 0 ? 'WARP A' : 'WARP B' });
         }
       }
     }
     if (portals.length === 1) portals.length = 0;
-    const req = [{ c: 15, r: 5 }, ...pickups.map(p => ({ c: p.c, r: p.r })), ...empRelays.map(e => ({ c: e.c, r: e.r }))];
+    const req = [{ c: 15, r: 5 }, ...pickups.map(p => ({ c: p.c, r: p.r })), ...empRelays.map(e => ({ c: e.c, r: e.r })), ...portals.map(pt => ({ c: pt.c, r: pt.r }))];
     validateVaultConnectivity(grid, req);
     for (const w of watchers) buildWatcherRoute(grid, w);
     const rng = mulberry32(hashSeed(spec.name || 'CUST', 77));
@@ -1958,8 +1958,20 @@
   }
 
   function buildWatcherRoute(grid, w) {
-    const ok = (c, r) => grid[r][c] !== TILE.WALL_SOLID && grid[r][c] !== TILE.WALL_GLASS && !isEntryZone(c, r) && !(c === 15 && r === 5);
-    const seed = w.waypoints.find(([c, r]) => ok(c, r));
+    const ok = (c, r) => grid[r][c] !== TILE.WALL_SOLID && grid[r][c] !== TILE.WALL_GLASS && !isEntryZone(c, r) && Math.hypot(c - 1, r - 5) >= 3.2 && !(c === 15 && r === 5);
+    let seed = w.waypoints.find(([c, r]) => ok(c, r));
+    if (!seed) {
+      let best = null, bd = 1e9;
+      const sx = Math.floor(w.x), sy = Math.floor(w.y);
+      for (let rr = 1; rr < ROWS - 1; rr++) {
+        for (let cc = 1; cc < COLS - 1; cc++) {
+          if (!ok(cc, rr)) continue;
+          const d = Math.abs(cc - sx) + Math.abs(rr - sy);
+          if (d < bd) { bd = d; best = [cc, rr]; }
+        }
+      }
+      seed = best;
+    }
     if (!seed) return;
     const area = new Uint8Array(COLS * ROWS);
     const fq = [seed]; area[seed[1] * COLS + seed[0]] = 1;
@@ -1982,7 +1994,13 @@
       }
       return best;
     };
-    const corners = w.waypoints.map(snap).filter(Boolean);
+    const rawCorners = w.waypoints.map(snap).filter(Boolean);
+    const corners = [];
+    for (const pt of rawCorners) {
+      const prev = corners[corners.length - 1];
+      if (!prev || prev[0] !== pt[0] || prev[1] !== pt[1]) corners.push(pt);
+    }
+    if (corners.length > 1 && corners[corners.length - 1][0] === corners[0][0] && corners[corners.length - 1][1] === corners[0][1]) corners.pop();
     const route = [];
     for (let i = 0; i < corners.length; i++) {
       const a = corners[i], b = corners[(i + 1) % corners.length];
@@ -1992,10 +2010,42 @@
       for (const s of seg) route.push(s);
     }
     if (route.length > 1 && route[route.length - 1][0] === route[0][0] && route[route.length - 1][1] === route[0][1]) route.pop();
-    if (route.length < 2) return;
+    // Prune dead-end 180-degree spike reversals (A -> B -> A) when a cleaner loop exists
+    let pruned = true;
+    while (pruned && route.length > 4) {
+      pruned = false;
+      for (let i = 0; i < route.length; i++) {
+        const prev = route[(i - 1 + route.length) % route.length];
+        const next = route[(i + 1) % route.length];
+        if (prev[0] === next[0] && prev[1] === next[1]) {
+          // Remove spike tip and the duplicate return step
+          const nextIdx = (i + 1) % route.length;
+          if (nextIdx > i) {
+            route.splice(nextIdx, 1);
+            route.splice(i, 1);
+          } else {
+            route.splice(i, 1);
+            route.splice(nextIdx, 1);
+          }
+          pruned = true;
+          break;
+        }
+      }
+    }
+    if (route.length < 2) {
+      // Single valid anchor: pick a safe neighbor so watcher patrols without snapping inside walls/entry
+      const [sc, sr] = seed;
+      const nb = [[1,0],[-1,0],[0,1],[0,-1]].map(([dc, dr]) => [sc + dc, sr + dr]).find(([nc, nr]) => nc > 0 && nc < COLS - 1 && nr > 0 && nr < ROWS - 1 && ok(nc, nr));
+      w.waypoints = nb ? [seed, nb] : [seed];
+      w.x = sc + 0.5; w.y = sr + 0.5;
+      w.wpIdx = nb ? 1 : 0;
+      if (nb) w.angle = Math.atan2(nb[1] - sr, nb[0] - sc);
+      return;
+    }
     w.waypoints = route;
     w.x = route[0][0] + 0.5; w.y = route[0][1] + 0.5;
     w.wpIdx = 1;
+    w.angle = Math.atan2(route[1][1] - route[0][1], route[1][0] - route[0][0]);
   }
 
   function validateVaultConnectivity(grid, requiredCoords) {
@@ -2226,7 +2276,7 @@
       markOcc(14, 1);
       hunters.push({
         id: 'h1', dockC: 14, dockR: 1, x: 14.5, y: 1.5, angle: Math.PI,
-        active: false, targetC: 14, targetR: 1, path: [], repathTimer: 0, baseSpeed: 3.7
+        active: false, armTimer: 0, targetC: 14, targetR: 1, path: [], repathTimer: 0, baseSpeed: 3.7
       });
 
       const coreSpots = [[6, 1], [10, 9], [6, 9], [10, 1]];
@@ -2276,21 +2326,21 @@
 
       watchers.push({
         id: 'w1', x: 5.5, y: 1.5, angle: 0, speed: 2.9,
-        waypoints: [[4,1],[12,1],[12,3],[4,3]], wpIdx: 1
+        waypoints: [[5,1],[11,1],[11,3],[5,3]], wpIdx: 1
       });
       watchers.push({
-        id: 'w2', x: 12.5, y: 9.5, angle: Math.PI, speed: 2.9,
-        waypoints: [[12,9],[4,9],[4,7],[12,7]], wpIdx: 1
+        id: 'w2', x: 11.5, y: 9.5, angle: Math.PI, speed: 2.9,
+        waypoints: [[11,9],[5,9],[5,7],[11,7]], wpIdx: 1
       });
 
       markOcc(14, 1); markOcc(14, 9);
       hunters.push({
         id: 'h1', dockC: 14, dockR: 1, x: 14.5, y: 1.5, angle: Math.PI,
-        active: false, targetC: 14, targetR: 1, path: [], repathTimer: 0, baseSpeed: 3.75
+        active: false, armTimer: 0, targetC: 14, targetR: 1, path: [], repathTimer: 0, baseSpeed: 3.75
       });
       hunters.push({
         id: 'h2', dockC: 14, dockR: 9, x: 14.5, y: 9.5, angle: Math.PI,
-        active: false, targetC: 14, targetR: 9, path: [], repathTimer: 0, baseSpeed: 3.75
+        active: false, armTimer: 0, targetC: 14, targetR: 9, path: [], repathTimer: 0, baseSpeed: 3.75
       });
 
       const coreS = pickFreeTile([[8, 2], [8, 8], [7, 5]]) || pickFreeTile(allWalkablePool());
@@ -2359,11 +2409,11 @@
       markOcc(14, 1); markOcc(14, 9);
       hunters.push({
         id: 'h1', dockC: 14, dockR: 1, x: 14.5, y: 1.5, angle: Math.PI,
-        active: false, targetC: 14, targetR: 1, path: [], repathTimer: 0, baseSpeed: 3.6
+        active: false, armTimer: 0, targetC: 14, targetR: 1, path: [], repathTimer: 0, baseSpeed: 3.6
       });
       hunters.push({
         id: 'h2', dockC: 14, dockR: 9, x: 14.5, y: 9.5, angle: Math.PI,
-        active: false, targetC: 14, targetR: 9, path: [], repathTimer: 0, baseSpeed: 3.6
+        active: false, armTimer: 0, targetC: 14, targetR: 9, path: [], repathTimer: 0, baseSpeed: 3.6
       });
 
       const outerShards = [[3,4],[3,6],[6,1],[10,1],[6,9],[10,9],[13,4],[13,6]];
@@ -2378,20 +2428,6 @@
       for (let r = 2; r <= ROWS - 3; r++) {
         for (let c = 2; c <= COLS - 3; c++) {
           if (grid[r][c] === TILE.WALL_SOLID && rng() < 0.5) grid[r][c] = TILE.WALL_GLASS;
-        }
-      }
-    }
-
-    // Linked Phase Portals (Sector 3+)
-    if (sectorIdx >= 3) {
-      const pA = pickFreeTile([[4, 1], [5, 1], [3, 2], [4, 2]]) || pickFreeTile(allWalkablePool());
-      if (pA) {
-        markOcc(pA[0], pA[1]);
-        const pB = pickFreeTile([[12, 9], [11, 9], [13, 8], [12, 8]]) || pickFreeTile(allWalkablePool());
-        if (pB) {
-          markOcc(pB[0], pB[1]);
-          portals.push({ id: 'pA', c: pA[0], r: pA[1], pairIdx: 1, color: '#22d3ee', label: 'WARP A' });
-          portals.push({ id: 'pB', c: pB[0], r: pB[1], pairIdx: 0, color: '#c084fc', label: 'WARP B' });
         }
       }
     }
@@ -2417,13 +2453,48 @@
     const requiredCoords = [
       { c: 15, r: 5 },
       ...pickups.map(p => ({ c: p.c, r: p.r })),
-      ...empRelays.map(e => ({ c: e.c, r: e.r })),
-      ...portals.map(pt => ({ c: pt.c, r: pt.r }))
+      ...empRelays.map(e => ({ c: e.c, r: e.r }))
     ];
     if (boss) requiredCoords.push({ c: boss.c, r: boss.r });
 
     validateVaultConnectivity(grid, requiredCoords);
     for (const w of watchers) buildWatcherRoute(grid, w);
+
+    // Linked Phase Portals (Sector 3+) — placed AFTER watcher routes so portals never overlap patrols or spawns
+    const entryDistPre = bfsDistances(grid, 1, 5);
+    if (sectorIdx >= 3) {
+      const watcherTileSet = new Set();
+      for (const w of watchers) {
+        for (const [wc, wr] of (w.waypoints || [])) watcherTileSet.add(wc + ',' + wr);
+        watcherTileSet.add(Math.floor(w.x) + ',' + Math.floor(w.y));
+      }
+      const safeForPortal = ([c, r]) => {
+        if (c <= 0 || c >= COLS - 1 || r <= 0 || r >= ROWS - 1) return false;
+        if (!isWalkableTile(grid[r][c]) || isOcc(c, r) || isEntryZone(c, r)) return false;
+        if (entryDistPre[r * COLS + c] <= 0) return false;
+        if (watcherTileSet.has(c + ',' + r)) return false;
+        for (const w of watchers) {
+          if (Math.hypot(w.x - (c + 0.5), w.y - (r + 0.5)) <= 1.8) return false;
+        }
+        return true;
+      };
+      const pickPortalTile = (prefs) => {
+        const pool = prefs.filter(safeForPortal);
+        if (pool.length) return pool[(rng() * pool.length) | 0];
+        const fallback = allWalkablePool().filter(safeForPortal);
+        return fallback.length ? fallback[(rng() * fallback.length) | 0] : null;
+      };
+      const pA = pickPortalTile([[3, 1], [4, 1], [3, 2], [2, 2], [5, 1], [4, 2]]);
+      if (pA) {
+        markOcc(pA[0], pA[1]);
+        const pB = pickPortalTile([[13, 9], [12, 9], [13, 8], [14, 8], [11, 9], [12, 8]]);
+        if (pB) {
+          markOcc(pB[0], pB[1]);
+          portals.push({ id: 'pA', c: pA[0], r: pA[1], pairIdx: 1, color: '#22d3ee', label: 'WARP A' });
+          portals.push({ id: 'pB', c: pB[0], r: pB[1], pairIdx: 0, color: '#c084fc', label: 'WARP B' });
+        }
+      }
+    }
 
     // ---------- V3.7 Twin Exits ("LONG WAY" +15%) & Optional Heavy Cargo ----------
     const v37Rng = mulberry32(hashSeed(seedCode, sectorIdx + 3700));
@@ -2443,7 +2514,7 @@
       }
     }
 
-    const entryDist = bfsDistances(grid, 1, 5);
+    const entryDist = entryDistPre;
     const farExit = placeAndValidateFarExit(
       grid, entryDist, blockedSet, pickups, watchers, lasers, turrets, hunters, boss, v37Rng
     );
@@ -2806,10 +2877,21 @@
     const awake = lasersAwake();
     for (const lg of game.lasers) {
       if (!awake) {
-        lg.active = false; lg.warn = false; continue;
+        lg.active = false; lg.warn = false; lg.armed = false; continue;
       }
       const phase = (beatNum + lg.phaseOffset) % 5;
-      lg.active = (phase === 0 || phase === 1);
+      const wantActive = (phase === 0 || phase === 1);
+      if (!lg.armed) {
+        if (wantActive) {
+          // Never fire instantly on the very first beat after waking — give a yellow warn beat first
+          lg.active = false;
+          lg.warn = true;
+          lg.armed = true;
+          continue;
+        }
+        lg.armed = true;
+      }
+      lg.active = wantActive;
       lg.warn = (phase === 4);
     }
     if (awake && game.lasers.some(lg => lg.warn)) audio.sfxGateCharge();
@@ -2887,6 +2969,7 @@
     game.lockdownTriggered = false;
     game.lockdownRemaining = 0;
     game.purgeCooldown = 1.5;
+    game.purgeSeq = 0;
     game.empTimer = 0;
     game.blackoutTimer = hasMutator('BLACKOUT_OPS') ? 999 : 0;
     game.sonarFlash = hasMutator('BLACKOUT_OPS') ? 0.25 : 0;
@@ -3112,8 +3195,10 @@
       for (const hDrone of game.hunters) {
         if (!hDrone.active) {
           hDrone.active = true;
+          hDrone.armTimer = 0.85;
           hDrone.repathTimer = 0;
           spawnSignalRing(hDrone.x, hDrone.y, '#f59e0b');
+          spawnFloatingText(hDrone.x, hDrone.y - 0.5, 'HUNTER WAKING!', '#fb923c');
         }
       }
     }
@@ -3123,21 +3208,69 @@
   }
 
   // ---------- Raycasting & Geometry Helpers ----------
-  function castRay(ox, oy, angle, maxDist) {
+  const WATCHER_CONE_RANGE = 3.05;
+  const WATCHER_CONE_HALF = 0.48;
+  const WATCHER_KILL_RANGE = 2.94;
+  const WATCHER_KILL_HALF = 0.435;
+  const WATCHER_GRAZE_RANGE = 3.35;
+  const WATCHER_GRAZE_HALF = 0.68;
+
+  // Exact Amanatides & Woo 2D grid DDA raycaster shared by BOTH rendering and detection.
+  function castRay(ox, oy, angle, maxDist, ignoreOriginTurret = true) {
     const dx = Math.cos(angle);
     const dy = Math.sin(angle);
-    const step = 0.08;
-    let d = 0;
-    while (d < maxDist) {
-      d += step;
-      const cx = (ox + dx * d) | 0;
-      const cy = (oy + dy * d) | 0;
-      if (cx < 0 || cx >= COLS || cy < 0 || cy >= ROWS) break;
-      if (isBeamBlocked(game.grid[cy][cx]) || (d > 0.6 && isTurretCell(cx, cy))) {
-        return { x: ox + dx * d, y: oy + dy * d, dist: d };
+    const startC = Math.floor(ox);
+    const startR = Math.floor(oy);
+    let c = startC, r = startR;
+    if (c < 0 || c >= COLS || r < 0 || r >= ROWS) {
+      return { x: ox, y: oy, dist: 0, blocked: true };
+    }
+    if (isBeamBlocked(game.grid[r][c])) {
+      return { x: ox, y: oy, dist: 0, blocked: true };
+    }
+    const stepX = dx > 1e-9 ? 1 : (dx < -1e-9 ? -1 : 0);
+    const stepY = dy > 1e-9 ? 1 : (dy < -1e-9 ? -1 : 0);
+    const tDeltaX = stepX !== 0 ? Math.abs(1 / dx) : Infinity;
+    const tDeltaY = stepY !== 0 ? Math.abs(1 / dy) : Infinity;
+    let tMaxX = stepX > 0 ? (c + 1 - ox) * tDeltaX : (stepX < 0 ? (ox - c) * tDeltaX : Infinity);
+    let tMaxY = stepY > 0 ? (r + 1 - oy) * tDeltaY : (stepY < 0 ? (oy - r) * tDeltaY : Infinity);
+    let dist = 0;
+    for (let iter = 0; iter < 64; iter++) {
+      let nextDist;
+      if (Math.abs(tMaxX - tMaxY) < 1e-7) {
+        nextDist = Math.min(tMaxX, tMaxY);
+        if (nextDist >= maxDist) break;
+        const cNext = c + stepX, rNext = r + stepY;
+        const orthBlocked = (cNext >= 0 && cNext < COLS && isBeamBlocked(game.grid[r][cNext]))
+          || (rNext >= 0 && rNext < ROWS && isBeamBlocked(game.grid[rNext][c]));
+        if (orthBlocked) {
+          return { x: ox + dx * nextDist, y: oy + dy * nextDist, dist: nextDist, blocked: true };
+        }
+        tMaxX += tDeltaX;
+        tMaxY += tDeltaY;
+        c = cNext;
+        r = rNext;
+      } else if (tMaxX < tMaxY) {
+        nextDist = tMaxX;
+        if (nextDist >= maxDist) break;
+        tMaxX += tDeltaX;
+        c += stepX;
+      } else {
+        nextDist = tMaxY;
+        if (nextDist >= maxDist) break;
+        tMaxY += tDeltaY;
+        r += stepY;
+      }
+      dist = nextDist;
+      if (c < 0 || c >= COLS || r < 0 || r >= ROWS) {
+        return { x: ox + dx * dist, y: oy + dy * dist, dist, blocked: true };
+      }
+      const hitTurret = isTurretCell(c, r) && !(ignoreOriginTurret && c === startC && r === startR);
+      if (isBeamBlocked(game.grid[r][c]) || hitTurret) {
+        return { x: ox + dx * dist, y: oy + dy * dist, dist, blocked: true };
       }
     }
-    return { x: ox + dx * maxDist, y: oy + dy * maxDist, dist: maxDist };
+    return { x: ox + dx * maxDist, y: oy + dy * maxDist, dist: maxDist, blocked: false };
   }
 
   function isTurretCell(c, r) {
@@ -3149,15 +3282,8 @@
     const dx = x2 - x1, dy = y2 - y1;
     const dist = Math.hypot(dx, dy);
     if (dist < 0.05) return true;
-    const steps = Math.ceil(dist / 0.12);
-    for (let i = 1; i < steps; i++) {
-      const t = i / steps;
-      const cx = (x1 + dx * t) | 0;
-      const cy = (y1 + dy * t) | 0;
-      if (cx < 0 || cx >= COLS || cy < 0 || cy >= ROWS) return false;
-      if (isBeamBlocked(game.grid[cy][cx])) return false;
-    }
-    return true;
+    const hit = castRay(x1, y1, Math.atan2(dy, dx), dist);
+    return !hit.blocked || hit.dist >= dist - 0.015;
   }
 
   function distToSegment(px, py, x1, y1, x2, y2) {
@@ -3169,11 +3295,71 @@
     return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
   }
 
-  function angleDiff(a, b) {
-    let d = a - b;
+  function shortestAngleDelta(from, to) {
+    let d = to - from;
     while (d > Math.PI) d -= Math.PI * 2;
     while (d < -Math.PI) d += Math.PI * 2;
-    return Math.abs(d);
+    return d;
+  }
+
+  function angleDiff(a, b) {
+    return Math.abs(shortestAngleDelta(b, a));
+  }
+
+  // Exact visibility polygon for a watcher's spotlight cone (smooth fan + wall/turret corner rays).
+  function buildWatcherConeWorldPts(w, range = WATCHER_CONE_RANGE, halfAng = WATCHER_CONE_HALF) {
+    const angles = [];
+    const baseSamples = 32;
+    for (let i = 0; i <= baseSamples; i++) {
+      angles.push(-halfAng + (2 * halfAng * i / baseSamples));
+    }
+    const rPad = Math.ceil(range) + 1;
+    const minC = Math.max(0, Math.floor(w.x) - rPad);
+    const maxC = Math.min(COLS - 1, Math.floor(w.x) + rPad);
+    const minR = Math.max(0, Math.floor(w.y) - rPad);
+    const maxR = Math.min(ROWS - 1, Math.floor(w.y) + rPad);
+    for (let rr = minR; rr <= maxR; rr++) {
+      for (let cc = minC; cc <= maxC; cc++) {
+        if (!isBeamBlocked(game.grid[rr][cc]) && !isTurretCell(cc, rr)) continue;
+        for (let oy = 0; oy <= 1; oy++) {
+          for (let ox = 0; ox <= 1; ox++) {
+            const vx = cc + ox, vy = rr + oy;
+            const dx = vx - w.x, dy = vy - w.y;
+            if (dx * dx + dy * dy > (range + 0.5) * (range + 0.5)) continue;
+            const rel = shortestAngleDelta(w.angle, Math.atan2(dy, dx));
+            if (rel >= -halfAng && rel <= halfAng) {
+              if (rel - 0.0006 >= -halfAng) angles.push(rel - 0.0006);
+              angles.push(rel);
+              if (rel + 0.0006 <= halfAng) angles.push(rel + 0.0006);
+            }
+          }
+        }
+      }
+    }
+    angles.sort((a, b) => a - b);
+    const pts = [];
+    let prev = -999;
+    for (let i = 0; i < angles.length; i++) {
+      const rel = angles[i];
+      if (rel - prev < 0.00025 && i < angles.length - 1) continue;
+      prev = rel;
+      const hit = castRay(w.x, w.y, w.angle + rel, range);
+      pts.push({ x: hit.x, y: hit.y, dist: hit.dist });
+    }
+    return pts;
+  }
+
+  function isPointInWatcherSpotlight(w, px, py, useKillInset = true) {
+    const dx = px - w.x, dy = py - w.y;
+    const dist = Math.hypot(dx, dy);
+    const maxR = useKillInset ? WATCHER_KILL_RANGE : WATCHER_CONE_RANGE;
+    const maxA = useKillInset ? WATCHER_KILL_HALF : WATCHER_CONE_HALF;
+    if (dist > maxR) return false;
+    if (dist < 0.05) return true;
+    const ang = Math.atan2(dy, dx);
+    if (angleDiff(ang, w.angle) > maxA) return false;
+    const hit = castRay(w.x, w.y, ang, maxR);
+    return dist <= hit.dist - (useKillInset ? 0.04 : 0.01);
   }
 
   // ---------- Phase Blink & Decoy Ping ----------
@@ -3203,24 +3389,40 @@
     if (game.empTimer > 0) return false;
     for (const w of game.watchers) {
       if (Math.hypot(tx - w.x, ty - w.y) < 0.42) return true;
-      const dx = tx - w.x, dy = ty - w.y, d = Math.hypot(dx, dy);
-      if (d <= 3.05 && angleDiff(Math.atan2(dy, dx), w.angle) <= 0.48 && hasLineOfSight(w.x, w.y, tx, ty)) return true;
+      if (isPointInWatcherSpotlight(w, tx, ty, false)) return true;
     }
     for (const lg of game.lasers) {
       if (lg.active && distToSegment(tx, ty, lg.c1 + 0.5, lg.r1 + 0.15, lg.c2 + 0.5, lg.r2 + 0.85) < 0.28) return true;
     }
     for (const tur of game.turrets) {
-      if (tur.telegraph > 0) continue;
+      const angBase = tur.telegraph > 0 ? tur.targetAngle : tur.angle;
+      if (tur.telegraph > 0.22) continue;
       for (let b = 0; b < 2; b++) {
-        const hit = castRay(tur.c + 0.5, tur.r + 0.5, tur.angle + b * (Math.PI / 2), 20);
+        const hit = castRay(tur.c + 0.5, tur.r + 0.5, angBase + b * (Math.PI / 2), 20);
         if (distToSegment(tx, ty, tur.c + 0.5, tur.r + 0.5, hit.x, hit.y) < 0.26) return true;
       }
     }
     for (const h of game.hunters) {
-      if (h.active && Math.hypot(tx - h.x, ty - h.y) < 0.45) return true;
+      if (h.active && !(h.armTimer > 0) && Math.hypot(tx - h.x, ty - h.y) < 0.45) return true;
     }
     for (const bp of game.burnPlates) {
       if (bp.state === 'HOT' && Math.abs(tx - (bp.c + 0.5)) < 0.42 && Math.abs(ty - (bp.r + 0.5)) < 0.42) return true;
+    }
+    if (game.boss) {
+      const bx = game.boss.x, by = game.boss.y;
+      for (let b = 0; b < 2; b++) {
+        const a = game.boss.angle + b * Math.PI;
+        const sx = bx + Math.cos(a) * 0.55, sy = by + Math.sin(a) * 0.55;
+        const hit = castRay(bx, by, a, 20);
+        if (hit.dist > 0.6 && distToSegment(tx, ty, sx, sy, hit.x, hit.y) < 0.26) return true;
+      }
+    }
+    for (const pg of game.purges) {
+      if (pg.warn > 0) continue;
+      const pos = pg.horizontal ? (1 + pg.progress * (ROWS - 2)) : (1 + pg.progress * (COLS - 2));
+      const pAxis = pg.horizontal ? ty : tx;
+      const pPerp = pg.horizontal ? tx : ty;
+      if (Math.abs(pPerp - pg.gapPos) > 0.64 && Math.abs(pAxis - pos) < 0.30) return true;
     }
     return false;
   }
@@ -3882,7 +4084,7 @@
           p.x = partner.c + 0.5;
           p.y = partner.r + 0.5;
           p.portalCooldown = 1.15;
-          p.blinkGrace = Math.max(p.blinkGrace, 0.14);
+          p.blinkGrace = Math.max(p.blinkGrace, 0.45);
           game.cam.zoomPunch = 0.03;
           haptic(20);
           spawnBurst(ox, oy, pt.color, 14);
@@ -4044,23 +4246,38 @@
     const decoyTarget = game.activeDecoys.length > 0 ? game.activeDecoys[0] : null;
 
     if (!empFrozen) {
+      const wTurnBase = 5.4 * hazMult * (hasMutator('DOUBLE_KISS') ? 1.15 : 1.0);
       for (const w of game.watchers) {
         if (decoyTarget && Math.hypot(w.x - decoyTarget.x, w.y - decoyTarget.y) <= 4.5) {
-          w.angle = Math.atan2(decoyTarget.y - w.y, decoyTarget.x - w.x);
+          const wantAng = Math.atan2(decoyTarget.y - w.y, decoyTarget.x - w.x);
+          const dAng = shortestAngleDelta(w.angle, wantAng);
+          w.angle += Math.sign(dAng) * Math.min(Math.abs(dAng), wTurnBase * dt);
           continue;
         }
-        const wp = w.waypoints[w.wpIdx];
-        const tx = wp[0] + 0.5, ty = wp[1] + 0.5;
-        const dx = tx - w.x, dy = ty - w.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < 0.08) {
+        if (!w.waypoints || w.waypoints.length === 0) continue;
+        let wp = w.waypoints[w.wpIdx % w.waypoints.length];
+        let tx = wp[0] + 0.5, ty = wp[1] + 0.5;
+        let dx = tx - w.x, dy = ty - w.y;
+        let dist = Math.hypot(dx, dy);
+        if (dist < 0.06) {
           w.x = tx; w.y = ty;
-          w.wpIdx = (w.wpIdx + 1) % w.waypoints.length;
-        } else {
-          const step = w.speed * hazMult * (hasMutator('DOUBLE_KISS') ? 1.25 : 1.0) * dt;
-          w.x += (dx / dist) * Math.min(step, dist);
-          w.y += (dy / dist) * Math.min(step, dist);
-          w.angle = Math.atan2(dy, dx);
+          if (w.waypoints.length > 1) {
+            w.wpIdx = (w.wpIdx + 1) % w.waypoints.length;
+            wp = w.waypoints[w.wpIdx];
+            tx = wp[0] + 0.5; ty = wp[1] + 0.5;
+            dx = tx - w.x; dy = ty - w.y;
+            dist = Math.hypot(dx, dy);
+          }
+        }
+        if (dist >= 0.06) {
+          const wantAng = Math.atan2(dy, dx);
+          const dAng = shortestAngleDelta(w.angle, wantAng);
+          w.angle += Math.sign(dAng) * Math.min(Math.abs(dAng), wTurnBase * dt);
+          if (Math.abs(dAng) <= 0.28) {
+            const step = w.speed * hazMult * (hasMutator('DOUBLE_KISS') ? 1.25 : 1.0) * dt;
+            w.x += (dx / dist) * Math.min(step, dist);
+            w.y += (dy / dist) * Math.min(step, dist);
+          }
         }
       }
 
@@ -4075,6 +4292,11 @@
       for (let hIdx = 0; hIdx < game.hunters.length; hIdx++) {
         const h = game.hunters[hIdx];
         if (!h.active) continue;
+        if (h.armTimer > 0) {
+          h.armTimer = Math.max(0, h.armTimer - dt);
+          h.angle += dt * 8.5;
+          continue;
+        }
         let goalC = h.targetC, goalR = h.targetR;
         if (decoyTarget) {
           goalC = Math.max(1, Math.min(COLS - 2, Math.floor(decoyTarget.x)));
@@ -4139,10 +4361,16 @@
         game.purgeCooldown -= dt;
         if (game.purgeCooldown <= 0) {
           game.purgeCooldown = 3.8;
-          const horizontal = (game.purges.length % 2 === 0);
-          const gapPos = horizontal ? (2.5 + ((Math.floor(game.elapsed * 3) % 7))) : (2.5 + ((Math.floor(game.elapsed * 5) % 11)));
+          const seq = game.purgeSeq || 0;
+          game.purgeSeq = seq + 1;
+          const horizontal = (seq % 2 === 0);
+          // Horizontal wall spans X=1..COLS-1 so gap is an X coord (2.5..COLS-2.5);
+          // Vertical wall spans Y=1..ROWS-1 so gap is a Y coord (2.5..ROWS-2.5).
+          const gapPos = horizontal
+            ? (2.5 + ((Math.floor(game.elapsed * 5) + seq * 3) % (COLS - 5)))
+            : (2.5 + ((Math.floor(game.elapsed * 3) + seq * 2) % (ROWS - 4)));
           game.purges.push({
-            id: 'purge_' + Math.floor(game.elapsed * 100),
+            id: 'purge_' + seq + '_' + Math.floor(game.elapsed * 100),
             horizontal, warn: 1.15, progress: 0, duration: 2.6, gapPos
           });
         }
@@ -4163,18 +4391,18 @@
     if (!empFrozen && p.blinkGrace <= 0 && p.spawnShield <= 0) {
       for (const w of game.watchers) {
         const db = Math.hypot(p.x - w.x, p.y - w.y);
-        if (db < 0.36) return killPlayer('WATCHER COLLISION', w.x, w.y);
+        if (db < 0.34) return killPlayer('WATCHER COLLISION', w.x, w.y);
         if (db < 0.62 + gPad) awardGraze(w.id + '_b', w.x, w.y);
 
         const dx = p.x - w.x, dy = p.y - w.y;
         const dist = Math.hypot(dx, dy);
-        if (dist <= 3.35 + gPad) {
-          const ang = Math.atan2(dy, dx);
-          const ad = angleDiff(ang, w.angle);
-          if (dist <= 3.05 && ad <= 0.48 && hasLineOfSight(w.x, w.y, p.x, p.y)) {
+        if (dist <= WATCHER_GRAZE_RANGE + gPad) {
+          if (isPointInWatcherSpotlight(w, p.x, p.y, true)) {
             return killPlayer('WATCHER SPOTLIGHT', w.x, w.y);
           }
-          if (ad <= 0.68 + gPad * 0.6 && hasLineOfSight(w.x, w.y, p.x, p.y)) {
+          const ang = Math.atan2(dy, dx);
+          const ad = angleDiff(ang, w.angle);
+          if (ad <= WATCHER_GRAZE_HALF + gPad * 0.6 && hasLineOfSight(w.x, w.y, p.x, p.y)) {
             awardGraze(w.id + '_c', p.x, p.y);
           }
         }
@@ -4202,7 +4430,7 @@
       }
 
       for (const h of game.hunters) {
-        if (!h.active) continue;
+        if (!h.active || h.armTimer > 0) continue;
         const d = Math.hypot(p.x - h.x, p.y - h.y);
         if (d < 0.4) return killPlayer('HUNTER INTERCEPT', h.x, h.y);
         if (d < 0.68 + gPad) awardGraze(h.id, h.x, h.y);
@@ -4319,7 +4547,8 @@
     c.x += (tgtX - c.x) * lerpRate;
     c.y += (tgtY - c.y) * lerpRate;
     c.pitch += (preset.pitch - c.pitch) * lerpRate;
-    const targetRoll = (game.camMode === 'TOP_DOWN' || settings.reducedMotion) ? 0 : Math.max(-0.032, Math.min(0.032, -(game.player.vx || 0) * 0.0042));
+    const screenVx = (game.player.vx || 0) * Math.cos(c.yaw) - (game.player.vy || 0) * Math.sin(c.yaw);
+    const targetRoll = (game.camMode === 'TOP_DOWN' || settings.reducedMotion) ? 0 : Math.max(-0.032, Math.min(0.032, -screenVx * 0.0042));
     c.roll += (targetRoll - c.roll) * lerpRate;
     if (settings.reducedMotion) c.zoomPunch = 0;
     c.zoomPunch += (0 - c.zoomPunch) * Math.min(1, dt * 10);
@@ -4596,14 +4825,28 @@
   let occluderPts = [];
   function buildOccluderPoints() {
     occluderPts = [];
-    const add = (x, y) => occluderPts.push(project3D(x, y, 0.35));
+    const add = (x, y) => {
+      const p0 = project3D(x, y, 0.04);
+      const pMid = project3D(x, y, 0.30);
+      const depth = project3D(x, y, 0).depth;
+      occluderPts.push({ x: p0.x, y: p0.y, depth });
+      occluderPts.push({ x: pMid.x, y: pMid.y, depth });
+    };
     add(game.player.x, game.player.y);
     for (const p of game.pickups) if (!p.collected) add(p.c + 0.5, p.r + 0.5);
     for (const emp of game.empRelays) if (!emp.collected) add(emp.c + 0.5, emp.r + 0.5);
+    for (const pt of (game.portals || [])) add(pt.c + 0.5, pt.r + 0.5);
     if (game.cargo && !game.cargo.pickedUp) add(game.cargo.x, game.cargo.y);
     if (game.farExit) add(game.farExit.x, game.farExit.y);
-    for (const w of game.watchers) add(w.x, w.y);
-    for (const h of game.hunters) if (h.active) add(h.x, h.y);
+    for (const w of game.watchers) {
+      add(w.x, w.y);
+      const midHit = castRay(w.x, w.y, w.angle, 1.8);
+      if (midHit.dist > 0.6) {
+        const md = Math.min(1.4, midHit.dist * 0.65);
+        add(w.x + Math.cos(w.angle) * md, w.y + Math.sin(w.angle) * md);
+      }
+    }
+    for (const h of game.hunters) add(h.x, h.y);
   }
   function isOccludingEntity(c, r, wallH) {
     if (game.cam.pitch >= 1.46) return false;
@@ -4617,7 +4860,7 @@
     }
     const wallDepth = project3D(c + 0.5, r + 0.5, 0).depth;
     for (const q of occluderPts) {
-      if (q.depth > wallDepth + 0.3 && q.x > minX && q.x < maxX && q.y > minY && q.y < maxY) return true;
+      if (q.depth > wallDepth + 0.12 && q.x > minX && q.x < maxX && q.y > minY && q.y < maxY) return true;
     }
     return false;
   }
@@ -4647,7 +4890,7 @@
 
     const p = game.player;
     const pal = getActivePalette();
-    const hoverZ = 0.36 + Math.sin(animT * 6) * 0.035;
+    const hoverZ = 0.30 + Math.sin(animT * 6) * 0.03;
     drawRing3D(p.x, p.y, hoverZ, 0.34, 14, pal.bloom, 4, pal.bloomFill, null, bloomCtx);
 
     if (settings.ghosts && game.activeGhost && game.screen === 'PLAYING') {
@@ -4712,8 +4955,14 @@
     for (const pg of game.purges) {
       if (pg.warn <= 0) {
         const pos = pg.horizontal ? (1 + pg.progress * (ROWS - 2)) : (1 + pg.progress * (COLS - 2));
-        if (pg.horizontal) drawCylinderBeam3D(1, pos, 0.5, COLS - 1, pos, 0.5, '#fb7185', 'rgba(244,63,94,0.85)', 8, bloomCtx);
-        else drawCylinderBeam3D(pos, 1, 0.5, pos, ROWS - 1, 0.5, '#fb7185', 'rgba(244,63,94,0.85)', 8, bloomCtx);
+        const gA = Math.max(1, pg.gapPos - 0.64), gB = Math.min(pg.horizontal ? COLS - 1 : ROWS - 1, pg.gapPos + 0.64);
+        if (pg.horizontal) {
+          if (gA > 1) drawCylinderBeam3D(1, pos, 0.5, gA, pos, 0.5, '#fb7185', 'rgba(244,63,94,0.85)', 8, bloomCtx);
+          if (gB < COLS - 1) drawCylinderBeam3D(gB, pos, 0.5, COLS - 1, pos, 0.5, '#fb7185', 'rgba(244,63,94,0.85)', 8, bloomCtx);
+        } else {
+          if (gA > 1) drawCylinderBeam3D(pos, 1, 0.5, pos, gA, 0.5, '#fb7185', 'rgba(244,63,94,0.85)', 8, bloomCtx);
+          if (gB < ROWS - 1) drawCylinderBeam3D(pos, gB, 0.5, pos, ROWS - 1, 0.5, '#fb7185', 'rgba(244,63,94,0.85)', 8, bloomCtx);
+        }
       }
     }
   }
@@ -5000,14 +5249,42 @@
 
     for (const h of game.hunters) {
       drawPoly3D([[h.dockC + 0.18, h.dockR + 0.18, 0.01], [h.dockC + 0.82, h.dockR + 0.18, 0.01], [h.dockC + 0.82, h.dockR + 0.82, 0.01], [h.dockC + 0.18, h.dockR + 0.82, 0.01]],
-        'rgba(245, 158, 11, 0.1)', 'rgba(245, 158, 11, 0.55)', 1.8);
+        'rgba(245, 158, 11, 0.12)', 'rgba(245, 158, 11, 0.6)', 1.8);
+      if (!h.active) {
+        const dp = project3D(h.dockC + 0.5, h.dockR + 0.5, 0.02);
+        ctx.fillStyle = 'rgba(251, 146, 60, 0.72)';
+        ctx.font = '800 8px ui-monospace, monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('HUNTER', dp.x, dp.y + 14);
+      }
       drawRing3D(h.x, h.y, 0.015, 0.24, 12, null, 0, 'rgba(0,0,0,0.45)');
     }
     for (const w of game.watchers) {
       drawRing3D(w.x, w.y, 0.015, 0.24, 12, null, 0, 'rgba(0,0,0,0.45)');
     }
+
+    // 4b. Exact Watcher Floor Spotlight Cones (drawn flat on floor BEFORE 3D walls so they never bleed over walls)
+    const watcherCones = [];
+    for (const w of game.watchers) {
+      const worldPts = buildWatcherConeWorldPts(w, WATCHER_CONE_RANGE, WATCHER_CONE_HALF);
+      const conePts = worldPts.map(pt => project3D(pt.x, pt.y, 0.01));
+      watcherCones.push({ w, worldPts, conePts });
+      const wBase = project3D(w.x, w.y, 0.01);
+      ctx.beginPath();
+      ctx.moveTo(wBase.x, wBase.y);
+      for (const cp of conePts) ctx.lineTo(cp.x, cp.y);
+      ctx.closePath();
+      ctx.fillStyle = game.empTimer > 0 ? 'rgba(56, 189, 248, 0.14)' : 'rgba(244, 63, 94, 0.28)';
+      ctx.fill();
+      ctx.strokeStyle = game.empTimer > 0 ? 'rgba(186, 230, 253, 0.65)' : 'rgba(255, 228, 230, 0.82)';
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([6, 4]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
     drawRing3D(p.x, p.y, 0.015, 0.25, 14, null, 0, 'rgba(0, 0, 0, 0.45)');
-    drawRing3D(p.x, p.y, 0.02, 0.36 + (settings.reducedMotion ? 0 : Math.sin(animT * 4) * 0.04 + rxPulse * 0.04), 18, pal.ring, 2.2);
+    drawRing3D(p.x, p.y, 0.02, 0.34 + (settings.reducedMotion ? 0 : Math.sin(animT * 4) * 0.03 + rxPulse * 0.03), 18, pal.ring, 2.4);
 
     // 5. Depth-Sorted 3D World Objects (With 3D Breach Drop-In zScale)
     const drawQueue = [];
@@ -5017,14 +5294,17 @@
 
     const wallH = (game.camMode === '3D_DEEP' ? 1.02 : 0.86) * zScale;
     const glassH = 0.74 * zScale;
+    const frontBorderLow = game.cam.pitch < 1.50;
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
         const t = game.grid[r][c];
         if (t === TILE.WALL_SOLID) {
           push3D(c + 0.5, r + 0.5, () => {
-            const xRay = (c > 0 && c < COLS - 1 && r > 0 && r < ROWS - 1) && isOccludingEntity(c, r, wallH);
+            const isFrontCurb = frontBorderLow && (isPort ? (c === 0 && r > 0 && r < ROWS - 1) : (r === ROWS - 1 && c > 0 && c < COLS - 1));
+            const curWallH = isFrontCurb ? wallH * 0.40 : wallH;
+            const xRay = (c > 0 && c < COLS - 1 && r > 0 && r < ROWS - 1) && isOccludingEntity(c, r, curWallH);
             drawBox3D(
-              c + 0.5, r + 0.5, 0.48, 0.48, 0, wallH,
+              c + 0.5, r + 0.5, 0.48, 0.48, 0, curWallH,
               isLock ? '#1e1020' : secMeta.wallTop,
               isLock ? '#150812' : secMeta.wallFront,
               isLock ? '#10060e' : secMeta.wallSide,
@@ -5360,44 +5640,29 @@
 
     for (const w of game.watchers) {
       push3D(w.x, w.y, () => {
-        const lens = project3D(w.x, w.y, 0.48);
-        const conePts = [];
-        for (let i = 0; i <= 10; i++) {
-          const a = w.angle - 0.48 + (0.96 * i / 10);
-          const hit = castRay(w.x, w.y, a, 3.05);
-          conePts.push(project3D(hit.x, hit.y, 0.01));
-        }
-        ctx.fillStyle = game.empTimer > 0 ? 'rgba(56, 189, 248, 0.14)' : 'rgba(244, 63, 94, 0.24)';
-        ctx.beginPath();
-        const wBase = project3D(w.x, w.y, 0.01);
-        ctx.moveTo(wBase.x, wBase.y);
-        for (const cp of conePts) ctx.lineTo(cp.x, cp.y);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = game.empTimer > 0 ? 'rgba(186, 230, 253, 0.6)' : 'rgba(255, 228, 230, 0.75)';
-        ctx.lineWidth = 1.6; ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
-
-        ctx.fillStyle = game.empTimer > 0 ? 'rgba(56, 189, 248, 0.08)' : 'rgba(251, 113, 133, 0.12)';
-        for (let i = 0; i < conePts.length - 1; i++) {
-          ctx.beginPath();
-          ctx.moveTo(lens.x, lens.y);
-          ctx.lineTo(conePts[i].x, conePts[i].y);
-          ctx.lineTo(conePts[i + 1].x, conePts[i + 1].y);
-          ctx.closePath();
-          ctx.fill();
-        }
-
         const hover = Math.sin(animT * 5 + w.x) * 0.04;
+        const wz = 0.48 + hover;
         const cTop = game.empTimer > 0 ? '#7dd3fc' : '#fb7185';
         const cSide = game.empTimer > 0 ? '#0369a1' : '#be123c';
-        drawOcta3D(w.x, w.y, 0.48 + hover, 0.22, 0.18, w.angle, cTop, '#e11d48', cSide, '#ffe4e6');
+        drawOcta3D(w.x, w.y, wz, 0.22, 0.18, w.angle, cTop, '#e11d48', cSide, '#ffe4e6');
+        // Directional camera lens/visor so facing direction is unmistakable even under EMP or turns
+        const eye = project3D(w.x + Math.cos(w.angle) * 0.24, w.y + Math.sin(w.angle) * 0.24, wz);
+        ctx.fillStyle = game.empTimer > 0 ? '#bae6fd' : '#fff1f2';
+        ctx.beginPath();
+        ctx.arc(eye.x, eye.y, Math.max(2.6, 3.6 * (eye.scale / TILE_SIZE)), 0, Math.PI * 2);
+        ctx.fill();
       });
     }
 
     for (const h of game.hunters) {
       push3D(h.x, h.y, () => {
-        const hz = h.active ? 0.5 + Math.sin(animT * 7 + h.x) * 0.05 : 0.24;
-        const col = game.empTimer > 0 ? '#7dd3fc' : (h.active ? '#f97316' : '#64748b');
+        const arming = h.active && h.armTimer > 0;
+        const armFrac = arming ? (1 - h.armTimer / 0.85) : 1;
+        const hz = h.active ? (0.24 + 0.26 * armFrac + (arming ? 0 : Math.sin(animT * 7 + h.x) * 0.05)) : 0.24;
+        if (arming) {
+          drawRing3D(h.x, h.y, 0.04, 0.34 + Math.sin(animT * 24) * 0.08, 16, '#fb923c', 2.6, 'rgba(249,115,22,0.18)');
+        }
+        const col = game.empTimer > 0 ? '#7dd3fc' : (h.active ? (arming ? '#fbbf24' : '#f97316') : '#64748b');
         const dark = game.empTimer > 0 ? '#0284c7' : (h.active ? '#c2410c' : '#334155');
         const nose = project3D(h.x + Math.cos(h.angle) * 0.28, h.y + Math.sin(h.angle) * 0.28, hz);
         const wingL = project3D(h.x + Math.cos(h.angle + 2.35) * 0.24, h.y + Math.sin(h.angle + 2.35) * 0.24, hz - 0.06);
@@ -5513,7 +5778,7 @@
         ctx.globalAlpha = 1;
       }
 
-      const hoverZ = 0.36 + Math.sin(animT * 6) * 0.035;
+      const hoverZ = 0.30 + Math.sin(animT * 6) * 0.03;
       const colTop = (p.blinkGrace > 0 || p.spawnShield > 0) ? '#ffffff' : (p.blinkCooldown <= 0 ? pal.top : pal.ready);
       const colMid = p.blinkGrace > 0 ? pal.top : pal.mid;
       const colDark = pal.dark;
@@ -5543,25 +5808,29 @@
     for (const pg of game.purges) {
       const sweepPos = pg.horizontal ? (1 + pg.progress * (ROWS - 2)) : (1 + pg.progress * (COLS - 2));
       push3D(pg.horizontal ? 8.5 : sweepPos, pg.horizontal ? sweepPos : 5.5, () => {
+        const gA = Math.max(1, pg.gapPos - 0.64), gB = Math.min(pg.horizontal ? COLS - 1 : ROWS - 1, pg.gapPos + 0.64);
         if (pg.warn > 0) {
-          drawPoly3D(
-            pg.horizontal ? [[1, 1, 0.02], [COLS - 1, 1, 0.02], [COLS - 1, 1.35, 0.02], [1, 1.35, 0.02]]
-                          : [[1, 1, 0.02], [1.35, 1, 0.02], [1.35, ROWS - 1, 0.02], [1, ROWS - 1, 0.02]],
-            'rgba(244, 63, 94, 0.32)', '#fb7185', 1.5
-          );
+          if (pg.horizontal) {
+            if (gA > 1) drawPoly3D([[1, 1, 0.02], [gA, 1, 0.02], [gA, 1.35, 0.02], [1, 1.35, 0.02]], 'rgba(244, 63, 94, 0.32)', '#fb7185', 1.5);
+            if (gB < COLS - 1) drawPoly3D([[gB, 1, 0.02], [COLS - 1, 1, 0.02], [COLS - 1, 1.35, 0.02], [gB, 1.35, 0.02]], 'rgba(244, 63, 94, 0.32)', '#fb7185', 1.5);
+            drawPoly3D([[gA, 1, 0.025], [gB, 1, 0.025], [gB, 1.35, 0.025], [gA, 1.35, 0.025]], 'rgba(34, 211, 238, 0.22)', '#67e8f9', 1.6);
+          } else {
+            if (gA > 1) drawPoly3D([[1, 1, 0.02], [1.35, 1, 0.02], [1.35, gA, 0.02], [1, gA, 0.02]], 'rgba(244, 63, 94, 0.32)', '#fb7185', 1.5);
+            if (gB < ROWS - 1) drawPoly3D([[1, gB, 0.02], [1.35, gB, 0.02], [1.35, ROWS - 1, 0.02], [1, ROWS - 1, 0.02]], 'rgba(244, 63, 94, 0.32)', '#fb7185', 1.5);
+            drawPoly3D([[1, gA, 0.025], [1.35, gA, 0.025], [1.35, gB, 0.025], [1, gB, 0.025]], 'rgba(34, 211, 238, 0.22)', '#67e8f9', 1.6);
+          }
           const tp = pg.horizontal ? project3D(8.5, 1.18, 0.2) : project3D(1.18, 5.5, 0.2);
           ctx.fillStyle = '#fda4af'; ctx.font = '800 11px sans-serif'; ctx.textAlign = 'center';
           ctx.fillText('PURGE WAVE INCOMING', tp.x, tp.y);
         } else {
           const wallCol = game.empTimer > 0 ? 'rgba(56, 189, 248, 0.25)' : 'rgba(244, 63, 94, 0.42)';
           const edgeCol = game.empTimer > 0 ? '#7dd3fc' : '#fda4af';
-          const gA = pg.gapPos - 0.64, gB = pg.gapPos + 0.64;
           if (pg.horizontal) {
-            drawPoly3D([[1, sweepPos, 0], [gA, sweepPos, 0], [gA, sweepPos, 1.0], [1, sweepPos, 1.0]], wallCol, edgeCol, 2.2);
-            drawPoly3D([[gB, sweepPos, 0], [COLS - 1, sweepPos, 0], [COLS - 1, sweepPos, 1.0], [gB, sweepPos, 1.0]], wallCol, edgeCol, 2.2);
+            if (gA > 1) drawPoly3D([[1, sweepPos, 0], [gA, sweepPos, 0], [gA, sweepPos, 1.0], [1, sweepPos, 1.0]], wallCol, edgeCol, 2.2);
+            if (gB < COLS - 1) drawPoly3D([[gB, sweepPos, 0], [COLS - 1, sweepPos, 0], [COLS - 1, sweepPos, 1.0], [gB, sweepPos, 1.0]], wallCol, edgeCol, 2.2);
           } else {
-            drawPoly3D([[sweepPos, 1, 0], [sweepPos, gA, 0], [sweepPos, gA, 1.0], [sweepPos, 1, 1.0]], wallCol, edgeCol, 2.2);
-            drawPoly3D([[sweepPos, gB, 0], [sweepPos, ROWS - 1, 0], [sweepPos, ROWS - 1, 1.0], [sweepPos, gB, 1.0]], wallCol, edgeCol, 2.2);
+            if (gA > 1) drawPoly3D([[sweepPos, 1, 0], [sweepPos, gA, 0], [sweepPos, gA, 1.0], [sweepPos, 1, 1.0]], wallCol, edgeCol, 2.2);
+            if (gB < ROWS - 1) drawPoly3D([[sweepPos, gB, 0], [sweepPos, ROWS - 1, 0], [sweepPos, ROWS - 1, 1.0], [sweepPos, gB, 1.0]], wallCol, edgeCol, 2.2);
           }
         }
       });
@@ -5621,7 +5890,21 @@
       ctx.fillRect(-20, -20, VIEW_W + 40, VIEW_H + 40);
 
       if (game.sonarFlash > 0) {
-        for (const w of game.watchers) drawRing3D(w.x, w.y, 0.48, 0.26, 12, 'rgba(251,113,133,0.85)', 2);
+        for (const wc of watcherCones) {
+          drawRing3D(wc.w.x, wc.w.y, 0.48, 0.26, 12, 'rgba(251,113,133,0.85)', 2);
+          const wb = project3D(wc.w.x, wc.w.y, 0.01);
+          ctx.beginPath();
+          ctx.moveTo(wb.x, wb.y);
+          for (const cp of wc.conePts) ctx.lineTo(cp.x, cp.y);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(244,63,94,0.14)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(251,113,133,0.58)';
+          ctx.lineWidth = 1.4;
+          ctx.setLineDash([5, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
         for (const h of game.hunters) if (h.active) drawRing3D(h.x, h.y, 0.48, 0.28, 12, 'rgba(251,113,133,0.85)', 2);
         for (const lg of game.lasers) {
           if (lg.active) drawCylinderBeam3D(lg.c1 + 0.5, lg.r1 + 0.15, 0.42, lg.c2 + 0.5, lg.r2 + 0.85, 0.42, '#fb7185', 'rgba(251,113,133,0.4)', 2.2);
@@ -5728,8 +6011,9 @@
     hc.style.borderColor = tier.primary;
     hc.style.color = tier.primary;
 
-    const totalLoot = game.pickups.length;
-    const leftLoot = game.pickups.filter(p => !p.collected).length;
+    const pendingMaster = (game.boss && !game.boss.masterSeedSpawned) ? 1 : 0;
+    const totalLoot = game.pickups.length + pendingMaster;
+    const leftLoot = game.pickups.filter(p => !p.collected).length + pendingMaster;
     document.getElementById('lootVal').textContent = `${totalLoot - leftLoot}/${totalLoot}`;
 
     const rank = computeStyleRank();
@@ -5822,11 +6106,13 @@
     });
   }
 
+  let toastTimer = null;
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 1800);
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.classList.remove('show'); toastTimer = null; }, 1800);
   }
 
   function hideAllOverlays() {
@@ -5939,14 +6225,29 @@
       }
     }
   }
+  function openModalWithPause(overlayId) {
+    if (game.screen === 'PLAYING') {
+      game.pausedByMenu = false;
+      if (!game.paused) setPaused(true, false);
+      game.pausedByModal = true;
+    }
+    document.getElementById(overlayId).classList.remove('hidden');
+  }
+  function closeModalWithResume(overlayId) {
+    document.getElementById(overlayId).classList.add('hidden');
+    if (game.pausedByModal) {
+      game.pausedByModal = false;
+      if (game.screen === 'PLAYING' && game.paused) setPaused(false);
+    }
+    try { window.focus(); canvas.focus({ preventScroll: true }); } catch (_) {}
+  }
   function openArchitectModal() {
-    if (game.screen === 'PLAYING' && !game.paused) setPaused(true, false);
     document.getElementById('archNameInput').value = architectState.name;
     document.getElementById('archCodeInput').value = encodeVaultCode(architectState);
     renderArchitectTools();
     renderArchitectGrid();
     updateArchitectStatus();
-    document.getElementById('architectOverlay').classList.remove('hidden');
+    openModalWithPause('architectOverlay');
   }
   window.addEventListener('pointerup', () => { architectState.painting = false; });
 
@@ -6490,8 +6791,16 @@
   document.getElementById('setMotion').onclick = () => { settings.reducedMotion = !settings.reducedMotion; saveSettings(); syncSettingsUI(); };
   document.getElementById('setTips').onclick = () => { settings.tips = !settings.tips; saveSettings(); syncSettingsUI(); if (!settings.tips) hideTip(); };
   document.getElementById('resetTips').onclick = () => { tipsSeen = {}; safeSet('mbm_signalheist_tipsSeen', tipsSeen); settings.tips = true; saveSettings(); syncSettingsUI(); showToast('TIPS RESET'); };
+  function restartCurrentRun() {
+    document.getElementById('deathBanner').classList.remove('show');
+    if (game.mode === 'CUSTOM' && game.customVaultSpec) {
+      playCustomVault(game.customVaultSpec, game.customFromEditor);
+    } else {
+      startNewRun(game.mode, game.seed, game.mode === 'FREEPLAY' ? game.sector : 1);
+    }
+  }
   document.getElementById('resumeBtn').onclick = () => setPaused(false);
-  document.getElementById('pauseRestartBtn').onclick = () => { setPaused(false); startNewRun(game.mode, game.seed, game.mode === 'FREEPLAY' ? game.sector : 1); };
+  document.getElementById('pauseRestartBtn').onclick = () => { setPaused(false); restartCurrentRun(); };
   document.getElementById('pauseBtn').onclick = () => setPaused(!game.paused);
   const menuPanel = document.getElementById('menuPanel');
   const menuBtn = document.getElementById('menuBtn');
@@ -6501,7 +6810,10 @@
     menuBtn.textContent = open ? '✕ CLOSE' : '☰ MENU';
     document.querySelector('.topbar').style.zIndex = open ? '50' : '';
     if (open && game.screen === 'PLAYING' && !game.paused) { setPaused(true, false); game.pausedByMenu = true; }
-    if (!open && game.pausedByMenu) { game.pausedByMenu = false; if (game.paused && game.screen === 'PLAYING') setPaused(false); }
+    if (!open && game.pausedByMenu) {
+      game.pausedByMenu = false;
+      if (game.paused && game.screen === 'PLAYING' && !game.pausedByModal) setPaused(false);
+    }
   }
   menuBtn.onclick = () => setMenu(!menuPanel.classList.contains('open'));
   menuPanel.addEventListener('click', (e) => {
@@ -6598,7 +6910,21 @@
     }
     if (e.code === 'KeyP' || e.code === 'Escape') {
       e.preventDefault();
-      if (menuPanel.classList.contains('open')) setMenu(false);
+      if (e.code === 'Escape') {
+        for (const mid of ['shopOverlay', 'contractsOverlay', 'architectOverlay']) {
+          if (!document.getElementById(mid).classList.contains('hidden')) {
+            closeModalWithResume(mid);
+            return;
+          }
+        }
+        if (menuPanel.classList.contains('open')) {
+          setMenu(false);
+          return;
+        }
+      } else if (menuPanel.classList.contains('open')) {
+        setMenu(false);
+        return;
+      }
       if (game.paused) setPaused(false); else setPaused(true);
       return;
     }
@@ -6618,10 +6944,9 @@
       cycleCamMode();
     } else if (e.code === 'KeyR' && e.shiftKey && game.screen === 'PLAYING') {
       e.preventDefault();
-      startNewRun(game.mode, game.seed, game.mode === 'FREEPLAY' ? game.sector : 1);
+      restartCurrentRun();
     } else if (e.code === 'KeyR' && (game.screen === 'DEAD' || game.screen === 'VICTORY' || game.screen === 'DYING')) {
-      document.getElementById('deathBanner').classList.remove('show');
-      startNewRun(game.mode, game.seed, 1);
+      restartCurrentRun();
     }
   });
 
@@ -6629,7 +6954,8 @@
     const d = dirFromKey(e.code);
     if (d) {
       keyState[e.code] = false;
-      removeKey(d);
+      const stillHeld = Object.keys(keyState).some(k => keyState[k] && dirFromKey(k) === d);
+      if (!stillHeld) removeKey(d);
     }
   });
 
@@ -6744,23 +7070,16 @@
   document.getElementById('skipDraftBtn').onclick = () => { audio.unlock(); skipExploitDraft(); };
   document.getElementById('deepnetBankBtn').onclick = () => { audio.unlock(); claimGauntletVictory(); };
   document.getElementById('deepnetDiveBtn').onclick = () => { audio.unlock(); enterDeepnet(); };
-  document.getElementById('openContractsFromStart').onclick = () => { renderContractsModal(); document.getElementById('contractsOverlay').classList.remove('hidden'); };
-  document.getElementById('contractsBtn').onclick = () => { renderContractsModal(); document.getElementById('contractsOverlay').classList.remove('hidden'); };
-  document.getElementById('closeContractsBtn').onclick = () => {
-    document.getElementById('contractsOverlay').classList.add('hidden');
-    try { window.focus(); canvas.focus({ preventScroll: true }); } catch (_) {}
-  };
+  document.getElementById('openContractsFromStart').onclick = () => { renderContractsModal(); openModalWithPause('contractsOverlay'); };
+  document.getElementById('contractsBtn').onclick = () => { renderContractsModal(); openModalWithPause('contractsOverlay'); };
+  document.getElementById('closeContractsBtn').onclick = () => closeModalWithResume('contractsOverlay');
   document.getElementById('openArchitectFromStart').onclick = () => openArchitectModal();
   document.getElementById('architectBtn').onclick = () => openArchitectModal();
   document.getElementById('backToArchBtn').onclick = () => {
     document.getElementById('endOverlay').classList.add('hidden');
     openArchitectModal();
   };
-  document.getElementById('closeArchBtn').onclick = () => {
-    document.getElementById('architectOverlay').classList.add('hidden');
-    if (game.screen === 'PLAYING' && game.paused) setPaused(false);
-    try { window.focus(); canvas.focus({ preventScroll: true }); } catch (_) {}
-  };
+  document.getElementById('closeArchBtn').onclick = () => closeModalWithResume('architectOverlay');
   document.getElementById('archNameInput').addEventListener('input', (e) => {
     architectState.name = String(e.target.value || 'MY VAULT').toUpperCase().replace(/[^A-Z0-9 _-]/g, '').slice(0, 16) || 'MY VAULT';
   });
@@ -6798,12 +7117,9 @@
     renderArchitectGrid(); updateArchitectStatus();
     showToast('VAULT IMPORTED: ' + parsed.name);
   };
-  document.getElementById('openShopFromStart').onclick = () => { renderShop(); document.getElementById('shopOverlay').classList.remove('hidden'); };
-  document.getElementById('credsBtn').onclick = () => { renderShop(); document.getElementById('shopOverlay').classList.remove('hidden'); };
-  document.getElementById('closeShopBtn').onclick = () => {
-    document.getElementById('shopOverlay').classList.add('hidden');
-    try { window.focus(); canvas.focus({ preventScroll: true }); } catch (_) {}
-  };
+  document.getElementById('openShopFromStart').onclick = () => { renderShop(); openModalWithPause('shopOverlay'); };
+  document.getElementById('credsBtn').onclick = () => { renderShop(); openModalWithPause('shopOverlay'); };
+  document.getElementById('closeShopBtn').onclick = () => closeModalWithResume('shopOverlay');
 
   document.getElementById('modeGauntlet').onclick = () => startNewRun('GAUNTLET', game.seed, 1);
   document.getElementById('modeFreeplay').onclick = () => {
@@ -6854,11 +7170,17 @@
     resizeCanvas();
   };
   document.getElementById('muteBtn').onclick = () => { settings.sound = !settings.sound; applySound(); };
-  document.getElementById('restartBtn').onclick = () => startNewRun(game.mode, game.seed, game.mode === 'FREEPLAY' ? game.sector : 1);
+  document.getElementById('restartBtn').onclick = () => restartCurrentRun();
 
   document.getElementById('retryRunBtn').onclick = () => startNewRun('GAUNTLET', randomSeedCode(), 1, null);
-  document.getElementById('retrySameSeedBtn').onclick = () => startNewRun('GAUNTLET', game.seed, 1, game.mutator);
-  document.getElementById('practiceVaultBtn').onclick = () => jumpToSector(game.sector);
+  document.getElementById('retrySameSeedBtn').onclick = () => {
+    if (game.mode === 'CUSTOM' && game.customVaultSpec) playCustomVault(game.customVaultSpec, game.customFromEditor);
+    else startNewRun('GAUNTLET', game.seed, 1, game.mutator);
+  };
+  document.getElementById('practiceVaultBtn').onclick = () => {
+    if (game.mode === 'CUSTOM' && game.customVaultSpec) playCustomVault(game.customVaultSpec, game.customFromEditor);
+    else jumpToSector(game.sector);
+  };
   document.getElementById('copyReceiptBtn').onclick = () => {
     const txt = buildPlainTextReceipt();
     copyTextToClipboard(txt, 'RECEIPT COPIED');
@@ -7003,20 +7325,30 @@
     if (game.beatPulse > 0) game.beatPulse = Math.max(0, game.beatPulse - dt * 3.2);
     if (game.attractBlinkCd > 0) game.attractBlinkCd = Math.max(0, game.attractBlinkCd - dt);
 
-    // Advance patrol watchers cleanly in background
+    // Advance patrol watchers cleanly in background (smooth corner sweep)
     for (const w of game.watchers) {
       if (!w.waypoints || w.waypoints.length < 2) continue;
-      const wp = w.waypoints[w.wpIdx];
-      const tx = wp[0] + 0.5, ty = wp[1] + 0.5;
-      const dx = tx - w.x, dy = ty - w.y;
-      const d = Math.hypot(dx, dy);
-      if (d < 0.08) {
+      let wp = w.waypoints[w.wpIdx % w.waypoints.length];
+      let tx = wp[0] + 0.5, ty = wp[1] + 0.5;
+      let dx = tx - w.x, dy = ty - w.y;
+      let d = Math.hypot(dx, dy);
+      if (d < 0.06) {
+        w.x = tx; w.y = ty;
         w.wpIdx = (w.wpIdx + 1) % w.waypoints.length;
-      } else {
-        const spd = w.speed * 0.85 * dt;
-        w.x += (dx / d) * Math.min(d, spd);
-        w.y += (dy / d) * Math.min(d, spd);
-        w.angle = Math.atan2(dy, dx);
+        wp = w.waypoints[w.wpIdx];
+        tx = wp[0] + 0.5; ty = wp[1] + 0.5;
+        dx = tx - w.x; dy = ty - w.y;
+        d = Math.hypot(dx, dy);
+      }
+      if (d >= 0.06) {
+        const wantAng = Math.atan2(dy, dx);
+        const dAng = shortestAngleDelta(w.angle, wantAng);
+        w.angle += Math.sign(dAng) * Math.min(Math.abs(dAng), 4.8 * dt);
+        if (Math.abs(dAng) <= 0.28) {
+          const spd = w.speed * 0.85 * dt;
+          w.x += (dx / d) * Math.min(d, spd);
+          w.y += (dy / d) * Math.min(d, spd);
+        }
       }
     }
 
@@ -7221,11 +7553,14 @@
       remainingLoot: game.pickups.filter(p => !p.collected).length,
       totalLoot: game.pickups.length,
       watchersCount: game.watchers.length,
+      watchers: game.watchers.map(w => ({ id: w.id, x: w.x, y: w.y, angle: w.angle, wpIdx: w.wpIdx, waypoints: w.waypoints.map(p => [p[0], p[1]]) })),
       lasersCount: game.lasers.length,
       turretsCount: game.turrets.length,
       huntersCount: game.hunters.length,
+      hunters: game.hunters.map(h => ({ id: h.id, x: h.x, y: h.y, active: h.active, armTimer: h.armTimer || 0, dockC: h.dockC, dockR: h.dockR })),
       burnPlatesCount: game.burnPlates.length,
       purgesCount: game.purges.length,
+      purges: game.purges.map(pg => ({ id: pg.id, horizontal: pg.horizontal, warn: pg.warn, progress: pg.progress, gapPos: pg.gapPos })),
       hasBoss: Boolean(game.boss),
       tiles: game.grid.map(r => r.slice()),
       deathMarkers: game.currentDeathMarkers.slice()
@@ -7280,7 +7615,11 @@
     setPlayerPos: (x, y) => { if (Number.isFinite(x) && Number.isFinite(y)) { game.player.x = x; game.player.y = y; } },
     triggerBlink: () => triggerBlink(),
     triggerDecoy: () => triggerDecoy(),
-    setCamMode: (m) => setCamMode(m)
+    setCamMode: (m) => setCamMode(m),
+    castRay: (ox, oy, ang, maxD) => castRay(ox, oy, ang, maxD),
+    buildWatcherConeWorldPts: (w) => buildWatcherConeWorldPts(w),
+    isPointInWatcherSpotlight: (w, px, py, inset = true) => isPointInWatcherSpotlight(w, px, py, inset),
+    isOccludingEntity: (c, r, wallH = 0.86) => { buildOccluderPoints(); return isOccludingEntity(c, r, wallH); }
   };
 })();
 </script>
