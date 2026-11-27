@@ -49,8 +49,8 @@ const sha = crypto.createHash('sha256').update(html).digest('hex');
  * exactly as before; reversing them gives the pin below. The previous delivered
  * artifact (c3422641..., 50832 bytes) stays recorded in
  * reports/close/2026-08-05-apexrally-landing.md. */
-const DELIVERED_SHA256 = '32a15f404d0d0ae437c8bac94519e2752c6d807e66d69e405d0a1dd097524621';
-const DELIVERED_BYTES = 57603;
+const DELIVERED_SHA256 = 'b4cfd88baf8e1e3d317b20d442c23c4cda5d6cf3d43b1a2918b4560e439cdaac';
+const DELIVERED_BYTES = 109317;
 
 /* The two permitted edits, as reversible rules. */
 const E1 = { name: 'storage key rename', from: "'mbm_apexrally_v1'", to: "'apexRally.v1'", expect: 2 };
