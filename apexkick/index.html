@@ -36,44 +36,50 @@
   body.mbm-has-home .hud {
     padding-left: calc(112px + env(safe-area-inset-left, 0px));
   }
-  .hud-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+  .hud-top { display: flex; justify-content: space-between; align-items: center; gap: 4px; flex-wrap: nowrap; }
+  @media (max-width: 1080px) { .hud-top { flex-wrap: wrap; } }
   .broadcast-bar {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--panel); backdrop-filter: blur(12px);
-    border: 1px solid var(--border); border-radius: 12px;
-    padding: 8px 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.45);
+    display: flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, rgba(10, 18, 34, 0.90), rgba(16, 28, 52, 0.84));
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 11px;
+    padding: 4px 8px; box-shadow: 0 8px 28px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.08);
     pointer-events: auto;
   }
   .live-badge {
-    background: linear-gradient(135deg, #ff3838, #c0392b);
-    color: #fff; font-weight: 800; font-size: 14px; letter-spacing: 0.5px;
-    padding: 4px 8px; border-radius: 6px; text-transform: uppercase;
-    display: flex; align-items: center; gap: 5px;
+    background: linear-gradient(135deg, #ff3838, #b91c1c);
+    color: #fff; font-weight: 800; font-size: 11px; letter-spacing: 0.3px;
+    padding: 3px 6px; border-radius: 6px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 4px; white-space: nowrap;
   }
-  .live-dot { width: 7px; height: 7px; background: #fff; border-radius: 50%; animation: pulse 1.2s infinite; }
+  .live-dot { width: 6px; height: 6px; background: #fff; border-radius: 50%; animation: pulse 1.2s infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 
-  .score-pill { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
-  .score-pill span.val { color: var(--accent); font-size: 16px; font-variant-numeric: tabular-nums; }
+  .score-pill { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .score-pill span.val { color: var(--accent); font-size: 13px; font-variant-numeric: tabular-nums; }
   .score-pill span.gold { color: var(--gold); }
 
   .telemetry-bar {
-    display: flex; align-items: center; gap: 10px;
-    background: var(--panel); backdrop-filter: blur(12px);
-    border: 1px solid var(--border); border-radius: 12px;
-    padding: 8px 12px; font-size: 14px; pointer-events: auto;
+    display: flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, rgba(10, 18, 34, 0.88), rgba(16, 28, 52, 0.82));
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 11px;
+    padding: 4px 8px; font-size: 11px; pointer-events: auto; white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
   }
-  .wind-box { display: flex; align-items: center; gap: 5px; font-weight: 700; }
-  .wind-arrow { display: inline-block; font-size: 16px; color: var(--accent2); transition: transform 0.3s ease; }
+  .wind-box { display: flex; align-items: center; gap: 3px; font-weight: 700; }
+  .wind-arrow { display: inline-block; font-size: 13px; color: var(--accent2); transition: transform 0.3s ease; }
 
-  .hud-controls { display: flex; gap: 6px; pointer-events: auto; flex-wrap: wrap; }
+  .hud-controls { display: flex; gap: 3px; pointer-events: auto; flex-wrap: nowrap; align-items: center; }
+  @media (max-width: 1080px) { .hud-controls { flex-wrap: wrap; } }
   .btn-icon {
     min-height: 44px; min-width: 44px;
-    background: var(--panel); color: var(--text);
-    border: 1px solid var(--border); border-radius: 10px;
-    padding: 8px 12px; font-weight: 700; font-size: 14px;
-    cursor: pointer; backdrop-filter: blur(10px);
-    transition: all 0.15s ease; display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    background: rgba(11, 19, 36, 0.86); color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 9px;
+    padding: 4px 6px; font-weight: 700; font-size: 11px;
+    cursor: pointer; backdrop-filter: blur(10px); white-space: nowrap;
+    transition: all 0.15s ease; display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.32);
   }
   .btn-icon:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
   .btn-icon.active { background: rgba(0, 245, 160, 0.18); border-color: var(--accent); color: var(--accent); }
@@ -680,28 +686,67 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   }
 
   // =========================================================================
-  // 3. WEB AUDIO SYNTHESIZER
+  // 3. AAA STADIUM FOLEY & WEB AUDIO SYNTHESIZER
   // =========================================================================
   class SoundEngine {
-    constructor() { this.ctx = null; }
+    constructor() { this.ctx = null; this.noiseBuf = null; }
     init() {
       if (!this.ctx) {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (AudioCtx) { try { this.ctx = new AudioCtx(); } catch (e) { this.ctx = null; } }
+      }
+      if (this.ctx && !this.noiseBuf) {
+        const len = Math.floor(this.ctx.sampleRate * 2.0);
+        const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+        this.noiseBuf = buf;
       }
       if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
     }
     ready() { if (!save.sound) return false; this.init(); return !!this.ctx; }
     kick(power = 0.8) {
       if (!this.ready()) return;
-      const t = this.ctx.currentTime, osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+      const t = this.ctx.currentTime, p = Math.max(0.35, Math.min(1.2, power));
+      // 1) Deep boot-to-ball leather thump
+      const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(135 * (0.8 + power * 0.4), t);
-      osc.frequency.exponentialRampToValueAtTime(28, t + 0.16);
-      gain.gain.setValueAtTime(0.65, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.17);
+      osc.frequency.setValueAtTime(165 * (0.82 + p * 0.35), t);
+      osc.frequency.exponentialRampToValueAtTime(34, t + 0.14);
+      gain.gain.setValueAtTime(0.68 * p, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
       osc.connect(gain).connect(this.ctx.destination);
-      osc.start(t); osc.stop(t + 0.18);
+      osc.start(t); osc.stop(t + 0.17);
+      // 2) Crisp stitched-leather contact snap + air whoosh
+      if (this.noiseBuf) {
+        const snap = this.ctx.createBufferSource();
+        snap.buffer = this.noiseBuf;
+        const bp = this.ctx.createBiquadFilter();
+        bp.type = 'bandpass'; bp.Q.value = 1.6;
+        bp.frequency.setValueAtTime(1400 + p * 700, t);
+        bp.frequency.exponentialRampToValueAtTime(320, t + 0.11);
+        const sg = this.ctx.createGain();
+        sg.gain.setValueAtTime(0.38 * p, t);
+        sg.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        snap.connect(bp).connect(sg).connect(this.ctx.destination);
+        snap.start(t); snap.stop(t + 0.13);
+      }
+    }
+    netSwish(speed = 18) {
+      if (!this.ready() || !this.noiseBuf) return;
+      const t = this.ctx.currentTime, amp = Math.min(0.42, 0.14 + speed * 0.011);
+      const src = this.ctx.createBufferSource();
+      src.buffer = this.noiseBuf;
+      const flt = this.ctx.createBiquadFilter();
+      flt.type = 'bandpass'; flt.Q.value = 0.9;
+      flt.frequency.setValueAtTime(2400, t);
+      flt.frequency.exponentialRampToValueAtTime(750, t + 0.28);
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0.001, t);
+      g.gain.linearRampToValueAtTime(amp, t + 0.025);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.34);
+      src.connect(flt).connect(g).connect(this.ctx.destination);
+      src.start(t); src.stop(t + 0.36);
     }
     suspend() {
       if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {});
@@ -709,59 +754,85 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     clang() {
       if (!this.ready()) return;
       const t = this.ctx.currentTime;
-      [440, 690, 1180, 1840].forEach((freq, idx) => {
+      // Low aluminum goalframe thud
+      const thud = this.ctx.createOscillator(), tg = this.ctx.createGain();
+      thud.type = 'sine'; thud.frequency.setValueAtTime(190, t); thud.frequency.exponentialRampToValueAtTime(68, t + 0.12);
+      tg.gain.setValueAtTime(0.36, t); tg.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+      thud.connect(tg).connect(this.ctx.destination); thud.start(t); thud.stop(t + 0.15);
+      // Resonant metallic goalpost harmonics
+      [392, 658, 1142, 1895, 2740].forEach((freq, idx) => {
         const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
-        osc.type = idx === 3 ? 'sine' : 'triangle';
+        osc.type = idx >= 3 ? 'sine' : 'triangle';
         osc.frequency.setValueAtTime(freq, t);
-        gain.gain.setValueAtTime(0.28 / (idx + 1), t);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + (idx === 3 ? 0.68 : 0.5));
+        gain.gain.setValueAtTime(0.24 / (idx + 1), t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + (idx >= 3 ? 0.72 : 0.52));
         osc.connect(gain).connect(this.ctx.destination);
-        osc.start(t); osc.stop(t + 0.7);
+        osc.start(t); osc.stop(t + 0.75);
       });
     }
     chime() {
       if (!this.ready()) return;
       const t = this.ctx.currentTime;
-      [880, 1320].forEach((freq, idx) => {
+      [880, 1175, 1568].forEach((freq, idx) => {
         const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, t + idx * 0.07);
+        osc.frequency.setValueAtTime(freq, t + idx * 0.055);
         gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.linearRampToValueAtTime(0.2, t + idx * 0.07 + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.07 + 0.3);
+        gain.gain.linearRampToValueAtTime(0.18, t + idx * 0.055 + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.055 + 0.34);
         osc.connect(gain).connect(this.ctx.destination);
-        osc.start(t); osc.stop(t + 0.45);
+        osc.start(t); osc.stop(t + 0.5);
       });
     }
     whistle() {
       if (!this.ready()) return;
-      const t = this.ctx.currentTime, osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator(), lfo = this.ctx.createOscillator(), lfoG = this.ctx.createGain(), gain = this.ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(2750, t);
-      osc.frequency.setValueAtTime(2920, t + 0.08);
-      gain.gain.setValueAtTime(0.16, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+      osc.frequency.setValueAtTime(2820, t);
+      osc.frequency.linearRampToValueAtTime(2960, t + 0.12);
+      // Authentic referee pea-whistle 32 Hz trill
+      lfo.frequency.value = 32; lfoG.gain.value = 95;
+      lfo.connect(lfoG).connect(osc.frequency);
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(0.15, t + 0.02);
+      gain.gain.setValueAtTime(0.14, t + 0.19);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
       osc.connect(gain).connect(this.ctx.destination);
-      osc.start(t); osc.stop(t + 0.3);
+      lfo.start(t); osc.start(t); lfo.stop(t + 0.34); osc.stop(t + 0.34);
+    }
+    gasp() {
+      if (!this.ready() || !this.noiseBuf) return;
+      const t = this.ctx.currentTime;
+      const src = this.ctx.createBufferSource(); src.buffer = this.noiseBuf;
+      const flt = this.ctx.createBiquadFilter(); flt.type = 'bandpass'; flt.Q.value = 2.6;
+      flt.frequency.setValueAtTime(740, t); flt.frequency.exponentialRampToValueAtTime(340, t + 0.65);
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0.005, t);
+      g.gain.linearRampToValueAtTime(0.24, t + 0.1);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.72);
+      src.connect(flt).connect(g).connect(this.ctx.destination);
+      src.start(t); src.stop(t + 0.74);
     }
     cheer() {
-      if (!this.ready()) return;
+      if (!this.ready() || !this.noiseBuf) return;
       const t = this.ctx.currentTime;
-      const bufferSize = this.ctx.sampleRate * 1.4;
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = buffer;
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(900, t);
-      const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.01, t);
-      gain.gain.linearRampToValueAtTime(0.32, t + 0.2);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 1.4);
-      noise.connect(filter).connect(gain).connect(this.ctx.destination);
-      noise.start(t);
+      // Dual-band stadium crowd roar (warm low chest roar + bright upper cheers)
+      [[560, 0.8, 0.26, 1.75], [1450, 1.1, 0.18, 1.55]].forEach(([freq, q, peak, dur]) => {
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = this.noiseBuf;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass'; filter.Q.value = q;
+        filter.frequency.setValueAtTime(freq * 0.85, t);
+        filter.frequency.linearRampToValueAtTime(freq * 1.18, t + 0.35);
+        filter.frequency.linearRampToValueAtTime(freq * 0.9, t + dur);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.008, t);
+        gain.gain.linearRampToValueAtTime(peak, t + 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        noise.connect(filter).connect(gain).connect(this.ctx.destination);
+        noise.start(t); noise.stop(t + dur + 0.05);
+      });
     }
   }
   const sfx = new SoundEngine();
@@ -782,149 +853,444 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   applyCalmBody();
   if (rmQuery && rmQuery.addEventListener) rmQuery.addEventListener('change', (e) => { reduceMotion = e.matches; applyCalmBody(); applyWeatherEnvironment(); });
 
+  const EMBEDDED_ASSETS = {"grass":"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","leather":"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","concrete":"UklGRk4FAABXRUJQVlA4WAoAAAAgAAAA/wAA/wAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDggYAMAAPAZAJ0BKgABAAE+iUSdTCUjoyUgKMigEQlpbeQRmP0AInZXLt7VTWPby1Ivv/1c+/6bm/7AK04lF2fX7W5nbWZiUhREOuyOhIwjEu7cPJ9vwE5/FBvkEqA+X9AlWqLjE2kcGa8JzbCi6FsL1RZLxTHZu3toYvChBZMA0tFLrr2mvxY3hnFRGnGElIz1n1JTCMjLat5sEWoTLFA3VoVtNMy4y6efdpX/zoZaDbDJ5/N710wGvJlua7R7IpuKNa+WLk3gFty1OXO3TYjjRiTTyZ20g9Tlqea+AAD+9FRMegRhMI3OQdizzlX9xmP7+azsLWMVHgWaGfBo+WtiuZaXdy2PRYbkfZpCetyIiwT8zNNlC1+lphtPZuAUrB+rlT/SzCgZc9wCv+gFp1FygmkSBVpUXi8rx/ugykIViDRRG58pAyIicyUqHIuSsMIKaxtHXv0NH8IOTj0ipsOQW1AL6SFxp3O+KwsZw8Qvw+m+xfMZdSWg2GbAmRKIbqh5XMyGsTPQC5kZd2D6O6N7yo5ivJqoV6EAWc6e2BZRElQPg0WqsSr9fx0hiYvaJ7OtrOyIYQ1L53TU1xoOR02jHJU6bGzxWgSfIZxujCwEJ9XN4SIR6FPhAaYJkN7axVMQsN/Sfi8BO7u6zq/UEQegCUcg3GDk3ISBTP3rVh3+yfT1L1JvEcLtYE80TGrGXJViAKEtvfMwmbtKELsywCbWcqUY5EQ9+zNPzPB/5Hm9aPuuF7cieay3VGexDTWoxZdWt/EufgiAVFMtY/8p82r5/VgcwjvshBEKSI4KG8ScHI+cYN+ok4uHJ8nevel4T6ecSHm5gXMI+NJOvNF7EaIAopgNaQPKSxU0ULp7x3Vj8Lpc97Hnuead64i4mls+PVFJQPe9dUwJ7hTCDwh04AgE+VCbtmoO5Rv0B/9fWG4BpHgAeQMFgfp/IG4d5wx5Ab/1akIdUGqxhHNB/43SB+RT5WKPJ9w4zZcWnuFUHdr8FdQH0rkexq0t3gnlOpJ67xqp4LY4GMVxfpkE2ZAe7oir6Km4xzz0XXXDD+ffjsvGl7BukJbfpCQGYDfi7lBp/EnGtwZlAKtLjntjTtBtqgMfGb5B5njfR/4GZp/wmXHgoc/SfncnUpEAMDEOY2e8TvFWQwAAAA==","roof":"UklGRtIEAABXRUJQVlA4WAoAAAAgAAAA/wAA/wAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDgg5AIAAJAnAJ0BKgABAAE+iUKdTCUjIqKgdVhwoBEJaW5mn+imgCeXmNpD+49eIDc/+eohHnk1Pv2OJnwCAK1ro8sLPbSAliAVQToMZVIE1bPlXeszbmrWWirLlAOMOkhwFJIvAKUozLGZDwUhbxmye2b5M6+SbyKHP8snAUehupzF4ujwMqactTlvQABWI/uqqZI4OWngdGC0jhb+Ygb7AEoVkmQppzqGipWyapBurHJxNa/80MIzjvcR5VYzXNjmQsclvZRSNQXcKI4d0iG8hE+LR4sMFHGZ10ZLbMlcowwq2/zhJ8zAsk75LYVCR+LSIs30JuzfOsQaDAQEmS8Bxf6goj7GvxhvLUbF706NLwkdMhSLLxLxBa18hVwsLpVKzD0eBjsIzbc3S90NJ3iD0TecgGIpoLhTqCqdR/d4W8ZnGr8f5bk6ESAA/vhfA6mkq8g95OrqmdWj5dEEGWsuSMmM5uotel4uy9rwS9aEEgZZHSbAAAGbrGiv0Pxw7lKr9QHWxj9tdc0Oxq5ucf/5tQeEVD9FlZ3do0VyXwlvBzM4j68CZ2JTqoE62bBRz7FfM1gU0eO4uvTMWQFydtQD6vFez1f1bPPuZ9StKi/KRg8i2St5jNH3+rVV5iYXlQBFtp8MSPYfXorIFZPWhbcivvzxl1zysP4k2uu0rIQdF0TzKKoUb2DQzpTt32d9u0d+lpdaCi2wJ1S3tLa4Dd5iOzZ5uGIUJFhyHMSFriKUY+uxoF652MmB2WghOxUybdONuvIFG/vbjtyXzmh4pvkTlE993ekVpaINtPnkm/MmiVsJJbSO1u4ytSZHjaUvZCbl4l/W0IG3qfbF1055A3/dHE7ovk9DmdKImEqUIyGwfs1usj6+z/tUY3g7S2hQDjoGC573M+rX2pFJrchCP3WURtqj/Z/TNGsVnfrNPvZVsV7bEKd0NfKqWQm0hhYIJioljfYvquUWzy3UpXWlyG0clStVnNu6lAAA","skynight":"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","skyday":"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"};
+
   const renderer = new THREE.WebGLRenderer({ canvas: gameCanvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, isTouch ? 1.5 : 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.08;
+  const maxAniso = (renderer.capabilities && typeof renderer.capabilities.getMaxAnisotropy === 'function')
+    ? Math.min(8, renderer.capabilities.getMaxAnisotropy()) : 1;
+
+  // Offline zero-network WebP CC0 Poly Haven asset decoder (createImageBitmap on Blob -> 0 HTTP requests)
+  function decodeEmbeddedWebP(b64) {
+    if (typeof createImageBitmap !== 'function' || typeof Blob !== 'function') return Promise.resolve(null);
+    try {
+      const bin = atob(b64), u8 = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      return createImageBitmap(new Blob([u8], { type: 'image/webp' })).catch(() => null);
+    } catch (_) { return Promise.resolve(null); }
+  }
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x050914);
-  scene.fog = new THREE.FogExp2(0x070d1d, 0.0075);
+  scene.fog = new THREE.FogExp2(0x070d1d, 0.0052);
   // Phones held upright get a wider lens so more of the pitch shows (AK10-AF); landscape and desktop keep 48°
   const coarsePointer = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
   const lensFov = () => (coarsePointer && coarsePointer.matches && window.innerWidth < 600 && window.innerWidth < window.innerHeight) ? 56 : 48;
-  const camera = new THREE.PerspectiveCamera(lensFov(), window.innerWidth / window.innerHeight, 0.1, 300);
+  const camera = new THREE.PerspectiveCamera(lensFov(), window.innerWidth / window.innerHeight, 0.1, 450);
 
-  const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.58);
+  // Stadium 3-point broadcast lighting: Hemisphere sky/turf bounce + key floodlight + cool rim fill
+  const ambientLight = new THREE.HemisphereLight(0xdbeafe, 0x0e2a1b, 0.72);
   scene.add(ambientLight);
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1.15);
-  dirLight.position.set(18, 38, 26);
+  const dirLight = new THREE.DirectionalLight(0xfffaf0, 1.32);
+  dirLight.position.set(18, 36, 24);
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.width = isTouch ? 1024 : 2048;
   dirLight.shadow.mapSize.height = isTouch ? 1024 : 2048;
+  dirLight.shadow.bias = -0.0005;
   const d = 32;
   dirLight.shadow.camera.left = -d; dirLight.shadow.camera.right = d;
   dirLight.shadow.camera.top = d; dirLight.shadow.camera.bottom = -d;
   scene.add(dirLight);
+  const rimLight = new THREE.DirectionalLight(0x60a5fa, 0.42);
+  rimLight.position.set(-22, 20, -24);
+  scene.add(rimLight);
 
-  function createPitchTexture() {
-    const c = document.createElement('canvas');
-    c.width = 1024; c.height = 1024;
-    const ctx = c.getContext('2d');
-    const stripes = 16;
-    for (let i = 0; i < stripes; i++) {
-      ctx.fillStyle = i % 2 === 0 ? '#156c36' : '#197c3e';
-      ctx.fillRect(0, (i * 1024) / stripes, 1024, 1024 / stripes);
+  // Real CC0 Photographic Sky Dome (radius 220 >> 0.2 so never matches ballMesh check)
+  const skyCanvases = { night: document.createElement('canvas'), day: document.createElement('canvas') };
+  const skyTextures = {};
+  ['night', 'day'].forEach(mode => {
+    const c = skyCanvases[mode]; c.width = 512; c.height = 256;
+    const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 0, 256);
+    if (mode === 'night') {
+      gr.addColorStop(0, '#040814'); gr.addColorStop(0.55, '#0b1834'); gr.addColorStop(1, '#13274a');
+    } else {
+      gr.addColorStop(0, '#1d6fd6'); gr.addColorStop(0.6, '#58a9f2'); gr.addColorStop(1, '#cde9ff');
     }
-    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-    ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.moveTo(60, 80); ctx.lineTo(964, 80); ctx.stroke();
-    ctx.strokeRect(212, 80, 600, 260);
-    ctx.strokeRect(362, 80, 300, 95);
-    ctx.beginPath(); ctx.arc(512, 250, 6, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
-    ctx.beginPath(); ctx.arc(512, 275, 95, 0.22 * Math.PI, 0.78 * Math.PI); ctx.stroke();
-    return new THREE.CanvasTexture(c);
+    g.fillStyle = gr; g.fillRect(0, 0, 512, 256);
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.ClampToEdgeWrapping;
+    skyTextures[mode] = tex;
+  });
+  const skyDomeMat = new THREE.MeshBasicMaterial({ map: skyTextures.night, side: THREE.BackSide, fog: false, depthWrite: false, color: 0xffffff });
+  // Upper-hemisphere sky dome (0..0.54*PI) matches our top-hemisphere CC0 sky textures so real clouds & midnight stars frame cleanly behind the stadium!
+  const skyDome = new THREE.Mesh(new THREE.SphereGeometry(220, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.54), skyDomeMat);
+  skyDome.position.set(0, -10, 14);
+  skyDome.rotation.y = -Math.PI * 0.65;
+  scene.add(skyDome);
+
+  // ---- FIFA-Accurate 2048x1024 Textured Pitch (world X in [-38,38], Z in [-10.5,74.5]) ----
+  const pitchCanvas = document.createElement('canvas');
+  pitchCanvas.width = 2048; pitchCanvas.height = 1024;
+  const pitchTex = new THREE.CanvasTexture(pitchCanvas);
+  pitchTex.anisotropy = maxAniso;
+
+  function renderPitchCanvas(grassImg) {
+    const W = 2048, H = 1024, ctx = pitchCanvas.getContext('2d');
+    const wx = (x) => ((x + 38) / 76) * W;
+    const wz = (z) => ((z + 10.5) / 85) * H;
+
+    // 1) Stadium outer concrete/track apron
+    ctx.fillStyle = '#0e1b2e';
+    ctx.fillRect(0, 0, W, H);
+    // Running track / technical surround
+    ctx.fillStyle = '#153429';
+    ctx.fillRect(wx(-31.5), wz(-7.2), wx(31.5) - wx(-31.5), wz(73.5) - wz(-7.2));
+
+    // 2) Playable stadium turf base with rich Premiership alternating mown grass bands (4.5m stripes)
+    const bandM = 4.5;
+    for (let z = -6.5, idx = 0; z < 73.0; z += bandM, idx++) {
+      ctx.fillStyle = idx % 2 === 0 ? '#0d5424' : '#146e31';
+      ctx.fillRect(wx(-30.0), wz(z), wx(30.0) - wx(-30.0), wz(z + bandM) - wz(z) + 1);
+    }
+    // Subtle longitudinal pitch mowing sheen
+    ctx.save();
+    for (let x = -27, i = 0; x < 27; x += 6, i++) {
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.038)' : 'rgba(0,0,0,0.045)';
+      ctx.fillRect(wx(x), wz(-6.5), wx(x + 6) - wx(x), wz(73.0) - wz(-6.5));
+    }
+    ctx.restore();
+
+    // 3) Real CC0 Poly Haven grass_ground micro-detail overlay
+    if (grassImg) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.globalAlpha = 0.88;
+      const pat = ctx.createPattern(grassImg, 'repeat');
+      if (pat) {
+        ctx.fillStyle = pat;
+        ctx.fillRect(wx(-30.5), wz(-7.0), wx(30.5) - wx(-30.5), wz(73.5) - wz(-7.0));
+      }
+      ctx.globalCompositeOperation = 'soft-light';
+      ctx.globalAlpha = 0.35;
+      if (pat) {
+        ctx.fillStyle = pat;
+        ctx.fillRect(wx(-30.5), wz(-7.0), wx(30.5) - wx(-30.5), wz(73.5) - wz(-7.0));
+      }
+      ctx.restore();
+    }
+
+    // 4) Subtle realistic match-worn turf inside the goal mouth & around penalty spot
+    const wearGoal = ctx.createRadialGradient(wx(0), wz(1.4), 10, wx(0), wz(1.4), wx(4.6) - wx(0));
+    wearGoal.addColorStop(0, 'rgba(116, 98, 62, 0.30)');
+    wearGoal.addColorStop(1, 'rgba(116, 98, 62, 0)');
+    ctx.fillStyle = wearGoal;
+    ctx.fillRect(wx(-6), wz(-1.5), wx(6) - wx(-6), wz(5.5) - wz(-1.5));
+
+    // Darker technical perimeter border outside playable touchlines
+    ctx.fillStyle = 'rgba(6, 22, 16, 0.34)';
+    ctx.fillRect(wx(-31.5), wz(-7.2), wx(-24.55) - wx(-31.5), wz(73.5) - wz(-7.2));
+    ctx.fillRect(wx(24.55), wz(-7.2), wx(31.5) - wx(24.55), wz(73.5) - wz(-7.2));
+    ctx.fillRect(wx(-24.55), wz(-7.2), wx(24.55) - wx(-24.55), wz(0) - wz(-7.2));
+
+    // 5) Crisp FIFA chalk pitch markings at exact world coordinates!
+    ctx.save();
+    ctx.strokeStyle = 'rgba(248, 252, 255, 0.92)';
+    ctx.fillStyle = 'rgba(248, 252, 255, 0.95)';
+    ctx.lineWidth = 4.6;
+    ctx.lineJoin = 'miter';
+    // Outer pitch touchlines & goal line (exact z = 0.0 under goalposts!)
+    ctx.strokeRect(wx(-24.55), wz(0), wx(24.55) - wx(-24.55), wz(68.0) - wz(0));
+    // 18-yard Penalty Area (40.32m wide x 16.5m deep)
+    ctx.strokeRect(wx(-20.16), wz(0), wx(20.16) - wx(-20.16), wz(16.5) - wz(0));
+    // 6-yard Goal Area (18.32m wide x 5.5m deep)
+    ctx.strokeRect(wx(-9.16), wz(0), wx(9.16) - wx(-9.16), wz(5.5) - wz(0));
+    // Penalty Spot at exact z = 11.0m
+    ctx.beginPath();
+    ctx.ellipse(wx(0), wz(11.0), 5.5, 3.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Penalty Arc ("the D"): R = 9.15m around (0, 11.0), portion with z >= 16.5
+    const aSpan = Math.acos(5.5 / 9.15);
+    ctx.beginPath();
+    for (let i = 0; i <= 40; i++) {
+      const ang = -aSpan + (2 * aSpan * i) / 40;
+      const px = wx(Math.sin(ang) * 9.15);
+      const pz = wz(11.0 + Math.cos(ang) * 9.15);
+      i === 0 ? ctx.moveTo(px, pz) : ctx.lineTo(px, pz);
+    }
+    ctx.stroke();
+    // Corner Kick Quadrants (1.0m radius curving INWARD into playable pitch!)
+    [-1, 1].forEach(side => {
+      ctx.beginPath();
+      for (let i = 0; i <= 18; i++) {
+        const ang = (i / 18) * (Math.PI / 2);
+        const cx = side * 24.55 - side * Math.cos(ang) * 1.15;
+        const cz = Math.sin(ang) * 1.15;
+        i === 0 ? ctx.moveTo(wx(cx), wz(cz)) : ctx.lineTo(wx(cx), wz(cz));
+      }
+      ctx.stroke();
+    });
+    // Halfway line & center circle at z = 52.5m for broadcast depth
+    ctx.beginPath(); ctx.moveTo(wx(-24.55), wz(52.5)); ctx.lineTo(wx(24.55), wz(52.5)); ctx.stroke();
+    ctx.beginPath();
+    for (let i = 0; i <= 48; i++) {
+      const ang = (i / 48) * Math.PI * 2;
+      const px = wx(Math.cos(ang) * 9.15), pz = wz(52.5 + Math.sin(ang) * 9.15);
+      i === 0 ? ctx.moveTo(px, pz) : ctx.lineTo(px, pz);
+    }
+    ctx.closePath(); ctx.stroke();
+    // Subtle dark goal-net floor shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.fillRect(wx(-3.66), wz(-2.4), wx(3.66) - wx(-3.66), wz(0) - wz(-2.4));
+    ctx.restore();
+    pitchTex.needsUpdate = true;
   }
-  const pitchMat = new THREE.MeshStandardMaterial({ map: createPitchTexture(), roughness: 0.85 });
+  renderPitchCanvas(null);
+
+  const pitchMat = new THREE.MeshStandardMaterial({ map: pitchTex, roughness: 0.84, metalness: 0.03 });
   const pitch = new THREE.Mesh(new THREE.PlaneGeometry(76, 85), pitchMat);
   pitch.rotation.x = -Math.PI / 2;
   pitch.position.set(0, 0, 32);
   pitch.receiveShadow = true;
   scene.add(pitch);
 
-  // ---- Stadium: tiered stands, 1,200-strong instanced crowd, jumbotron, ad board, floodlights ----
+  // ---- Architectural Stadium: CC0 concrete tiers, cantilevered steel roofs, 1,200 crowd + camera flashes,
+  //      animated perimeter LED boards, jumbotron, floodlights + volumetric cones ----
   const stadiumGroup = new THREE.Group();
   scene.add(stadiumGroup);
-  const STEP_H = 0.75, STEP_D = 0.9;
+  const STEP_H = 0.78, STEP_D = 0.94;
   const crowd = { bodies: null, heads: null, seats: [] };
+  const standMat = new THREE.MeshStandardMaterial({ color: 0x22304a, roughness: 0.85, metalness: 0.08 });
+  const roofMat = new THREE.MeshStandardMaterial({ color: 0x3b4d68, roughness: 0.48, metalness: 0.58 });
+  const trussMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.45, metalness: 0.7 });
+  const floodBeamMats = [];
+  const roofTrimMats = [];
+  const flashSprites = [];
+
+  // Perimeter LED Advertising Board (live animated scroll + GOAL celebration flash!)
+  const adCanvas = document.createElement('canvas');
+  adCanvas.width = 1024; adCanvas.height = 64;
+  const actx = adCanvas.getContext('2d');
+  const adTex = new THREE.CanvasTexture(adCanvas);
+  adTex.wrapS = THREE.RepeatWrapping;
+  adTex.repeat.set(2, 1);
+  let adFlashMode = 'normal';
+  function drawAdBoard(mode = 'normal') {
+    adFlashMode = mode;
+    actx.textAlign = 'center';
+    if (mode === 'goal') {
+      const g = actx.createLinearGradient(0, 0, 1024, 0);
+      g.addColorStop(0, '#00f5a0'); g.addColorStop(0.5, '#ffcc33'); g.addColorStop(1, '#00d9f5');
+      actx.fillStyle = g; actx.fillRect(0, 0, 1024, 64);
+      actx.fillStyle = '#04101d'; actx.font = '900 28px sans-serif';
+      actx.fillText('★  GOAL!!  ★   APEX KICK WORLD STAGE   ★  MADE BY MATT PLAY  ★', 512, 43);
+    } else {
+      const g = actx.createLinearGradient(0, 0, 0, 64);
+      g.addColorStop(0, '#071832'); g.addColorStop(1, '#030a18');
+      actx.fillStyle = g; actx.fillRect(0, 0, 1024, 64);
+      actx.fillStyle = '#00f5a0'; actx.fillRect(0, 0, 1024, 4);
+      actx.fillStyle = '#00d9f5'; actx.fillRect(0, 60, 1024, 4);
+      actx.font = '900 22px sans-serif';
+      actx.fillStyle = '#00f5a0'; actx.fillText('APEX KICK WORLD STAGE', 185, 40);
+      actx.fillStyle = '#ffcc33'; actx.fillText('•  AAA BROADCAST EDITION  •', 530, 40);
+      actx.fillStyle = '#f8fafc'; actx.fillText('MADE BY MATT PLAY', 865, 40);
+    }
+    actx.textAlign = 'left';
+    adTex.needsUpdate = true;
+  }
+  drawAdBoard('normal');
 
   (function buildStadium() {
-    const standMat = new THREE.MeshStandardMaterial({ color: 0x111a2e, roughness: 0.75 });
-    // North stand: 10 tiers stepping up and away behind the goal
+    // North stand: 10 concrete tiers + fascia + upper concourse back wall
     for (let r = 0; r < 10; r++) {
       const h = (r + 1) * STEP_H;
-      const step = new THREE.Mesh(new THREE.BoxGeometry(76, h, STEP_D), standMat);
-      step.position.set(0, h / 2, -9.45 - r * STEP_D);
+      const step = new THREE.Mesh(new THREE.BoxGeometry(78, h, STEP_D), standMat);
+      step.position.set(0, h / 2, -9.4 - r * STEP_D);
+      step.receiveShadow = true;
       stadiumGroup.add(step);
     }
-    const northBack = new THREE.Mesh(new THREE.BoxGeometry(76, 10, 1), standMat);
-    northBack.position.set(0, 5, -18.9);
+    const northBack = new THREE.Mesh(new THREE.BoxGeometry(80, 10.6, 1.2), standMat);
+    northBack.position.set(0, 5.3, -19.2);
     stadiumGroup.add(northBack);
-    // East / West stands: 6 tiers stepping outward along the touchlines
+
+    // Sweeping Cantilevered North Roof Canopy (raised high & cantilevered cleanly so Jumbotron & Sky Dome are 100% framed!)
+    const northRoof = new THREE.Mesh(new THREE.BoxGeometry(80, 0.55, 9.2), roofMat);
+    northRoof.position.set(0, 16.4, -15.4);
+    northRoof.rotation.x = -0.10;
+    stadiumGroup.add(northRoof);
+    const northTrimMat = new THREE.MeshBasicMaterial({ color: 0x00d9f5 });
+    roofTrimMats.push(northTrimMat);
+    const northTrim = new THREE.Mesh(new THREE.BoxGeometry(79.8, 0.24, 0.28), northTrimMat);
+    northTrim.position.set(0, 16.82, -10.85);
+    stadiumGroup.add(northTrim);
+    for (let tx = -34; tx <= 34; tx += 11.33) {
+      const col = new THREE.Mesh(new THREE.BoxGeometry(0.62, 16.5, 0.62), trussMat);
+      col.position.set(tx, 8.25, -19.0);
+      stadiumGroup.add(col);
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.52, 9.6), trussMat);
+      beam.position.set(tx, 16.05, -15.3);
+      beam.rotation.x = -0.10;
+      stadiumGroup.add(beam);
+    }
+
+    // East / West tiered stands + cantilevered side roof canopies
     [-1, 1].forEach(side => {
-      for (let r = 0; r < 6; r++) {
+      for (let r = 0; r < 7; r++) {
         const h = (r + 1) * STEP_H;
-        const step = new THREE.Mesh(new THREE.BoxGeometry(STEP_D, h, 95), standMat);
-        step.position.set(side * (38.45 + r * STEP_D), h / 2, 30);
+        const step = new THREE.Mesh(new THREE.BoxGeometry(STEP_D, h, 96), standMat);
+        step.position.set(side * (35.4 + r * STEP_D), h / 2, 28);
+        step.receiveShadow = true;
         stadiumGroup.add(step);
       }
-      const back = new THREE.Mesh(new THREE.BoxGeometry(1, 6.5, 95), standMat);
-      back.position.set(side * 44, 3.25, 30);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(1.2, 10.5, 96), standMat);
+      back.position.set(side * 42.4, 5.25, 28);
       stadiumGroup.add(back);
+      const sideRoof = new THREE.Mesh(new THREE.BoxGeometry(11.5, 0.5, 96), roofMat);
+      sideRoof.position.set(side * 37.6, 11.2, 28);
+      sideRoof.rotation.z = side * 0.14;
+      stadiumGroup.add(sideRoof);
+      const sTrimMat = new THREE.MeshBasicMaterial({ color: 0x00f5a0 });
+      roofTrimMats.push(sTrimMat);
+      const sTrim = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.22, 95.5), sTrimMat);
+      sTrim.position.set(side * 32.0, 10.4, 28);
+      stadiumGroup.add(sTrim);
+      for (let tz = -14; tz <= 68; tz += 16.4) {
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(11.8, 0.45, 0.4), trussMat);
+        beam.position.set(side * 37.6, 10.82, tz);
+        beam.rotation.z = side * 0.14;
+        stadiumGroup.add(beam);
+      }
+      // Sideline perimeter LED boards
+      const sideAd = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.0, 78), new THREE.MeshBasicMaterial({ map: adTex, fog: false }));
+      sideAd.position.set(side * 31.8, 0.5, 31.5);
+      stadiumGroup.add(sideAd);
     });
 
-    // Crowd seats: 600 north (10×60) + 300 east (6×50) + 300 west (6×50) = 1,200
+    // North perimeter LED board
+    const adBoard = new THREE.Mesh(new THREE.BoxGeometry(64, 1.15, 0.42), new THREE.MeshBasicMaterial({ map: adTex, fog: false }));
+    adBoard.position.set(0, 0.58, -7.2);
+    stadiumGroup.add(adBoard);
+
+    // Broadcast TV camera rigs behind goal line (authentic stadium atmosphere)
+    const rigMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.6 });
+    [[-12.5, -5.2], [12.5, -5.2]].forEach(([rx, rz]) => {
+      const tripod = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.32, 1.25, 6), rigMat);
+      tripod.position.set(rx, 0.62, rz);
+      const camBody = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.32, 0.72), rigMat);
+      camBody.position.set(rx, 1.38, rz);
+      camBody.lookAt(0, 1.2, 14);
+      const tally = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.06, 0.06), new THREE.MeshBasicMaterial({ color: 0xff3838 }));
+      tally.position.set(rx, 1.56, rz);
+      stadiumGroup.add(tripod, camBody, tally);
+    });
+
+    // Crowd seats: 600 north (10x60) + 350 east (7x50) + 350 west (7x50) = 1,300 supporters
     for (let r = 0; r < 10; r++) {
       for (let c = 0; c < 60; c++) {
-        crowd.seats.push({ x: -35.4 + c * 1.2 + (Math.random() - 0.5) * 0.3, y: (r + 1) * STEP_H, z: -9.45 - r * STEP_D });
+        crowd.seats.push({ x: -35.4 + c * 1.2 + (Math.random() - 0.5) * 0.28, y: (r + 1) * STEP_H, z: -9.4 - r * STEP_D, sec: (c / 12) | 0 });
       }
     }
     [-1, 1].forEach(side => {
-      for (let r = 0; r < 6; r++) {
+      for (let r = 0; r < 7; r++) {
         for (let c = 0; c < 50; c++) {
-          crowd.seats.push({ x: side * (38.45 + r * STEP_D), y: (r + 1) * STEP_H, z: -4 + c * 1.15 + (Math.random() - 0.5) * 0.3 });
+          crowd.seats.push({ x: side * (35.4 + r * STEP_D), y: (r + 1) * STEP_H, z: -4 + c * 1.15 + (Math.random() - 0.5) * 0.28, sec: side > 0 ? 6 : 7 });
         }
       }
     });
     const N = crowd.seats.length;
-    const CROWD_COLORS = [0x00d9f5, 0xf8fafc, 0xdc2626, 0xfacc15, 0xa855f7, 0x1e293b, 0x00f5a0, 0xff9f1a, 0x2563eb];
+    // Supporter sections (home cyan/white, away crimson/gold, stadium dark jackets)
+    const SEC_PALETTES = [
+      [0x00d9f5, 0xf8fafc, 0x0f172a, 0x0284c7],
+      [0xf8fafc, 0x00f5a0, 0x1e293b, 0x00d9f5],
+      [0xdc2626, 0xfacc15, 0x1e293b, 0xf8fafc],
+      [0x2563eb, 0xf8fafc, 0x0f172a, 0x38bdf8],
+      [0x00f5a0, 0x0f172a, 0xf8fafc, 0x14b8a6],
+      [0xff9f1a, 0x1e293b, 0xf8fafc, 0xdc2626],
+      [0x00d9f5, 0xf8fafc, 0x1e293b, 0x0ea5e9],
+      [0xdc2626, 0xf8fafc, 0x1e293b, 0xfacc15]
+    ];
     crowd.bodies = new THREE.InstancedMesh(new THREE.BoxGeometry(0.46, 0.62, 0.34), new THREE.MeshLambertMaterial({ color: 0xffffff }), N);
-    crowd.heads = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.15, 0), new THREE.MeshLambertMaterial({ color: 0xffffff }), N);
+    crowd.heads = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.145, 0), new THREE.MeshLambertMaterial({ color: 0xffffff }), N);
     crowd.bodies.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     crowd.heads.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     const m = new THREE.Matrix4(), col = new THREE.Color();
-    const SKINS = [0xe0ac69, 0xc68642, 0x8d5524, 0xf1c27d, 0xffdbac];
+    const SKINS = [0xe0ac69, 0xc68642, 0x8d5524, 0xf1c27d, 0xffdbac, 0x6b3e26];
     crowd.seats.forEach((s, i) => {
       s.phase = Math.random() * Math.PI * 2;
-      s.speed = 0.7 + Math.random() * 0.6;
+      s.speed = 0.7 + Math.random() * 0.65;
       m.makeTranslation(s.x, s.y + 0.36, s.z);
       crowd.bodies.setMatrixAt(i, m);
       m.makeTranslation(s.x, s.y + 0.84, s.z);
       crowd.heads.setMatrixAt(i, m);
-      crowd.bodies.setColorAt(i, col.setHex(CROWD_COLORS[(Math.random() * CROWD_COLORS.length) | 0]));
+      const pal = SEC_PALETTES[s.sec % SEC_PALETTES.length];
+      crowd.bodies.setColorAt(i, col.setHex(pal[(Math.random() * pal.length) | 0]));
       crowd.heads.setColorAt(i, col.setHex(SKINS[(Math.random() * SKINS.length) | 0]));
     });
     crowd.bodies.instanceColor.needsUpdate = true;
     crowd.heads.instanceColor.needsUpdate = true;
     stadiumGroup.add(crowd.bodies, crowd.heads);
 
-    // Ad board
-    const adCanvas = document.createElement('canvas');
-    adCanvas.width = 1024; adCanvas.height = 64;
-    const actx = adCanvas.getContext('2d');
-    actx.fillStyle = '#061224'; actx.fillRect(0, 0, 1024, 64);
-    actx.fillStyle = '#00f5a0'; actx.font = '900 30px sans-serif';
-    actx.fillText('APEX KICK V10.2  •  AAA BROADCAST EDITION  •  MADE BY MATT PLAY', 20, 43);
-    const adBoard = new THREE.Mesh(new THREE.BoxGeometry(74, 1.1, 0.4), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(adCanvas) }));
-    adBoard.position.set(0, 0.55, -7.2);
-    stadiumGroup.add(adBoard);
+    // Twinkling camera flashes in the stands
+    const flashCanvas = document.createElement('canvas');
+    flashCanvas.width = 64; flashCanvas.height = 64;
+    const fctx = flashCanvas.getContext('2d');
+    const fg = fctx.createRadialGradient(32, 32, 1, 32, 32, 30);
+    fg.addColorStop(0, 'rgba(255,255,255,1)');
+    fg.addColorStop(0.25, 'rgba(210,245,255,0.85)');
+    fg.addColorStop(1, 'rgba(255,255,255,0)');
+    fctx.fillStyle = fg; fctx.fillRect(0, 0, 64, 64);
+    const flashTex = new THREE.CanvasTexture(flashCanvas);
+    for (let i = 0; i < 36; i++) {
+      const seat = crowd.seats[(Math.random() * crowd.seats.length) | 0];
+      const spMat = new THREE.SpriteMaterial({ map: flashTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+      const sp = new THREE.Sprite(spMat);
+      sp.position.set(seat.x, seat.y + 0.95, seat.z + (seat.z < -8 ? 0.25 : 0));
+      sp.scale.set(1.3, 1.3, 1);
+      sp.userData = { next: Math.random() * 5, life: 0 };
+      stadiumGroup.add(sp);
+      flashSprites.push(sp);
+    }
 
-    // Floodlights
-    const poleMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
-    const headMat = new THREE.MeshBasicMaterial({ color: 0xfffbeb });
-    [[-36, -12], [36, -12], [-38, 52], [38, 52]].forEach(([tx, tz]) => {
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.7, 30, 8), poleMat);
-      pole.position.set(tx, 15, tz);
+    // Floodlight Towers + Multi-Lamp LED Banks + Volumetric Atmospheric Light Cones!
+    const beamCanvas = document.createElement('canvas');
+    beamCanvas.width = 64; beamCanvas.height = 256;
+    const bctx = beamCanvas.getContext('2d');
+    const bg = bctx.createLinearGradient(0, 0, 0, 256);
+    bg.addColorStop(0, 'rgba(235, 248, 255, 0.55)');
+    bg.addColorStop(0.35, 'rgba(195, 232, 255, 0.18)');
+    bg.addColorStop(1, 'rgba(180, 220, 255, 0.0)');
+    bctx.fillStyle = bg; bctx.fillRect(0, 0, 64, 256);
+    const beamTex = new THREE.CanvasTexture(beamCanvas);
+
+    const poleMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.65, roughness: 0.35 });
+    const headBackMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.5, roughness: 0.4 });
+    const headMat = new THREE.MeshBasicMaterial({ color: 0xfffef2, fog: false });
+    [[-24, -22, 16.2], [24, -22, 16.2], [-38, 52, 28], [38, 52, 28]].forEach(([tx, tz, th]) => {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.62, th, 8), poleMat);
+      pole.position.set(tx, th / 2, tz);
       stadiumGroup.add(pole);
-      const head = new THREE.Mesh(new THREE.BoxGeometry(5.5, 2.6, 1.2), headMat);
-      head.position.set(tx, 30, tz);
-      head.lookAt(0, 0, 12);
-      stadiumGroup.add(head);
+      const rig = new THREE.Group();
+      rig.position.set(tx, th + 0.5, tz);
+      rig.lookAt(0, 1.5, 10);
+      const housing = new THREE.Mesh(new THREE.BoxGeometry(5.6, 2.5, 1.0), headBackMat);
+      rig.add(housing);
+      const lamp = new THREE.Mesh(new THREE.PlaneGeometry(5.1, 2.1), headMat);
+      lamp.position.z = 0.54;
+      rig.add(lamp);
+      // Glowing halo flare around floodlight array
+      const haloMat = new THREE.SpriteMaterial({ map: flashTex, color: 0xe6f4ff, transparent: true, opacity: 0.68, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+      const halo = new THREE.Sprite(haloMat);
+      halo.scale.set(13, 9.5, 1);
+      halo.position.z = 0.85;
+      rig.add(halo);
+      floodBeamMats.push(haloMat);
+      // Volumetric light cone pointing onto the pitch
+      const coneMat = new THREE.MeshBasicMaterial({ map: beamTex, transparent: true, opacity: 0.24, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(8.2, 34, 16, 1, true), coneMat);
+      cone.rotation.x = -Math.PI / 2;
+      cone.position.z = 17.5;
+      rig.add(cone);
+      floodBeamMats.push(coneMat);
+      stadiumGroup.add(rig);
     });
   })();
 
-  // Jumbotron on the North Stand roof — a 2D canvas LED board redrawn only when its content changes
+  // Jumbotron framed 100% cleanly beneath the raised North Roof canopy!
   const jumboCanvas = document.createElement('canvas');
   jumboCanvas.width = 512; jumboCanvas.height = 256;
   const jctx = jumboCanvas.getContext('2d');
@@ -933,57 +1299,107 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   scanCanvas.width = 512; scanCanvas.height = 256;
   (function () {
     const sc = scanCanvas.getContext('2d');
-    sc.fillStyle = 'rgba(0,0,0,0.28)';
+    sc.fillStyle = 'rgba(0,0,0,0.22)';
     for (let y = 0; y < 256; y += 3) sc.fillRect(0, y, 512, 1);
     for (let x = 0; x < 512; x += 3) sc.fillRect(x, 0, 1, 256);
   })();
   (function buildJumbotron() {
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(14.8, 7.8, 0.5), new THREE.MeshStandardMaterial({ color: 0x0b1220, roughness: 0.5 }));
-    frame.position.set(0, 11.7, -18.7);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(13.8, 6.6, 0.6), new THREE.MeshStandardMaterial({ color: 0x09101f, roughness: 0.4, metalness: 0.55 }));
+    frame.position.set(0, 12.1, -18.1);
     stadiumGroup.add(frame);
-    // LED board glows through the fog
-    const screen = new THREE.Mesh(new THREE.PlaneGeometry(14, 7), new THREE.MeshBasicMaterial({ map: jumboTex, fog: false }));
-    screen.position.set(0, 11.7, -18.43);
+    const screen = new THREE.Mesh(new THREE.PlaneGeometry(13.0, 5.9), new THREE.MeshBasicMaterial({ map: jumboTex, fog: false }));
+    screen.position.set(0, 12.1, -17.78);
     stadiumGroup.add(screen);
-    const legMat = new THREE.MeshStandardMaterial({ color: 0x334155 });
-    [-5.5, 5.5].forEach(x => {
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.5, 4, 0.5), legMat);
-      leg.position.set(x, 8.6, -18.9);
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.6, roughness: 0.35 });
+    [-5.2, 5.2].forEach(x => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.48, 3.6, 0.48), legMat);
+      leg.position.set(x, 15.0, -18.2);
       stadiumGroup.add(leg);
     });
   })();
 
-  // Regulation goal
+  // ---- Regulation FIFA Goal with Woven Twine Netting & Steel Back Stanchions ----
   const GOAL_W = 7.32, GOAL_H = 2.44, GOAL_D = 2.4, POST_R = 0.08;
   const GOAL_CENTER = new THREE.Vector3(0, 0, 0);
   const goalGroup = new THREE.Group();
   scene.add(goalGroup);
-  const postMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.35, roughness: 0.22 });
-  const leftPost = new THREE.Mesh(new THREE.CylinderGeometry(POST_R, POST_R, GOAL_H, 16), postMat);
+  const postMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.25, roughness: 0.18 });
+  const stanchionMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.72, roughness: 0.28 });
+
+  const leftPost = new THREE.Mesh(new THREE.CylinderGeometry(POST_R, POST_R, GOAL_H, 18), postMat);
   leftPost.position.set(-GOAL_W / 2, GOAL_H / 2, 0);
   leftPost.castShadow = true;
   goalGroup.add(leftPost);
   const rightPost = leftPost.clone();
   rightPost.position.x = GOAL_W / 2;
   goalGroup.add(rightPost);
-  const crossbar = new THREE.Mesh(new THREE.CylinderGeometry(POST_R, POST_R, GOAL_W + POST_R * 2, 16), postMat);
+  const crossbar = new THREE.Mesh(new THREE.CylinderGeometry(POST_R, POST_R, GOAL_W + POST_R * 2, 18), postMat);
   crossbar.rotation.z = Math.PI / 2;
   crossbar.position.set(0, GOAL_H, 0);
   crossbar.castShadow = true;
   goalGroup.add(crossbar);
+  // Crisp corner elbow joints (using IcosahedronGeometry, NOT SphereGeometry!)
+  [-1, 1].forEach(side => {
+    const joint = new THREE.Mesh(new THREE.IcosahedronGeometry(POST_R * 1.08, 1), postMat);
+    joint.position.set(side * GOAL_W / 2, GOAL_H, 0);
+    goalGroup.add(joint);
+    // Steel back stanchion top bar + upright rear pole + ground anchor bar
+    const topBar = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, GOAL_D, 10), stanchionMat);
+    topBar.rotation.x = Math.PI / 2;
+    topBar.position.set(side * GOAL_W / 2, GOAL_H - 0.02, -GOAL_D / 2);
+    goalGroup.add(topBar);
+    const rearPost = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.038, GOAL_H, 10), stanchionMat);
+    rearPost.position.set(side * GOAL_W / 2, GOAL_H / 2, -GOAL_D);
+    goalGroup.add(rearPost);
+    const baseSide = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, GOAL_D, 10), stanchionMat);
+    baseSide.rotation.x = Math.PI / 2;
+    baseSide.position.set(side * GOAL_W / 2, 0.032, -GOAL_D / 2);
+    goalGroup.add(baseSide);
+  });
+  const baseBack = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.034, GOAL_W, 10), stanchionMat);
+  baseBack.rotation.z = Math.PI / 2;
+  baseBack.position.set(0, 0.034, -GOAL_D);
+  goalGroup.add(baseBack);
 
-  const netMat = new THREE.MeshBasicMaterial({ color: 0xe2e8f0, wireframe: true, transparent: true, opacity: 0.35 });
-  // Back net is its own geometry so its vertices can bulge on impact (see section 7)
-  const backNet = new THREE.Mesh(new THREE.PlaneGeometry(GOAL_W, GOAL_H, 28, 12), netMat);
+  // Woven square/diamond white football net CanvasTexture (no diagonal wireframe triangles!)
+  function createNetTexture(repX, repY) {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const g = c.getContext('2d');
+    g.clearRect(0, 0, 128, 128);
+    g.strokeStyle = 'rgba(241, 245, 249, 0.92)';
+    g.lineWidth = 5;
+    for (let i = 0; i <= 128; i += 32) {
+      g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 128); g.stroke();
+      g.beginPath(); g.moveTo(0, i); g.lineTo(128, i); g.stroke();
+    }
+    // Subtle woven twine knots
+    g.fillStyle = 'rgba(255, 255, 255, 0.98)';
+    for (let x = 0; x <= 128; x += 32) {
+      for (let y = 0; y <= 128; y += 32) {
+        g.beginPath(); g.arc(x, y, 4.2, 0, Math.PI * 2); g.fill();
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(repX, repY);
+    tex.anisotropy = maxAniso;
+    return tex;
+  }
+  const backNetMat = new THREE.MeshStandardMaterial({ map: createNetTexture(16, 5.5), transparent: true, opacity: 0.72, side: THREE.DoubleSide, depthWrite: false, roughness: 0.9 });
+  const topNetMat  = new THREE.MeshStandardMaterial({ map: createNetTexture(16, 5.2), transparent: true, opacity: 0.65, side: THREE.DoubleSide, depthWrite: false, roughness: 0.9 });
+  const sideNetMat = new THREE.MeshStandardMaterial({ map: createNetTexture(5.2, 5.5), transparent: true, opacity: 0.68, side: THREE.DoubleSide, depthWrite: false, roughness: 0.9 });
+
+  const backNet = new THREE.Mesh(new THREE.PlaneGeometry(GOAL_W, GOAL_H, 28, 12), backNetMat);
   backNet.position.set(0, GOAL_H / 2, -GOAL_D);
   goalGroup.add(backNet);
   const netBase = Float32Array.from(backNet.geometry.attributes.position.array);
-  const topNet = new THREE.Mesh(new THREE.PlaneGeometry(GOAL_W, GOAL_D, 24, 8), netMat);
+  const topNet = new THREE.Mesh(new THREE.PlaneGeometry(GOAL_W, GOAL_D, 24, 8), topNetMat);
   topNet.rotation.x = Math.PI / 2;
   topNet.position.set(0, GOAL_H, -GOAL_D / 2);
   goalGroup.add(topNet);
   const sideNetGeo = new THREE.PlaneGeometry(GOAL_D, GOAL_H, 8, 10);
-  const leftNet = new THREE.Mesh(sideNetGeo, netMat);
+  const leftNet = new THREE.Mesh(sideNetGeo, sideNetMat);
   leftNet.rotation.y = Math.PI / 2;
   leftNet.position.set(-GOAL_W / 2, GOAL_H / 2, -GOAL_D / 2);
   goalGroup.add(leftNet);
@@ -991,29 +1407,32 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   rightNet.position.x = GOAL_W / 2;
   goalGroup.add(rightNet);
 
-  // Corner flags (shown in Corner Kick Whip)
+  // Corner flags positioned accurately on the FIFA goal-line/touchline corners (z = 0.0)
   const cornerFlags = new THREE.Group();
+  const flagMeshes = [];
   scene.add(cornerFlags);
   [-1, 1].forEach(side => {
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.5, 6), new THREE.MeshStandardMaterial({ color: 0xf8fafc }));
-    pole.position.set(side * 24.55, 0.75, 0.05);
-    const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.32), new THREE.MeshBasicMaterial({ color: 0xffcc33, side: THREE.DoubleSide }));
-    flag.position.set(side * 24.55 + side * 0.23, 1.33, 0.05);
-    const arc = new THREE.Mesh(new THREE.RingGeometry(0.95, 1.0, 24, 1, side > 0 ? Math.PI / 2 : 0, Math.PI / 2),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
-    arc.rotation.x = -Math.PI / 2;
-    arc.position.set(side * 24.55, 0.02, 0.05);
-    cornerFlags.add(pole, flag, arc);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.028, 1.55, 8), new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 }));
+    pole.position.set(side * 24.55, 0.775, 0.0);
+    const fCanvas = document.createElement('canvas'); fCanvas.width = 64; fCanvas.height = 48;
+    const fc = fCanvas.getContext('2d');
+    fc.fillStyle = '#ffcc33'; fc.fillRect(0, 0, 64, 48);
+    fc.fillStyle = '#ff4757'; fc.fillRect(0, 0, 32, 24); fc.fillRect(32, 24, 32, 24);
+    const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.34, 6, 2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(fCanvas), side: THREE.DoubleSide }));
+    flag.position.set(side * 24.55 - side * 0.24, 1.34, 0.0);
+    flag.userData = { side };
+    flagMeshes.push(flag);
+    cornerFlags.add(pole, flag);
   });
   cornerFlags.visible = false;
 
   // Weather particles
-  const WEATHER_COUNT = 900;
+  const WEATHER_COUNT = 1100;
   const weatherPositions = new Float32Array(WEATHER_COUNT * 3);
   for (let i = 0; i < WEATHER_COUNT; i++) {
-    weatherPositions[i * 3] = (Math.random() - 0.5) * 60;
+    weatherPositions[i * 3] = (Math.random() - 0.5) * 64;
     weatherPositions[i * 3 + 1] = Math.random() * 26;
-    weatherPositions[i * 3 + 2] = Math.random() * 44 - 6;
+    weatherPositions[i * 3 + 2] = Math.random() * 48 - 6;
   }
   const weatherGeo = new THREE.BufferGeometry();
   weatherGeo.setAttribute('position', new THREE.BufferAttribute(weatherPositions, 3));
@@ -1022,132 +1441,493 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   weatherParticles.visible = false;
   scene.add(weatherParticles);
 
-  // Confetti — pre-allocated pool, one geometry, materials cached by colour
+  // Confetti + Turf Divot & Splash Particle Pool
   const burstParticles = [];
   const burstGroup = new THREE.Group();
   scene.add(burstGroup);
-  const burstGeo = new THREE.BoxGeometry(0.11, 0.11, 0.04);
+  const burstGeo = new THREE.BoxGeometry(0.11, 0.11, 0.045);
   const burstMats = {};
   const burstMat = (hex) => burstMats[hex] || (burstMats[hex] = new THREE.MeshBasicMaterial({ color: hex }));
-  const BURST_POOL_SIZE = 96;
+  const BURST_POOL_SIZE = 140;
   const burstPool = [];
   for (let i = 0; i < BURST_POOL_SIZE; i++) {
     const m = new THREE.Mesh(burstGeo, burstMat(0x00f5a0));
     m.visible = false;
-    m.userData = { vel: new THREE.Vector3(), life: 0 };
+    m.userData = { vel: new THREE.Vector3(), life: 0, maxLife: 1, gravity: 9.8, baseScale: 1 };
     burstGroup.add(m);
     burstPool.push(m);
   }
-  function spawnBurst(origin, colorHex = 0x00f5a0, count = 45) {
+  function spawnBurst(origin, colorHex = 0x00f5a0, count = 45, opts = {}) {
     if (isCalm()) return;
     let spawned = 0;
+    const altHex = opts.altHex !== undefined ? opts.altHex : 0xffcc33;
+    const spread = opts.spread || 9;
+    const lift = opts.lift || 2.2;
+    const liftRnd = opts.liftRnd || 6.5;
+    const lifeBase = opts.life || 1.05;
+    const scl = opts.scale || 1;
+    const grav = opts.gravity || 9.8;
     for (let i = 0; i < burstPool.length && spawned < count; i++) {
       const m = burstPool[i];
       if (m.visible) continue;
-      m.material = burstMat(spawned % 2 === 0 ? colorHex : 0xffcc33);
+      m.material = burstMat(spawned % 2 === 0 ? colorHex : altHex);
       m.position.copy(origin);
-      m.rotation.set(0, 0, 0);
-      m.userData.vel.set((Math.random() - 0.5) * 9, 2 + Math.random() * 7, (Math.random() - 0.5) * 9);
-      m.userData.life = 1.1 + Math.random() * 0.5;
+      m.rotation.set(Math.random() * 3, Math.random() * 3, 0);
+      m.scale.setScalar(scl);
+      m.userData.vel.set((Math.random() - 0.5) * spread, lift + Math.random() * liftRnd, (Math.random() - 0.5) * spread);
+      m.userData.life = lifeBase + Math.random() * 0.45;
+      m.userData.maxLife = m.userData.life;
+      m.userData.gravity = grav;
+      m.userData.baseScale = scl;
+      m.visible = true;
+      burstParticles.push(m);
+      spawned++;
+    }
+  }
+  function spawnTurfKickSpray(origin, dirVec, power = 0.85) {
+    if (isCalm()) return;
+    const isRain = state.weather === 'rain', isSnow = state.weather === 'snow';
+    const c1 = isRain ? 0xbae6fd : (isSnow ? 0xf8fafc : 0x22c55e);
+    const c2 = isRain ? 0xe0f2fe : (isSnow ? 0xcbd5e1 : 0x6b4f2a);
+    let spawned = 0, count = isRain ? 22 : 16;
+    for (let i = 0; i < burstPool.length && spawned < count; i++) {
+      const m = burstPool[i];
+      if (m.visible) continue;
+      m.material = burstMat(spawned % 3 === 0 ? c2 : c1);
+      m.position.set(origin.x + (Math.random() - 0.5) * 0.25, 0.06, origin.z + (Math.random() - 0.5) * 0.25);
+      m.scale.setScalar(isRain ? 0.55 : 0.72);
+      const fwd = 2.5 + Math.random() * 5.0 * power;
+      m.userData.vel.set(dirVec.x * fwd + (Math.random() - 0.5) * 2.8, 1.4 + Math.random() * 3.0 * power, dirVec.z * fwd + (Math.random() - 0.5) * 2.8);
+      m.userData.life = 0.42 + Math.random() * 0.3;
+      m.userData.maxLife = m.userData.life;
+      m.userData.gravity = 13.5;
+      m.userData.baseScale = isRain ? 0.55 : 0.72;
       m.visible = true;
       burstParticles.push(m);
       spawned++;
     }
   }
 
-  // Ball
-  function createBallTexture() {
-    const c = document.createElement('canvas');
-    c.width = 512; c.height = 256;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, 512, 256);
-    ctx.fillStyle = '#0f172a';
-    for (let x = 32; x < 512; x += 96) {
-      for (let y = 32; y < 256; y += 84) {
+  // ---- Championship Star-Panel Match Ball composited with CC0 leather_white ----
+  const ballCanvas = document.createElement('canvas');
+  ballCanvas.width = 512; ballCanvas.height = 256;
+  const ballTex = new THREE.CanvasTexture(ballCanvas);
+  ballTex.anisotropy = maxAniso;
+  function renderBallTexture(leatherImg) {
+    const ctx = ballCanvas.getContext('2d');
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 0, 512, 256);
+    if (leatherImg) {
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      const pat = ctx.createPattern(leatherImg, 'repeat');
+      if (pat) { ctx.fillStyle = pat; ctx.fillRect(0, 0, 512, 256); }
+      ctx.restore();
+    }
+    // Crisp hexagonal seam lattice
+    ctx.strokeStyle = 'rgba(100, 116, 139, 0.35)';
+    ctx.lineWidth = 2;
+    for (let x = 0; x <= 512; x += 64) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke();
+    }
+    // Tournament geometric star-panel graphics
+    for (let row = 0; row < 3; row++) {
+      const cy = 44 + row * 84;
+      const xOff = row % 2 === 0 ? 44 : 92;
+      for (let cx = xOff; cx < 512; cx += 96) {
+        ctx.save();
+        ctx.translate(cx, cy);
         ctx.beginPath();
-        for (let s = 0; s < 5; s++) {
-          const ang = (s * Math.PI * 2) / 5;
-          const px = x + Math.cos(ang) * 22, py = y + Math.sin(ang) * 22;
+        for (let s = 0; s < 10; s++) {
+          const r = s % 2 === 0 ? 27 : 12.5;
+          const ang = (s * Math.PI) / 5 - Math.PI / 2;
+          const px = Math.cos(ang) * r, py = Math.sin(ang) * r;
           s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
         }
-        ctx.closePath(); ctx.fill();
+        ctx.closePath();
+        const sg = ctx.createLinearGradient(-22, -22, 22, 22);
+        sg.addColorStop(0, '#0f172a'); sg.addColorStop(1, '#1e3a5f');
+        ctx.fillStyle = sg; ctx.fill();
+        ctx.strokeStyle = '#00d9f5'; ctx.lineWidth = 2.4; ctx.stroke();
+        // Gold center micro-dot
+        ctx.fillStyle = '#ffcc33';
+        ctx.beginPath(); ctx.arc(0, 0, 3.2, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
       }
     }
-    ctx.strokeStyle = '#00d9f5'; ctx.lineWidth = 6;
+    // Equatorial aero trim band
+    ctx.strokeStyle = 'rgba(0, 245, 160, 0.72)'; ctx.lineWidth = 3.5;
     ctx.beginPath(); ctx.moveTo(0, 128); ctx.lineTo(512, 128); ctx.stroke();
-    return new THREE.CanvasTexture(c);
+    ballTex.needsUpdate = true;
   }
+  renderBallTexture(null);
+
   const BALL_R = 0.14;
-  const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(BALL_R, 28, 28), new THREE.MeshStandardMaterial({ map: createBallTexture(), roughness: 0.35, metalness: 0.1 }));
+  // IMPORTANT: ballMesh is the ONLY SphereGeometry with 0.08 < r < 0.2 in the scene (verify_apexkick_v10 Stub contract!)
+  const ballMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(BALL_R, 32, 32),
+    new THREE.MeshStandardMaterial({ map: ballTex, roughness: 0.28, metalness: 0.08 })
+  );
   ballMesh.castShadow = true;
   scene.add(ballMesh);
 
-  const TRAIL_LEN = 28;
-  const trailPositions = new Float32Array(TRAIL_LEN * 3);
-  const trailGeo = new THREE.BufferGeometry();
-  trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
-  const trailMat = new THREE.LineBasicMaterial({ color: 0x00f5a0, transparent: true, opacity: 0.8 });
-  scene.add(new THREE.Line(trailGeo, trailMat));
+  // Subtle grounded contact shadow disc beneath the ball (scales & fades with ball height)
+  const ballShadowCanvas = document.createElement('canvas');
+  ballShadowCanvas.width = 64; ballShadowCanvas.height = 64;
+  const bsg = ballShadowCanvas.getContext('2d');
+  const bsGrad = bsg.createRadialGradient(32, 32, 3, 32, 32, 30);
+  bsGrad.addColorStop(0, 'rgba(0,0,0,0.58)'); bsGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  bsg.fillStyle = bsGrad; bsg.fillRect(0, 0, 64, 64);
+  const ballShadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.68, 0.68),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(ballShadowCanvas), transparent: true, opacity: 0.7, depthWrite: false })
+  );
+  ballShadow.rotation.x = -Math.PI / 2;
+  ballShadow.position.y = 0.018;
+  scene.add(ballShadow);
 
-  const FORECAST_PTS = 32;
-  const forecastPositions = new Float32Array(FORECAST_PTS * 3);
-  const forecastGeo = new THREE.BufferGeometry();
-  forecastGeo.setAttribute('position', new THREE.BufferAttribute(forecastPositions, 3));
-  const forecastLine = new THREE.Line(forecastGeo, new THREE.LineDashedMaterial({ color: 0x00d9f5, dashSize: 0.5, gapSize: 0.3 }));
-  forecastLine.visible = false;
-  scene.add(forecastLine);
+  // ---- AAA VOLUMETRIC 3D TRACER RIBBON + PLASMA CORE + AERODYNAMIC SPIN VORTEX RINGS ----
+  const TRAIL_LEN = 36;
+  const trailPts = [];
+  for (let i = 0; i < TRAIL_LEN; i++) trailPts.push(new THREE.Vector3());
+  let trailColorHex = 0x00f5a0;
+  let trailColorObj = new THREE.Color(0x00f5a0);
 
-  // Vanishing spray: arc around the ball + line at the wall's feet, fades after the strike
-  const sprayMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false, side: THREE.DoubleSide });
-  const sprayArc = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.56, 40), sprayMat);
+  function createVolumetricRibbon(segCount, opacity, blending) {
+    // 2 orthogonal strips (horizontal + vertical) per segment = visible volume from every camera angle!
+    const vertCount = segCount * 4;
+    const pos = new Float32Array(vertCount * 3);
+    const col = new Float32Array(vertCount * 3);
+    const idx = [];
+    for (let i = 0; i < segCount - 1; i++) {
+      // Strip A (horizontal): vertices i*4+0, i*4+1
+      const a0 = i * 4, a1 = a0 + 1, a2 = a0 + 4, a3 = a0 + 5;
+      idx.push(a0, a1, a2, a1, a3, a2);
+      // Strip B (vertical): vertices i*4+2, i*4+3
+      const b0 = i * 4 + 2, b1 = b0 + 1, b2 = b0 + 4, b3 = b0 + 5;
+      idx.push(b0, b1, b2, b1, b3, b2);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    geo.setIndex(idx);
+    const mat = new THREE.MeshBasicMaterial({
+      vertexColors: true, transparent: true, opacity,
+      side: THREE.DoubleSide, blending, depthWrite: false
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.frustumCulled = false;
+    return mesh;
+  }
+  const trailRibbonOuter = createVolumetricRibbon(TRAIL_LEN, 0.72, THREE.AdditiveBlending);
+  const trailRibbonCore  = createVolumetricRibbon(TRAIL_LEN, 0.92, THREE.AdditiveBlending);
+  trailRibbonOuter.visible = false;
+  trailRibbonCore.visible = false;
+  scene.add(trailRibbonOuter, trailRibbonCore);
+  // Keep trailMat reference alive for applyEquippedCosmetics compatibility
+  const trailMat = { color: { setHex(h) { trailColorHex = h; trailColorObj.setHex(h); } } };
+
+  const _rbDir = new THREE.Vector3(), _rbSide = new THREE.Vector3(), _rbUp = new THREE.Vector3(0, 1, 0), _rbBinorm = new THREE.Vector3();
+  function writeRibbonGeometry(mesh, pts, count, maxRadius, colorA, colorB, boost) {
+    const pos = mesh.geometry.attributes.position.array;
+    const col = mesh.geometry.attributes.color.array;
+    const tmpCol = new THREE.Color();
+    for (let i = 0; i < count; i++) {
+      const t = i / Math.max(1, count - 1);
+      const p = pts[i];
+      if (i === 0) _rbDir.subVectors(pts[0], pts[1]);
+      else if (i === count - 1) _rbDir.subVectors(pts[i - 1], pts[i]);
+      else _rbDir.subVectors(pts[i - 1], pts[i + 1]);
+      if (_rbDir.lengthSq() < 1e-6) _rbDir.set(0, 0, -1); else _rbDir.normalize();
+      _rbSide.crossVectors(_rbDir, _rbUp);
+      if (_rbSide.lengthSq() < 1e-4) _rbSide.set(1, 0, 0); else _rbSide.normalize();
+      _rbBinorm.crossVectors(_rbSide, _rbDir).normalize();
+      // Taper smoothly: full plasma width near ball -> sharp laser point at tail
+      const w = maxRadius * Math.pow(1 - t, 1.35) * boost;
+      const fade = Math.pow(1 - t, 1.45);
+      tmpCol.lerpColors(colorA, colorB, Math.min(1, t * 1.4)).multiplyScalar(fade);
+      const base = i * 12;
+      // Strip A
+      pos[base]     = p.x - _rbSide.x * w; pos[base + 1] = p.y - _rbSide.y * w; pos[base + 2] = p.z - _rbSide.z * w;
+      pos[base + 3] = p.x + _rbSide.x * w; pos[base + 4] = p.y + _rbSide.y * w; pos[base + 5] = p.z + _rbSide.z * w;
+      // Strip B
+      pos[base + 6] = p.x - _rbBinorm.x * w; pos[base + 7] = p.y - _rbBinorm.y * w; pos[base + 8] = p.z - _rbBinorm.z * w;
+      pos[base + 9] = p.x + _rbBinorm.x * w; pos[base + 10] = p.y + _rbBinorm.y * w; pos[base + 11] = p.z + _rbBinorm.z * w;
+      for (let v = 0; v < 4; v++) {
+        col[base + v * 3] = tmpCol.r; col[base + v * 3 + 1] = tmpCol.g; col[base + v * 3 + 2] = tmpCol.b;
+      }
+    }
+    mesh.geometry.attributes.position.needsUpdate = true;
+    mesh.geometry.attributes.color.needsUpdate = true;
+  }
+
+  let trailActiveLen = 0;
+  function resetTrailAt(pos) {
+    for (let i = 0; i < TRAIL_LEN; i++) trailPts[i].copy(pos);
+    trailActiveLen = 1;
+    trailRibbonOuter.visible = false;
+    trailRibbonCore.visible = false;
+  }
+  const _whiteCol = new THREE.Color(0xffffff);
+  const _tailDark = new THREE.Color(0x020617);
+  function pushTrailPoint(pos, speedMs, spinMag) {
+    for (let i = TRAIL_LEN - 1; i >= 1; i--) trailPts[i].copy(trailPts[i - 1]);
+    trailPts[0].copy(pos);
+    trailActiveLen = Math.min(TRAIL_LEN, trailActiveLen + 1);
+    const show = speedMs > 3.5 && trailActiveLen >= 3;
+    trailRibbonOuter.visible = show;
+    trailRibbonCore.visible = show;
+    if (!show) return;
+    // Pad inactive tail slots smoothly along the active span so ribbon ALWAYS tapers to a razor point from frame 1!
+    for (let i = trailActiveLen; i < TRAIL_LEN; i++) trailPts[i].copy(trailPts[trailActiveLen - 1]);
+    const boost = THREE.MathUtils.clamp(0.72 + (speedMs / 32) * 0.52 + Math.min(0.42, spinMag * 0.025), 0.72, 1.65);
+    writeRibbonGeometry(trailRibbonOuter, trailPts, TRAIL_LEN, 0.145, trailColorObj, _tailDark, boost);
+    writeRibbonGeometry(trailRibbonCore, trailPts, TRAIL_LEN, 0.048, _whiteCol, trailColorObj, boost);
+  }
+
+  // Aerodynamic Spin Vortex Rings (visualizes Magnus curve & rocket shockwaves!)
+  const VORTEX_POOL = 10;
+  const vortexRings = [];
+  const vortexGeo = new THREE.TorusGeometry(0.16, 0.016, 8, 24);
+  for (let i = 0; i < VORTEX_POOL; i++) {
+    const vm = new THREE.Mesh(vortexGeo, new THREE.MeshBasicMaterial({
+      color: 0x00f5a0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false
+    }));
+    vm.visible = false;
+    vm.userData = { life: 0, maxLife: 0.42 };
+    scene.add(vm);
+    vortexRings.push(vm);
+  }
+  let vortexTimer = 0;
+  function spawnVortexRing(pos, vel, colorHex) {
+    if (isCalm()) return;
+    const ring = vortexRings.find(r => !r.visible);
+    if (!ring) return;
+    ring.position.copy(pos);
+    ring.lookAt(pos.x + vel.x, pos.y + vel.y, pos.z + vel.z);
+    ring.material.color.setHex(colorHex);
+    ring.material.opacity = 0.72;
+    ring.scale.setScalar(0.85);
+    ring.userData.life = 0.38;
+    ring.userData.maxLife = 0.38;
+    ring.visible = true;
+  }
+
+  // ---- AAA 3D Volumetric Predictive Forecast Ribbon + Live Goal-Plane Impact Reticle ----
+  const FORECAST_PTS = 34;
+  const forecastPts = [];
+  for (let i = 0; i < FORECAST_PTS; i++) forecastPts.push(new THREE.Vector3());
+  const forecastRibbon = createVolumetricRibbon(FORECAST_PTS, 0.76, THREE.AdditiveBlending);
+  forecastRibbon.visible = false;
+  scene.add(forecastRibbon);
+  const forecastLine = forecastRibbon; // alias preserved for endSwipe / startKick
+
+  // Glowing 3D Aim Reticle Ring (sits on the goal plane z=0.08 or wall-block point!)
+  const aimReticle = new THREE.Group();
+  const reticleOuterMat = new THREE.MeshBasicMaterial({ color: 0x00f5a0, transparent: true, opacity: 0.9, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
+  const reticleInnerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
+  const reticleOuter = new THREE.Mesh(new THREE.RingGeometry(0.32, 0.44, 32), reticleOuterMat);
+  const reticleCore  = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.14, 24), reticleInnerMat);
+  const reticleTicks = new THREE.Group();
+  for (let i = 0; i < 4; i++) {
+    const tick = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.045), reticleOuterMat);
+    const a = (i * Math.PI) / 2;
+    tick.position.set(Math.cos(a) * 0.56, Math.sin(a) * 0.56, 0);
+    tick.rotation.z = a;
+    reticleTicks.add(tick);
+  }
+  aimReticle.add(reticleOuter, reticleCore, reticleTicks);
+  aimReticle.visible = false;
+  scene.add(aimReticle);
+
+  // Vanishing spray: crisp foam arc around ball + wall distance line
+  const sprayMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.88, depthWrite: false, side: THREE.DoubleSide });
+  const sprayArc = new THREE.Mesh(new THREE.RingGeometry(0.48, 0.55, 40), sprayMat);
   sprayArc.rotation.x = -Math.PI / 2;
   scene.add(sprayArc);
   const sprayLineGroup = new THREE.Group();
-  const sprayLine = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.07), sprayMat);
+  const sprayLine = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.075), sprayMat);
   sprayLine.rotation.x = -Math.PI / 2;
   sprayLineGroup.add(sprayLine);
   scene.add(sprayLineGroup);
 
-  // Players — geometry shared by every figure
+  // ---- Sculpted Articulated Footballers (hip-pivoted legs, shoulder-pivoted arms, numbered jerseys,
+  //      socks, boots, keeper gloves; head uses IcosahedronGeometry so NEVER collides with ballMesh Stub check!) ----
   const PGEO = {
-    torso: new THREE.BoxGeometry(0.46, 0.62, 0.24),
-    shorts: new THREE.BoxGeometry(0.44, 0.28, 0.23),
-    head: new THREE.SphereGeometry(0.15, 16, 16),
-    arm: new THREE.CylinderGeometry(0.06, 0.05, 0.62, 10),
-    leg: new THREE.CylinderGeometry(0.08, 0.06, 0.58, 10)
+    torso:    new THREE.CylinderGeometry(0.21, 0.165, 0.56, 12),
+    chest:    new THREE.BoxGeometry(0.42, 0.32, 0.22),
+    shorts:   new THREE.CylinderGeometry(0.175, 0.195, 0.24, 12),
+    neck:     new THREE.CylinderGeometry(0.055, 0.068, 0.10, 8),
+    head:     new THREE.IcosahedronGeometry(0.132, 2),
+    hair:     new THREE.IcosahedronGeometry(0.139, 2),
+    sleeve:   new THREE.CylinderGeometry(0.068, 0.056, 0.22, 10),
+    forearm:  new THREE.CylinderGeometry(0.048, 0.038, 0.30, 8),
+    hand:     new THREE.BoxGeometry(0.065, 0.095, 0.045),
+    glove:    new THREE.BoxGeometry(0.095, 0.135, 0.068),
+    thigh:    new THREE.CylinderGeometry(0.082, 0.064, 0.32, 10),
+    sock:     new THREE.CylinderGeometry(0.060, 0.048, 0.32, 10),
+    boot:     new THREE.BoxGeometry(0.105, 0.085, 0.24)
   };
-  const skinMat = new THREE.MeshStandardMaterial({ color: 0xe0ac69, roughness: 0.6 });
-  const wallKitMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.6 });
-  const wallShortMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.7 });
+  const PLAYER_SKINS = [0xe0ac69, 0xc68642, 0x8d5524, 0xf1c27d, 0xd49b6a];
+  const PLAYER_HAIRS = [0x1a120b, 0x3b2414, 0x0f172a, 0x5c3c1e, 0x261a12];
+  const bootMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.35, metalness: 0.18 });
+  const bootAccentMat = new THREE.MeshStandardMaterial({ color: 0x00f5a0, roughness: 0.35 });
+  const gloveMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.42 });
+  const wallKitMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.58 });
+  const wallShortMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.72 });
 
-  function buildPlayerModel(jerseyColor, shortsColor, sharedMats) {
+  function makeJerseyTexture(numStr, accentHex) {
+    // Cylinder UV u in [0,1]: back face (-Z in Three.js) is centered at u = 0.0 / 1.0, front (+Z) at u = 0.5!
+    const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, 512, 256);
+    // Subtle pro athletic vertical jacquard pinstripes
+    g.fillStyle = 'rgba(0,0,0,0.065)';
+    for (let x = 0; x < 512; x += 32) g.fillRect(x, 0, 12, 256);
+    // Collar & waist hem trim
+    g.fillStyle = accentHex || '#0f172a';
+    g.fillRect(0, 0, 512, 22);
+    g.fillRect(0, 238, 512, 18);
+    // Crisp proportional squad number centered on the BACK (u = 0 / 1 seam -> draw centered at x = 0 and x = 512!)
+    // plus on front-facing wall players draw small chest crest at x = 256
+    if (numStr) {
+      g.fillStyle = '#ffffff';
+      g.strokeStyle = 'rgba(15,23,42,0.82)';
+      g.lineWidth = 6;
+      g.font = '900 84px sans-serif';
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      // Three.js CylinderGeometry: theta=0 is +Z (u=0.0/1.0 is +Z, u=0.5 is -Z!)
+      // Kicker faces away from camera (+Z local is forward via lookAt!), so BACK is -Z = u = 0.5 (x = 256)!
+      g.strokeText(numStr, 256, 126);
+      g.fillText(numStr, 256, 126);
+    }
+    return new THREE.CanvasTexture(c);
+  }
+
+  function makeSockTexture() {
+    const c = document.createElement('canvas'); c.width = 64; c.height = 128;
+    const g = c.getContext('2d');
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, 64, 128);
+    g.fillStyle = '#0f172a'; g.fillRect(0, 14, 64, 14);
+    g.fillStyle = 'rgba(255,255,255,0.9)'; g.fillRect(0, 28, 64, 8);
+    return new THREE.CanvasTexture(c);
+  }
+  const sharedSockTex = makeSockTexture();
+  const shoulderCapGeo = new THREE.IcosahedronGeometry(0.072, 1);
+
+  function buildPlayerModel(jerseyColor, shortsColor, opts = {}) {
+    const sharedMats = opts.kitMat ? opts : opts.sharedMats;
+    const isKeeperModel = !!opts.isKeeper;
+    const isWallModel = !!opts.isWall;
+    const skinHex = PLAYER_SKINS[(opts.skinIdx || 0) % PLAYER_SKINS.length];
+    const hairHex = PLAYER_HAIRS[(opts.hairIdx || 0) % PLAYER_HAIRS.length];
+    const pSkinMat = new THREE.MeshStandardMaterial({ color: skinHex, roughness: 0.62 });
+    const pHairMat = new THREE.MeshStandardMaterial({ color: hairHex, roughness: 0.8 });
+
     const group = new THREE.Group();
-    const kitMat = sharedMats ? sharedMats.kitMat : new THREE.MeshStandardMaterial({ color: jerseyColor, roughness: 0.6 });
-    const shortMat = sharedMats ? sharedMats.shortMat : new THREE.MeshStandardMaterial({ color: shortsColor, roughness: 0.7 });
-    const torso = new THREE.Mesh(PGEO.torso, kitMat); torso.position.y = 1.15; torso.castShadow = true; group.add(torso);
-    const shorts = new THREE.Mesh(PGEO.shorts, shortMat); shorts.position.y = 0.72; shorts.castShadow = true; group.add(shorts);
-    const head = new THREE.Mesh(PGEO.head, skinMat); head.position.y = 1.64; head.castShadow = true; group.add(head);
-    const lArm = new THREE.Mesh(PGEO.arm, kitMat); lArm.position.set(-0.32, 1.25, 0); lArm.castShadow = true; group.add(lArm);
-    const rArm = lArm.clone(); rArm.position.x = 0.32; group.add(rArm);
-    const lLeg = new THREE.Mesh(PGEO.leg, skinMat); lLeg.position.set(-0.13, 0.3, 0); lLeg.castShadow = true; group.add(lLeg);
-    const rLeg = lLeg.clone(); rLeg.position.x = 0.13; group.add(rLeg);
-    group.userData = { lArm, rArm, lLeg, rLeg, torso, kitMat, shortMat };
+    const kitMat = sharedMats ? sharedMats.kitMat : new THREE.MeshStandardMaterial({ color: jerseyColor, roughness: 0.56 });
+    const torsoMat = sharedMats ? sharedMats.kitMat : new THREE.MeshStandardMaterial({
+      color: jerseyColor, roughness: 0.56,
+      map: opts.number ? makeJerseyTexture(opts.number, '#0f172a') : null
+    });
+    const sockMat = sharedMats ? sharedMats.kitMat : new THREE.MeshStandardMaterial({
+      color: jerseyColor, roughness: 0.62, map: sharedSockTex
+    });
+    const shortMat = sharedMats ? sharedMats.shortMat : new THREE.MeshStandardMaterial({ color: shortsColor, roughness: 0.72 });
+
+    // Athletic torso + shoulder taper (dedicated numbered torsoMat so sleeves & socks stay clean!)
+    const torso = new THREE.Mesh(PGEO.torso, torsoMat);
+    torso.scale.set(1.16, 1.0, 0.72);
+    torso.position.y = 1.16;
+    torso.castShadow = true;
+    group.add(torso);
+
+    const shorts = new THREE.Mesh(PGEO.shorts, shortMat);
+    shorts.scale.set(1.15, 1.0, 0.76);
+    shorts.position.y = 0.78;
+    shorts.castShadow = true;
+    group.add(shorts);
+
+    // Neck + sculpted head + athletic hair cap
+    const neck = new THREE.Mesh(PGEO.neck, pSkinMat);
+    neck.position.y = 1.48;
+    group.add(neck);
+    const head = new THREE.Mesh(PGEO.head, pSkinMat);
+    head.position.y = 1.63;
+    head.castShadow = true;
+    group.add(head);
+    const hair = new THREE.Mesh(PGEO.hair, pHairMat);
+    hair.scale.set(1.02, 0.76, 1.04);
+    hair.position.set(0, 1.69, -0.02);
+    group.add(hair);
+
+    // Shoulder-pivoted arms with smooth rounded shoulder cap
+    function makeArm(side) {
+      const armPivot = new THREE.Group();
+      armPivot.position.set(side * 0.255, 1.38, 0);
+      const cap = new THREE.Mesh(shoulderCapGeo, kitMat);
+      armPivot.add(cap);
+      const sleeve = new THREE.Mesh(PGEO.sleeve, kitMat);
+      sleeve.position.y = -0.10; sleeve.castShadow = true;
+      armPivot.add(sleeve);
+      const forearm = new THREE.Mesh(PGEO.forearm, isKeeperModel ? kitMat : pSkinMat);
+      forearm.position.y = -0.34; forearm.castShadow = true;
+      armPivot.add(forearm);
+      const hand = new THREE.Mesh(isKeeperModel ? PGEO.glove : PGEO.hand, isKeeperModel ? gloveMat : pSkinMat);
+      hand.position.y = -0.52;
+      armPivot.add(hand);
+      return armPivot;
+    }
+    const lArm = makeArm(-1);
+    const rArm = makeArm(1);
+    if (isWallModel) {
+      // Defensive wall free-kick guard stance (arms tucked across chest/front)
+      lArm.rotation.set(-0.55, 0, 0.42);
+      rArm.rotation.set(-0.55, 0, -0.42);
+    } else {
+      lArm.rotation.z = 0.16;
+      rArm.rotation.z = -0.16;
+    }
+    group.add(lArm, rArm);
+
+    // Hip-pivoted legs (clean striped team socks, zero stretched numbers!)
+    function makeLeg(side) {
+      const legPivot = new THREE.Group();
+      legPivot.position.set(side * 0.115, 0.72, 0);
+      const thigh = new THREE.Mesh(PGEO.thigh, pSkinMat);
+      thigh.position.y = -0.16; thigh.castShadow = true;
+      legPivot.add(thigh);
+      const sock = new THREE.Mesh(PGEO.sock, sockMat);
+      sock.position.y = -0.47; sock.castShadow = true;
+      legPivot.add(sock);
+      const boot = new THREE.Mesh(PGEO.boot, isKeeperModel ? bootAccentMat : bootMat);
+      boot.position.set(0, -0.67, 0.055); boot.castShadow = true;
+      legPivot.add(boot);
+      return legPivot;
+    }
+    const lLeg = makeLeg(-1);
+    const rLeg = makeLeg(1);
+    group.add(lLeg, rLeg);
+
+    group.userData = { lArm, rArm, lLeg, rLeg, torso, kitMat, torsoMat, sockMat, shortMat };
     return group;
   }
   function setKit(model, jersey, shorts) {
     model.userData.kitMat.color.setHex(jersey);
+    if (model.userData.torsoMat) model.userData.torsoMat.color.setHex(jersey);
+    if (model.userData.sockMat) model.userData.sockMat.color.setHex(jersey);
     model.userData.shortMat.color.setHex(shorts);
   }
 
-  const keeper = buildPlayerModel(KEEPER_KIT.jersey, KEEPER_KIT.shorts);
+  const keeper = buildPlayerModel(KEEPER_KIT.jersey, KEEPER_KIT.shorts, { isKeeper: true, number: '1', skinIdx: 1, hairIdx: 2 });
   keeper.position.set(0, 0, 0.35);
   scene.add(keeper);
-  const aiShooter = buildPlayerModel(0xe11d48, 0x0f172a);
+  const aiShooter = buildPlayerModel(0xe11d48, 0x0f172a, { number: '9', skinIdx: 2, hairIdx: 0 });
   aiShooter.visible = false;
   scene.add(aiShooter);
-  const kicker = buildPlayerModel(0x00d9f5, 0x0f172a);   // the player's own avatar, wears the equipped kit
+  const kicker = buildPlayerModel(0x00d9f5, 0x0f172a, { number: '10', skinIdx: 0, hairIdx: 1 });
   scene.add(kicker);
-  const striker = buildPlayerModel(0x00d9f5, 0x0f172a);  // volley / header runner
+  const striker = buildPlayerModel(0x00d9f5, 0x0f172a, { number: '11', skinIdx: 3, hairIdx: 3 });
   striker.visible = false;
   scene.add(striker);
 
@@ -1155,24 +1935,58 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   scene.add(wallGroup);
   const targetGroup = new THREE.Group();
   scene.add(targetGroup);
-  const targetOuterGeo = new THREE.TorusGeometry(0.48, 0.06, 12, 28);
+  const targetOuterGeo = new THREE.TorusGeometry(0.48, 0.065, 14, 32);
   const targetInnerGeo = new THREE.CircleGeometry(0.42, 24);
-  const targetGoldMat = new THREE.MeshStandardMaterial({ color: 0xffcc33, emissive: 0x112211 });
-  const targetGreenMat = new THREE.MeshStandardMaterial({ color: 0x00f5a0, emissive: 0x112211 });
-  const targetInnerMat = new THREE.MeshBasicMaterial({ color: 0x00d9f5, transparent: true, opacity: 0.28, side: THREE.DoubleSide });
+  const targetGoldMat = new THREE.MeshStandardMaterial({ color: 0xffcc33, emissive: 0x4a3300, roughness: 0.25, metalness: 0.5 });
+  const targetGreenMat = new THREE.MeshStandardMaterial({ color: 0x00f5a0, emissive: 0x003d26, roughness: 0.25, metalness: 0.4 });
+  const targetInnerMat = new THREE.MeshBasicMaterial({ color: 0x00d9f5, transparent: true, opacity: 0.34, side: THREE.DoubleSide });
 
   // Time Attack gold time rings
   const timeRingGroup = new THREE.Group();
   scene.add(timeRingGroup);
-  const timeRingGeo = new THREE.TorusGeometry(0.55, 0.07, 10, 28);
-  const timeRingMat = new THREE.MeshBasicMaterial({ color: 0xffcc33 });
+  const timeRingGeo = new THREE.TorusGeometry(0.55, 0.075, 12, 32);
+  const timeRingMat = new THREE.MeshStandardMaterial({ color: 0xffcc33, emissive: 0x553b00, metalness: 0.65, roughness: 0.2 });
 
-  const assistZoneRing = new THREE.Mesh(new THREE.RingGeometry(1.1, 1.45, 32),
-    new THREE.MeshBasicMaterial({ color: 0x00f5a0, side: THREE.DoubleSide, transparent: true, opacity: 0.75 }));
+  const assistZoneRing = new THREE.Mesh(new THREE.RingGeometry(1.1, 1.48, 36),
+    new THREE.MeshBasicMaterial({ color: 0x00f5a0, side: THREE.DoubleSide, transparent: true, opacity: 0.82 }));
   assistZoneRing.rotation.x = -Math.PI / 2;
-  assistZoneRing.position.y = 0.03;
+  assistZoneRing.position.y = 0.032;
   assistZoneRing.visible = false;
   scene.add(assistZoneRing);
+
+  // Async offline hydration of all 6 embedded CC0 Poly Haven WebP textures (zero HTTP requests!)
+  (function hydrateEmbeddedAssets() {
+    decodeEmbeddedWebP(EMBEDDED_ASSETS.grass).then(img => { if (img) renderPitchCanvas(img); });
+    decodeEmbeddedWebP(EMBEDDED_ASSETS.leather).then(img => { if (img) renderBallTexture(img); });
+    decodeEmbeddedWebP(EMBEDDED_ASSETS.concrete).then(img => {
+      if (!img) return;
+      const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+      c.getContext('2d').drawImage(img, 0, 0, 256, 256);
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.RepeatWrapping; t.repeat.set(16, 4);
+      standMat.map = t; standMat.color.setHex(0x8899b8); standMat.needsUpdate = true;
+    });
+    decodeEmbeddedWebP(EMBEDDED_ASSETS.roof).then(img => {
+      if (!img) return;
+      const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+      c.getContext('2d').drawImage(img, 0, 0, 256, 256);
+      const t = new THREE.CanvasTexture(c);
+      t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.RepeatWrapping; t.repeat.set(18, 3);
+      roofMat.map = t; roofMat.color.setHex(0xb8c9e0); roofMat.needsUpdate = true;
+    });
+    decodeEmbeddedWebP(EMBEDDED_ASSETS.skynight).then(img => {
+      if (!img) return;
+      const g = skyCanvases.night.getContext('2d');
+      g.drawImage(img, 0, 0, 512, 256);
+      skyTextures.night.needsUpdate = true;
+    });
+    decodeEmbeddedWebP(EMBEDDED_ASSETS.skyday).then(img => {
+      if (!img) return;
+      const g = skyCanvases.day.getContext('2d');
+      g.drawImage(img, 0, 0, 512, 256);
+      skyTextures.day.needsUpdate = true;
+    });
+  })();
 
   // =========================================================================
   // 5. GAME STATE, PAUSABLE TIMERS & HELPERS
@@ -1192,7 +2006,8 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     wind: new THREE.Vector3(), wallJumpY: 0, wallJumping: false,
     ballPos: new THREE.Vector3(), ballVel: new THREE.Vector3(), ballSpin: new THREE.Vector3(),
     flightTime: 0, maxSpeedKmh: 0, maxCurveM: 0, xg: 0, spinRpm: 0, lastKmh: 0,
-    keeperDiveX: 0, keeperDiveY: 0, keeperReacted: false,
+    keeperDiveX: 0, keeperDiveY: 0, keeperFinalX: 0, keeperFinalY: 1.1, keeperDelay: 0, keeperReacted: false,
+    isKnuckle: false, knucklePhase: 0, woodShake: 0, liveAim: null, fovBoost: 0,
     assistTriggered: false, assistKind: null, assistT: 0,
     pendingKick: null, kickT: 0, kickFrom: new THREE.Vector3(), kickTo: new THREE.Vector3(),
     aiRunT: 0, aiFrom: new THREE.Vector3(), aiTo: new THREE.Vector3(),
@@ -1262,16 +2077,22 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   function applyWeatherEnvironment() {
     const w = state.weather;
     const cfg = {
-      day:   { bg: 0x38bdf8, fog: 0xbae6fd, dens: 0.0035, amb: 0.85, dir: 1.35, parts: false, rough: 0.8 },
-      night: { bg: 0x050914, fog: 0x070d1d, dens: 0.0075, amb: 0.58, dir: 1.15, parts: false, rough: 0.85 },
-      rain:  { bg: 0x091326, fog: 0x0f172a, dens: 0.012, amb: 0.48, dir: 0.9, parts: true, rough: 0.4, pc: 0x7dd3fc, ps: 0.14 },
-      snow:  { bg: 0x1e293b, fog: 0x334155, dens: 0.014, amb: 0.75, dir: 0.95, parts: true, rough: 0.95, pc: 0xffffff, ps: 0.24 }
+      day:   { bg: 0x3b9be8, fog: 0xaad8fb, dens: 0.0022, amb: 1.05, dir: 1.55, dirCol: 0xfff6e0, rim: 0.28, sky: 'day',   skyTint: 0xffffff, beams: 0.03, parts: false, rough: 0.78 },
+      night: { bg: 0x050914, fog: 0x081024, dens: 0.0046, amb: 0.74, dir: 1.32, dirCol: 0xf8fbff, rim: 0.46, sky: 'night', skyTint: 0xffffff, beams: 0.24, parts: false, rough: 0.84 },
+      rain:  { bg: 0x081122, fog: 0x0c172b, dens: 0.0085, amb: 0.62, dir: 1.05, dirCol: 0xdbeafe, rim: 0.55, sky: 'night', skyTint: 0x8aa4c2, beams: 0.34, parts: true,  rough: 0.34, pc: 0x93c5fd, ps: 0.15 },
+      snow:  { bg: 0x162235, fog: 0x2a3b52, dens: 0.0095, amb: 0.88, dir: 1.08, dirCol: 0xe2e8f0, rim: 0.48, sky: 'night', skyTint: 0xc2d5e8, beams: 0.30, parts: true,  rough: 0.92, pc: 0xffffff, ps: 0.25 }
     }[w];
     scene.background.setHex(cfg.bg);
     scene.fog.color.setHex(cfg.fog);
     scene.fog.density = cfg.dens;
     ambientLight.intensity = cfg.amb;
     dirLight.intensity = cfg.dir;
+    dirLight.color.setHex(cfg.dirCol);
+    rimLight.intensity = cfg.rim;
+    skyDomeMat.map = skyTextures[cfg.sky];
+    skyDomeMat.color.setHex(cfg.skyTint);
+    skyDomeMat.needsUpdate = true;
+    floodBeamMats.forEach((m, i) => { m.opacity = i % 2 === 0 ? Math.min(0.85, cfg.beams * 2.5) : cfg.beams; });
     weatherParticles.visible = !!(cfg.parts && !isCalm());
     if (cfg.parts) { weatherMat.color.setHex(cfg.pc); weatherMat.size = cfg.ps; }
     pitchMat.roughness = cfg.rough;
@@ -1323,6 +2144,10 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     state.flightTime = 0;
     state.wallJumpY = 0; state.wallJumping = false;
     state.keeperReacted = false; state.keeperDiveX = 0; state.keeperDiveY = 0;
+    state.keeperFinalX = 0; state.keeperFinalY = 1.1; state.keeperDelay = 0;
+    state.isKnuckle = false; state.woodShake = 0; state.liveAim = null; state.fovBoost = 0;
+    aimReticle.visible = false;
+    if (adFlashMode !== 'normal') drawAdBoard('normal');
     state.manualKeeperDir = null;
     state.assistTriggered = false; state.assistKind = null;
     state.pendingKick = null; state.kickT = 0; state.aiRunT = 0;
@@ -1373,8 +2198,10 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     keeper.visible = (state.mode !== 'targets' && state.mode !== 'crossbar');
     keeper.position.set(state.mode === 'corner' ? state.cornerSide * 1.1 : sx * 0.06, 0, 0.35);
     keeper.rotation.set(0, 0, 0);
-    keeper.userData.lArm.rotation.z = 0.25;
-    keeper.userData.rArm.rotation.z = -0.25;
+    keeper.userData.lArm.rotation.set(-0.35, 0, 0.35);
+    keeper.userData.rArm.rotation.set(-0.35, 0, -0.35);
+    keeper.userData.lLeg.rotation.set(0, 0, 0.08);
+    keeper.userData.rLeg.rotation.set(0, 0, -0.08);
 
     const dir = dirToAim(), perp = perpOf(dir);
 
@@ -1411,7 +2238,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       const sideBias = sx >= 0 ? -0.45 : 0.45;
       for (let i = 0; i < wallCount; i++) {
         const offset = (i - (wallCount - 1) / 2) * 0.54 + sideBias;
-        const defender = buildPlayerModel(0, 0, { kitMat: wallKitMat, shortMat: wallShortMat });
+        const defender = buildPlayerModel(0, 0, { sharedMats: { kitMat: wallKitMat, shortMat: wallShortMat }, isWall: true, skinIdx: i, hairIdx: i + 1 });
         defender.position.set(wallCenter.x + perp.x * offset, 0, wallCenter.z + perp.z * offset);
         defender.lookAt(sx, 0, sz);
         wallGroup.add(defender);
@@ -1481,10 +2308,10 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     cornerFlags.visible = state.mode === 'corner';
 
     ballMesh.position.copy(state.ballPos);
-    for (let i = 0; i < TRAIL_LEN * 3; i += 3) {
-      trailPositions[i] = state.ballPos.x; trailPositions[i + 1] = state.ballPos.y; trailPositions[i + 2] = state.ballPos.z;
-    }
-    trailGeo.attributes.position.needsUpdate = true;
+    ballShadow.position.set(state.ballPos.x, 0.018, state.ballPos.z);
+    ballShadow.scale.setScalar(1);
+    resetTrailAt(state.ballPos);
+    vortexRings.forEach(r => { r.visible = false; });
 
     positionCameraForShot(true);
     updateHUD();
@@ -1602,7 +2429,9 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   function endSwipe() {
     isSwiping = false;
     swipePts = [];
-    forecastLine.visible = false;
+    state.liveAim = null;
+    forecastRibbon.visible = false;
+    aimReticle.visible = false;
     sCtx.clearRect(0, 0, swipeCanvas.width, swipeCanvas.height);
   }
 
@@ -1627,7 +2456,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     }
     if (state.phase === 'aiming' && save.assist && swipePts.length >= 4) {
       const params = analyzeSwipe(swipePts);
-      if (params) updateForecastLine(params.vel, params.spin);
+      if (params) updateForecastLine(params.vel, params.spin, !!params.isKnuckle);
     }
   });
   window.addEventListener('pointerup', () => {
@@ -1766,14 +2595,20 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     const sx = state.spawnPos.x, sz = state.spawnPos.z, aim = aimPoint();
     const baseAngle = Math.atan2(aim.x - sx, aim.z - sz);
     const yaw = baseAngle - (dx / window.innerWidth) * 0.62;
-    const powerRatio = THREE.MathUtils.clamp((dy / (window.innerHeight * 0.42)) * 0.65 + speedPx * 0.14, 0.48, 1.15);
+    const riseFrac = dy / Math.max(260, window.innerHeight);
+    const powerRatio = THREE.MathUtils.clamp((riseFrac / 0.42) * 0.64 + speedPx * 0.145, 0.48, 1.15);
     const distScale = Math.max(0.8, Math.sqrt(Math.hypot(aim.x - sx, aim.z - sz) / 22));
     const speedMs = (23.5 + powerRatio * 11.5) * distScale;
-    const loftAngle = THREE.MathUtils.clamp(0.16 + (dy / window.innerHeight) * 0.34, 0.14, 0.46);
+    // Non-linear realistic dipping loft curve: keeps short & medium swipes crisp under the bar, high swipes clear tall walls
+    const loftAngle = THREE.MathUtils.clamp(0.14 + Math.pow(THREE.MathUtils.clamp(riseFrac / 0.48, 0, 1.25), 0.78) * 0.235, 0.14, 0.42);
+    const isKnuckle = state.mode !== 'corner' && state.mode !== 'volley' && powerRatio >= 0.88 && Math.abs(maxDeviation) < 15 && riseFrac > 0.18;
+    const sideSpin = isKnuckle ? THREE.MathUtils.clamp(-maxDeviation * 0.08, -2.5, 2.5) : THREE.MathUtils.clamp(-maxDeviation * 0.34, -27, 27);
+    const topSpin = isKnuckle ? 2.2 : THREE.MathUtils.clamp(powerRatio * 10.6, 4.5, 15.2);
     return {
       vel: new THREE.Vector3(Math.sin(yaw) * Math.cos(loftAngle) * speedMs, Math.sin(loftAngle) * speedMs, Math.cos(yaw) * Math.cos(loftAngle) * speedMs),
-      spin: new THREE.Vector3(THREE.MathUtils.clamp(powerRatio * 9.5, 4, 14), THREE.MathUtils.clamp(-maxDeviation * 0.32, -26, 26), 0),
-      powerRatio
+      spin: new THREE.Vector3(topSpin, sideSpin, 0),
+      powerRatio,
+      isKnuckle
     };
   }
 
@@ -1783,41 +2618,137 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     const trailObj = TRAILS.find(t => t.id === save.equippedTrail) || TRAILS[0];
     sCtx.save();
     sCtx.lineCap = 'round'; sCtx.lineJoin = 'round';
+    // 1) Outer neon bloom beam
     for (let i = 1; i < swipePts.length; i++) {
       const p0 = swipePts[i - 1], p1 = swipePts[i], ratio = i / swipePts.length;
       sCtx.beginPath(); sCtx.moveTo(p0.x, p0.y); sCtx.lineTo(p1.x, p1.y);
-      sCtx.strokeStyle = trailObj.hex; sCtx.globalAlpha = ratio * 0.9; sCtx.lineWidth = 3 + ratio * 10;
-      sCtx.shadowColor = trailObj.hex; sCtx.shadowBlur = 12;
+      sCtx.strokeStyle = trailObj.hex; sCtx.globalAlpha = ratio * 0.55; sCtx.lineWidth = 6 + ratio * 16;
+      sCtx.shadowColor = trailObj.hex; sCtx.shadowBlur = 18;
       sCtx.stroke();
     }
-    sCtx.restore();
-  }
-
-  function updateForecastLine(initVel, initSpin) {
-    forecastLine.visible = true;
-    const simPos = state.spawnPos.clone(), simVel = initVel.clone();
-    for (let i = 0; i < FORECAST_PTS; i++) {
-      forecastPositions[i * 3] = simPos.x;
-      forecastPositions[i * 3 + 1] = Math.max(0.05, simPos.y);
-      forecastPositions[i * 3 + 2] = simPos.z;
-      stepAerodynamics(simPos, simVel, initSpin, 0.032);
+    // 2) Bright plasma core filament
+    sCtx.shadowBlur = 0;
+    for (let i = 1; i < swipePts.length; i++) {
+      const p0 = swipePts[i - 1], p1 = swipePts[i], ratio = i / swipePts.length;
+      sCtx.beginPath(); sCtx.moveTo(p0.x, p0.y); sCtx.lineTo(p1.x, p1.y);
+      sCtx.strokeStyle = '#ffffff'; sCtx.globalAlpha = ratio * 0.92; sCtx.lineWidth = 1.5 + ratio * 4.5;
+      sCtx.stroke();
     }
-    forecastGeo.attributes.position.needsUpdate = true;
-    forecastLine.computeLineDistances();
+    // 3) Directional arrow tip + live broadcast shot telemetry pill!
+    const last = swipePts[swipePts.length - 1], prev = swipePts[Math.max(0, swipePts.length - 4)];
+    const ang = Math.atan2(last.y - prev.y, last.x - prev.x);
+    sCtx.globalAlpha = 0.96;
+    sCtx.translate(last.x, last.y);
+    sCtx.rotate(ang);
+    sCtx.fillStyle = '#ffffff';
+    sCtx.beginPath(); sCtx.moveTo(12, 0); sCtx.lineTo(-6, -8); sCtx.lineTo(-3, 0); sCtx.lineTo(-6, 8); sCtx.closePath();
+    sCtx.fill();
+    sCtx.restore();
+
+    if (state.liveAim && state.mode !== 'keeper') {
+      const a = state.liveAim;
+      const bx = THREE.MathUtils.clamp(last.x + 22, 16, swipeCanvas.width - 210);
+      const by = THREE.MathUtils.clamp(last.y - 54, 72, swipeCanvas.height - 86);
+      sCtx.save();
+      roundRectPath(sCtx, bx, by, 188, 46, 10);
+      sCtx.fillStyle = 'rgba(7, 13, 28, 0.90)'; sCtx.fill();
+      sCtx.strokeStyle = a.badgeCol; sCtx.lineWidth = 1.6; sCtx.stroke();
+      sCtx.font = '900 11px sans-serif'; sCtx.fillStyle = a.badgeCol;
+      sCtx.fillText(a.label, bx + 10, by + 17);
+      sCtx.font = '700 11px sans-serif'; sCtx.fillStyle = '#e2e8f0';
+      sCtx.fillText(`${a.kmh} KM/H  ·  ${a.curveM}m BEND`, bx + 10, by + 35);
+      sCtx.restore();
+    }
   }
 
-  // Magnus swerve acts perpendicular to the ball's horizontal travel, so it bends correctly from the
-  // corner flag as well as from in front of goal (identical to V9.1 for shots travelling at the goal).
-  function stepAerodynamics(pos, vel, spin, dt) {
+  const _fcColStart = new THREE.Color(), _fcColEnd = new THREE.Color();
+  function updateForecastLine(initVel, initSpin, isKnuckle = false) {
+    forecastRibbon.visible = true;
+    const simPos = state.spawnPos.clone(), simVel = initVel.clone();
+    let blockedPt = null, goalCross = null, hitAssist = false;
+    for (let i = 0; i < FORECAST_PTS; i++) {
+      forecastPts[i].set(simPos.x, Math.max(0.06, simPos.y), simPos.z);
+      const prevP = simPos.clone();
+      stepAerodynamics(simPos, simVel, initSpin, 0.032, false, 0);
+      if (!blockedPt && wallGroup.children.length > 0) {
+        for (const def of wallGroup.children) {
+          if (Math.abs(simPos.x - def.position.x) < 0.34 && Math.abs(simPos.z - def.position.z) < 0.38 && simPos.y > 0 && simPos.y < 1.98) {
+            blockedPt = simPos.clone();
+            break;
+          }
+        }
+      }
+      if (!goalCross && prevP.z > 0 && simPos.z <= 0) {
+        const f = prevP.z / Math.max(1e-4, prevP.z - simPos.z);
+        goalCross = new THREE.Vector3(
+          THREE.MathUtils.lerp(prevP.x, simPos.x, f),
+          THREE.MathUtils.lerp(prevP.y, simPos.y, f),
+          0.08
+        );
+      }
+      if (!hitAssist && assistZoneRing.visible && Math.hypot(simPos.x - assistZoneRing.position.x, simPos.z - assistZoneRing.position.z) < 1.65 && simPos.y < 3.0) {
+        hitAssist = true;
+      }
+    }
+
+    // Determine aim reticle color, position & shot type telemetry!
+    let retColor = 0x00d9f5, badgeCol = '#00d9f5', label = 'DRIVEN STRIKE';
+    const kmh = Math.round(initVel.length() * 3.6);
+    const curveM = +(Math.abs(initSpin.y) * 0.095).toFixed(1);
+    if (blockedPt) {
+      retColor = 0xff4757; badgeCol = '#ff4757'; label = 'WALL BLOCKED ⚠';
+      aimReticle.position.set(blockedPt.x, Math.max(0.4, blockedPt.y), blockedPt.z + 0.25);
+      aimReticle.visible = true;
+    } else if (goalCross) {
+      const inFrame = Math.abs(goalCross.x) < GOAL_W / 2 && goalCross.y >= 0.05 && goalCross.y < GOAL_H;
+      const isTopBins = inFrame && Math.abs(goalCross.x) > 2.35 && goalCross.y > 1.55;
+      aimReticle.position.set(
+        THREE.MathUtils.clamp(goalCross.x, -GOAL_W / 2 - 2.2, GOAL_W / 2 + 2.2),
+        THREE.MathUtils.clamp(goalCross.y, 0.25, GOAL_H + 1.8),
+        0.09
+      );
+      aimReticle.visible = true;
+      if (isTopBins) { retColor = 0xffcc33; badgeCol = '#ffcc33'; label = 'TOP-BINS LOCK 🎯'; }
+      else if (inFrame) {
+        retColor = 0x00f5a0; badgeCol = '#00f5a0';
+        label = isKnuckle ? 'KNUCKLEBALL ⚡' : (curveM >= 1.4 ? 'WHIP CURLER 🌀' : (kmh >= 112 ? 'THUNDERBOLT 🚀' : 'ON TARGET ✓'));
+      } else {
+        retColor = 0xff9f1a; badgeCol = '#ff9f1a';
+        label = goalCross.y >= GOAL_H ? 'HIGH / OVER BAR' : 'WIDE OF POST';
+      }
+    } else if (hitAssist) {
+      retColor = 0x00f5a0; badgeCol = '#00f5a0'; label = 'ASSIST ZONE LOCK ✓';
+      aimReticle.position.set(assistZoneRing.position.x, 1.35, assistZoneRing.position.z);
+      aimReticle.visible = true;
+    } else {
+      aimReticle.visible = false;
+      label = isKnuckle ? 'KNUCKLEBALL ⚡' : (curveM >= 1.4 ? 'WHIP CURLER 🌀' : 'LONG STRIKE');
+    }
+
+    reticleOuterMat.color.setHex(retColor);
+    _fcColStart.setHex(retColor);
+    _fcColEnd.setHex(0xffffff);
+    writeRibbonGeometry(forecastRibbon, forecastPts, FORECAST_PTS, 0.085, _fcColEnd, _fcColStart, 1.0);
+    state.liveAim = { label, badgeCol, kmh, curveM };
+  }
+
+  // Magnus swerve + authentic top-spin dip + optional knuckleball aerodynamic vortex flutter
+  function stepAerodynamics(pos, vel, spin, dt, isKnuckle = false, flightT = 0) {
     vel.y -= 9.81 * dt;
-    const dragCoeff = state.weather === 'snow' ? 0.19 : (state.weather === 'day' ? 0.095 : 0.12);
+    const dragCoeff = state.weather === 'snow' ? 0.19 : (state.weather === 'day' ? 0.092 : 0.118);
     vel.multiplyScalar(1 - dragCoeff * dt);
     vel.x += state.wind.x * 0.26 * dt;
-    const k = spin.y * 0.0145 * dt;
+    const k = spin.y * 0.0148 * dt;
     const vx = vel.x, vz = vel.z;
     vel.x += -vz * k;
     vel.z += vx * k;
-    vel.y -= spin.x * Math.hypot(vx, vz) * 0.0085 * dt;
+    vel.y -= spin.x * Math.hypot(vx, vz) * 0.0088 * dt;
+    if (isKnuckle && flightT > 0.14) {
+      // Unpredictable low-spin knuckleball air-vortex wobble + sharp late dip
+      const spd = Math.hypot(vx, vz);
+      vel.x += Math.sin(flightT * 17.5 + state.knucklePhase) * spd * 0.19 * dt;
+      vel.y += (Math.cos(flightT * 13.0 + state.knucklePhase) * 0.12 - 0.14) * spd * dt;
+    }
     pos.addScaledVector(vel, dt);
   }
 
@@ -1826,7 +2757,9 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     state.pendingKick = params;
     state.kickT = 0;
     state.phase = 'kicking';
-    forecastLine.visible = false;
+    forecastRibbon.visible = false;
+    aimReticle.visible = false;
+    state.liveAim = null;
   }
   const KICK_TIME = 0.3;
   function updateKick(dt) {
@@ -1834,20 +2767,25 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     const runTime = kicker.visible ? KICK_TIME : 0;
     const p = runTime ? Math.min(1, state.kickT / runTime) : 1;
     kicker.position.lerpVectors(state.kickFrom, state.kickTo, p);
-    kicker.userData.lLeg.rotation.x = Math.sin(p * Math.PI * 3) * 0.7;
-    kicker.userData.rLeg.rotation.x = p < 0.7 ? 0.9 * (p / 0.7) : -1.2;
+    kicker.userData.lLeg.rotation.x = Math.sin(p * Math.PI * 3) * 0.68;
+    kicker.userData.rLeg.rotation.x = p < 0.7 ? 0.95 * (p / 0.7) : -1.25;
+    kicker.userData.lArm.rotation.x = -kicker.userData.lLeg.rotation.x * 0.6;
+    kicker.userData.rArm.rotation.x = -kicker.userData.rLeg.rotation.x * 0.5;
     if (p >= 1) {
       const k = state.pendingKick;
       state.pendingKick = null;
-      launchBall(k.vel, k.spin, k.powerRatio);
+      launchBall(k.vel, k.spin, k.powerRatio, !!k.isKnuckle);
     }
   }
 
-  function launchBall(vel, spin, powerRatio) {
+  function launchBall(vel, spin, powerRatio, isKnuckle = false) {
     sfx.kick(powerRatio);
+    spawnTurfKickSpray(state.spawnPos, dirToAim(), powerRatio);
     state.phase = 'in_flight';
     state.ballVel.copy(vel);
     state.ballSpin.copy(spin);
+    state.isKnuckle = isKnuckle;
+    state.knucklePhase = Math.random() * Math.PI * 2;
     state.maxSpeedKmh = Math.round(vel.length() * 3.6);
     state.maxCurveM = +(Math.abs(spin.y) * 0.095).toFixed(1);
     state.xg = computeXG(state.spawnPos, state.mode === 'corner' ? 'corner' : 'shot');
@@ -1855,23 +2793,40 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     state.flightTime = 0;
     state.wallJumping = true;
     state.sprayFading = true;
+    state.fovBoost = isCalm() ? 0 : Math.min(4.2, powerRatio * 3.6);
+    vortexTimer = 0;
 
     if (state.mode === 'shootout2p') {
       if (state.manualKeeperDir === null) state.manualKeeperDir = Math.floor(Math.random() * 3) - 1;
       state.keeperDiveX = state.manualKeeperDir * 2.45;
       state.keeperDiveY = 1.35;
+      state.keeperFinalX = state.keeperDiveX;
+      state.keeperFinalY = state.keeperDiveY;
+      state.keeperDelay = 0;
       setDiveButtons('armed');
+      state.keeperReacted = true;
     } else if (state.mode === 'corner') {
       state.keeperDiveX = state.cornerSide * 1.1; // tracked live in updatePhysics
       state.keeperDiveY = 1.2;
+      state.keeperDelay = 0;
+      state.keeperReacted = true;
     } else {
+      // Realistic human goalkeeper read: slight reaction delay + initial read along launch tangent
+      // so wicked late Magnus curve & knuckleballs can genuinely wrong-foot the keeper!
+      const stg = getActiveStage();
       const timeToGoal = Math.abs(state.spawnPos.z / Math.min(-5, vel.z));
-      const predictedX = state.spawnPos.x + vel.x * timeToGoal + (spin.y * Math.abs(vel.z) * 0.007 * timeToGoal * timeToGoal);
+      const straightX = state.spawnPos.x + vel.x * timeToGoal;
+      const curveOffset = spin.y * Math.abs(vel.z) * 0.0072 * timeToGoal * timeToGoal;
+      const fooledFactor = isKnuckle ? 0.35 : THREE.MathUtils.clamp(0.42 + stg.keeperSpeed * 0.44, 0.45, 0.88);
+      const predictedX = straightX + curveOffset * fooledFactor;
       const predictedY = Math.max(0.4, state.spawnPos.y + vel.y * timeToGoal - 0.5 * 9.81 * timeToGoal * timeToGoal);
-      state.keeperDiveX = THREE.MathUtils.clamp(predictedX, -GOAL_W / 2 + 0.4, GOAL_W / 2 - 0.4);
-      state.keeperDiveY = THREE.MathUtils.clamp(predictedY, 0.3, GOAL_H - 0.2);
+      state.keeperFinalX = THREE.MathUtils.clamp(predictedX, -GOAL_W / 2 + 0.38, GOAL_W / 2 - 0.38);
+      state.keeperFinalY = THREE.MathUtils.clamp(predictedY, 0.32, GOAL_H - 0.22);
+      state.keeperDiveX = THREE.MathUtils.clamp(straightX * 0.65, -GOAL_W / 2 + 0.5, GOAL_W / 2 - 0.5);
+      state.keeperDiveY = state.keeperFinalY;
+      state.keeperDelay = Math.max(0.11, 0.24 - stg.keeperSpeed * 0.13);
+      state.keeperReacted = false;
     }
-    state.keeperReacted = true;
   }
 
   // =========================================================================
@@ -1881,8 +2836,9 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   const NET_SIGMA2 = 2 * 0.6 * 0.6;
   function hitNet(x, y, speed) {
     net.x = x; net.y = y;
-    net.vel += Math.min(9, 2 + speed * 0.25);
+    net.vel += Math.min(9.5, 2.4 + speed * 0.28);
     net.active = true;
+    sfx.netSwish(speed);
   }
   const netBulgeAt = (x, y) => Math.max(0, net.disp) * Math.exp(-((x - net.x) ** 2 + (y - net.y) ** 2) / NET_SIGMA2);
   function updateNet(dt) {
@@ -1902,23 +2858,41 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
   }
 
   function updateKeeperDive(dt) {
-    if (!(state.keeperReacted && keeper.visible)) return;
+    if (!keeper.visible) return;
+    if (!state.keeperReacted) {
+      if (state.phase === 'in_flight' && state.mode !== 'keeper' && state.flightTime >= state.keeperDelay) {
+        state.keeperReacted = true;
+        state.keeperDiveX = state.keeperFinalX;
+        state.keeperDiveY = state.keeperFinalY;
+      } else {
+        return;
+      }
+    }
     let speedMult = getActiveStage().keeperSpeed;
     if (state.mode === 'keeper') speedMult = 1.45;
     else if (state.mode === 'shootout2p') speedMult = 1.2;
-    else if (state.mode === 'corner') speedMult = 0.45 + speedMult * 0.4;   // close-range headers: flatter difficulty curve
+    else if (state.mode === 'corner') speedMult = 0.45 + speedMult * 0.4;
     const kSpeed = Math.min(1, 4.4 * speedMult * dt);
     keeper.position.x = THREE.MathUtils.lerp(keeper.position.x, state.keeperDiveX, kSpeed);
-    keeper.rotation.z = THREE.MathUtils.clamp(-(state.keeperDiveX - keeper.position.x) * 0.45, -1.15, 1.15);
-    keeper.position.y = THREE.MathUtils.lerp(keeper.position.y, Math.max(0, (state.keeperDiveY - 1.1) * 0.58), kSpeed);
-    keeper.userData.lArm.rotation.z = 2.6;
-    keeper.userData.rArm.rotation.z = -2.6;
+    const dx = state.keeperDiveX - keeper.position.x;
+    const diveLean = THREE.MathUtils.clamp(-dx * 0.52, -1.25, 1.25);
+    keeper.rotation.z = THREE.MathUtils.lerp(keeper.rotation.z, diveLean, Math.min(1, 12 * dt));
+    keeper.position.y = THREE.MathUtils.lerp(keeper.position.y, Math.max(0, (state.keeperDiveY - 1.05) * 0.62), kSpeed);
+    // Athletic full-stretch diving gloves & trailing legs
+    keeper.userData.lArm.rotation.set(-0.2, 0, 2.75);
+    keeper.userData.rArm.rotation.set(-0.2, 0, -2.75);
+    keeper.userData.lLeg.rotation.z = Math.abs(diveLean) * 0.22;
+    keeper.userData.rLeg.rotation.z = -Math.abs(diveLean) * 0.22;
   }
 
   function applyGroundBounce() {
     if (state.ballPos.y >= BALL_R) return;
     state.ballPos.y = BALL_R;
     const v = state.ballVel;
+    if (Math.abs(v.y) > 2.2) {
+      const splashCol = state.weather === 'rain' ? 0xbae6fd : (state.weather === 'snow' ? 0xf8fafc : 0x22c55e);
+      spawnBurst(state.ballPos, splashCol, 8, { altHex: 0x86efac, spread: 3.2, lift: 1.0, liftRnd: 1.8, life: 0.35, scale: 0.52, gravity: 14 });
+    }
     if (state.weather === 'rain') { v.y = Math.abs(v.y) * 0.38; v.x *= 0.96; v.z *= 0.96; }
     else if (state.weather === 'snow') { v.y = Math.abs(v.y) * 0.32; v.x *= 0.72; v.z *= 0.72; }
     else { v.y = Math.abs(v.y) * 0.52; v.x *= 0.86; v.z *= 0.86; }
@@ -1928,11 +2902,26 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     ballMesh.position.copy(state.ballPos);
     ballMesh.rotation.x -= state.ballSpin.x * dt;
     ballMesh.rotation.y += state.ballSpin.y * dt;
-    for (let i = (TRAIL_LEN - 1) * 3; i >= 3; i -= 3) {
-      trailPositions[i] = trailPositions[i - 3]; trailPositions[i + 1] = trailPositions[i - 2]; trailPositions[i + 2] = trailPositions[i - 1];
+    // Update soft grounded shadow disc beneath ball
+    ballShadow.position.set(state.ballPos.x, 0.018, state.ballPos.z);
+    const hFade = THREE.MathUtils.clamp(1 - state.ballPos.y / 6.5, 0.2, 1);
+    ballShadow.scale.setScalar(0.65 + (1 - hFade) * 0.9);
+    ballShadow.material.opacity = 0.65 * hFade;
+
+    const spd = state.ballVel.length();
+    const spinMag = Math.abs(state.ballSpin.y);
+    pushTrailPoint(state.ballPos, spd, spinMag);
+    // Spawn aerodynamic spin vortex rings & high-speed sparks during live flight
+    if (state.phase === 'in_flight' && spd > 14 && !isCalm()) {
+      vortexTimer += dt;
+      if (vortexTimer >= (spinMag > 10 || state.isKnuckle ? 0.075 : 0.13)) {
+        vortexTimer = 0;
+        spawnVortexRing(state.ballPos, state.ballVel, state.isKnuckle ? 0xffcc33 : trailColorHex);
+      }
+      if ((spd > 25 || spinMag > 12) && Math.random() < 0.45) {
+        spawnBurst(state.ballPos, trailColorHex, 1, { altHex: 0xffffff, spread: 1.6, lift: 0.2, liftRnd: 0.8, life: 0.28, scale: 0.45, gravity: 3.0 });
+      }
     }
-    trailPositions[0] = state.ballPos.x; trailPositions[1] = state.ballPos.y; trailPositions[2] = state.ballPos.z;
-    trailGeo.attributes.position.needsUpdate = true;
     state.history.push({ ballPos: state.ballPos.clone(), keeperPos: keeper.position.clone(), keeperRotZ: keeper.rotation.z });
   }
 
@@ -2015,8 +3004,13 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 
     const SUBSTEPS = 4, subDt = dt / SUBSTEPS;
 
-    if (state.wallJumping && state.flightTime < 0.55) {
-      state.wallJumpY = Math.sin((state.flightTime / 0.55) * Math.PI) * 0.62;
+    if (state.wallJumping) {
+      if (state.flightTime < 0.55) {
+        state.wallJumpY = Math.sin((state.flightTime / 0.55) * Math.PI) * 0.62;
+      } else {
+        state.wallJumpY = 0;
+        state.wallJumping = false;
+      }
       wallGroup.children.forEach(def => { def.position.y = state.wallJumpY; });
     }
 
@@ -2050,8 +3044,8 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     }
 
     for (let s = 0; s < SUBSTEPS; s++) {
-      const prevZ = state.ballPos.z;
-      stepAerodynamics(state.ballPos, state.ballVel, state.ballSpin, subDt);
+      const prevX = state.ballPos.x, prevY = state.ballPos.y, prevZ = state.ballPos.z;
+      stepAerodynamics(state.ballPos, state.ballVel, state.ballSpin, subDt, state.isKnuckle && !state.assistTriggered, state.flightTime);
       state.flightTime += subDt;
       applyGroundBounce();
 
@@ -2129,9 +3123,11 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
         }
       }
 
-      // Goal line & woodwork
+      // Goal line & woodwork (exact linear interpolation at z = 0 plane!)
       if (prevZ > 0 && state.ballPos.z <= 0) {
-        const bx = state.ballPos.x, by = state.ballPos.y;
+        const crossT = prevZ / Math.max(1e-5, prevZ - state.ballPos.z);
+        const bx = prevX + (state.ballPos.x - prevX) * crossT;
+        const by = prevY + (state.ballPos.y - prevY) * crossT;
         const pad = state.mode === 'crossbar' ? 0.22 : (POST_R + BALL_R);
         const hitLeft = Math.abs(bx + GOAL_W / 2) < pad && by <= GOAL_H + pad;
         const hitRight = Math.abs(bx - GOAL_W / 2) < pad && by <= GOAL_H + pad;
@@ -2141,6 +3137,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 
         if (hitWood) {
           sfx.clang();
+          state.woodShake = 0.36;
           state.screenShake = 0.35;
           spawnBurst(state.ballPos, 0xffcc33, 40);
           if (state.mode === 'crossbar') {
@@ -2161,7 +3158,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
             if (hitLeft) state.ballVel.x = -Math.abs(state.ballVel.x) * 0.6 - 1.5;
             if (hitRight) state.ballVel.x = Math.abs(state.ballVel.x) * 0.6 + 1.5;
             if (state.mode === 'keeper') finishShot('goal', 'OFF THE POST & OUT!', '+150 PTS · Angles covered cleanly!', 150);
-            else finishShot('woodwork', 'OFF THE WOODWORK!', 'Inches away from glory!');
+            else { sfx.gasp(); finishShot('woodwork', 'OFF THE WOODWORK!', 'Inches away from glory!'); }
             return;
           }
           // inside the frame after the clang → falls through as a goal (in off the woodwork)
@@ -2182,6 +3179,9 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
           } else if (state.mode === 'corner') {
             basePts = isTopBins ? 300 : 220;
             title = state.assistKind === 'header' ? 'BULLET HEADER GOAL!' : 'CORNER VOLLEY GOAL!';
+          } else if (state.isKnuckle) {
+            basePts = isTopBins ? 325 : 225;
+            title = isTopBins ? 'TOP BINS KNUCKLEBALL!' : 'KNUCKLEBALL SCREAMER!';
           } else {
             basePts = isTopBins ? 250 : 150;
             title = isTopBins ? 'TOP BINS SCREAMER!' : 'GOAL!';
@@ -2211,7 +3211,11 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
         recordCrossing(bx, by, by > GOAL_H ? 'over' : 'wide');
         if (state.mode === 'keeper') finishShot('goal', 'SHOT DRIFTED WIDE!', '+150 PTS · Good positioning!', 150);
         else if (state.mode === 'corner') { sfx.whistle(); finishShot('miss', 'OUT FOR A GOAL KICK', 'Bend it back inside the near post — or find the header ring'); }
-        else { sfx.whistle(); finishShot('miss', by > GOAL_H ? 'OVER THE BAR' : 'WIDE OF THE MARK', 'Ease off the power or tighten your curve'); }
+        else {
+          if (Math.abs(bx) < GOAL_W / 2 + 1.2 && by < GOAL_H + 1.1) sfx.gasp();
+          else sfx.whistle();
+          finishShot('miss', by > GOAL_H ? 'OVER THE BAR' : 'WIDE OF THE MARK', 'Ease off the power or tighten your curve');
+        }
         return;
       }
     }
@@ -2269,6 +3273,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       const jumboTitle = state.mode === 'keeper' ? 'SAVE!' : state.mode === 'crossbar' ? 'WOODWORK!' : state.mode === 'targets' ? 'BULLSEYE!' : 'GOAL!';
       state.jumboFlash = { title: jumboTitle, sub: `${state.maxSpeedKmh} KM/H${opts.topBins ? ' · TOP BINS' : ''}`, until: performance.now() + 2400 };
       state.crowdHype = 1;
+      drawAdBoard('goal');
     } else {
       state.streak = 0;
       state.fever = 1;
@@ -2922,15 +3927,78 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       }
     }
 
+    // Animate aerodynamic spin vortex rings
+    for (let i = 0; i < vortexRings.length; i++) {
+      const r = vortexRings[i];
+      if (!r.visible) continue;
+      r.userData.life -= dt;
+      if (r.userData.life <= 0) { r.visible = false; continue; }
+      const p = 1 - r.userData.life / r.userData.maxLife;
+      r.scale.setScalar(0.85 + p * 2.4);
+      r.material.opacity = (1 - p) * 0.62;
+    }
+    // Animate scrolling perimeter LED boards, twinkling crowd flashes, fluttering corner flags & aim reticle pulse
+    if (live && !calm) {
+      adTex.offset.x = (adTex.offset.x + dt * (state.crowdHype > 0.2 ? 0.34 : 0.085)) % 1;
+      const hypeMult = 1 + state.crowdHype * 5.5;
+      for (let i = 0; i < flashSprites.length; i++) {
+        const sp = flashSprites[i];
+        if (sp.userData.life > 0) {
+          sp.userData.life -= dt;
+          sp.material.opacity = Math.max(0, sp.userData.life / 0.14) * (state.weather === 'day' ? 0.28 : 0.92);
+        } else {
+          sp.userData.next -= dt * hypeMult;
+          if (sp.userData.next <= 0) {
+            sp.userData.life = 0.14;
+            sp.userData.next = 1.6 + Math.random() * 6.5;
+          }
+        }
+      }
+      if (cornerFlags.visible) {
+        const tWave = now * 0.008;
+        flagMeshes.forEach(fm => { fm.rotation.y = Math.sin(tWave + fm.userData.side) * 0.28; });
+      }
+      if (aimReticle.visible) {
+        const pulse = 1 + Math.sin(now * 0.01) * 0.1;
+        aimReticle.scale.setScalar(pulse);
+        reticleTicks.rotation.z = now * 0.0022;
+      }
+    }
+    // Woodwork vibration on post/crossbar clang
+    if (state.woodShake > 0 && live) {
+      state.woodShake = Math.max(0, state.woodShake - dt * 1.4);
+      goalGroup.position.x = calm ? 0 : Math.sin(now * 0.09) * state.woodShake * 0.06;
+      goalGroup.position.y = calm ? 0 : Math.cos(now * 0.11) * state.woodShake * 0.04;
+      if (state.woodShake === 0) goalGroup.position.set(0, 0, 0);
+    }
+    // Smooth broadcast camera FOV kick easing
+    if (state.fovBoost > 0.01 && live) {
+      state.fovBoost = Math.max(0, state.fovBoost - dt * 5.5);
+      camera.fov = lensFov() + state.fovBoost;
+      camera.updateProjectionMatrix();
+    }
+
     if (state.phase === 'replay' && state.history.length > 0) {
       const idx = Math.min(Math.floor(state.replayFrame), state.replayEnd);
       const f = state.history[idx];
       ballMesh.position.copy(f.ballPos);
+      ballShadow.position.set(f.ballPos.x, 0.018, f.ballPos.z);
       keeper.position.copy(f.keeperPos);
       keeper.rotation.z = f.keeperRotZ;
-      const side = state.mode === 'corner' ? -state.cornerSide : 1;
-      camera.position.set(side * 4.8, 1.9, 4.2);
-      camera.lookAt(f.ballPos);
+      // Rebuild volumetric 3D tracer trail up to current slow-mo replay frame!
+      for (let ti = 0; ti < TRAIL_LEN; ti++) {
+        const hi = Math.max(0, idx - ti);
+        trailPts[ti].copy(state.history[hi].ballPos);
+      }
+      trailRibbonOuter.visible = true; trailRibbonCore.visible = true;
+      writeRibbonGeometry(trailRibbonOuter, trailPts, TRAIL_LEN, 0.175, trailColorObj, _tailDark, 1.35);
+      writeRibbonGeometry(trailRibbonCore, trailPts, TRAIL_LEN, 0.058, _whiteCol, trailColorObj, 1.35);
+      // Sweeping broadcast crane orbit across the goal mouth!
+      const side = state.mode === 'corner' ? -state.cornerSide : (f.ballPos.x >= 0 ? 1 : -1);
+      const repT = THREE.MathUtils.clamp((state.replayFrame - Math.max(0, state.outcomeFrame - 48)) / Math.max(1, state.replayEnd - Math.max(0, state.outcomeFrame - 48)), 0, 1);
+      const orbitAng = side * (0.45 + repT * 0.55);
+      camera.position.set(Math.sin(orbitAng) * 7.2, 1.7 + repT * 1.1, Math.cos(orbitAng) * 5.4);
+      camera.lookAt(f.ballPos.x * 0.65, Math.max(0.85, f.ballPos.y * 0.78), f.ballPos.z * 0.45);
       if (!state.replayNetDone && state.netHitFrame >= 0 && idx >= state.netHitFrame && state.netHitData) {
         state.replayNetDone = true;
         hitNet(state.netHitData.x, state.netHitData.y, state.netHitData.speed);

@@ -1479,7 +1479,7 @@ const SIDE_MISSIONS = [
   },
   {
     id:"sm_town", name:"Town Alley Dash", kind:"delivery", reward:160, timeLimit:44,
-    marker:{ x:136, z:118 }, spawn:{ x:136, z:118, yaw:-1.57 }, target:{ x:318, z:296, name:"South East Plaza" },
+    marker:{ x:136, z:118 }, spawn:{ x:136, z:118, yaw:-1.57 }, target:{ x:294, z:296, name:"South East Plaza" },
     text:"Cut through Riverside Town's paved roads and wide alleyways to drop off survey charts at South East Plaza."
   },
   {
@@ -1770,9 +1770,21 @@ const MUD_PATCHES = [
 ];
 
 const BRIDGES = [
-  { x:-271, z:-104, yaw:0.65, len:15, w:6.5 },
-  { x:-244, z:28,   yaw:0.25, len:14, w:6.0 }
+  { x:-270, z:-102, yaw:1.82, len:22, w:6.5 },
+  { x:-233.5, z:7.3, yaw:-0.57, len:20, w:6.5 }
 ];
+
+function evalBridgeHeight(br, x, z) {
+  const dx = x - br.x, dz = z - br.z;
+  const cs = Math.cos(br.yaw), sn = Math.sin(br.yaw);
+  const lx = dx * cs - dz * sn;
+  const lz = dx * sn + dz * cs;
+  const hw = br.w * 0.5, hl = br.len * 0.5;
+  if (Math.abs(lx) > hw || Math.abs(lz) > hl + 1.8) return -1e9;
+  if (Math.abs(lz) <= hl) return 2.38;
+  const t = 1.0 - (Math.abs(lz) - hl) / 1.8;
+  return lerp(2.05, 2.38, clamp(t, 0, 1));
+}
 
 const RAMPS = [
   { id:"r_mx1", name:"Opening MX Tabletop", type:"tabletop", x:0, z:146, yaw:0, halfW:8.2, hPeak:3.9, lipLen:11.5, deckLen:13.0, landLen:14.0, baseY:2.0 },
@@ -2033,17 +2045,14 @@ function computeAnalyticTerrain(x, z) {
     if (trackW > 0.35) surf = SURF.DIRT;
   }
 
-  let onBridge = false;
   for (let b = 0; b < BRIDGES.length; b++) {
     const br = BRIDGES[b];
-    const dx = x - br.x, dz = z - br.z;
-    const cs = Math.cos(-br.yaw), sn = Math.sin(-br.yaw);
-    const lx = dx * cs - dz * sn, lz = dx * sn + dz * cs;
-    if (Math.abs(lx) < br.w * 0.72 && Math.abs(lz) < br.len * 0.56) {
-      onBridge = true; h = Math.max(h, 2.35); surf = SURF.DIRT;
+    const brD = Math.hypot(x - br.x, z - br.z);
+    if (brD < br.len * 1.15) {
+      h = lerp(h, 2.35, smoothstep(br.len * 1.15, br.len * 0.45, brD));
     }
   }
-  if (!onBridge && creekD < 11) {
+  if (creekD < 11) {
     h = lerp(h, 0.25, smoothstep(11, 3.5, creekD));
     if (creekD < 8.5) surf = SURF.MUD;
   }
@@ -2053,10 +2062,10 @@ function computeAnalyticTerrain(x, z) {
     surf = (z < -265) ? SURF.ROCK : SURF.DIRT;
   }
   if (quarryRoadD < 8.5) surf = SURF.DIRT;
-  if (minTrailD < 6.8 && !onBridge) surf = SURF.DIRT;
+  if (minTrailD < 6.8) surf = SURF.DIRT;
   for (let m = 0; m < MUD_PATCHES.length; m++) {
     const mp = MUD_PATCHES[m];
-    if (Math.hypot(x - mp[0], z - mp[1]) < mp[2] && minRoadD > 9 && !onBridge) surf = SURF.MUD;
+    if (Math.hypot(x - mp[0], z - mp[1]) < mp[2] && minRoadD > 9) surf = SURF.MUD;
   }
   if (mxInfo.d < 9.2) surf = SURF.DIRT;
   if (minRoadD < 7.6) surf = SURF.TARMAC;
@@ -2106,6 +2115,7 @@ const WORLD = {
       if (Math.hypot(x, z - 220) < 28 || Math.hypot(x, z - 75) < 28) return false;
       if (Math.hypot(x - CHASE_TRIGGER.x, z - CHASE_TRIGGER.z) < 22) return false;
       for (const r of RAMPS) if (Math.hypot(x - r.x, z - r.z) < 28) return false;
+      for (const br of BRIDGES) if (Math.hypot(x - br.x, z - br.z) < br.len * 0.85) return false;
       for (const sz of SAFE_ZONES) if (Math.hypot(x - sz.x, z - sz.z) < 24) return false;
       for (const pt of HIDDEN_PARTS) if (Math.hypot(x - pt.x, z - pt.z) < 16) return false;
       for (const sm of SIDE_MISSIONS) if (Math.hypot(x - sm.marker.x, z - sm.marker.z) < 16) return false;
@@ -2176,13 +2186,70 @@ const WORLD = {
     const cell = 32;
     const cx = Math.floor(x / cell), cz = Math.floor(z / cell);
     const out = [];
+    const stamp = (this._qStamp = (this._qStamp || 0) + 1);
     for (let dz = -1; dz <= 1; dz++) {
       for (let dx = -1; dx <= 1; dx++) {
         const arr = this.gridMap.get((cx + dx) + "," + (cz + dz));
-        if (arr) for (let i = 0; i < arr.length; i++) out.push(arr[i]);
+        if (arr) {
+          for (let i = 0; i < arr.length; i++) {
+            const c = arr[i];
+            if (c._qs !== stamp) { c._qs = stamp; out.push(c); }
+          }
+        }
       }
     }
     return out;
+  },
+
+  isPointBlocked(x, z, pad=0.8) {
+    const cols = this.queryColliders(x, z);
+    for (let i = 0; i < cols.length; i++) {
+      const c = cols[i];
+      if (c.type === "box") {
+        if (Math.abs(x - c.x) < c.hx + pad && Math.abs(z - c.z) < c.hz + pad) return true;
+      } else {
+        if (Math.hypot(x - c.x, z - c.z) < c.r + pad) return true;
+      }
+    }
+    return false;
+  },
+
+  pushOutColliders(obj, rad, allowHeight=true) {
+    let hitAny = false;
+    for (let pass = 0; pass < 2; pass++) {
+      const cols = this.queryColliders(obj.x, obj.z);
+      for (let i = 0; i < cols.length; i++) {
+        const c = cols[i];
+        if (allowHeight && obj.y > c.yBase + c.h) continue;
+        let hit = false, nx = 0, nz = 0, pen = 0;
+        if (c.type === "box") {
+          const cx = clamp(obj.x, c.x - c.hx, c.x + c.hx);
+          const cz = clamp(obj.z, c.z - c.hz, c.z + c.hz);
+          const dx = obj.x - cx, dz = obj.z - cz, d = Math.hypot(dx, dz);
+          if (d < rad) {
+            hit = true;
+            if (d > 1e-4) { nx = dx / d; nz = dz / d; pen = rad - d; }
+            else {
+              const ox = c.hx - Math.abs(obj.x - c.x), oz = c.hz - Math.abs(obj.z - c.z);
+              if (ox < oz) { nx = obj.x >= c.x ? 1 : -1; pen = ox + rad; }
+              else { nz = obj.z >= c.z ? 1 : -1; pen = oz + rad; }
+            }
+          }
+        } else {
+          const dx = obj.x - c.x, dz = obj.z - c.z, d = Math.hypot(dx, dz), minD = c.r + rad;
+          if (d < minD) { hit = true; nx = d > 1e-4 ? dx / d : 1; nz = d > 1e-4 ? dz / d : 0; pen = minD - d; }
+        }
+        if (hit) {
+          obj.x += nx * pen; obj.z += nz * pen;
+          hitAny = true;
+          if (obj.vx !== undefined && obj.vz !== undefined) {
+            const vn = obj.vx * nx + obj.vz * nz;
+            if (vn < 0) { obj.vx -= nx * vn * 1.1; obj.vz -= nz * vn * 1.1; }
+          }
+        }
+      }
+    }
+    return hitAny;
   },
 
   getBaseHeight(x, z) {
@@ -2199,6 +2266,10 @@ const WORLD = {
 
   getHeight(x, z) {
     let h = this.getBaseHeight(x, z);
+    for (let i = 0; i < BRIDGES.length; i++) {
+      const bh = evalBridgeHeight(BRIDGES[i], x, z);
+      if (bh > h) h = bh;
+    }
     for (let i = 0; i < RAMPS.length; i++) {
       const rh = evalRampHeight(RAMPS[i], x, z);
       if (rh > h) h = rh;
@@ -2217,17 +2288,21 @@ const WORLD = {
   },
 
   getSurface(x, z) {
+    for (let i = 0; i < BRIDGES.length; i++) {
+      if (evalBridgeHeight(BRIDGES[i], x, z) > -1e6) return SURF.DIRT;
+    }
     const ix = clamp(Math.round((x + MAP_HALF) / MAP_SIZE * GRID_N), 0, GRID_N);
     const iz = clamp(Math.round((z + MAP_HALF) / MAP_SIZE * GRID_N), 0, GRID_N);
     return this.surfs[iz * GRID_STRIDE + ix];
   },
 
   hasLineOfSight(ax, ay, az, bx, by, bz) {
-    const steps = 10;
+    const dist = Math.hypot(bx - ax, by - ay, bz - az);
+    const steps = clamp(Math.ceil(dist / 2.2), 6, 48);
     for (let i = 1; i < steps; i++) {
       const t = i / steps;
       const px = lerp(ax, bx, t), py = lerp(ay, by, t), pz = lerp(az, bz, t);
-      if (py < this.getBaseHeight(px, pz) + 0.5) return false;
+      if (py < this.getBaseHeight(px, pz) + 0.45) return false;
       const cols = this.queryColliders(px, pz);
       for (let j = 0; j < cols.length; j++) {
         const c = cols[j];
@@ -2237,6 +2312,38 @@ const WORLD = {
     return true;
   }
 };
+
+const VEH_BOUNDS = {
+  veh_patrol: { hx: 1.08, hz: 2.52, h: 1.90 },
+  veh_truck:  { hx: 1.12, hz: 2.44, h: 1.95 },
+  veh_van:    { hx: 1.10, hz: 2.34, h: 2.05 },
+  veh_suv:    { hx: 1.10, hz: 2.36, h: 1.90 },
+  veh_sedan:  { hx: 1.04, hz: 2.22, h: 1.75 },
+  veh_sports: { hx: 1.02, hz: 2.18, h: 1.55 },
+  patrol_bike:{ hx: 0.46, hz: 1.05, h: 1.55 }
+};
+
+function resolveCircleOBB(px, pz, py, r, bx, bz, by, yaw, hx, hz, h) {
+  if (py > by + h + 0.15 || py + 1.5 < by) return null;
+  const dx = px - bx, dz = pz - bz;
+  if (Math.abs(dx) > hx + hz + r + 1 || Math.abs(dz) > hx + hz + r + 1) return null;
+  const cs = Math.cos(yaw), sn = Math.sin(yaw);
+  const lx = dx * cs - dz * sn;
+  const lz = dx * sn + dz * cs;
+  const cx = clamp(lx, -hx, hx), cz = clamp(lz, -hz, hz);
+  const dlx = lx - cx, dlz = lz - cz;
+  const d = Math.hypot(dlx, dlz);
+  if (d >= r) return null;
+  let lnx = 0, lnz = 0, pen = 0;
+  if (d > 1e-4) {
+    lnx = dlx / d; lnz = dlz / d; pen = r - d;
+  } else {
+    const ox = hx - Math.abs(lx), oz = hz - Math.abs(lz);
+    if (ox < oz) { lnx = lx >= 0 ? 1 : -1; pen = ox + r; }
+    else { lnz = lz >= 0 ? 1 : -1; pen = oz + r; }
+  }
+  return { nx: lnx * cs + lnz * sn, nz: -lnx * sn + lnz * cs, pen };
+}
 
 /* ============================================================================
    SECTION 3: RUTLINE — WEBGL2 PBR ENGINE, 5-BIOME TERRAIN SPLATTING,
@@ -3782,12 +3889,18 @@ const GL = {
       mb.addBox(q.x, y + q.h + 1.2, q.z, q.w + 1.6, 2.2, q.d + 1.6, [0.76,0.52,0.20]);
     }
 
-    // 7. Timber Creek Bridges (Wood Planks mat=9)
+    // 7. Timber Creek Bridges (Wood Planks mat=9 + riverbed support pilings)
     for (const br of BRIDGES) {
       mb.addBox(br.x, 2.15, br.z, br.w, 0.45, br.len, [0.74,0.54,0.34], 0, br.yaw, 9.0);
       const cs = Math.cos(br.yaw), sn = Math.sin(br.yaw), rx = br.w * 0.46;
       mb.addBox(br.x + rx*cs, 2.85, br.z - rx*sn, 0.35, 0.9, br.len, [0.62,0.44,0.26], 0, br.yaw, 9.0);
       mb.addBox(br.x - rx*cs, 2.85, br.z + rx*sn, 0.35, 0.9, br.len, [0.62,0.44,0.26], 0, br.yaw, 9.0);
+      for (const lz of [-br.len*0.38, 0, br.len*0.38]) {
+        for (const sx of [-rx, rx]) {
+          const px = br.x + sx*cs + lz*sn, pz = br.z - sx*sn + lz*cs;
+          mb.addBox(px, 1.0, pz, 0.42, 2.2, 0.42, [0.44,0.31,0.19], 0, br.yaw, 9.0);
+        }
+      }
     }
 
     // 8. MX Paddock Trail Crew Tent Canopy (clear of MX track at x=+23, z=200!)
@@ -4603,59 +4716,71 @@ const ValleyLife = {
     if (this.inited) return;
     this.inited = true;
 
-    // 1. Static Paddock & Trail Crew Parked Vehicles (guaranteed clear of all tracks, ramps & checkpoints!)
+    // 1. Static Paddock & Trail Crew Parked Vehicles (guaranteed clear of all tracks, ramps, buildings & checkpoints!)
     const padDefs = [
       { model:"veh_truck",  x:17.5,  z:196.0, yaw:-0.52, col:[0.13,0.56,0.58] }, // MX Paddock Crew Pickup
       { model:"veh_van",    x:30.0,  z:195.5, yaw:-0.28, col:[0.90,0.68,0.20] }, // MX Paddock Trail Crew Van
       { model:"veh_suv",    x:22.5,  z:212.5, yaw: 0.18, col:[0.82,0.34,0.26] }, // MX Spectator SUV
       { model:"veh_truck",  x:166.5, z:-184.0,yaw: 0.42, col:[0.86,0.58,0.18] }, // Slope Summit Staging Truck
       { model:"veh_van",    x:199.5, z:-182.0,yaw:-0.38, col:[0.20,0.44,0.74] }, // Slope Summit Support Van
-      { model:"veh_sports", x:196.0, z:126.0, yaw: 1.57, col:[0.22,0.74,0.86] }, // Riverside Town Parked Coupe
-      { model:"veh_suv",    x:284.0, z:184.0, yaw:-1.57, col:[0.36,0.54,0.38] }  // Riverside Town SUV
+      { model:"veh_sports", x:193.5, z:126.0, yaw: 0.0,  col:[0.22,0.74,0.86] }, // Riverside Town Parked Coupe
+      { model:"veh_suv",    x:286.5, z:184.0, yaw: 0.0,  col:[0.36,0.54,0.38] }  // Riverside Town Parked SUV
     ];
     this.paddockCars = padDefs.map(d => ({
       ...d, y: WORLD.getBaseHeight(d.x, d.z), spin: 0
     }));
 
-    // 2. Active Highway & Riverside Town Cruising Traffic (2-way lanes on 720m Long Straight + Town Avenue + Cross Street)
+    // 2. Active Highway & Riverside Town Cruising Traffic (2-way lanes clear of all stunt ramps & buildings!)
     const carModels = ["veh_sedan","veh_suv","veh_truck","veh_van","veh_sports","veh_sedan","veh_suv"];
     const carPaints = [
       [0.82,0.26,0.22], [0.18,0.54,0.76], [0.88,0.72,0.24], [0.22,0.64,0.56],
       [0.86,0.88,0.92], [0.34,0.42,0.58], [0.76,0.42,0.24], [0.32,0.56,0.36]
     ];
     this.traffic = [];
-    // 8 cars on 720m Long Straight Highway (x=346.2 southbound +Z, x=353.8 northbound -Z)
+    // 8 cars on 720m Long Straight Highway (x=346.4 southbound +Z, x=353.6 northbound -Z)
     for (let i = 0; i < 8; i++) {
       const nb = (i % 2 === 0);
       const z = -310 + (i * 80);
       const x = nb ? 353.6 : 346.4;
       this.traffic.push({
         lane: "hwy", dir: nb ? -1 : 1, x, z, y: WORLD.getBaseHeight(x, z),
-        yaw: nb ? 0 : Math.PI, speed: 16 + (i % 4) * 3.2,
+        yaw: nb ? 0 : Math.PI, speed: 16 + (i % 4) * 3.2, curSpd: 16, braking: 0,
         model: carModels[i % carModels.length], col: carPaints[i % carPaints.length],
         spin: 0, nearCd: 0, highOnly: i >= 4
       });
     }
-    // 4 cars on Riverside Town Avenue (x=236.5 / 243.5, z=95..325)
-    for (let i = 0; i < 4; i++) {
+    // 2 cars on Riverside East Town Street (x=291.8 southbound +Z, x=296.2 northbound -Z, clear of r_town!)
+    for (let i = 0; i < 2; i++) {
       const nb = (i % 2 === 0);
-      const z = 110 + i * 56;
-      const x = nb ? 243.4 : 236.6;
+      const z = nb ? 295 : 118;
+      const x = nb ? 296.2 : 291.8;
       this.traffic.push({
         lane: "townNS", dir: nb ? -1 : 1, x, z, y: WORLD.getBaseHeight(x, z),
-        yaw: nb ? 0 : Math.PI, speed: 10.5 + (i % 2) * 2.5,
+        yaw: nb ? 0 : Math.PI, speed: 10.5 + (i % 2) * 1.5, curSpd: 10.5, braking: 0,
         model: carModels[(i + 2) % carModels.length], col: carPaints[(i + 3) % carPaints.length],
-        spin: 0, nearCd: 0, highOnly: i >= 2
+        spin: 0, nearCd: 0, highOnly: false
       });
     }
-    // 2 cars on Riverside Cross Street (z=156.5 / 163.5, x=135..330)
+    // 2 cars on Riverside South Cross Street (z=263.4 eastbound +X, z=256.6 westbound -X)
+    for (let i = 0; i < 2; i++) {
+      const eb = (i === 0);
+      const x = eb ? 165 : 310;
+      const z = eb ? 263.4 : 256.6;
+      this.traffic.push({
+        lane: "townEW2", dir: eb ? 1 : -1, x, z, y: WORLD.getBaseHeight(x, z),
+        yaw: eb ? -Math.PI * 0.5 : Math.PI * 0.5, speed: 9.8, curSpd: 9.8, braking: 0,
+        model: carModels[(i + 3) % carModels.length], col: carPaints[(i + 4) % carPaints.length],
+        spin: 0, nearCd: 0, highOnly: true
+      });
+    }
+    // 2 cars on Riverside Cross Street (z=163.4 eastbound +X, z=156.6 westbound -X)
     for (let i = 0; i < 2; i++) {
       const eb = (i === 0);
       const x = eb ? 170 : 295;
       const z = eb ? 163.4 : 156.6;
       this.traffic.push({
         lane: "townEW", dir: eb ? 1 : -1, x, z, y: WORLD.getBaseHeight(x, z),
-        yaw: eb ? -Math.PI * 0.5 : Math.PI * 0.5, speed: 9.5,
+        yaw: eb ? -Math.PI * 0.5 : Math.PI * 0.5, speed: 9.5, curSpd: 9.5, braking: 0,
         model: carModels[(i + 4) % carModels.length], col: carPaints[(i + 5) % carPaints.length],
         spin: 0, nearCd: 0, highOnly: i >= 1
       });
@@ -4715,52 +4840,151 @@ const ValleyLife = {
     });
   },
 
+  isCarActive(i, isTraffic, c) {
+    const q = GL.activeQuality;
+    if (isTraffic && q !== "high" && c.highOnly) return false;
+    if (q === "lite" && (i % 2 === 1)) return false;
+    return true;
+  },
+
   step(dt) {
     if (!this.inited) this.init();
     const isHigh = (GL.activeQuality === "high");
     const bikeSpdMph = Math.hypot(Bike.vx, Bike.vz) * 2.23694;
+    const activeRB = (Mode.type === "chase" && Mode.heat >= 3);
 
     for (let i = 0; i < this.traffic.length; i++) {
       const c = this.traffic[i];
-      if (!isHigh && c.highOnly) continue;
+      if (!this.isCarActive(i, true, c)) continue;
       if (c.nearCd > 0) c.nearCd -= dt;
-      // Gently pause cars right next to player if player stopped ahead in lane
-      let curSpd = c.speed;
-      const dxp = Bike.x - c.x, dzp = Bike.z - c.z;
-      const dist = Math.hypot(dxp, dzp);
       const fx = -Math.sin(c.yaw), fz = -Math.cos(c.yaw);
-      if (dist < 14 && (dxp * fx + dzp * fz) > 2.0) curSpd *= 0.25;
+      const rx = Math.cos(c.yaw), rz = -Math.sin(c.yaw);
+      let targetSpd = c.speed;
 
+      // 1. Yield / stop cleanly for player directly ahead in the same lane
+      const dxp = Bike.x - c.x, dzp = Bike.z - c.z;
+      const fwdP = dxp * fx + dzp * fz, latP = Math.abs(dxp * rx + dzp * rz);
+      if (fwdP > 1.5 && fwdP < 15.0 && latP < 2.2 && Math.abs(Bike.y - c.y) < 2.2) {
+        targetSpd = Math.min(targetSpd, fwdP < 6.2 ? 0 : c.speed * ((fwdP - 6.2) / 8.8));
+      }
+
+      // 2. Same-lane following distance & cross-street intersection yielding (zero car-through-car!)
+      const span = c.lane === "hwy" ? 660 : (c.lane === "townNS" ? 240 : 202);
+      for (let j = 0; j < this.traffic.length; j++) {
+        if (i === j) continue;
+        const o = this.traffic[j];
+        if (!this.isCarActive(j, true, o)) continue;
+        if (o.lane === c.lane && o.dir === c.dir) {
+          let gap = (c.lane === "hwy" || c.lane === "townNS") ? (o.z - c.z) * c.dir : (o.x - c.x) * c.dir;
+          if (gap < -span * 0.5) gap += span;
+          if (gap > 0 && gap < 18.0) {
+            targetSpd = Math.min(targetSpd, gap < 8.5 ? 0 : Math.min(o.curSpd || o.speed, c.speed * ((gap - 8.5) / 9.5)));
+          }
+        } else if (c.lane !== "hwy" && o.lane !== "hwy") {
+          const dxo = o.x - c.x, dzo = o.z - c.z;
+          const fwdO = dxo * fx + dzo * fz, latO = Math.abs(dxo * rx + dzo * rz);
+          if (fwdO > 1.5 && fwdO < 14.5 && latO < 7.0) {
+            const oFx = -Math.sin(o.yaw), oFz = -Math.cos(o.yaw);
+            const oFwdMe = (c.x - o.x) * oFx + (c.z - o.z) * oFz;
+            if (oFwdMe < 1.5 || fwdO > oFwdMe + 0.5 || (Math.abs(fwdO - oFwdMe) <= 0.5 && i > j)) {
+              targetSpd = 0;
+            }
+          }
+        }
+      }
+
+      // 3. Stop cleanly before active Heat 3+ roadblocks & nearby patrol cruisers
+      if (activeRB) {
+        for (let r = 0; r < ROADBLOCKS.length; r++) {
+          const rb = ROADBLOCKS[r];
+          const fRb = (rb.x - c.x) * fx + (rb.z - c.z) * fz;
+          const lRb = Math.abs((rb.x - c.x) * rx + (rb.z - c.z) * rz);
+          if (fRb > 1.5 && fRb < 15.0 && lRb < 6.5) targetSpd = Math.min(targetSpd, fRb < 6.8 ? 0 : c.speed * ((fRb - 6.8) / 8.2));
+        }
+      }
+      for (let p = 0; p < Mode.patrols.length; p++) {
+        const u = Mode.patrols[p];
+        const fU = (u.x - c.x) * fx + (u.z - c.z) * fz, lU = Math.abs((u.x - c.x) * rx + (u.z - c.z) * rz);
+        if (fU > 1.5 && fU < 13.0 && lU < 2.6) targetSpd = Math.min(targetSpd, fU < 6.5 ? 0 : c.speed * ((fU - 6.5) / 6.5));
+      }
+
+      c.curSpd = lerp(c.curSpd !== undefined ? c.curSpd : c.speed, targetSpd, clamp(dt * (targetSpd < (c.curSpd || 0) ? 7.5 : 3.0), 0, 1));
+      if (c.curSpd < 0.08 && targetSpd === 0) c.curSpd = 0;
+      c.braking = targetSpd < c.speed * 0.65 ? 1.0 : 0.0;
+
+      const tryWrap = (nx, nz) => {
+        if (Math.hypot(Bike.x - nx, Bike.z - nz) < 16) return false;
+        for (let j = 0; j < this.traffic.length; j++) {
+          if (i !== j && this.isCarActive(j, true, this.traffic[j]) && Math.hypot(this.traffic[j].x - nx, this.traffic[j].z - nz) < 12) return false;
+        }
+        return true;
+      };
       if (c.lane === "hwy") {
-        c.z += c.dir * curSpd * dt;
-        if (c.z < -330) c.z = 330;
-        if (c.z > 330) c.z = -330;
+        const nz = c.z + c.dir * c.curSpd * dt;
+        if (nz < -330) { if (tryWrap(c.x, 330)) c.z = 330; else c.curSpd = 0; }
+        else if (nz > 330) { if (tryWrap(c.x, -330)) c.z = -330; else c.curSpd = 0; }
+        else c.z = nz;
       } else if (c.lane === "townNS") {
-        c.z += c.dir * curSpd * dt;
-        if (c.z < 92) c.z = 332;
-        if (c.z > 332) c.z = 92;
-      } else if (c.lane === "townEW") {
-        c.x += c.dir * curSpd * dt;
-        if (c.x < 130) c.x = 332;
-        if (c.x > 332) c.x = 130;
+        const nz = c.z + c.dir * c.curSpd * dt;
+        if (nz < 92) { if (tryWrap(c.x, 332)) c.z = 332; else c.curSpd = 0; }
+        else if (nz > 332) { if (tryWrap(c.x, 92)) c.z = 92; else c.curSpd = 0; }
+        else c.z = nz;
+      } else {
+        const nx = c.x + c.dir * c.curSpd * dt;
+        if (nx < 130) { if (tryWrap(332, c.z)) c.x = 332; else c.curSpd = 0; }
+        else if (nx > 332) { if (tryWrap(130, c.z)) c.x = 130; else c.curSpd = 0; }
+        else c.x = nx;
       }
       c.y = WORLD.getBaseHeight(c.x, c.z);
-      c.spin += (curSpd / 0.42) * dt;
+      c.spin += (c.curSpd / 0.42) * dt;
 
-      // Near-Miss Stunt Bonus & Forgiving Soft Bump Collision!
-      if (App.screen === "play" && !Bike.crashed && dist < 4.8) {
-        if (dist < 2.25) {
-          const inv = 1 / (dist || 1);
-          const nx = dxp * inv, nz = dzp * inv;
-          Bike.x = c.x + nx * 2.35;
-          Bike.z = c.z + nz * 2.35;
-          Bike.vx = Bike.vx * 0.62 + nx * 5.2;
-          Bike.vz = Bike.vz * 0.62 + nz * 5.2;
-          AudioSys.sfxThump(0.75);
-        } else if (bikeSpdMph > 40 && c.nearCd <= 0 && !Bike.airborne) {
+      // Exact Post-Move Vehicle OBB Collision & Near-Miss Bonus (with vertical air jump clearance!)
+      if (App.screen === "play" && !Bike.crashed) {
+        const vb = VEH_BOUNDS[c.model] || VEH_BOUNDS.veh_sedan;
+        const hit = resolveCircleOBB(Bike.x, Bike.z, Bike.y, 0.65, c.x, c.z, c.y, c.yaw, vb.hx, vb.hz, vb.h);
+        if (hit) {
+          Bike.x += hit.nx * (hit.pen + 0.04);
+          Bike.z += hit.nz * (hit.pen + 0.04);
+          const cvx = fx * c.curSpd, cvz = fz * c.curSpd;
+          const rvx = Bike.vx - cvx, rvz = Bike.vz - cvz;
+          const rvn = rvx * hit.nx + rvz * hit.nz;
+          if (rvn < 0) {
+            const impact = -rvn;
+            if (impact > 20.0) { Bike.triggerCrash("TRAFFIC IMPACT — RESETTING"); }
+            else {
+              Bike.vx -= hit.nx * rvn * 1.15; Bike.vz -= hit.nz * rvn * 1.15;
+              Bike.vx = Bike.vx * 0.72 + hit.nx * 3.0; Bike.vz = Bike.vz * 0.72 + hit.nz * 3.0;
+              AudioSys.sfxThump(clamp(impact / 10, 0.55, 1.3));
+            }
+          }
+          WORLD.pushOutColliders(Bike, 0.65, true);
+        } else if (bikeSpdMph > 40 && c.nearCd <= 0 && !Bike.airborne && Math.abs(Bike.y - c.y) < 2.0 && Math.hypot(Bike.x - c.x, Bike.z - c.z) < 4.9) {
           c.nearCd = 3.5;
           Stunts.add(80, "NEAR MISS");
           AudioSys.sfxStunt();
+        }
+      }
+    }
+
+    // Solid OBB Collision against all visible Parked Paddock & Town Vehicles!
+    if (App.screen === "play" && !Bike.crashed) {
+      for (let i = 0; i < this.paddockCars.length; i++) {
+        const c = this.paddockCars[i];
+        if (!this.isCarActive(i, false, c)) continue;
+        const vb = VEH_BOUNDS[c.model] || VEH_BOUNDS.veh_suv;
+        const hit = resolveCircleOBB(Bike.x, Bike.z, Bike.y, 0.65, c.x, c.z, c.y, c.yaw, vb.hx, vb.hz, vb.h);
+        if (hit) {
+          Bike.x += hit.nx * (hit.pen + 0.03);
+          Bike.z += hit.nz * (hit.pen + 0.03);
+          const vn = Bike.vx * hit.nx + Bike.vz * hit.nz;
+          if (vn < 0) {
+            const impact = -vn;
+            if (impact > 18.0) { Bike.triggerCrash("IMPACT — RESETTING"); break; }
+            Bike.vx -= hit.nx * vn * 1.25; Bike.vz -= hit.nz * vn * 1.25;
+            Bike.vx *= 0.76; Bike.vz *= 0.76;
+            if (impact > 3.0) AudioSys.sfxThump(clamp(impact / 10, 0.45, 1.2));
+          }
+          WORLD.pushOutColliders(Bike, 0.65, true);
         }
       }
     }
@@ -4785,25 +5009,25 @@ const ValleyLife = {
   renderVehicles(time, mood, shadowOnly) {
     if (!GL.extReady) return;
     const isHigh = (GL.activeQuality === "high");
-    const isLite = (GL.activeQuality === "lite");
     const headOn = (mood.lampGlow > 0.45) ? 1.0 : 0.0;
     const strobe = PREFERS_REDUCED_MOTION ? 0.5 : (time * 8.5);
     const maxD = shadowOnly ? (isHigh ? 112 : 66) : GL.drawDist;
 
-    // 1. Heat 1-5 Park Patrol Cruisers (3D cruiser + 4 spinning wheels)
+    // 1. Heat 1-5 Park Patrol Cruisers (3D cruiser + 4 spinning wheels + terrain pitch!)
     for (let i = 0; i < Mode.patrols.length; i++) {
       const u = Mode.patrols[i];
       if (u.kind !== "car") continue;
       if (Math.hypot(u.x - Cam.x, u.z - Cam.z) > maxD) continue;
-      const spd = Math.hypot(u.vx || 0, u.vz || 0);
-      u._spin = (u._spin || 0) + (spd * 0.038 + 0.14);
-      drawRoadVehicle("veh_patrol", u.x, u.y, u.z, u.yaw, 0, 0, [1,1,1], u._spin, 0, 1.0, 0.35, strobe + i * 1.7, shadowOnly);
+      const hA = WORLD.getBaseHeight(u.x - Math.sin(u.yaw) * 1.5, u.z - Math.cos(u.yaw) * 1.5);
+      const hB = WORLD.getBaseHeight(u.x + Math.sin(u.yaw) * 1.5, u.z + Math.cos(u.yaw) * 1.5);
+      const pitch = clamp(Math.atan2(hA - hB, 3.0), -0.25, 0.25);
+      drawRoadVehicle("veh_patrol", u.x, u.y, u.z, u.yaw, pitch, 0, [1,1,1], u._spin || 0, 0, 1.0, 0.35, strobe + i * 1.7, shadowOnly);
     }
 
     // 2. Paddock & Staging Fleet (parked Trail Crew trucks/vans/SUVs)
     for (let i = 0; i < this.paddockCars.length; i++) {
-      if (isLite && (i % 2 === 1)) continue;
       const c = this.paddockCars[i];
+      if (!this.isCarActive(i, false, c)) continue;
       if (Math.hypot(c.x - Cam.x, c.z - Cam.z) > maxD) continue;
       drawRoadVehicle(c.model, c.x, c.y, c.z, c.yaw, 0, 0, c.col, 0, 0.14, headOn * 0.35, 0.0, 0, shadowOnly);
     }
@@ -4811,13 +5035,12 @@ const ValleyLife = {
     // 3. Cruising Highway & Town Traffic
     for (let i = 0; i < this.traffic.length; i++) {
       const c = this.traffic[i];
-      if (!isHigh && c.highOnly) continue;
-      if (isLite && (i % 2 === 1)) continue;
+      if (!this.isCarActive(i, true, c)) continue;
       if (Math.hypot(c.x - Cam.x, c.z - Cam.z) > maxD) continue;
       const hA = WORLD.getBaseHeight(c.x - Math.sin(c.yaw) * 1.5, c.z - Math.cos(c.yaw) * 1.5);
       const hB = WORLD.getBaseHeight(c.x + Math.sin(c.yaw) * 1.5, c.z + Math.cos(c.yaw) * 1.5);
       const pitch = clamp(Math.atan2(hA - hB, 3.0), -0.25, 0.25);
-      drawRoadVehicle(c.model, c.x, c.y, c.z, c.yaw, pitch, 0, c.col, c.spin, 0, headOn, 0.0, 0, shadowOnly);
+      drawRoadVehicle(c.model, c.x, c.y, c.z, c.yaw, pitch, 0, c.col, c.spin, 0, headOn, c.braking || 0.0, 0, shadowOnly);
     }
   },
 
@@ -5043,7 +5266,7 @@ const Input = {
         this.clear();
         AudioSys.setPaused(true);
         if (App.screen === "play" && !App.paused && !App.modal && !App.photoMode) App.setPaused(true, "Tab hidden");
-      } else if (!App.paused) {
+      } else if (App.screen === "play" && !App.paused && !App.modal && !App.photoMode) {
         AudioSys.setPaused(false);
       }
     });
@@ -5359,7 +5582,7 @@ const Bike = {
 
   quickReset() {
     if (Mode.type === "hillclimb") { Mode.start("hillclimb", 0); return; }
-    if (this.crashed) this.resetAt(this.safePos.x, this.safePos.z, this.safePos.yaw);
+    if (this.crashed || WORLD.isPointBlocked(this.x, this.z, 1.0)) this.resetAt(this.safePos.x, this.safePos.z, this.safePos.yaw);
     else this.resetAt(this.x, this.z, this.yaw);
     showCallout("BACK ON TRACK");
   },
@@ -5406,6 +5629,11 @@ const Bike = {
       this.riderPos[2] += this.riderVel[2] * simDt;
       this.riderRot[1] += 6.2 * simDt;
       this.riderRot[2] += 4.5 * simDt;
+      const rObj = { x: this.riderPos[0], y: this.riderPos[1], z: this.riderPos[2], vx: this.riderVel[0], vz: this.riderVel[2] };
+      if (WORLD.pushOutColliders(rObj, 0.55, true)) {
+        this.riderPos[0] = rObj.x; this.riderPos[2] = rObj.z;
+        this.riderVel[0] = rObj.vx * 0.45; this.riderVel[2] = rObj.vz * 0.45;
+      }
       const rh = WORLD.getHeight(this.riderPos[0], this.riderPos[2]) + 0.56;
       if (this.riderPos[1] < rh) {
         this.riderPos[1] = rh;
@@ -5414,16 +5642,7 @@ const Bike = {
       }
       this.vy -= 18.0 * simDt;
       this.x += this.vx * simDt; this.y += this.vy * simDt; this.z += this.vz * simDt;
-      const cCols = WORLD.queryColliders(this.x, this.z);
-      for (let i = 0; i < cCols.length; i++) {
-        const c = cCols[i];
-        const rad = (c.hx ? Math.max(c.hx, c.hz) : c.r) + 0.85;
-        const dx = this.x - c.x, dz = this.z - c.z, d = Math.hypot(dx, dz);
-        if (d < rad && d > 0.01) {
-          this.x = c.x + (dx / d) * rad; this.z = c.z + (dz / d) * rad;
-          this.vx *= -0.3; this.vz *= -0.3;
-        }
-      }
+      if (WORLD.pushOutColliders(this, 0.75, true)) { this.vx *= 0.45; this.vz *= 0.45; }
       const bh = WORLD.getHeight(this.x, this.z) + 0.44;
       if (this.y < bh) { this.y = bh; this.vy = 0; this.vx *= 0.88; this.vz *= 0.88; }
       this.roll = lerp(this.roll, Math.sign(this.roll || 1) * 1.32, simDt * 5);
@@ -5470,8 +5689,12 @@ const Bike = {
     const halfWB = p.wb * 0.5;
     const frontX = this.x + fx * halfWB, frontZ = this.z + fz * halfWB;
     const rearX  = this.x - fx * halfWB, rearZ  = this.z - fz * halfWB;
-    const hF = WORLD.getHeight(frontX, frontZ);
-    const hR = WORLD.getHeight(rearX, rearZ);
+    const safeWheelH = (wx, wz) => {
+      const bh = WORLD.getBaseHeight(wx, wz), fh = WORLD.getHeight(wx, wz);
+      return (fh - bh > 0.25 && fh > this.y + 1.15) ? bh : fh;
+    };
+    const hF = safeWheelH(frontX, frontZ);
+    const hR = safeWheelH(rearX, rearZ);
     const hMid = (hF + hR) * 0.5;
     const groundSlope = Math.atan2(hF - hR, p.wb);
     this.surface = WORLD.getSurface(this.x, this.z);
@@ -5583,7 +5806,7 @@ const Bike = {
       this.slip = 0;
     } else {
       this.airTime = 0;
-      if (Math.abs(this.roll) < 0.65 && Math.abs(this.pitch - groundSlope) < 0.5 && hSpd < 45 && Mode.type !== "hillclimb") {
+      if (Math.abs(this.roll) < 0.65 && Math.abs(this.pitch - groundSlope) < 0.5 && hSpd < 45 && Mode.type !== "hillclimb" && !WORLD.isPointBlocked(this.x, this.z, 1.4)) {
         this.safePos.x = this.x; this.safePos.z = this.z; this.safePos.yaw = this.yaw;
       }
 
@@ -5749,10 +5972,74 @@ const Bike = {
       }
     }
 
+    const prevX = this.x, prevZ = this.z;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
     this.z += this.vz * dt;
     this.wheelSpin += (fwdSpd / p.wheelR) * dt;
+
+    // Prevent vertical teleport through sheer kicker back walls & ramp side walls!
+    for (let i = 0; i < RAMPS.length; i++) {
+      const r = RAMPS[i];
+      if (Math.hypot(this.x - r.x, this.z - r.z) > 30) continue;
+      const cs = Math.cos(r.yaw), sn = Math.sin(r.yaw);
+      const dx = this.x - r.x, dz = this.z - r.z;
+      const lx = dx * cs - dz * sn, lz = dx * sn + dz * cs;
+      const pdx = prevX - r.x, pdz = prevZ - r.z;
+      const plx = pdx * cs - pdz * sn, plz = pdx * sn + pdz * cs;
+      const zMin = r.type === "tabletop" ? -(r.deckLen * 0.5 + r.landLen) : -0.6;
+      const zMax = r.type === "tabletop" ? (r.deckLen * 0.5 + r.lipLen) : r.lipLen;
+      if (r.type === "kicker" && plz <= -0.55 && lz > -1.42 && lz < 2.2 && Math.abs(lx) < r.halfW + 0.52 && this.y < r.baseY + r.hPeak - 0.65) {
+        const push = -1.44 - lz;
+        this.x += sn * push; this.z += cs * push;
+        const vn = this.vx * (-sn) + this.vz * (-cs);
+        if (vn < 0) {
+          if (-vn > 17.5) { this.triggerCrash("RAMP WALL IMPACT — RESETTING"); return; }
+          this.vx -= (-sn) * vn * 1.25; this.vz -= (-cs) * vn * 1.25;
+          this.vx *= 0.72; this.vz *= 0.72;
+          if (-vn > 3.5) AudioSys.sfxThump(clamp(-vn / 10, 0.4, 1.2));
+        }
+        continue;
+      }
+      if (lz >= zMin && lz <= zMax && Math.abs(plx) >= r.halfW - 0.05 && Math.abs(lx) < r.halfW + 0.55) {
+        const edgeX = r.x + Math.sign(plx || 1) * (r.halfW - 0.15) * cs + lz * sn;
+        const edgeZ = r.z - Math.sign(plx || 1) * (r.halfW - 0.15) * sn + lz * cs;
+        const deckH = evalRampHeight(r, edgeX, edgeZ);
+        if (deckH > this.y + 0.72) {
+          const sgn = plx >= 0 ? 1 : -1;
+          const targetLx = sgn * (r.halfW + 0.58);
+          const corr = targetLx - lx;
+          this.x += cs * corr; this.z -= sn * corr;
+          const nx = sgn * cs, nz = -sgn * sn;
+          const vn = this.vx * nx + this.vz * nz;
+          if (vn < 0) {
+            this.vx -= nx * vn * 1.2; this.vz -= nz * vn * 1.2;
+            this.vx *= 0.80; this.vz *= 0.80;
+            if (-vn > 3.5) AudioSys.sfxThump(clamp(-vn / 10, 0.35, 1.0));
+          }
+        }
+      }
+    }
+
+    // Timber Bridge side railing collision (keeps bikes on the planks cleanly)
+    for (let i = 0; i < BRIDGES.length; i++) {
+      const br = BRIDGES[i];
+      if (Math.hypot(this.x - br.x, this.z - br.z) > br.len * 0.7) continue;
+      const cs = Math.cos(br.yaw), sn = Math.sin(br.yaw);
+      const dx = this.x - br.x, dz = this.z - br.z;
+      const lx = dx * cs - dz * sn, lz = dx * sn + dz * cs;
+      const pdx = prevX - br.x, pdz = prevZ - br.z;
+      const plx = pdx * cs - pdz * sn;
+      const railLim = br.w * 0.46 - 0.62;
+      if (Math.abs(lz) < br.len * 0.49 && this.y > 1.7 && this.y < 3.5 && Math.abs(plx) <= br.w * 0.46 && Math.abs(lx) > railLim) {
+        const sgn = lx >= 0 ? 1 : -1;
+        const corr = sgn * railLim - lx;
+        this.x += cs * corr; this.z -= sn * corr;
+        const nx = -sgn * cs, nz = sgn * sn;
+        const vn = this.vx * nx + this.vz * nz;
+        if (vn < 0) { this.vx -= nx * vn * 1.15; this.vz -= nz * vn * 1.15; }
+      }
+    }
 
     const lim = MAP_HALF - 22;
     if (Math.abs(this.x) > lim) { this.x = Math.sign(this.x) * lim; this.vx *= -0.35; }
@@ -5761,46 +6048,59 @@ const Bike = {
     const floorY = WORLD.getHeight(this.x, this.z) + 0.04;
     if (this.y < floorY) { this.y = floorY; if (this.vy < 0) this.vy = 0; }
 
-    // World static colliders
-    const cols = WORLD.queryColliders(this.x, this.z);
+    // World static colliders (2-pass deduplicated resolution prevents corner clipping!)
     const bikeR = 0.65;
-    for (let i = 0; i < cols.length; i++) {
-      const c = cols[i];
-      if (this.y > c.yBase + c.h) continue;
-      let hit = false, nx = 0, nz = 0, pen = 0;
-      if (c.type === "box") {
-        const cx = clamp(this.x, c.x - c.hx, c.x + c.hx);
-        const cz = clamp(this.z, c.z - c.hz, c.z + c.hz);
-        const dx = this.x - cx, dz = this.z - cz, d = Math.hypot(dx, dz);
-        if (d < bikeR) { hit = true; nx = d > 1e-4 ? dx/d : 1; nz = d > 1e-4 ? dz/d : 0; pen = bikeR - d; }
-      } else {
-        const dx = this.x - c.x, dz = this.z - c.z, d = Math.hypot(dx, dz), minD = c.r + bikeR;
-        if (d < minD) { hit = true; nx = d > 1e-4 ? dx/d : 1; nz = d > 1e-4 ? dz/d : 0; pen = minD - d; }
-      }
-      if (hit) {
-        this.x += nx * pen; this.z += nz * pen;
-        const vn = this.vx * nx + this.vz * nz;
-        if (vn < 0) {
-          const impact = -vn;
-          if (impact > 15.5) { this.triggerCrash("IMPACT — RESETTING"); return; }
-          this.vx -= nx * vn * 1.25; this.vz -= nz * vn * 1.25;
-          this.vx *= 0.78; this.vz *= 0.78;
-          if (impact > 4) AudioSys.sfxThump(impact / 10);
+    for (let pass = 0; pass < 2; pass++) {
+      const cols = WORLD.queryColliders(this.x, this.z);
+      for (let i = 0; i < cols.length; i++) {
+        const c = cols[i];
+        if (this.y > c.yBase + c.h) continue;
+        let hit = false, nx = 0, nz = 0, pen = 0;
+        if (c.type === "box") {
+          const cx = clamp(this.x, c.x - c.hx, c.x + c.hx);
+          const cz = clamp(this.z, c.z - c.hz, c.z + c.hz);
+          const dx = this.x - cx, dz = this.z - cz, d = Math.hypot(dx, dz);
+          if (d < bikeR) {
+            hit = true;
+            if (d > 1e-4) { nx = dx / d; nz = dz / d; pen = bikeR - d; }
+            else {
+              const ox = c.hx - Math.abs(this.x - c.x), oz = c.hz - Math.abs(this.z - c.z);
+              if (ox < oz) { nx = this.x >= c.x ? 1 : -1; pen = ox + bikeR; }
+              else { nz = this.z >= c.z ? 1 : -1; pen = oz + bikeR; }
+            }
+          }
+        } else {
+          const dx = this.x - c.x, dz = this.z - c.z, d = Math.hypot(dx, dz), minD = c.r + bikeR;
+          if (d < minD) { hit = true; nx = d > 1e-4 ? dx/d : 1; nz = d > 1e-4 ? dz/d : 0; pen = minD - d; }
+        }
+        if (hit) {
+          this.x += nx * pen; this.z += nz * pen;
+          const vn = this.vx * nx + this.vz * nz;
+          if (vn < 0) {
+            const impact = -vn;
+            if (impact > 15.5) { this.triggerCrash("IMPACT — RESETTING"); return; }
+            this.vx -= nx * vn * 1.25; this.vz -= nz * vn * 1.25;
+            this.vx *= 0.78; this.vz *= 0.78;
+            if (impact > 4) AudioSys.sfxThump(impact / 10);
+          }
         }
       }
     }
 
-    // Heat 3+ Roadblock barricade colliders (leaves center 3.6m lane passable!)
+    // Heat 3+ Roadblock barricade colliders (exact match to visual gapX!)
     if (Mode.type === "chase" && Mode.heat >= 3) {
       for (const rb of ROADBLOCKS) {
-        if (Math.hypot(this.x - rb.x, this.z - rb.z) > 10) continue;
+        if (Math.hypot(this.x - rb.x, this.z - rb.z) > 10.5) continue;
         const cs = Math.cos(rb.yaw), sn = Math.sin(rb.yaw);
         const dx = this.x - rb.x, dz = this.z - rb.z;
         const lx = dx * cs - dz * sn - rb.gapX, lz = dx * sn + dz * cs;
-        if (Math.abs(lz) < 0.95 && Math.abs(lx) > 1.80 && Math.abs(lx) < 7.2 && this.y < WORLD.getBaseHeight(rb.x, rb.z) + 1.5) {
+        if (Math.abs(lz) < 0.96 && Math.abs(lx) > 1.80 && Math.abs(lx) < 7.2 && this.y < WORLD.getBaseHeight(rb.x, rb.z) + 1.55) {
           const pushSign = lz >= 0 ? 1 : -1;
-          this.x += sn * pushSign * 0.6; this.z += cs * pushSign * 0.6;
-          this.vx *= -0.35; this.vz *= -0.35;
+          const pen = 0.98 - Math.abs(lz);
+          const nx = sn * pushSign, nz = cs * pushSign;
+          this.x += nx * pen; this.z += nz * pen;
+          const vn = this.vx * nx + this.vz * nz;
+          if (vn < 0) { this.vx -= nx * vn * 1.35; this.vz -= nz * vn * 1.35; this.vx *= 0.70; this.vz *= 0.70; }
           AudioSys.sfxThump(1.1);
           showCallout("THREAD THE ROADBLOCK GAP!", "warn");
         }
@@ -5930,15 +6230,21 @@ const Mode = {
       const sp = spawns[subIdx] || spawns[0];
       Bike.resetAt(sp.x, sp.z, sp.yaw);
       this.aiRiders = [
-        { seg: 3, t: 0.2, speed: 17.5, x:-60, y:2, z:16, yaw:1.2, dust:0, lap:0 },
-        { seg: 7, t: 0.4, speed: 19.2, x:-80, y:2, z:255, yaw:-1.4, dust:0, lap:0 }
+        { seg: 3, t: 0.2, latOff: -2.4, speed: 17.5, x:-60, y:2, z:16, yaw:1.2, dust:0, lap:0 },
+        { seg: 7, t: 0.4, latOff:  2.4, speed: 19.2, x:-80, y:2, z:255, yaw:-1.4, dust:0, lap:0 }
       ];
       showCallout("FREE ROAM — FIND 7 HIDDEN PARTS & 6 SIDE MISSIONS");
     } else if (type === "chase") {
       if (subIdx === 0) Bike.resetAt(240, 210, 0);
       else if (subIdx === 1) Bike.resetAt(50, 88, -1.0);
-      this.spawnPatrol("car", Bike.x - 28, Bike.z + 26, 1);
-      this.spawnPatrol("bike", Bike.x + 26, Bike.z + 20, -1);
+      this._heatWarnCd = 0;
+      if (subIdx === 0) {
+        this.spawnPatrol("car", 240, 250, 1);
+        this.spawnPatrol("bike", 240, 166, -1);
+      } else {
+        this.spawnPatrol("car", Bike.x - 28, Bike.z + 26, 1);
+        this.spawnPatrol("bike", Bike.x + 26, Bike.z + 20, -1);
+      }
       showCallout("HEAT 1 CHASE — STAY SHARP! HEAT 3 DEPLOYS ROADBLOCKS", "warn");
     } else if (type === "timetrial") {
       const rt = TIME_TRIALS[subIdx] || TIME_TRIALS[0];
@@ -5969,8 +6275,8 @@ const Mode = {
       const sm = SIDE_MISSIONS[subIdx] || SIDE_MISSIONS[0];
       Bike.resetAt(sm.spawn.x, sm.spawn.z, sm.spawn.yaw);
       this.aiRiders = [
-        { seg: 0, t: 0.02, speed: 18.0, x:-3.5, y:2, z:225, yaw:0, dust:0, lap:0 },
-        { seg: 0, t: 0.02, speed: 19.6, x: 3.5, y:2, z:225, yaw:0, dust:0, lap:0 }
+        { seg: 0, t: 0.02, latOff: -3.2, speed: 18.0, x:-3.2, y:2, z:223.5, yaw:0, dust:0, lap:0 },
+        { seg: 0, t: 0.04, latOff:  3.2, speed: 19.6, x: 3.2, y:2, z:222.0, yaw:0, dust:0, lap:0 }
       ];
       showCallout("MX LAP RACE — BEAT BOTH TRAIL CREW RIDERS THROUGH 10 GATES!");
     } else if (type === "sidedelivery") {
@@ -6010,8 +6316,34 @@ const Mode = {
   },
 
   spawnPatrol(kind, x, z, flank) {
-    x = clamp(x, -430, 430); z = clamp(z, -430, 430);
-    this.patrols.push({ kind, x, y: WORLD.getHeight(x, z), z, vx:0, vz:0, yaw:0, flank });
+    const pad = kind === "car" ? 2.8 : 1.5;
+    const isClear = (cx, cz) => {
+      if (Math.abs(cx) > 430 || Math.abs(cz) > 430) return false;
+      if (WORLD.isPointBlocked(cx, cz, pad)) return false;
+      for (let i = 0; i < RAMPS.length; i++) {
+        if (evalRampHeight(RAMPS[i], cx, cz) > -1e6) return false;
+      }
+      for (let i = 0; i < this.patrols.length; i++) {
+        if (Math.hypot(cx - this.patrols[i].x, cz - this.patrols[i].z) < 6.0) return false;
+      }
+      for (let i = 0; i < ValleyLife.paddockCars.length; i++) {
+        if (Math.hypot(cx - ValleyLife.paddockCars[i].x, cz - ValleyLife.paddockCars[i].z) < 5.5) return false;
+      }
+      return true;
+    };
+    let sx = clamp(x, -430, 430), sz = clamp(z, -430, 430);
+    if (!isClear(sx, sz)) {
+      outer: for (let rad = 6; rad <= 54; rad += 6) {
+        for (let k = 0; k < 16; k++) {
+          const a = (k / 16) * Math.PI * 2;
+          const cx = clamp(sx + Math.cos(a) * rad, -430, 430);
+          const cz = clamp(sz + Math.sin(a) * rad, -430, 430);
+          if (isClear(cx, cz)) { sx = cx; sz = cz; break outer; }
+        }
+      }
+    }
+    const initYaw = Math.atan2(-(Bike.x - sx), -(Bike.z - sz));
+    this.patrols.push({ kind, x: sx, y: WORLD.getHeight(sx, sz), z: sz, vx:0, vz:0, yaw: initYaw, flank, _spin: 0 });
   },
 
   // Award credits & mark Story/Side completion cleanly!
@@ -6201,11 +6533,24 @@ const Mode = {
         if (ai.seg === 0) ai.lap = (ai.lap || 0) + 1;
       }
       const pA = MX_LOOP[ai.seg], pB = MX_LOOP[(ai.seg + 1) % MX_LOOP.length];
-      ai.x = lerp(pA[0], pB[0], ai.t);
-      ai.z = lerp(pA[1], pB[1], ai.t);
+      const sLen = Math.hypot(pB[0] - pA[0], pB[1] - pA[1]) || 1;
+      const nxL = -(pB[1] - pA[1]) / sLen, nzL = (pB[0] - pA[0]) / sLen;
+      const off = ai.latOff || 0;
+      ai.x = lerp(pA[0], pB[0], ai.t) + nxL * off;
+      ai.z = lerp(pA[1], pB[1], ai.t) + nzL * off;
       ai.y = WORLD.getHeight(ai.x, ai.z);
       const tYaw = Math.atan2(-(pB[0] - pA[0]), -(pB[1] - pA[1]));
       ai.yaw += wrapAngle(tYaw - ai.yaw) * clamp(dt * 6, 0, 1);
+      // Soft bike-vs-AI rubbing collision (respects mid-air jump clearance)
+      if (App.screen === "play" && !Bike.crashed && Math.abs(Bike.y - ai.y) < 1.65) {
+        const dxB = Bike.x - ai.x, dzB = Bike.z - ai.z, dB = Math.hypot(dxB, dzB);
+        if (dB < 1.15 && dB > 1e-4) {
+          const push = 1.15 - dB, bnx = dxB / dB, bnz = dzB / dB;
+          Bike.x += bnx * push; Bike.z += bnz * push;
+          Bike.vx += bnx * 2.2; Bike.vz += bnz * 2.2;
+          WORLD.pushOutColliders(Bike, 0.65, true);
+        }
+      }
       ai.dust += dt * 10;
       if (ai.dust >= 1) {
         ai.dust -= 1;
@@ -6299,29 +6644,46 @@ const Mode = {
   stepChase(dt) {
     let anySees = false, closeCount = 0;
     const playerSpd = Math.hypot(Bike.vx, Bike.vz);
+    const reqHeat = (this.activeStoryIdx >= 0 && STORY_CHAPTERS[this.activeStoryIdx].minHeat) ? STORY_CHAPTERS[this.activeStoryIdx].minHeat : 1;
+    if (this._heatWarnCd > 0) this._heatWarnCd -= dt;
 
     for (let i = 0; i < this.patrols.length; i++) {
       const u = this.patrols[i];
-      const dxP = Bike.x - u.x, dzP = Bike.z - u.z, dist = Math.hypot(dxP, dzP) || 1;
-      const lead = clamp(dist * 0.25, 0, 16);
+      const uRad = u.kind === "car" ? 1.55 : 0.75;
+      const dxP0 = Bike.x - u.x, dzP0 = Bike.z - u.z, dist0 = Math.hypot(dxP0, dzP0) || 1;
+      const lead = clamp(dist0 * 0.25, 0, 16);
       const px = -Math.sin(Bike.yaw), pz = -Math.cos(Bike.yaw);
       const rx =  Math.cos(Bike.yaw), rz = -Math.sin(Bike.yaw);
-      const tx = Bike.x + Bike.vx * 0.48 + (i === 0 ? 0 : rx * u.flank * Math.min(dist * 0.35, 10)) + px * (i > 1 ? lead * 0.65 : 0);
-      const tz = Bike.z + Bike.vz * 0.48 + (i === 0 ? 0 : rz * u.flank * Math.min(dist * 0.35, 10)) + pz * (i > 1 ? lead * 0.65 : 0);
+      const tx = Bike.x + Bike.vx * 0.48 + (i === 0 ? 0 : rx * u.flank * Math.min(dist0 * 0.35, 10)) + px * (i > 1 ? lead * 0.65 : 0);
+      const tz = Bike.z + Bike.vz * 0.48 + (i === 0 ? 0 : rz * u.flank * Math.min(dist0 * 0.35, 10)) + pz * (i > 1 ? lead * 0.65 : 0);
 
       let dirX = tx - u.x, dirZ = tz - u.z;
       const dl = Math.hypot(dirX, dirZ) || 1; dirX /= dl; dirZ /= dl;
 
-      const cols = WORLD.queryColliders(u.x + dirX * 5, u.z + dirZ * 5);
+      // Exact box-edge steering avoidance + tangential slide around buildings & trees
+      const cols = WORLD.queryColliders(u.x + dirX * 7, u.z + dirZ * 7);
       for (let c = 0; c < cols.length; c++) {
-        const ob = cols[c], odx = u.x - ob.x, odz = u.z - ob.z;
-        const rad = (ob.hx ? Math.max(ob.hx, ob.hz) : ob.r) + 3.2, od = Math.hypot(odx, odz);
-        if (od < rad && od > 0.01) { dirX += (odx / od) * 2.2; dirZ += (odz / od) * 2.2; }
+        const ob = cols[c];
+        let odx, odz, od, avoidR;
+        if (ob.type === "box") {
+          const cx = clamp(u.x, ob.x - ob.hx, ob.x + ob.hx);
+          const cz = clamp(u.z, ob.z - ob.hz, ob.z + ob.hz);
+          odx = u.x - cx; odz = u.z - cz; od = Math.hypot(odx, odz); avoidR = uRad + 5.5;
+        } else {
+          odx = u.x - ob.x; odz = u.z - ob.z; od = Math.hypot(odx, odz); avoidR = ob.r + uRad + 3.5;
+        }
+        if (od < avoidR && od > 0.01) {
+          const w = (1.0 - od / avoidR) * 3.4;
+          const nx = odx / od, nz = odz / od;
+          const tanSign = (dirX * (-nz) + dirZ * nx) >= 0 ? 1 : -1;
+          dirX += nx * w + (-nz * tanSign) * w * 0.65;
+          dirZ += nz * w + ( nx * tanSign) * w * 0.65;
+        }
       }
       for (let j = 0; j < this.patrols.length; j++) {
         if (i === j) continue;
         const o = this.patrols[j], sx = u.x - o.x, sz = u.z - o.z, sd = Math.hypot(sx, sz);
-        if (sd < 6.5 && sd > 0.01) { dirX += sx/sd * 1.4; dirZ += sz/sd * 1.4; }
+        if (sd < 7.0 && sd > 0.01) { dirX += sx/sd * 1.6; dirZ += sz/sd * 1.6; }
       }
       const nLen = Math.hypot(dirX, dirZ) || 1; dirX /= nLen; dirZ /= nLen;
 
@@ -6333,29 +6695,82 @@ const Mode = {
         else if (sf === SURF.GRASS || sf === SURF.ROCK) topSpd = 17;
         else if (sf === SURF.DIRT) topSpd = 21;
       } else if (sf === SURF.MUD) topSpd = 18;
-      if (dist > 130) topSpd *= 1.18;
+      if (dist0 > 130) topSpd *= 1.18;
 
       const targetYaw = Math.atan2(-dirX, -dirZ);
-      u.yaw += clamp(wrapAngle(targetYaw - u.yaw), -2.8 * dt, 2.8 * dt);
+      u.yaw += clamp(wrapAngle(targetYaw - u.yaw), -3.2 * dt, 3.2 * dt);
       u.vx = lerp(u.vx, -Math.sin(u.yaw) * topSpd, dt * 3.2);
       u.vz = lerp(u.vz, -Math.cos(u.yaw) * topSpd, dt * 3.2);
       u.x = clamp(u.x + u.vx * dt, -445, 445);
       u.z = clamp(u.z + u.vz * dt, -445, 445);
-      u.y = WORLD.getHeight(u.x, u.z);
 
-      const minSep = u.kind === "car" ? 2.6 : 1.7;
-      if (dist < minSep) {
-        const push = (minSep - dist);
-        Bike.x += (dxP / dist) * push * 0.7; Bike.z += (dzP / dist) * push * 0.7;
-        Bike.vx *= 0.85; Bike.vz *= 0.85;
+      // Hard solid collision resolution: buildings, quarry props, trees, boulders, traffic, parked cars & roadblocks!
+      WORLD.pushOutColliders(u, uRad, false);
+      for (let k = 0; k < ValleyLife.paddockCars.length; k++) {
+        const pc = ValleyLife.paddockCars[k];
+        if (!ValleyLife.isCarActive(k, false, pc)) continue;
+        const vb = VEH_BOUNDS[pc.model] || VEH_BOUNDS.veh_suv;
+        const h = resolveCircleOBB(u.x, u.z, u.y, uRad, pc.x, pc.z, pc.y, pc.yaw, vb.hx, vb.hz, vb.h);
+        if (h) { u.x += h.nx * h.pen; u.z += h.nz * h.pen; const vn = u.vx*h.nx+u.vz*h.nz; if (vn < 0) { u.vx -= h.nx*vn; u.vz -= h.nz*vn; } }
       }
-      if (dist < 8.5) closeCount++;
-      if (dist < 102 && WORLD.hasLineOfSight(u.x, u.y + 1.8, u.z, Bike.x, Bike.y + 1.4, Bike.z)) anySees = true;
+      for (let k = 0; k < ValleyLife.traffic.length; k++) {
+        const tc = ValleyLife.traffic[k];
+        if (!ValleyLife.isCarActive(k, true, tc)) continue;
+        const vb = VEH_BOUNDS[tc.model] || VEH_BOUNDS.veh_sedan;
+        const h = resolveCircleOBB(u.x, u.z, u.y, uRad, tc.x, tc.z, tc.y, tc.yaw, vb.hx, vb.hz, vb.h);
+        if (h) { u.x += h.nx * h.pen; u.z += h.nz * h.pen; const vn = u.vx*h.nx+u.vz*h.nz; if (vn < 0) { u.vx -= h.nx*vn; u.vz -= h.nz*vn; } }
+      }
+      if (this.heat >= 3) {
+        for (let r = 0; r < ROADBLOCKS.length; r++) {
+          const rb = ROADBLOCKS[r];
+          if (Math.hypot(u.x - rb.x, u.z - rb.z) > 10.5) continue;
+          const cs = Math.cos(rb.yaw), sn = Math.sin(rb.yaw);
+          const dxr = u.x - rb.x, dzr = u.z - rb.z;
+          const lx = dxr * cs - dzr * sn - rb.gapX, lz = dxr * sn + dzr * cs;
+          const minGap = u.kind === "car" ? 0.0 : 1.75;
+          if (Math.abs(lz) < 1.35 && Math.abs(lx) >= minGap && Math.abs(lx) < 7.2) {
+            const sgn = lz >= 0 ? 1 : -1;
+            const pen = 1.38 - Math.abs(lz);
+            u.x += sn * sgn * pen; u.z += cs * sgn * pen;
+            u.vx *= 0.35; u.vz *= 0.35;
+          }
+        }
+      }
+      u.y = WORLD.getHeight(u.x, u.z);
+      u._spin = (u._spin || 0) + (Math.hypot(u.vx, u.vz) / 0.42) * dt;
+    }
+
+    // Hard patrol-vs-patrol separation + post-move OBB bike-vs-patrol collision & LOS!
+    for (let i = 0; i < this.patrols.length; i++) {
+      const a = this.patrols[i];
+      for (let j = i + 1; j < this.patrols.length; j++) {
+        const b = this.patrols[j];
+        const minP = (a.kind === "car" ? 1.7 : 0.9) + (b.kind === "car" ? 1.7 : 0.9);
+        const dx = b.x - a.x, dz = b.z - a.z, d = Math.hypot(dx, dz);
+        if (d < minP && d > 1e-4) {
+          const push = (minP - d) * 0.5, nx = dx / d, nz = dz / d;
+          a.x -= nx * push; a.z -= nz * push; b.x += nx * push; b.z += nz * push;
+          WORLD.pushOutColliders(a, a.kind === "car" ? 1.55 : 0.75, false);
+          WORLD.pushOutColliders(b, b.kind === "car" ? 1.55 : 0.75, false);
+        }
+      }
+      const vb = a.kind === "car" ? VEH_BOUNDS.veh_patrol : VEH_BOUNDS.patrol_bike;
+      if (!Bike.crashed) {
+        const hit = resolveCircleOBB(Bike.x, Bike.z, Bike.y, 0.68, a.x, a.z, a.y, a.yaw, vb.hx, vb.hz, vb.h);
+        if (hit) {
+          Bike.x += hit.nx * (hit.pen + 0.04); Bike.z += hit.nz * (hit.pen + 0.04);
+          Bike.vx = Bike.vx * 0.78 + hit.nx * 3.2; Bike.vz = Bike.vz * 0.78 + hit.nz * 3.2;
+          WORLD.pushOutColliders(Bike, 0.65, true);
+        }
+      }
+      const dist = Math.hypot(Bike.x - a.x, Bike.z - a.z);
+      if (dist < 8.5 && Math.abs(Bike.y - a.y) < 3.5) closeCount++;
+      if (dist < 102 && WORLD.hasLineOfSight(a.x, a.y + 1.8, a.z, Bike.x, Bike.y + 1.4, Bike.z)) anySees = true;
     }
 
     // Escalate Heat 1 -> 5 the longer you stay in patrol sight!
     if (anySees && this.heat < 5) {
-      this.heatProg += dt / 13.5;
+      this.heatProg += dt / (reqHeat > this.heat ? 10.0 : 13.5);
       if (this.heatProg >= 1.0) {
         this.heatProg = 0;
         this.heat++;
@@ -6383,8 +6798,15 @@ const Mode = {
 
     for (const sz of SAFE_ZONES) {
       if (Math.hypot(Bike.x - sz.x, Bike.z - sz.z) < sz.r && this.boxedTimer < 1.0) {
-        this.finishChase(true, "REACHED " + sz.name.toUpperCase() + "!");
-        return;
+        if (this.maxHeat < reqHeat) {
+          if (!this._heatWarnCd || this._heatWarnCd <= 0) {
+            this._heatWarnCd = 3.5;
+            showCallout(`BUILD HEAT TO LEVEL ${reqHeat} FIRST — KEEP DODGING!`, "warn");
+          }
+        } else {
+          this.finishChase(true, "REACHED " + sz.name.toUpperCase() + "!");
+          return;
+        }
       }
     }
 
@@ -6392,7 +6814,11 @@ const Mode = {
     this.losBroken = !anySees;
     if (this.losBroken) {
       this.evadeTimer += dt;
-      if (this.evadeTimer >= evadeNeed) { this.finishChase(true, "BROKE LINE OF SIGHT!"); return; }
+      if (this.maxHeat < reqHeat) {
+        this.evadeTimer = Math.min(this.evadeTimer, evadeNeed - 0.15);
+      } else if (this.evadeTimer >= evadeNeed) {
+        this.finishChase(true, "BROKE LINE OF SIGHT!"); return;
+      }
     } else {
       this.evadeTimer = Math.max(0, this.evadeTimer - dt * 1.8);
     }
@@ -6531,7 +6957,7 @@ const Mode = {
     const paceHearMul = (Save.difficulty === "relaxed") ? 0.72 : 1.0;
     if (this.grGrace > 0) {
       this.grGrace = Math.max(0, this.grGrace - dt);
-      if (!Bike.engineOn || hearAdd <= 0) {
+      if (!spotted && (!Bike.engineOn || hearAdd <= 0)) {
         this.grGrace = 0;
         this.heard = 65;
         showCallout("CLOSE CALL — KEEP COASTING SILENTLY!", "good");
@@ -6539,7 +6965,7 @@ const Mode = {
         AudioSys.sfxThump(1.3);
         const cpHint = this.grHalfReached ? " Try Again restarts at your Mid-Way Checkpoint!" : "";
         this.completeMission("DETECTED!", formatTime(this.timer), "MISSION FAILED",
-          "A drone or scanner locked onto your exhaust! Tap [F] to coast silently or ride Bramkor Coil-E." + cpHint, "medal-bronze", 30, false);
+          "A drone or scanner locked onto you! Stay out of searchlights, tap [F] to coast silently, or ride Bramkor Coil-E." + cpHint, "medal-bronze", 30, false);
         return;
       }
     } else if (hearAdd > 0) {
@@ -6556,7 +6982,7 @@ const Mode = {
           this.grGrace = 3.0;
           this.heard = 95;
           AudioSys.sfxAlert();
-          showCallout("THEY HEARD YOU — TAP [F] TO COAST NOW! (3s)", "warn");
+          showCallout(spotted ? "SPOTTED — LEAVE THE LIGHT & TAP [F]! (3s)" : "THEY HEARD YOU — TAP [F] TO COAST NOW! (3s)", "warn");
         } else {
           AudioSys.sfxThump(1.3);
           const cpHint = this.grHalfReached ? " Try Again restarts at your Mid-Way Checkpoint!" : "";
@@ -6592,17 +7018,51 @@ const Cam = {
 
   resetLook() { this.lookYaw = 0; this.lookPitch = 0; this.lookIdle = 9; },
 
+  pullOutsideBuildings(ax, ay, az, gx, gy, gz) {
+    for (let i = 1; i <= 20; i++) {
+      const t = i / 20;
+      const px = lerp(ax, gx, t), py = lerp(ay, gy, t), pz = lerp(az, gz, t);
+      const cols = WORLD.queryColliders(px, pz);
+      for (let j = 0; j < cols.length; j++) {
+        const c = cols[j];
+        if (c.type === "box" && Math.abs(px - c.x) < c.hx + 0.48 && Math.abs(pz - c.z) < c.hz + 0.48 && py < c.yBase + c.h + 0.35) {
+          const ts = Math.max(0.05, (i - 1) / 20);
+          const sx = lerp(ax, gx, ts), sz = lerp(az, gz, ts);
+          return [sx, Math.max(lerp(ay, gy, ts), WORLD.getHeight(sx, sz) + 1.05), sz];
+        }
+      }
+    }
+    return [gx, gy, gz];
+  },
+
+  clampOutOfBoxes() {
+    const cols = WORLD.queryColliders(this.x, this.z);
+    for (let j = 0; j < cols.length; j++) {
+      const c = cols[j];
+      if (c.type !== "box" || this.y >= c.yBase + c.h + 0.35) continue;
+      const dx = this.x - c.x, dz = this.z - c.z;
+      if (Math.abs(dx) < c.hx + 0.45 && Math.abs(dz) < c.hz + 0.45) {
+        const ox = c.hx + 0.45 - Math.abs(dx), oz = c.hz + 0.45 - Math.abs(dz);
+        if (ox < oz) this.x += (dx >= 0 ? ox : -ox);
+        else this.z += (dz >= 0 ? oz : -oz);
+      }
+    }
+  },
+
   update(dt) {
     if (App.modal === "garage") {
       this.garageDragIdle += dt;
       if (!this.dragging && this.garageDragIdle > 2.6) this.orbitAngle += dt * 0.26;
-      const dist = 5.95;
       const gx = GARAGE_POS[0] + 0.45, gy = GARAGE_POS[1], gz = GARAGE_POS[2] - 0.35;
       const cp = Math.cos(this.garagePitch), sp = Math.sin(this.garagePitch);
-      this.x = gx + Math.sin(this.orbitAngle) * dist * cp;
-      this.z = gz + Math.cos(this.orbitAngle) * dist * cp;
-      this.y = gy + 0.98 + dist * sp;
-      this.tx = gx; this.ty = gy + 0.42; this.tz = gz;
+      const dirX = Math.sin(this.orbitAngle) * cp, dirZ = Math.cos(this.orbitAngle) * cp;
+      let dist = 4.85;
+      const backLim = GARAGE_POS[2] - 4.72;
+      if (dirZ < -0.05 && gz + dirZ * dist < backLim) dist = Math.max(2.6, (backLim - gz) / dirZ);
+      this.x = clamp(gx + dirX * dist, GARAGE_POS[0] - 8.8, GARAGE_POS[0] + 8.8);
+      this.z = Math.max(backLim, gz + dirZ * dist);
+      this.y = clamp(gy + 0.96 + dist * sp, gy + 0.9, gy + 4.45);
+      this.tx = gx; this.ty = gy + 0.48; this.tz = gz;
       this.fov = 48;
       return;
     }
@@ -6613,9 +7073,11 @@ const Cam = {
       if (k.KeyW || k.ArrowUp)    this.photoDist = clamp(this.photoDist - dt * 3.0, 2.4, 10.5);
       if (k.KeyS || k.ArrowDown)  this.photoDist = clamp(this.photoDist + dt * 3.0, 2.4, 10.5);
       const cp = Math.cos(this.photoPitch), sp = Math.sin(this.photoPitch);
-      this.x = Bike.x + Math.sin(this.photoYaw) * this.photoDist * cp;
-      this.z = Bike.z + Math.cos(this.photoYaw) * this.photoDist * cp;
-      this.y = Math.max(Bike.y + 0.75 + this.photoDist * sp, WORLD.getHeight(this.x, this.z) + 0.7);
+      const rx = Bike.x + Math.sin(this.photoYaw) * this.photoDist * cp;
+      const rz = Bike.z + Math.cos(this.photoYaw) * this.photoDist * cp;
+      const ry = Math.max(Bike.y + 0.75 + this.photoDist * sp, WORLD.getHeight(rx, rz) + 0.7);
+      const [px, py, pz] = this.pullOutsideBuildings(Bike.x, Bike.y + 1.0, Bike.z, rx, ry, rz);
+      this.x = px; this.y = py; this.z = pz;
       this.tx = Bike.x; this.ty = Bike.y + 0.95; this.tz = Bike.z;
       this.fov = 50;
       return;
@@ -6648,8 +7110,9 @@ const Cam = {
     }
 
     if (Bike.crashed) {
-      const gx = Bike.riderPos[0] - fx * 6.5, gz = Bike.riderPos[2] - fz * 6.5;
-      const gy = Math.max(WORLD.getHeight(gx, gz) + 2.2, Bike.riderPos[1] + 2.8);
+      const gx0 = Bike.riderPos[0] - fx * 6.5, gz0 = Bike.riderPos[2] - fz * 6.5;
+      const gy0 = Math.max(WORLD.getHeight(gx0, gz0) + 2.2, Bike.riderPos[1] + 2.8);
+      const [gx, gy, gz] = this.pullOutsideBuildings(Bike.riderPos[0], Bike.riderPos[1] + 0.8, Bike.riderPos[2], gx0, gy0, gz0);
       const s = 1 - Math.exp(-4.5 * dt);
       this.x = lerp(this.x, gx, s); this.y = lerp(this.y, gy, s); this.z = lerp(this.z, gz, s);
       this.tx = lerp(this.tx, Bike.riderPos[0], 1 - Math.exp(-7 * dt));
@@ -6677,13 +7140,15 @@ const Cam = {
     const blendYaw = Bike.yaw + wrapAngle(velYaw - Bike.yaw) * 0.38 + this.lookYaw;
     const bfx = -Math.sin(blendYaw), bfz = -Math.cos(blendYaw);
 
-    const goalX = Bike.x - bfx * back, goalZ = Bike.z - bfz * back;
-    const goalY = Math.max(Bike.y + height + this.lookPitch * 3.4, WORLD.getHeight(goalX, goalZ) + 1.35);
+    const rawX = Bike.x - bfx * back, rawZ = Bike.z - bfz * back;
+    const rawY = Math.max(Bike.y + height + this.lookPitch * 3.4, WORLD.getHeight(rawX, rawZ) + 1.35);
+    const [goalX, goalY, goalZ] = this.pullOutsideBuildings(Bike.x, Bike.y + 1.35, Bike.z, rawX, rawY, rawZ);
     const posK = 1 - Math.exp(-7.8 * dt);
     const yK   = 1 - Math.exp(-6.0 * dt);
     this.x = lerp(this.x, goalX, posK);
     this.y = lerp(this.y, goalY, yK);
     this.z = lerp(this.z, goalZ, posK);
+    this.clampOutOfBoxes();
 
     const lookX = Bike.x + bfx * 5.0, lookY = Bike.y + 1.25 + Math.sin(Bike.pitch) * 1.1, lookZ = Bike.z + bfz * 5.0;
     const lookK = 1 - Math.exp(-11.0 * dt);
@@ -6847,7 +7312,8 @@ function renderScene(time, dt) {
       }
       if (Mode.type === "chase" && Mode.heat >= 3) {
         for (const rb of ROADBLOCKS) {
-          M4.fromTRS(GL.model, rb.x, WORLD.getBaseHeight(rb.x, rb.z), rb.z, rb.yaw, 0, 0);
+          const rx = rb.x + Math.cos(rb.yaw) * rb.gapX, rz = rb.z - Math.sin(rb.yaw) * rb.gapX;
+          M4.fromTRS(GL.model, rx, WORLD.getBaseHeight(rb.x, rb.z), rz, rb.yaw, 0, 0);
           GL.drawMeshShadow(GL.roadblockMesh, GL.model);
         }
       }
@@ -6969,7 +7435,8 @@ function renderScene(time, dt) {
     }
     if (Mode.type === "chase" && Mode.heat >= 3) {
       for (const rb of ROADBLOCKS) {
-        M4.fromTRS(GL.model, rb.x, WORLD.getBaseHeight(rb.x, rb.z), rb.z, rb.yaw, 0, 0);
+        const rx = rb.x + Math.cos(rb.yaw) * rb.gapX, rz = rb.z - Math.sin(rb.yaw) * rb.gapX;
+        M4.fromTRS(GL.model, rx, WORLD.getBaseHeight(rb.x, rb.z), rz, rb.yaw, 0, 0);
         GL.drawMesh(GL.roadblockMesh, GL.model, [1,1,1,1], 0);
       }
     }
@@ -7108,9 +7575,12 @@ function renderScene(time, dt) {
       for (const d of Mode.drones) {
         const tint = d.alert ? [1.0, 0.32, 0.25, 0.34] : [1.0, 0.90, 0.35, 0.24];
         const dx = d.gx - d.x, dz = d.gz - d.z, dy = Math.max(d.y - d.gy, 1);
-        M4.fromTRS(GL.model, d.x, d.y - 0.3, d.z, 0, Math.atan2(dz, dy), -Math.atan2(dx, dy), d.radius * 0.55, dy, d.radius * 0.55);
+        const slant = Math.hypot(dx, dy, dz);
+        const tiltRoll = Math.asin(clamp(dx / slant, -0.98, 0.98));
+        const tiltPitch = -Math.atan2(dz, dy);
+        M4.fromTRS(GL.model, d.x, d.y - 0.3, d.z, 0, tiltPitch, tiltRoll, d.radius * 0.55, slant, d.radius * 0.55);
         GL.drawMesh(GL.coneMesh, GL.model, tint, 1);
-        M4.fromTRS(GL.model, d.gx, d.gy + 0.14, d.gz, 0, 0, 0, d.radius * 0.65, 1, d.radius * 0.65);
+        M4.fromTRS(GL.model, d.gx, d.gy + 0.14, d.gz, 0, 0, 0, d.radius * 0.58, 1, d.radius * 0.58);
         GL.drawMesh(GL.shadowDisc, GL.model, d.alert ? [1.0, 0.25, 0.2, 0.46] : [1.0, 0.88, 0.32, 0.34], 2);
       }
       for (const sc of Mode.scanners) {
@@ -7744,8 +8214,8 @@ function updateBikeUI() {
   const rst = document.getElementById("btnResetTune");
   if (rst) rst.onclick = () => { Save.resetTune(b.id); Bike.refreshTune(); };
   document.getElementById("btnRideSelected").onclick = () => {
-    App.closeModals();
-    if (App.screen === "title") App.launchMode("freeroam", 0);
+    App.closeModals(true);
+    if (App.screen === "title" || Mode.finished) App.launchMode("freeroam", 0);
     else App.setPaused(false);
   };
   document.querySelectorAll(".bike-item").forEach(el => el.classList.toggle("selected", el.dataset.bid === b.id));
@@ -7969,7 +8439,10 @@ function updateHudLive() {
     mMain.textContent = Mode.boxedTimer > 0.15
       ? `BOXED IN ${Math.round((Mode.boxedTimer / 2.3) * 100)}%`
       : (Mode.losBroken ? `HIDE: ${(evadeNeed - Mode.evadeTimer).toFixed(1)}s` : `${Mode.patrols.length} UNITS · ${formatTime(Mode.timer)}`);
-    mSub.textContent = Mode.heat >= 3 ? "Roadblocks active! Thread center gaps or hit Safe Zone" : "Break sight or follow arrow to cyan Safe Zone";
+    const reqHeat = (Mode.activeStoryIdx >= 0 && STORY_CHAPTERS[Mode.activeStoryIdx].minHeat) ? STORY_CHAPTERS[Mode.activeStoryIdx].minHeat : 1;
+    mSub.textContent = Mode.maxHeat < reqHeat
+      ? `Build Heat to Level ${reqHeat} first, then evade or hit Safe Zone`
+      : (Mode.heat >= 3 ? "Roadblocks active! Thread center gaps or hit Safe Zone" : "Break sight or follow arrow to cyan Safe Zone");
     if (Mode.boxedTimer > 0.15) {
       mFill.style.width = clamp(Mode.boxedTimer / 2.3 * 100, 0, 100) + "%"; mFill.style.background = "#e2554a";
     } else {
@@ -8081,8 +8554,11 @@ const App = {
         updateHudLive();
         Minimap.draw();
       } else if (this.screen === "title" || this.modal === "garage" || this.photoMode) {
+        acc = 0;
         if (this.screen === "title") ValleyLife.step(rawDt * 0.55);
         Cam.update(rawDt);
+      } else {
+        acc = 0;
       }
 
       const simActive = (this.screen === "play" && !this.paused && !this.modal && !this.photoMode);
@@ -8116,6 +8592,7 @@ const App = {
 
   openStoryBriefing(idx) {
     const ch = STORY_CHAPTERS[clamp(idx, 0, STORY_CHAPTERS.length - 1)];
+    if (this.screen === "play") { AudioSys.setPaused(true); Input.clear(); }
     this.closeModals(true);
     document.getElementById("titleOverlay").classList.add("hidden");
     document.getElementById("pauseOverlay").classList.add("hidden");
@@ -8245,7 +8722,7 @@ const App = {
 
     // Part B #1 What Next Go buttons
     on("btnTitleWnGo", () => { if (this._whatNextRun) this._whatNextRun(); });
-    on("btnPauseWnGo", () => { this.setPaused(false); if (this._whatNextRun) this._whatNextRun(); });
+    on("btnPauseWnGo", () => { if (this._whatNextRun) this._whatNextRun(); });
 
     // Part B #3 Photo Mode Postcard Save
     on("btnSavePostcard", () => downloadPostcard());
@@ -8329,11 +8806,14 @@ const App = {
     this.photoMode = false;
     calloutTimer = 0; document.getElementById("callout").classList.remove("show");
     document.getElementById("photoBar").classList.add("hidden");
-    this.screen = "title"; this.paused = false; AudioSys.setPaused(true);
+    const pp = document.getElementById("partPing"); if (pp) pp.style.display = "none";
+    Mode.type = "freeroam"; Mode.finished = false; Mode.patrols = []; Mode.drones = []; Mode.scanners = []; Mode.aiRiders = [];
+    this.screen = "title"; this.paused = false; AudioSys.setPaused(true); Input.clear();
     document.getElementById("pauseOverlay").classList.add("hidden");
     document.getElementById("resultOverlay").classList.add("hidden");
     document.getElementById("titleOverlay").classList.remove("hidden");
     Bike.resetAt(0, 205, 0);
+    Cam.resetLook();
     updateMetaUI();
     this.syncHudVisibility();
   },
@@ -8363,6 +8843,7 @@ const App = {
   },
 
   openModes() {
+    if (this.screen === "play") { AudioSys.setPaused(true); Input.clear(); }
     this.closeModals(true);
     document.getElementById("pauseOverlay").classList.add("hidden");
     buildModeModalLists();
@@ -8372,6 +8853,7 @@ const App = {
   },
 
   openStoryList() {
+    if (this.screen === "play") { AudioSys.setPaused(true); Input.clear(); }
     this.closeModals(true);
     document.getElementById("pauseOverlay").classList.add("hidden");
     buildStoryModalList();
@@ -8381,6 +8863,7 @@ const App = {
   },
 
   openDaily() {
+    if (this.screen === "play") { AudioSys.setPaused(true); Input.clear(); }
     this.closeModals(true);
     document.getElementById("pauseOverlay").classList.add("hidden");
     buildDailyModalList();
@@ -8395,7 +8878,17 @@ const App = {
       const el = document.getElementById(id); if (el) el.classList.add("hidden");
     });
     if (!keepPause && this.screen === "title") { updateMetaUI(); document.getElementById("titleOverlay").classList.remove("hidden"); }
-    if (!keepPause && this.screen === "play" && this.paused) document.getElementById("pauseOverlay").classList.remove("hidden");
+    if (!keepPause && this.screen === "play") {
+      if (Mode.finished) {
+        this.modal = "result";
+        document.getElementById("pauseOverlay").classList.add("hidden");
+        document.getElementById("resultOverlay").classList.remove("hidden");
+      } else if (this.paused) {
+        document.getElementById("pauseOverlay").classList.remove("hidden");
+      } else {
+        AudioSys.setPaused(false);
+      }
+    }
     this.syncHudVisibility();
   },
 

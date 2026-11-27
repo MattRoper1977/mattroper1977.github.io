@@ -29,8 +29,17 @@ const FILE = supplied || path.join(__dirname, '..', 'apexpool', 'index.html');
  * Verified before moving rather than re-pinned on sight: 8432492^ hashes to the
  * OLD pin exactly, and the whole delta is the generated exit block.
  * Previous: 4de1383f8ee029db438258bb239e4e7f3b7ffd9e603706a9fd145fd397af87ad (88751 B) */
-const EXPECTED_BYTES = 194212;
-const EXPECTED_SHA256 = 'fd90b16cc0fe3e9d4306ed84b62bd8a3b50fd030e0c105b268814ddd2db4870e';
+const EXPECTED_BYTES = 231299;
+const EXPECTED_SHA256 = 'b7eae56610d5963c327121d4c261417cdd5390841369d7ad17a9dd8100cb4546';
+/* 26 Nov 2026: moved from fd90b16cc0fe3e9d4306ed84b62bd8a3b50fd030e0c105b268814ddd2db4870e
+ * (194212 B) for the owner-reported corner pocket geometry fix and visual/audio upgrade:
+ * WPA-regulation corner (2.00x) and side (2.21x) pocket mouths with tangent jaw knuckles
+ * and 12 angled cushion facings, back-pocket containment (zero off-table ball escape),
+ * legal alternating 8-ball rack corners, ball-in-hand pocket guard, fixed 2D stripe balls,
+ * embedded CC0 Poly Haven wood/baize/leather/parquet textures decoded offline via
+ * createImageBitmap(Blob), rebuilt 3D pocket geometry and lounge floor, and velocity-scaled
+ * WebAudio Foley. Inline-exit block, storage keys, accessibility floors, and <250KB ceiling
+ * are preserved intact. */
 /* 21 Nov 2026: moved from 62e6aae3aa66382a138993c87b90eb64057545aa312b732fc69698fcdd854dbd
  * (190141 B) for catalogue batch 05 plus its landscape fix (ruling thread gates, 21 Nov): touch
  * Aim/Call mode so a touch drag aims without firing, procedural sound with suspend on hide, 44px
