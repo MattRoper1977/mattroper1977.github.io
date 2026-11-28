@@ -1,6 +1,102 @@
 <!doctype html>
 <html lang="en">
 <head>
+<!-- MBM-R2-KIT:BEGIN v1.0.1 shared play options (graphics tier, one-hand touch, gamepad, daily streak) -->
+<script>/* MBM R2 KIT (head): graphics tier. Device-only, no network. Keys: mbm_gfx_tier (shared), read before the game boots. */
+(function(){"use strict";
+var pref="auto";try{var v=localStorage.getItem("mbm_gfx_tier");if(v==="high"||v==="low"||v==="auto")pref=v;}catch(_){}
+var n=navigator,weak=false;
+try{var coarse=matchMedia("(pointer:coarse)").matches,small=Math.min(screen.width,screen.height)<=820;
+weak=(coarse&&small)||(n.deviceMemory&&n.deviceMemory<=2);}catch(_){}
+var low=pref==="low"||(pref==="auto"&&weak);
+window.__MBM_R2={pref:pref,low:low,tier:low?"low":"high",auto:pref==="auto"};
+if(low){try{var real=window.devicePixelRatio||1;Object.defineProperty(window,"devicePixelRatio",{configurable:true,get:function(){return Math.min(real,1);}});}catch(_){}}
+})();</script>
+<script>/* MBM R2 KIT (body): options panel, one-hand touch, gamepad, daily streak. Device-only, no network.
+   New keys only: mbm_gfx_tier, mbm_r2_onehand, mbm_r2_streak_<game>. Existing game saves are never read or written. */
+(function(){"use strict";
+var CFG={"id":"touchline","gear":{"right":8,"top":64}};var R2=window.__MBM_R2||{pref:"auto",low:false,tier:"high",auto:true};
+var doc=document,LS={get:function(k){try{return localStorage.getItem(k);}catch(_){return null;}},set:function(k,v){try{localStorage.setItem(k,v);}catch(_){}}};
+var reduced=false;try{reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(_){}
+function key(type,code){try{var k=code==="Space"?" ":code.indexOf("Key")===0?code.slice(3).toLowerCase():code.indexOf("Arrow")===0?code:code.indexOf("Shift")===0?"Shift":code;window.dispatchEvent(new KeyboardEvent(type,{code:code,key:k,bubbles:true,cancelable:true}));}catch(_){}}
+var held={};function down(c){if(c&&!held[c]){held[c]=1;key("keydown",c);}}function up(c){if(c&&held[c]){delete held[c];key("keyup",c);}}
+function pulse(c,ms){if(!c)return;down(c);setTimeout(function(){up(c);},ms||350);}
+/* ---------- daily streak (one grace day) ---------- */
+var SK="mbm_r2_streak_"+CFG.id;
+function dayNum(d){return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000);}
+function readStreak(){var s={last:0,n:0,best:0,grace:0};try{var o=JSON.parse(LS.get(SK)||"null");if(o&&typeof o.last==="number"&&typeof o.n==="number"){s.last=o.last;s.n=o.n;s.best=o.best||o.n;s.grace=o.grace||0;}}catch(_){}return s;}
+function markPlayed(){var s=readStreak(),t=dayNum(new Date());if(s.last===t)return s;var gap=t-s.last;
+ if(s.last&&gap===1)s.n+=1;else if(s.last&&gap===2&&t-s.grace>=7){s.n+=1;s.grace=t;}else s.n=1;
+ s.last=t;if(s.n>s.best)s.best=s.n;LS.set(SK,JSON.stringify(s));return s;}
+function streakText(){var s=readStreak(),t=dayNum(new Date());var live=s.last&&t-s.last<=2?s.n:0;return "Daily streak: "+live+(live===1?" day":" days")+(s.best>1?" (best "+s.best+")":"")+(s.last===t?" ✓ played today":"");}
+var active=0,lastAct=0,marked=false;
+function act(){var now=Date.now();if(now-lastAct<5000)active+=now-lastAct;lastAct=now;if(!marked&&active>=45000){marked=true;markPlayed();refresh();}}
+["keydown","pointerdown","touchstart"].forEach(function(t){window.addEventListener(t,act,{capture:true,passive:true});});
+/* ---------- one-hand touch (opt-in) ---------- */
+var OH=CFG.oneHand||null,ohOn=LS.get("mbm_r2_onehand")==="1",touchDev=false;try{touchDev=("ontouchstart" in window)||matchMedia("(pointer:coarse)").matches;}catch(_){}
+var drag=null;
+function ohStart(e){if(!ohOn||!OH||panelOpen||e.pointerType==="mouse")return;if(e.target&&e.target.closest&&e.target.closest("button,a,input,select,textarea,[role=button],#mbmr2-gear,#mbmr2-panel"))return;if(e.clientY<innerHeight*0.35)return;
+ drag={id:e.pointerId,x:e.clientX,y:e.clientY,t:Date.now(),dir:"",v:"",boost:false};(OH.hold||[]).forEach(down);}
+function ohMove(e){if(!drag||e.pointerId!==drag.id)return;var dx=e.clientX-drag.x,dy=e.clientY-drag.y,dead=14;
+ var dir=dx>dead?"R":dx<-dead?"L":"";if(dir!==drag.dir){up(OH.left);up(OH.right);if(dir==="L")down(OH.left);if(dir==="R")down(OH.right);drag.dir=dir;}
+ if(OH.stick){var v=dy>dead?"D":dy<-dead?"U":"";if(v!==drag.v){up(OH.up);up(OH.down);if(v==="U")down(OH.up);if(v==="D")down(OH.down);drag.v=v;}}
+ else if(OH.swipeUp&&!drag.boost&&dy<-60){drag.boost=true;pulse(OH.swipeUp,700);}
+ if(Math.abs(dx)>90)drag.x=e.clientX-(dx>0?90:-90);}
+function ohEnd(e){if(!drag||e.pointerId!==drag.id)return;up(OH.left);up(OH.right);up(OH.up);up(OH.down);(OH.hold||[]).forEach(up);drag=null;}
+window.addEventListener("pointerdown",ohStart,{capture:true,passive:true});window.addEventListener("pointermove",ohMove,{capture:true,passive:true});
+window.addEventListener("pointerup",ohEnd,{capture:true,passive:true});window.addEventListener("pointercancel",ohEnd,{capture:true,passive:true});
+window.addEventListener("blur",function(){Object.keys(held).forEach(up);drag=null;});
+/* ---------- gamepad ---------- */
+var GP=CFG.pad||null,padSeen=false,padState={};
+function padSet(name,on,code){if(!code)return;if(on&&!padState[name]){padState[name]=1;down(code);}else if(!on&&padState[name]){delete padState[name];up(code);}}
+function padPoll(){var pads=[];try{pads=navigator.getGamepads?navigator.getGamepads():[];}catch(_){}var p=null;for(var i=0;i<pads.length;i++)if(pads[i]&&pads[i].connected){p=pads[i];break;}
+ if(p&&GP){if(!padSeen){padSeen=true;refresh();}var ax=p.axes||[],b=p.buttons||[],pr=function(i){return !!(b[i]&&(b[i].pressed||b[i].value>0.5));};
+  padSet("l",(ax[0]||0)<-0.35||pr(14),GP.left);padSet("r",(ax[0]||0)>0.35||pr(15),GP.right);padSet("u",(ax[1]||0)<-0.5||pr(12),GP.up);padSet("d",(ax[1]||0)>0.5||pr(13),GP.down);
+  padSet("a",pr(0),GP.a);padSet("b",pr(1)||pr(7),GP.b);padSet("x",pr(2),GP.x);padSet("y",pr(3),GP.y);padSet("s",pr(9),GP.start);if(pr(0)||pr(9)||Math.abs(ax[0]||0)>0.35)act();}
+ requestAnimationFrame(padPoll);}
+if(GP&&navigator.getGamepads){window.addEventListener("gamepadconnected",function(){if(!padPoll.on){padPoll.on=1;padPoll();}});try{var g0=navigator.getGamepads();for(var gi=0;gi<g0.length;gi++)if(g0[gi]&&!padPoll.on){padPoll.on=1;padPoll();}}catch(_){}}
+/* ---------- panel ---------- */
+var css="#mbmr2-gear{position:fixed;left:8px;top:64px;z-index:2147481000;width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.28);background:rgba(8,14,28,.62);color:#e8f6ff;font:700 18px/1 system-ui,sans-serif;cursor:pointer;opacity:.55;padding:0;touch-action:manipulation}#mbmr2-gear:hover,#mbmr2-gear:focus-visible{opacity:1;outline:2px solid #5fd3ff;outline-offset:2px}#mbmr2-gear[data-idle]{opacity:.18}"+
+"#mbmr2-panel{position:fixed;inset:0;z-index:2147481500;display:none;place-items:center;background:rgba(2,6,14,.72);font:500 15px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;color:#e8f2fa}#mbmr2-panel[data-open]{display:grid}"+
+"#mbmr2-card{width:min(92vw,400px);max-height:88vh;overflow:auto;background:#0b1424;border:1px solid rgba(132,224,192,.35);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.6)}#mbmr2-card h2{margin:0 0 4px;font-size:19px;color:#84e0c0}#mbmr2-card p{margin:6px 0;color:#b4c5d4;font-size:13px}"+
+"#mbmr2-card .r2row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}#mbmr2-card button{min-height:44px;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:#13233c;color:#e8f2fa;font:700 14px system-ui,sans-serif;cursor:pointer;touch-action:manipulation}#mbmr2-card button[aria-pressed=true]{background:#1d6e5a;border-color:#84e0c0}#mbmr2-card button[aria-pressed=true]::before{content:'\\2713 '}#mbmr2-card button:focus-visible{outline:2px solid #5fd3ff;outline-offset:2px}#mbmr2-card .r2lab{font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#5fd3ff;margin-top:10px}#mbmr2-streak{font-weight:700;color:#ffe08a}";
+var st=doc.createElement("style");st.id="mbmr2-css";st.textContent=css;doc.head.appendChild(st);
+var gear=doc.createElement("button");gear.id="mbmr2-gear";gear.type="button";gear.setAttribute("aria-label","Play options: graphics, controls and daily streak");gear.textContent="⚙";
+var panel=doc.createElement("div");panel.id="mbmr2-panel";panel.setAttribute("role","dialog");panel.setAttribute("aria-modal","true");panel.setAttribute("aria-label","Play options");
+var panelOpen=false,lastFocus=null;
+function btn(label,pressed,fn){var b=doc.createElement("button");b.type="button";b.textContent=label;if(pressed!==null)b.setAttribute("aria-pressed",pressed?"true":"false");b.addEventListener("click",fn);return b;}
+function refresh(){if(!panel.firstChild)return;build();}
+function build(){var c=doc.createElement("div");c.id="mbmr2-card";var h=doc.createElement("h2");h.textContent="Play options";c.appendChild(h);
+ var s=doc.createElement("p");s.id="mbmr2-streak";s.textContent=streakText();c.appendChild(s);
+ var sp=doc.createElement("p");sp.textContent="Play for a little each day to grow your streak. Miss one day a week and it still counts.";c.appendChild(sp);
+ var l1=doc.createElement("div");l1.className="r2lab";l1.textContent="Graphics";c.appendChild(l1);var r1=doc.createElement("div");r1.className="r2row";
+ [["auto","Auto"],["high","High"],["low","Low"]].forEach(function(o){r1.appendChild(btn(o[1],R2.pref===o[0],function(){LS.set("mbm_gfx_tier",o[0]);R2.pref=o[0];changed=true;build();}));});c.appendChild(r1);
+ var p1=doc.createElement("p");p1.textContent="Now running: "+(R2.low?"Low (smoother on older devices)":"High")+(R2.auto?", chosen automatically.":".")+(changed?" Your change applies when the game reloads.":"");c.appendChild(p1);
+ if(changed){var rr=doc.createElement("div");rr.className="r2row";rr.appendChild(btn("Reload now",null,function(){location.reload();}));c.appendChild(rr);}
+ if(OH&&touchDev){var l2=doc.createElement("div");l2.className="r2lab";l2.textContent="One-hand touch";c.appendChild(l2);var r2=doc.createElement("div");r2.className="r2row";
+  r2.appendChild(btn("On",ohOn,function(){ohOn=true;LS.set("mbm_r2_onehand","1");build();}));r2.appendChild(btn("Off",!ohOn,function(){ohOn=false;LS.set("mbm_r2_onehand","0");build();}));c.appendChild(r2);
+  var p2=doc.createElement("p");p2.textContent=OH.help;c.appendChild(p2);}
+ if(GP){var l3=doc.createElement("div");l3.className="r2lab";l3.textContent="Gamepad";c.appendChild(l3);var p3=doc.createElement("p");p3.textContent=(padSeen?"Connected. ":"Press any button on a gamepad to connect it. ")+GP.help;c.appendChild(p3);}
+ var r9=doc.createElement("div");r9.className="r2row";var cl=btn("Close",null,close);cl.id="mbmr2-close";r9.appendChild(cl);c.appendChild(r9);
+ var keep=doc.activeElement&&panel.contains(doc.activeElement)?doc.activeElement.textContent:null;panel.textContent="";panel.appendChild(c);
+ if(keep){var bs=c.querySelectorAll("button");for(var i=0;i<bs.length;i++)if(bs[i].textContent===keep){bs[i].focus();break;}}}
+var changed=false;
+function open(){lastFocus=doc.activeElement;panelOpen=true;build();panel.setAttribute("data-open","");var b=panel.querySelector("button");if(b)b.focus();}
+function close(){panelOpen=false;panel.removeAttribute("data-open");try{(lastFocus&&lastFocus.focus?lastFocus:gear).focus();}catch(_){}}
+gear.addEventListener("click",function(e){e.stopPropagation();panelOpen?close():open();});
+panel.addEventListener("click",function(e){if(e.target===panel)close();});
+panel.addEventListener("keydown",function(e){e.stopPropagation();if(e.key==="Escape"){e.preventDefault();close();}else if(e.key==="Tab"){var bs=panel.querySelectorAll("button");if(!bs.length)return;var f=bs[0],l=bs[bs.length-1];if(e.shiftKey&&doc.activeElement===f){e.preventDefault();l.focus();}else if(!e.shiftKey&&doc.activeElement===l){e.preventDefault();f.focus();}}},true);
+["keyup","pointerdown","pointerup","touchstart","touchend","mousedown","click"].forEach(function(t){panel.addEventListener(t,function(e){e.stopPropagation();});});
+/* fade the gear while playing so it never hides the game */
+var idleT=0;function wake(){gear.removeAttribute("data-idle");clearTimeout(idleT);idleT=setTimeout(function(){if(!panelOpen)gear.setAttribute("data-idle","");},4000);}
+["pointermove","pointerdown","keydown"].forEach(function(t){window.addEventListener(t,function(e){if(t==="keydown"&&!/Escape|KeyP|Tab/.test(e.code||""))return;wake();},{capture:true,passive:true});});
+function place(){var g=CFG.gear||{},s=(innerWidth<=500&&g.small)||g;gear.style.left=gear.style.right=gear.style.top=gear.style.bottom="auto";if(s.right!=null)gear.style.right=s.right+"px";else gear.style.left=(s.left!=null?s.left:8)+"px";if(s.bottom!=null)gear.style.bottom=s.bottom+"px";else gear.style.top=(s.top!=null?s.top:64)+"px";}
+window.addEventListener("resize",place);
+function mount(){place();(doc.body||doc.documentElement).appendChild(gear);(doc.body||doc.documentElement).appendChild(panel);wake();}
+if(doc.readyState==="loading")doc.addEventListener("DOMContentLoaded",mount,{once:true});else mount();
+window.__MBM_R2_KIT__={version:"1.0.1",game:CFG.id,tier:R2.tier,streak:readStreak,markPlayed:markPlayed,open:open,close:close,selfTest:function(){var t=dayNum(new Date());return{ok:typeof t==="number"&&!!doc.getElementById("mbmr2-gear"),tier:R2.tier};}};
+})();</script>
+<!-- MBM-R2-KIT:END -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#071114">
@@ -135,6 +231,17 @@
     @media(max-width:767px){body.match-mode{overflow:auto}body.match-mode #match-app{height:auto;min-height:100%}body.match-mode #scene3d,body.match-mode #scene2d{touch-action:pan-y}.career-main{scroll-padding-bottom:100px}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;transition-duration:.001ms!important}}
     @media(max-width:640px){.talk-grid,.press-options{grid-template-columns:1fr}}
+/* MBM-R2 batch 7: matchday medals and match keys */
+#r2-td-medals{margin-top:14px;padding:10px 12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(0,0,0,.22);font:700 12px/1.45 system-ui,sans-serif;color:#dfe7f2}
+#r2-td-medals b{color:var(--gold,#f3c449)}
+#r2-td-medals .r2-row{display:flex;flex-wrap:wrap;gap:6px 14px}
+#r2-td-medals .r2-keys{margin-top:6px;font-weight:600;font-size:11px;opacity:.8}
+#r2-td-result{margin:4px auto 10px;max-width:520px;font:800 13px/1.4 system-ui,sans-serif;color:var(--gold,#f3c449)}
+#r2-td-result[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){#r2-td-medals,#r2-td-result{transition:none;animation:none}}
+/* keep the kit gear (right 8 px, top 64 px, 44 px) clear of the analysis labels and the first tactics control */
+.drawer-body{padding-top:26px}
+@media (min-width:501px){.side .card-head{padding-right:56px}}
   </style>
 </head>
 <body>
@@ -308,7 +415,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
       <div>
         <div class="fixture-lockup"><div><div class="crest" style="background:var(--home)">HBR</div></div><div><div class="fixture-name">Harbour FC</div><div class="fixture-meta">8-club Dynasty Premiership</div></div><div class="versus">＋</div><div><div class="fixture-name">Dynasty Challenge Cup</div><div class="fixture-meta">Transfers · Youth · Club growth</div></div><div class="crest" style="background:var(--gold)">V2</div></div>
         <p class="launch-copy">Lead Harbour FC through a living multi-season football world: a 14-round league, knockout cup, evolving AI clubs, manager changes, transfer stories, awards, youth development, contracts, facilities, finances, board pressure, legacy records and four-slot career saves. Every playable fixture opens the complete Dynasty Sports broadcast matchday.</p>
-        <div class="launch-actions"><button class="btn primary" id="kickoff">Start new career</button><button class="btn cyan" id="continue-career" disabled>Continue autosave</button><button class="btn" id="new-seed">New career seed</button></div>
+        <div class="launch-actions"><button class="btn primary" id="kickoff">Start new career</button><button class="btn cyan" id="continue-career" disabled>Continue autosave</button><button class="btn" id="new-seed">New career seed</button></div><div id="r2-td-medals" aria-live="polite"></div>
       </div>
       <div class="setup">
         <div class="field"><label for="seed-input">DETERMINISTIC CAREER SEED</label><input id="seed-input" type="number" inputmode="numeric" value="84928492"></div>
@@ -352,7 +459,7 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
 
 <div class="modal-backdrop" id="settings-modal" hidden inert><section class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1"><div class="modal-head"><div><span style="font-size:8px;color:var(--cyan);font-weight:900;letter-spacing:.12em">MADEBYMATT · LOCAL SETTINGS</span><h2 id="settings-title">Game & Accessibility</h2></div><button class="btn ghost" id="settings-close">Close</button></div><div class="modal-body"><div class="settings-grid"><label class="settings-option"><span><strong>Reduced motion</strong><small>Shorter transitions, no automatic replays or camera flash.</small></span><input id="setting-reduced" type="checkbox"></label><label class="settings-option"><span><strong>High contrast</strong><small>Strengthens text, borders and panel separation.</small></span><input id="setting-contrast" type="checkbox"></label><label class="settings-option"><span><strong>Larger interface text</strong><small>Increases menu and management text without zoom blocking.</small></span><input id="setting-large-text" type="checkbox"></label><label class="settings-option"><span><strong>Automatic goal replays</strong><small>Disabled automatically when reduced motion is active.</small></span><input id="setting-replays" type="checkbox" checked></label><label class="settings-option"><span><strong>Procedural audio</strong><small>Stadium sound is generated locally after your interaction.</small></span><input id="setting-audio" type="checkbox" checked></label><label class="settings-option"><span><strong>Stadium announcer</strong><small>Optional browser speech for goals and substitutions. Off by default.</small></span><input id="setting-announcer" type="checkbox"></label><label class="settings-option"><span><strong>Render profile</strong><small>Balanced mode can step down detail if frame rate stays low.</small></span><select id="setting-quality"><option value="broadcast">Broadcast</option><option value="balanced">Balanced adaptive</option><option value="battery">Battery saver</option></select></label></div><p style="font-size:9px;color:var(--muted);line-height:1.55;margin:14px 0 0">No account is required. These preferences are stored with this career and remain on this device.</p></div></section></div>
 
-<div class="modal-backdrop" id="fulltime-modal" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="ft-title"><div class="fulltime"><h2 id="ft-title">FULL TIME · DYNASTY SPORTS</h2><div class="big-score" id="ft-score">0 — 0</div><p id="ft-copy">The V2 Release Candidate match centre has completed its live transmission.</p><div class="summary-grid"><div><b id="ft-xg">0.00—0.00</b><span>EXPECTED GOALS</span></div><div><b id="ft-shots">0—0</b><span>SHOTS</span></div><div><b id="ft-pos">50—50</b><span>POSSESSION</span></div></div><div class="analysis-grid"><article class="analysis-card"><h3>PLAYER OF THE MATCH</h3><p><strong id="ft-potm" style="display:block;color:var(--lime);font-size:15px">Marcus Vance · 8.1</strong><span id="ft-potm-reason">Decisive in the biggest moments.</span></p></article><article class="analysis-card"><h3>MATCH HIGHLIGHTS</h3><div class="highlights" id="ft-highlights"></div></article></div><p id="ft-seed" style="font:800 9px ui-monospace,monospace;color:var(--gold)">REPRODUCIBLE SEED 84928492</p><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn primary" id="play-again">Return to career</button><button class="btn cyan" id="play-new" hidden>Replay seed</button><button class="btn" id="export-report">Export match report</button></div></div></section></div>
+<div class="modal-backdrop" id="fulltime-modal" hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="ft-title"><div class="fulltime"><h2 id="ft-title">FULL TIME · DYNASTY SPORTS</h2><div class="big-score" id="ft-score">0 — 0</div><p id="ft-copy">The V2 Release Candidate match centre has completed its live transmission.</p><p id="r2-td-result" role="status" hidden></p><div class="summary-grid"><div><b id="ft-xg">0.00—0.00</b><span>EXPECTED GOALS</span></div><div><b id="ft-shots">0—0</b><span>SHOTS</span></div><div><b id="ft-pos">50—50</b><span>POSSESSION</span></div></div><div class="analysis-grid"><article class="analysis-card"><h3>PLAYER OF THE MATCH</h3><p><strong id="ft-potm" style="display:block;color:var(--lime);font-size:15px">Marcus Vance · 8.1</strong><span id="ft-potm-reason">Decisive in the biggest moments.</span></p></article><article class="analysis-card"><h3>MATCH HIGHLIGHTS</h3><div class="highlights" id="ft-highlights"></div></article></div><p id="ft-seed" style="font:800 9px ui-monospace,monospace;color:var(--gold)">REPRODUCIBLE SEED 84928492</p><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn primary" id="play-again">Return to career</button><button class="btn cyan" id="play-new" hidden>Replay seed</button><button class="btn" id="export-report">Export match report</button></div></div></section></div>
 
 <div class="career-dialog" id="career-dialog" hidden><section class="career-dialog-card" role="dialog" aria-modal="true" aria-labelledby="career-dialog-title"><div class="career-dialog-head"><h2 id="career-dialog-title">Career notice</h2><button class="btn ghost" id="career-dialog-close">Close</button></div><div class="career-dialog-body" id="career-dialog-body"></div></section></div>
 <input class="career-import-input" id="career-import-input" type="file" accept="application/json,.json" hidden tabindex="-1" aria-hidden="true">
@@ -1225,6 +1332,30 @@ try{observer.observe(document.documentElement,{childList:true,subtree:true});var
     toggleStarter:id=>{toggleCareerStarter(id);return deepClone(careerState)},
     sellPlayer:id=>{sellCareerPlayer(id);return deepClone(careerState)}
   });
+})();
+(function installTouchlineR2(){'use strict';
+var KEY='mbm_r2_touchline_meta',DAYS=14,$=function(s){return document.querySelector(s)};
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function num(v){return typeof v==='number'&&isFinite(v)&&v>=0&&v<1e7?Math.floor(v):0}
+function read(){var m={v:1,gold:0,silver:0,bronze:0,daily:{}};try{var o=JSON.parse(localStorage.getItem(KEY)||'null');if(o&&typeof o==='object'&&!Array.isArray(o)){m.gold=num(o.gold);m.silver=num(o.silver);m.bronze=num(o.bronze);if(o.daily&&typeof o.daily==='object'&&!Array.isArray(o.daily))Object.keys(o.daily).forEach(function(k){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&num(o.daily[k])>0)m.daily[k]=num(o.daily[k])})}}catch(_){}return m}
+function trim(d){var ks=Object.keys(d).sort();while(ks.length>DAYS)delete d[ks.shift()];return d}
+function write(m){try{localStorage.setItem(KEY,JSON.stringify({v:1,gold:m.gold,silver:m.silver,bronze:m.bronze,daily:trim(m.daily)}))}catch(_){}}
+function streak(){try{var k=window.__MBM_R2_KIT__;var s=k&&k.streak&&k.streak();return s&&typeof s.n==='number'?s.n:0}catch(_){return 0}}
+function render(){var el=$('#r2-td-medals');if(!el)return;var m=read(),done=num(m.daily[today()])>0,n=streak();
+ el.innerHTML='<div class="r2-row"><span>Matchday medals: <b>'+m.gold+'</b> gold · <b>'+m.silver+'</b> silver · <b>'+m.bronze+'</b> bronze</span><span>Today: '+(done?'<b>medal earned</b>':'earn one medal')+'</span>'+(n>0?'<span>Streak: <b>'+n+'</b> day'+(n===1?'':'s')+'</span>':'')+'</div><div class="r2-keys">Match keys: Space pause · F speed · T touchline · S subs · R replay</div>'}
+// Reads the result from the full-time card text (#ft-score, user side first): "2 — 1", "1 — 1 · PENS 4–3", "2 — 1 · AET".
+function medalFor(text){var t=String(text||''),g=t.match(/^\s*(\d+)\s*—\s*(\d+)/);if(!g)return null;var u=+g[1],o=+g[2],p=t.match(/PENS\s*(\d+)\s*[–-]\s*(\d+)/);
+ if(p){return +p[1]>+p[2]?'silver':null}if(u>o)return o===0?'gold':'silver';if(u===o)return 'bronze';return null}
+var LABEL={gold:'Gold medal: a clean-sheet win.',silver:'Silver medal: a win.',bronze:'Bronze medal: a point earned.'};
+var lastShown=false;
+function onFullTime(){var modal=$('#fulltime-modal'),line=$('#r2-td-result');if(!modal||!line)return;var shown=!modal.hidden;if(shown===lastShown)return;lastShown=shown;if(!shown)return;
+ var medal=medalFor(($('#ft-score')||{}).textContent);if(!medal){line.hidden=true;line.textContent='';return}
+ var m=read();m[medal]=num(m[medal])+1;var d=today();m.daily[d]=num(m.daily[d])+1;write(m);line.textContent=LABEL[medal]+' Today’s goal done.';line.hidden=false;render()}
+function keys(e){if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey)return;if(!document.body.classList.contains('match-mode'))return;var a=document.activeElement,tag=a&&a.tagName;if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+ if(document.querySelector('.modal-backdrop:not([hidden]),#drawer.open,#mbmr2-panel[data-open]'))return;var id={KeyF:'speed',KeyT:'tactics',KeyS:'subs'}[e.code];if(!id)return;var b=document.getElementById(id);if(b&&!b.disabled&&b.offsetParent!==null){e.preventDefault();b.click()}}
+function boot(){render();var modal=$('#fulltime-modal');if(modal)new MutationObserver(onFullTime).observe(modal,{attributes:true,attributeFilter:['hidden']});var launch=$('#launch');if(launch)new MutationObserver(function(){if(!launch.hidden)render()}).observe(launch,{attributes:true,attributeFilter:['hidden']});document.addEventListener('keydown',keys)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+window.__MBM_R2_TOUCHLINE__={medalFor:medalFor,read:read};
 })();
 </script>
 <!-- MBM-INLINE-EXIT:BEGIN generated by tools/render_inline_exit.py, do not edit by hand -->
