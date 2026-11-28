@@ -95,7 +95,7 @@
       align-items: center;
       gap: 12px;
       min-height: 48px;
-      padding: 9px 12px;
+      padding: 9px 14px 9px 58px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: linear-gradient(180deg, rgba(25,25,32,.92), rgba(14,14,19,.82));
@@ -1579,18 +1579,25 @@
     }
     shoot(weapon) {
       if (weapon.id === 'rifle') {
-        this.tone('sawtooth', 250, 45, .095, .22);
-        this.noise(.075, .16, 1100);
+        this.tone('sawtooth', 290, 52, .085, .21);
+        this.tone('triangle', 120, 38, .07, .18);
+        this.noise(.07, .22, 1850);
+        this.tone('square', 1420, 820, .022, .05, .025);
       } else if (weapon.id === 'scatter') {
-        this.tone('square', 150, 32, .16, .24);
-        this.noise(.14, .28, 680);
+        this.tone('sawtooth', 165, 28, .19, .28);
+        this.tone('sine', 95, 26, .21, .26);
+        this.noise(.17, .34, 960);
+        this.noise(.09, .18, 2400, .01);
       } else {
-        this.tone('triangle', 620, 62, .22, .25);
-        this.tone('sine', 880, 190, .12, .10, .015);
+        this.tone('sawtooth', 880, 58, .26, .24);
+        this.tone('sine', 1320, 220, .18, .15, .01);
+        this.tone('sine', 110, 30, .28, .26);
+        this.noise(.14, .20, 2800);
       }
     }
     hit(headshot = false) {
-      this.tone('sine', headshot ? 1450 : 930, headshot ? 2100 : 1300, .06, .14);
+      this.tone('sine', headshot ? 1680 : 960, headshot ? 2450 : 1280, headshot ? .09 : .055, headshot ? .18 : .13);
+      if (headshot) this.tone('triangle', 2600, 3200, .08, .10, .018);
     }
     kill() {
       this.tone('triangle', 420, 820, .11, .12);
@@ -1642,6 +1649,7 @@
 
     uniform mat4 uMVP;
     uniform mat4 uModel;
+    uniform vec2 uUvScale;
 
     varying vec3 vNormal;
     varying vec3 vWorldPos;
@@ -1651,7 +1659,7 @@
       vec4 world = uModel * vec4(aPosition, 1.0);
       vWorldPos = world.xyz;
       vNormal = normalize(mat3(uModel) * aNormal);
-      vTexCoord = aTexCoord;
+      vTexCoord = aTexCoord * uUvScale;
       gl_Position = uMVP * vec4(aPosition, 1.0);
     }
   `;
@@ -1669,12 +1677,15 @@
     uniform vec3 uViewPos;
     uniform vec3 uArenaLight;
     uniform vec3 uPlayerLight;
+    uniform vec3 uMuzzleColor;
+    uniform float uMuzzlePower;
     uniform vec3 uFogColor;
     uniform float uUseTexture;
     uniform float uFogDensity;
     uniform float uEmissive;
     uniform float uQuality;
     uniform float uPulse;
+    uniform float uRim;
 
     void main() {
       vec3 base = uTint;
@@ -1683,24 +1694,42 @@
       }
 
       vec3 n = normalize(vNormal);
-      vec3 l1 = normalize(uArenaLight - vWorldPos);
-      float diffuse1 = max(dot(n, l1), 0.0) * 0.72;
+      vec3 viewDir = normalize(uViewPos - vWorldPos);
 
+      // Hemisphere cyber-hangar ambient (cool steel sky + warm floor bounce)
+      float hemiMix = clamp(n.y * 0.5 + 0.5, 0.0, 1.0);
+      vec3 ambient = mix(vec3(0.14, 0.12, 0.16), vec3(0.22, 0.27, 0.36), hemiMix);
+
+      // Central reactor overhead key light (subtle cool-warm shift)
+      vec3 l1Vec = uArenaLight - vWorldPos;
+      float l1Dist = length(l1Vec);
+      vec3 l1 = l1Vec / max(l1Dist, 0.001);
+      float att1 = 1.0 / (1.0 + 0.012 * l1Dist + 0.0018 * l1Dist * l1Dist);
+      float diff1 = max(dot(n, l1), 0.0) * 1.18 * att1;
+      vec3 keyCol = mix(vec3(0.75, 0.92, 1.0), vec3(1.0, 0.85, 0.62), 0.38 + 0.2 * uPulse);
+
+      // Player tactical headlamp + dynamic muzzle flash illumination
       vec3 l2Vec = uPlayerLight - vWorldPos;
       float l2Dist = length(l2Vec);
-      vec3 l2 = normalize(l2Vec);
-      float attenuation = 1.0 / (1.0 + 0.045 * l2Dist + 0.018 * l2Dist * l2Dist);
-      float diffuse2 = max(dot(n, l2), 0.0) * attenuation * 2.45;
+      vec3 l2 = l2Vec / max(l2Dist, 0.001);
+      float att2 = 1.0 / (1.0 + 0.042 * l2Dist + 0.016 * l2Dist * l2Dist);
+      float diff2 = max(dot(n, l2), 0.0) * att2;
+      vec3 playerCol = vec3(0.86, 0.92, 1.0) * (1.85 * diff2) + uMuzzleColor * (uMuzzlePower * 4.4 * diff2);
 
+      // Crisp Blinn-Phong metallic specular + Fresnel cyber rim lighting
       float spec = 0.0;
-      if (uQuality > 0.5) {
-        vec3 viewDir = normalize(uViewPos - vWorldPos);
-        vec3 reflectDir = reflect(-l1, n);
-        spec = pow(max(dot(viewDir, reflectDir), 0.0), 18.0) * 0.28;
+      float fresnel = 0.0;
+      if (uQuality > 0.4) {
+        vec3 half1 = normalize(l1 + viewDir);
+        vec3 half2 = normalize(l2 + viewDir);
+        spec = pow(max(dot(n, half1), 0.0), 28.0) * 0.45 * att1
+             + pow(max(dot(n, half2), 0.0), 22.0) * (0.32 + uMuzzlePower * 0.9) * att2;
+        fresnel = pow(1.0 - max(dot(n, viewDir), 0.0), 3.0) * uRim;
       }
 
-      float pulseLight = 0.92 + 0.08 * uPulse;
-      vec3 lit = base * (0.18 + (diffuse1 + diffuse2) * pulseLight + spec);
+      float pulseLight = 0.94 + 0.06 * uPulse;
+      vec3 lit = base * (ambient + keyCol * diff1 * pulseLight + playerCol) + vec3(spec) * mix(vec3(0.85, 0.94, 1.0), uMuzzleColor, clamp(uMuzzlePower, 0.0, 0.65));
+      lit += mix(vec3(0.0, 0.72, 1.0), uTint, 0.5) * fresnel;
       lit += base * uEmissive + uFlash;
 
       float dist = length(uViewPos - vWorldPos);
@@ -1745,18 +1774,22 @@
     aTexCoord: gl.getAttribLocation(program, 'aTexCoord'),
     uMVP: gl.getUniformLocation(program, 'uMVP'),
     uModel: gl.getUniformLocation(program, 'uModel'),
+    uUvScale: gl.getUniformLocation(program, 'uUvScale'),
     uTexture: gl.getUniformLocation(program, 'uTexture'),
     uTint: gl.getUniformLocation(program, 'uTint'),
     uFlash: gl.getUniformLocation(program, 'uFlash'),
     uViewPos: gl.getUniformLocation(program, 'uViewPos'),
     uArenaLight: gl.getUniformLocation(program, 'uArenaLight'),
     uPlayerLight: gl.getUniformLocation(program, 'uPlayerLight'),
+    uMuzzleColor: gl.getUniformLocation(program, 'uMuzzleColor'),
+    uMuzzlePower: gl.getUniformLocation(program, 'uMuzzlePower'),
     uFogColor: gl.getUniformLocation(program, 'uFogColor'),
     uUseTexture: gl.getUniformLocation(program, 'uUseTexture'),
     uFogDensity: gl.getUniformLocation(program, 'uFogDensity'),
     uEmissive: gl.getUniformLocation(program, 'uEmissive'),
     uQuality: gl.getUniformLocation(program, 'uQuality'),
-    uPulse: gl.getUniformLocation(program, 'uPulse')
+    uPulse: gl.getUniformLocation(program, 'uPulse'),
+    uRim: gl.getUniformLocation(program, 'uRim')
   };
 
   function createCubeMesh() {
@@ -1814,89 +1847,140 @@
   }
   bindCubeMesh();
 
+  function uploadTextureSource(texture, srcEl) {
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, srcEl);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.generateMipmap(gl.TEXTURE_2D);
+  }
+
   function createTexture(drawFn) {
     const c = document.createElement('canvas');
     c.width = c.height = 256;
     const ctx = c.getContext('2d');
     drawFn(ctx, 256);
     const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-    gl.generateMipmap(gl.TEXTURE_2D);
+    uploadTextureSource(texture, c);
     return texture;
   }
 
   const textures = {
     wall: createTexture((ctx, s) => {
-      ctx.fillStyle = '#1b1b22'; ctx.fillRect(0,0,s,s);
-      ctx.fillStyle = '#111116';
+      ctx.fillStyle = '#252c3b'; ctx.fillRect(0,0,s,s);
+      ctx.fillStyle = '#141925';
       for (let y = 0; y < s; y += 64) for (let x = 0; x < s; x += 64) ctx.fillRect(x + 3, y + 3, 58, 58);
-      ctx.strokeStyle = 'rgba(255,176,0,.34)'; ctx.lineWidth = 3;
-      for (let i = 0; i <= s; i += 64) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,s); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(s,i); ctx.stroke(); }
-      ctx.fillStyle = 'rgba(255,255,255,.09)';
-      for (let y = 12; y < s; y += 64) for (let x = 12; x < s; x += 64) { ctx.beginPath(); ctx.arc(x,y,2.5,0,Math.PI*2); ctx.fill(); }
-      const grad = ctx.createLinearGradient(0,0,s,0); grad.addColorStop(0,'rgba(255,255,255,.04)'); grad.addColorStop(.5,'transparent'); grad.addColorStop(1,'rgba(0,0,0,.28)'); ctx.fillStyle = grad; ctx.fillRect(0,0,s,s);
+      ctx.fillStyle = '#ffb000'; ctx.fillRect(0, s - 16, s, 5);
+      ctx.fillStyle = '#00d9ff'; ctx.fillRect(0, 12, s, 4);
     }),
     floor: createTexture((ctx, s) => {
-      ctx.fillStyle = '#101015'; ctx.fillRect(0,0,s,s);
-      ctx.strokeStyle = 'rgba(255,176,0,.18)'; ctx.lineWidth = 2;
-      for (let i = 0; i <= s; i += 32) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,s); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(s,i); ctx.stroke(); }
-      ctx.strokeStyle = 'rgba(255,255,255,.04)'; ctx.lineWidth = 1;
-      for (let i = 16; i <= s; i += 32) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,s); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(s,i); ctx.stroke(); }
-      for (let i = 0; i < 800; i++) { const a = Math.random() * .035; ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fillRect(Math.random()*s, Math.random()*s, 1, 1); }
+      ctx.fillStyle = '#141925'; ctx.fillRect(0,0,s,s);
+      ctx.strokeStyle = 'rgba(0,217,255,.26)'; ctx.lineWidth = 2;
+      ctx.strokeRect(2, 2, s - 4, s - 4);
+      ctx.strokeStyle = 'rgba(255,176,0,.16)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(s/2,0); ctx.lineTo(s/2,s); ctx.moveTo(0,s/2); ctx.lineTo(s,s/2); ctx.stroke();
+    }),
+    crate: createTexture((ctx, s) => {
+      ctx.fillStyle = '#223147'; ctx.fillRect(0,0,s,s);
+      ctx.strokeStyle = '#ffb000'; ctx.lineWidth = 6; ctx.strokeRect(6,6,s-12,s-12);
+    }),
+    ceiling: createTexture((ctx, s) => {
+      ctx.fillStyle = '#0f1420'; ctx.fillRect(0,0,s,s);
+      ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 4; ctx.strokeRect(4,4,s-8,s-8);
+    }),
+    gun: createTexture((ctx, s) => {
+      ctx.fillStyle = '#363e4f'; ctx.fillRect(0,0,s,s);
     }),
     drone: createTexture((ctx, s) => {
-      ctx.fillStyle = '#2b2c33'; ctx.fillRect(0,0,s,s);
-      ctx.fillStyle = '#16171c'; ctx.fillRect(0,90,s,76);
-      ctx.fillStyle = '#ffb000'; ctx.fillRect(0,108,s,18);
-      ctx.fillStyle = '#111';
-      for (let x = -30; x < s + 30; x += 44) { ctx.save(); ctx.translate(x,117); ctx.rotate(-Math.PI/4); ctx.fillRect(-8,-28,16,56); ctx.restore(); }
-      ctx.strokeStyle = 'rgba(255,255,255,.16)'; ctx.lineWidth = 3; ctx.strokeRect(5,5,s-10,s-10);
+      ctx.fillStyle = '#333b4d'; ctx.fillRect(0,0,s,s);
+      ctx.fillStyle = '#1a1f2c'; ctx.fillRect(0,88,s,78);
+      ctx.fillStyle = '#ffb000'; ctx.fillRect(0,110,s,16);
+      ctx.fillStyle = '#0e1118';
+      for (let x = -30; x < s + 30; x += 44) { ctx.save(); ctx.translate(x,118); ctx.rotate(-Math.PI/4); ctx.fillRect(-8,-28,16,56); ctx.restore(); }
+      ctx.strokeStyle = 'rgba(255,255,255,.24)'; ctx.lineWidth = 3; ctx.strokeRect(5,5,s-10,s-10);
     }),
     ochre: createTexture((ctx, s) => {
-      ctx.fillStyle = '#1b1b20'; ctx.fillRect(0,0,s,s);
-      ctx.fillStyle = '#ffb000'; ctx.fillRect(0,86,s,54);
-      ctx.fillStyle = '#15151a';
-      for (let x = -40; x < s+40; x += 48) { ctx.save(); ctx.translate(x,113); ctx.rotate(-Math.PI/4); ctx.fillRect(-10,-60,20,120); ctx.restore(); }
-      ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 3; ctx.strokeRect(7,7,s-14,s-14);
+      ctx.fillStyle = '#262b38'; ctx.fillRect(0,0,s,s);
+      ctx.fillStyle = '#ffb000'; ctx.fillRect(0,96,s,42);
+      ctx.fillStyle = '#181c26';
+      for (let x = -40; x < s+40; x += 48) { ctx.save(); ctx.translate(x,117); ctx.rotate(-Math.PI/4); ctx.fillRect(-9,-55,18,110); ctx.restore(); }
+      ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 3; ctx.strokeRect(7,7,s-14,s-14);
     }),
     carbon: createTexture((ctx, s) => {
-      ctx.fillStyle = '#1b1c22'; ctx.fillRect(0,0,s,s);
+      ctx.fillStyle = '#1f232e'; ctx.fillRect(0,0,s,s);
       for (let y = 0; y < s; y += 12) for (let x = 0; x < s; x += 12) {
-        ctx.fillStyle = ((x+y)/12)%2 ? '#282a33' : '#111217';
+        ctx.fillStyle = ((x+y)/12)%2 ? '#313747' : '#141720';
         ctx.beginPath(); ctx.moveTo(x,y+6); ctx.lineTo(x+6,y); ctx.lineTo(x+12,y+6); ctx.lineTo(x+6,y+12); ctx.closePath(); ctx.fill();
       }
-      ctx.fillStyle = 'rgba(255,176,0,.55)'; ctx.fillRect(0,119,s,18);
+      ctx.fillStyle = 'rgba(255,176,0,.72)'; ctx.fillRect(0,118,s,16);
     }),
     hazard: createTexture((ctx, s) => {
-      ctx.fillStyle = '#101014'; ctx.fillRect(0,0,s,s);
+      ctx.fillStyle = '#14161e'; ctx.fillRect(0,0,s,s);
       ctx.save(); ctx.translate(s/2,s/2); ctx.rotate(-Math.PI/4);
-      for (let x = -s; x < s; x += 44) { ctx.fillStyle = (Math.floor((x+s)/44)%2) ? '#ffd000' : '#101014'; ctx.fillRect(x,-s,44,s*2); }
+      for (let x = -s; x < s; x += 44) { ctx.fillStyle = (Math.floor((x+s)/44)%2) ? '#ffd000' : '#151822'; ctx.fillRect(x,-s,44,s*2); }
       ctx.restore();
-      ctx.fillStyle = 'rgba(0,0,0,.30)'; ctx.fillRect(0,0,s,s);
+      ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(0,0,s,s);
       ctx.strokeStyle = '#ffd000'; ctx.lineWidth = 5; ctx.strokeRect(6,6,s-12,s-12);
     }),
     neon: createTexture((ctx, s) => {
-      ctx.fillStyle = '#061318'; ctx.fillRect(0,0,s,s);
-      ctx.strokeStyle = 'rgba(0,217,255,.72)'; ctx.lineWidth = 3;
+      ctx.fillStyle = '#091b24'; ctx.fillRect(0,0,s,s);
+      ctx.strokeStyle = 'rgba(0,217,255,.82)'; ctx.lineWidth = 3;
       for (let i=0;i<=s;i+=32) { ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,s);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(s,i);ctx.stroke(); }
-      ctx.strokeStyle = 'rgba(255,176,0,.55)'; ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,176,0,.62)'; ctx.lineWidth = 2;
       for (let i=16;i<=s;i+=64) { ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,s);ctx.stroke(); }
     }),
     legend: createTexture((ctx, s) => {
       const g = ctx.createRadialGradient(s/2,s/2,12,s/2,s/2,s*.68);
-      g.addColorStop(0,'#fff3b0'); g.addColorStop(.22,'#ffcb38'); g.addColorStop(.55,'#ff8a00'); g.addColorStop(1,'#221207');
+      g.addColorStop(0,'#fff3b0'); g.addColorStop(.24,'#ffcb38'); g.addColorStop(.58,'#ff8a00'); g.addColorStop(1,'#29160a');
       ctx.fillStyle = g; ctx.fillRect(0,0,s,s);
-      ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 4; ctx.strokeRect(7,7,s-14,s-14);
+      ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 4; ctx.strokeRect(7,7,s-14,s-14);
       ctx.strokeStyle = 'rgba(45,18,0,.55)'; ctx.lineWidth = 8;
       for (let i=-s;i<s*2;i+=52){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i+s,s);ctx.stroke();}
     })
   };
+
+  /* Zero-network embedded CC0 Poly Haven PBR textures (decoded offline via createImageBitmap) */
+  const NB_PACKED_TEX = {"floor":"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","wall":"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","crate":"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","gun":"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","ceiling":"UklGRsoDAABXRUJQVlA4WAoAAAAgAAAA/wAA/wAASUNDUMgBAAAAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADZWUDgg3AEAAPAYAJ0BKgABAAE+oVChTqYko6MgdViwwBQJaW6+JxjyBm9ix9R8APmFcUQU5+N0B45dJd17z85jZWCJyKxVmUe7sXvTB9APTbn+gZ0gjHSnVc8tsT4v1qPjxjN+oFV97B/0ePWu18jP2pFOc7HAttVHzxWp2afqu7tlMJ4/qwXWnKbN1t3pVeOVqLmEMjvrn1NKgotMI0xGwh3njKJ4QuxyfhLaoWm4KXNrQNw1/yrpyz5w6PDeKQBkCffmSIZ/x5qetaR/KqtRE2jAaCQ5cMAA/vzCMUOTYQWhyf4+fDM0IUIBU9ADXT3nyznyaOfqmtlzj+o8fCwQvF13UuXlQGVYOhP/LhIA7m6JQ0kAo7vZGv4lgcfd4W/gxGDEQhTPqiafTKFxNwdHjKgYW8VQVZbp+A8tmirYzWWlKx0SkM1MeVJLol0TGbYrWlKXCxoinFZTCY9IAU+WWN5dFpe6qKEJ/e5aKD8TPXn6UHBmJL1FVrEDrar0amsQdZUIaC03OLbiBOQQglY2yrGeCfC3aCANSbb2Oe0zmfKwsUnhZ/At2g0ldpubYHLUXQtP80MPpHCyFBD6uag5lAxCj86OgvKvNVRt3Ut5B24v9+5ospacpmS2oDPRvNgQERAA"};
+  const nbTexState = { loaded: [] };
+  if (typeof createImageBitmap === 'function' && typeof Blob === 'function' && typeof atob === 'function') {
+    Object.keys(NB_PACKED_TEX).forEach((key) => {
+      try {
+        const bin = atob(NB_PACKED_TEX[key]);
+        const u8 = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        createImageBitmap(new Blob([u8], { type: 'image/webp' })).then((bmp) => {
+          const tc = document.createElement('canvas'); tc.width = tc.height = 256;
+          tc.getContext('2d').drawImage(bmp, 0, 0, 256, 256);
+          if (textures[key]) uploadTextureSource(textures[key], tc);
+          if (key === 'gun') {
+            // Composite real brushed gunmetal grain into default ochre skin & drone chassis!
+            ['ochre', 'drone'].forEach((sk) => {
+              const c = document.createElement('canvas'); c.width = c.height = 256;
+              const g = c.getContext('2d');
+              g.drawImage(tc, 0, 0, 256, 256);
+              if (sk === 'ochre') {
+                g.fillStyle = 'rgba(18,22,32,.48)'; g.fillRect(0, 0, 256, 256);
+                g.fillStyle = 'rgba(255,176,0,.88)'; g.fillRect(0, 102, 256, 28);
+                g.fillStyle = 'rgba(16,18,24,.9)';
+                for (let x = -30; x < 290; x += 40) { g.save(); g.translate(x, 116); g.rotate(-Math.PI/4); g.fillRect(-7, -30, 14, 60); g.restore(); }
+                g.strokeStyle = 'rgba(0,217,255,.55)'; g.lineWidth = 3; g.strokeRect(5, 5, 246, 246);
+              } else {
+                g.fillStyle = 'rgba(20,24,36,.36)'; g.fillRect(0, 0, 256, 256);
+                g.fillStyle = 'rgba(255,176,0,.75)'; g.fillRect(0, 114, 256, 12);
+                g.strokeStyle = 'rgba(255,255,255,.25)'; g.lineWidth = 3; g.strokeRect(6, 6, 244, 244);
+              }
+              uploadTextureSource(textures[sk], c);
+            });
+          }
+          nbTexState.loaded.push(key);
+        }).catch(() => {});
+      } catch (_) {}
+    });
+  }
+  window.__NEON_BREACH_V2__ = { nbTexState, get run(){return run;}, get player(){return player;}, get weapons(){return weapons;}, get enemyPool(){return enemyPool;} };
 
   // ---------------------------------------------------------------------------
   // Arena and collision geometry
@@ -2087,6 +2171,25 @@
     charge: 0, chargeTarget: 0, strafeSign: 1, hitTimer: 0
   }));
 
+  const tracers = [];
+  const dmgPopups = [];
+  const hitDir = { angle: 0, timer: 0 };
+  let weaponSwapBlend = 0;
+  let scatterPump = 0;
+
+  function spawnTracer(from, to, color, width = .028, life = .11) {
+    tracers.push({ from: from.slice(), to: to.slice(), color, width, life, maxLife: life });
+    if (tracers.length > 36) tracers.shift();
+  }
+  function spawnDmgPopup(point, amount, headshot) {
+    dmgPopups.push({
+      x: point[0] + rand(-.14, .14), y: point[1] + .18, z: point[2] + rand(-.14, .14),
+      text: headshot ? `CRIT ${Math.round(amount)}` : `${Math.round(amount)}`,
+      headshot, life: .62, maxLife: .62
+    });
+    if (dmgPopups.length > 24) dmgPopups.shift();
+  }
+
   const PARTICLE_POOL_SIZE = isTouchDevice ? 52 : 90;
   const particles = Array.from({ length: PARTICLE_POOL_SIZE }, () => ({
     active: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0,
@@ -2157,6 +2260,9 @@
     for (const weapon of weapons) weapon.ammo = weapon.mag;
     for (const enemy of enemyPool) enemy.active = false;
     for (const p of particles) p.active = false;
+    tracers.length = 0;
+    dmgPopups.length = 0;
+    hitDir.timer = 0;
     updatePerkBadges();
     beginWave(1);
     updateHUD(true);
@@ -2306,26 +2412,51 @@
     for (const enemy of enemyPool) {
       if (!enemy.active) continue;
       const c = enemyCenters(enemy);
-      const headT = raySphere(origin, dir, c.head, c.headRadius, maxDistance);
+      const headT = raySphere(origin, dir, c.head, c.headRadius * 1.14, maxDistance);
       const bodyT = raySphere(origin, dir, c.body, c.bodyRadius, maxDistance);
-      if (headT != null && (!best || headT < best.t)) best = { enemy, t: headT, headshot: true };
-      if (bodyT != null && (!best || bodyT < best.t)) best = { enemy, t: bodyT, headshot: false };
+      // Give head hits priority when both head & torso spheres are intersected
+      if (headT != null && (bodyT == null || headT <= bodyT + .18 * enemy.scale)) {
+        if (!best || headT < best.t) best = { enemy, t: headT, headshot: true };
+      } else if (bodyT != null && (!best || bodyT < best.t)) {
+        best = { enemy, t: bodyT, headshot: false };
+      }
     }
     return best;
   }
 
+  function getWorldMuzzlePos() {
+    const eye = [player.x, getEyeHeight(), player.z];
+    const f = getLookDirection();
+    const r = [Math.cos(player.yaw), 0, -Math.sin(player.yaw)];
+    const u = Vec3.normalize([r[1]*f[2] - r[2]*f[1], r[2]*f[0] - r[0]*f[2], r[0]*f[1] - r[1]*f[0]]);
+    const side = lerp(.22, .01, run.adsBlend);
+    const down = lerp(.17, .09, run.adsBlend);
+    return [
+      eye[0] + f[0] * .75 + r[0] * side - u[0] * down,
+      eye[1] + f[1] * .75 + r[1] * side - u[1] * down,
+      eye[2] + f[2] * .75 + r[2] * side - u[2] * down
+    ];
+  }
+
   function fireRay(origin, dir, damage, range, allowRicochet) {
+    const w = currentWeapon();
+    const muzzle = getWorldMuzzlePos();
+    const tCol = w.id === 'rail' ? [0.15, 0.92, 1.0] : w.id === 'scatter' ? [1.0, 0.78, 0.25] : [1.0, 0.68, 0.14];
+    const tWid = w.id === 'rail' ? .058 : w.id === 'scatter' ? .022 : .030;
+    const tLife = w.id === 'rail' ? .26 : .10;
     const wallHit = firstWorldHit(origin, dir, range);
     const enemyHit = firstEnemyHit(origin, dir, wallHit ? wallHit.t : range);
     if (enemyHit) {
       const point = Vec3.add(origin, Vec3.scale(dir, enemyHit.t));
+      spawnTracer(muzzle, point, enemyHit.headshot ? [1, .35, .42] : tCol, tWid, tLife);
       damageEnemy(enemyHit.enemy, damage, enemyHit.headshot, point);
       return true;
     }
 
     if (wallHit) {
       const point = Vec3.add(origin, Vec3.scale(dir, wallHit.t));
-      spawnSparks(point[0], point[1], point[2], [1, .58, .08], 6, 1.6);
+      spawnTracer(muzzle, point, tCol, tWid, tLife);
+      spawnSparks(point[0], point[1], point[2], tCol, w.id === 'rail' ? 14 : 7, 1.9);
       if (allowRicochet) {
         const reflected = Vec3.normalize(Vec3.reflect(dir, wallHit.normal));
         const nextOrigin = Vec3.add(point, Vec3.scale(wallHit.normal, .04));
@@ -2333,11 +2464,16 @@
         const nextEnemy = firstEnemyHit(nextOrigin, reflected, nextWall ? nextWall.t : range * .58);
         if (nextEnemy) {
           const p = Vec3.add(nextOrigin, Vec3.scale(reflected, nextEnemy.t));
+          spawnTracer(nextOrigin, p, [1, .48, .08], .038, .18);
           damageEnemy(nextEnemy.enemy, damage * .76, nextEnemy.headshot, p);
           toast('<strong>RICOCHET</strong> impact');
           return true;
+        } else if (nextWall) {
+          spawnTracer(nextOrigin, Vec3.add(nextOrigin, Vec3.scale(reflected, nextWall.t)), [1, .48, .08], .024, .12);
         }
       }
+    } else {
+      spawnTracer(muzzle, Vec3.add(origin, Vec3.scale(dir, Math.min(range, 36))), tCol, tWid, tLife);
     }
     return false;
   }
@@ -2364,7 +2500,8 @@
 
     weapon.ammo--;
     run.fireCooldown = weapon.delay * fireRateMultiplier();
-    run.muzzleTimer = .055;
+    run.muzzleTimer = weapon.id === 'rail' ? .095 : .065;
+    if (weapon.id === 'scatter') scatterPump = 1;
     run.crosshairKick = 1;
     run.recoilZ += weapon.recoil * .85 * recoilMultiplier();
     run.recoilPitch += weapon.recoil * recoilMultiplier();
@@ -2397,7 +2534,8 @@
     enemy.hitTimer = .18;
     audio.hit(headshot);
     showHitMarker(headshot);
-    spawnSparks(point[0], point[1], point[2], headshot ? [1, .22, .34] : [1, .72, .12], headshot ? 12 : 7, headshot ? 3.0 : 2.1);
+    spawnDmgPopup(point, damage, headshot);
+    spawnSparks(point[0], point[1], point[2], headshot ? [1, .22, .34] : [1, .72, .12], headshot ? 14 : 8, headshot ? 3.2 : 2.2);
 
     if (enemy.hp <= 0) killEnemy(enemy, headshot);
   }
@@ -2444,6 +2582,7 @@
     index = (index + weapons.length) % weapons.length;
     if (index === run.weaponIndex || run.state !== 'playing') return;
     run.weaponIndex = index;
+    weaponSwapBlend = 1;
     run.reloadTimer = 0;
     run.reloadTotal = 0;
     run.fireCooldown = Math.max(run.fireCooldown, .18);
@@ -2569,6 +2708,8 @@
       player.grounded = true;
     }
 
+    if (keys.KeyQ) player.yaw += 2.25 * dt;
+    if (keys.KeyE) player.yaw -= 2.25 * dt;
     player.pitch = clamp(player.pitch, -Math.PI * .46, Math.PI * .46);
     player.damageCooldown = Math.max(0, player.damageCooldown - dt);
   }
@@ -2580,8 +2721,14 @@
     }
   }
 
-  function takeDamage(amount) {
+  function takeDamage(amount, sourcePos = null) {
     if (run.state !== 'playing' || player.damageCooldown > 0) return;
+    if (sourcePos) {
+      const toSrc = Math.atan2(sourcePos[0] - player.x, sourcePos[2] - player.z);
+      const forwardAng = Math.atan2(-Math.sin(player.yaw), -Math.cos(player.yaw));
+      hitDir.angle = toSrc - forwardAng;
+      hitDir.timer = .55;
+    }
     player.damageCooldown = .10;
     let remaining = amount;
     if (player.armor > 0) {
@@ -2628,7 +2775,8 @@
         if (canSee && dist < 27) {
           e.charge += dt;
           if (e.charge >= 1.8) {
-            takeDamage(14 + run.wave * .75);
+            spawnTracer(head, [player.x, getEyeHeight() - .15, player.z], [1, .12, .52], .045, .22);
+            takeDamage(14 + run.wave * .75, [e.x, e.z]);
             e.charge = 0;
             e.strafeSign *= -1;
           }
@@ -2641,13 +2789,27 @@
         moveZ = (nz + nx * ziggle) * e.speed;
         const attackDistance = e.type === 'boss' ? 2.05 : e.type === 'heavy' ? 1.55 : 1.05;
         if (dist < attackDistance && e.attackCooldown <= 0) {
-          takeDamage(e.type === 'boss' ? 25 : e.type === 'heavy' ? 15 : 7 + run.wave * .25);
+          takeDamage(e.type === 'boss' ? 25 : e.type === 'heavy' ? 15 : 7 + run.wave * .25, [e.x, e.z]);
           e.attackCooldown = e.type === 'runner' ? .68 : 1.05;
           run.shake = Math.min(.5, run.shake + .18);
         }
       }
 
+      // Smart obstacle-avoidance steering so mechs flank around crates/walls instead of stalling
+      const stepX = moveX * dt, stepZ = moveZ * dt;
       const oldX = e.x, oldZ = e.z;
+      if (!canOccupy(e.x + stepX * 3.5, e.z + stepZ * 3.5, e.radius)) {
+        const spd = Math.hypot(moveX, moveZ) || e.speed;
+        const baseA = Math.atan2(moveZ, moveX);
+        const altA = baseA + e.strafeSign * 1.02;
+        const altB = baseA - e.strafeSign * 1.02;
+        if (canOccupy(e.x + Math.cos(altA) * spd * dt * 4, e.z + Math.sin(altA) * spd * dt * 4, e.radius)) {
+          moveX = Math.cos(altA) * spd; moveZ = Math.sin(altA) * spd;
+        } else if (canOccupy(e.x + Math.cos(altB) * spd * dt * 4, e.z + Math.sin(altB) * spd * dt * 4, e.radius)) {
+          e.strafeSign *= -1;
+          moveX = Math.cos(altB) * spd; moveZ = Math.sin(altB) * spd;
+        }
+      }
       moveWithCollision(e, moveX * dt, moveZ * dt, e.radius);
 
       // Keep hostile geometry outside the camera capsule so close attacks never fill
@@ -2754,6 +2916,18 @@
     updateWeapon(dt);
     updateEnemies(dt);
     updateParticles(dt);
+    for (let i = tracers.length - 1; i >= 0; i--) {
+      tracers[i].life -= dt;
+      if (tracers[i].life <= 0) tracers.splice(i, 1);
+    }
+    for (let i = dmgPopups.length - 1; i >= 0; i--) {
+      dmgPopups[i].life -= dt;
+      dmgPopups[i].y += dt * 1.15;
+      if (dmgPopups[i].life <= 0) dmgPopups.splice(i, 1);
+    }
+    if (hitDir.timer > 0) hitDir.timer = Math.max(0, hitDir.timer - dt);
+    weaponSwapBlend = damp(weaponSwapBlend, 0, 11, dt);
+    scatterPump = damp(scatterPump, 0, 6.5, dt);
     updateWave(dt);
     updateCombo(dt);
     updateHUD();
@@ -2799,22 +2973,29 @@
   resize();
 
   function setCommonUniforms(viewPos, fogDensity, time, quality = 1) {
+    const w = currentWeapon();
+    const mPower = run.muzzleTimer > 0 && saveData.settings.fullMotion ? clamp(run.muzzleTimer * 18, 0, 1.35) : 0;
+    const mCol = w.id === 'rail' ? [0.18, 0.88, 1.0] : w.id === 'scatter' ? [1.0, 0.72, 0.28] : [1.0, 0.65, 0.16];
     gl.uniform3f(locations.uViewPos, viewPos[0], viewPos[1], viewPos[2]);
-    gl.uniform3f(locations.uArenaLight, 0, 11.5, 0);
-    gl.uniform3f(locations.uPlayerLight, viewPos[0], viewPos[1] + .25, viewPos[2]);
-    gl.uniform3f(locations.uFogColor, .055, .055, .075);
+    gl.uniform3f(locations.uArenaLight, 0, 5.4, 0);
+    gl.uniform3f(locations.uPlayerLight, viewPos[0], viewPos[1] + .18, viewPos[2]);
+    gl.uniform3f(locations.uMuzzleColor, mCol[0], mCol[1], mCol[2]);
+    gl.uniform1f(locations.uMuzzlePower, mPower);
+    gl.uniform3f(locations.uFogColor, .042, .052, .082);
     gl.uniform1f(locations.uFogDensity, fogDensity);
     gl.uniform1f(locations.uQuality, quality);
-    gl.uniform1f(locations.uPulse, Math.sin(time * 1.45));
+    gl.uniform1f(locations.uPulse, Math.sin(time * 1.65));
   }
 
-  function drawCube(model, texture, tint = [1,1,1], flash = [0,0,0], emissive = 0, vp = viewProjection) {
+  function drawCube(model, texture, tint = [1,1,1], flash = [0,0,0], emissive = 0, vp = viewProjection, uvScale = [1,1], rim = 0) {
     Mat4.multiply(mvp, vp, model);
     gl.uniformMatrix4fv(locations.uModel, false, model);
     gl.uniformMatrix4fv(locations.uMVP, false, mvp);
+    gl.uniform2f(locations.uUvScale, uvScale[0], uvScale[1]);
     gl.uniform3f(locations.uTint, tint[0], tint[1], tint[2]);
     gl.uniform3f(locations.uFlash, flash[0], flash[1], flash[2]);
     gl.uniform1f(locations.uEmissive, emissive);
+    gl.uniform1f(locations.uRim, rim);
     if (texture) {
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -2827,71 +3008,153 @@
   }
 
   function drawWorld(time) {
-    drawCube(compose(0, -.28, 0, 36, .56, 36), textures.floor, [1,1,1]);
-    for (const wall of wallBoxes) drawCube(compose(wall.x, wall.h * .5, wall.z, wall.w, wall.h, wall.d), textures.wall, [1,1,1]);
+    // 1. Crisp 12x12 tiled CC0 hex-titanium floor deck
+    drawCube(compose(0, -.28, 0, 36.2, .56, 36.2), textures.floor, [1.05, 1.08, 1.15], [0,0,0], .02, viewProjection, [12, 12], 0);
 
+    // Tactical luminous floor perimeter lanes & center arena ring
+    drawCube(compose(0, .012, -16.8, 33.4, .02, .12), null, [1,.64,.08], [0,0,0], .72);
+    drawCube(compose(0, .012,  16.8, 33.4, .02, .12), null, [0,.82,1], [0,0,0], .62);
+    drawCube(compose(-16.8, .012, 0, .12, .02, 33.4), null, [1,.64,.08], [0,0,0], .55);
+    drawCube(compose( 16.8, .012, 0, .12, .02, 33.4), null, [0,.82,1], [0,0,0], .55);
+    drawCube(compose(0, .014, 0, 5.2, .02, .09), null, [0,.85,1], [0,0,0], .52);
+    drawCube(compose(0, .014, 0, .09, .02, 5.2), null, [1,.68,.08], [0,0,0], .52);
+
+    // 2. Enclosed CC0 armored hangar ceiling deck + steel roof trusses & skylight light-bars
+    drawCube(compose(0, 6.0, 0, 37, .4, 37), textures.ceiling, [1, 1.05, 1.16], [0,0,0], .04, viewProjection, [9, 9], 0);
+    for (let z = -12; z <= 12; z += 6) {
+      drawCube(compose(0, 5.62, z, 36, .34, .32), textures.gun, [.45, .52, .64], [0,0,0], .02, viewProjection, [8, 1], .15);
+      // Glowing overhead industrial light fixtures along each truss
+      const lCol = z < 0 ? [1.0, .74, .28] : z > 0 ? [.18, .86, 1.0] : [.95, .98, 1.0];
+      drawCube(compose(-8.5, 5.42, z, 3.6, .08, .20), null, lCol, [0,0,0], 1.15);
+      drawCube(compose( 8.5, 5.42, z, 3.6, .08, .20), null, lCol, [0,0,0], 1.15);
+    }
+
+    // 3. Crisp 12x2 tiled corrugated steel perimeter bulkheads + corner buttress towers
+    for (const wall of wallBoxes) {
+      const ux = Math.max(2, Math.round(Math.max(wall.w, wall.d) / 3.0));
+      drawCube(compose(wall.x, wall.h * .5, wall.z, wall.w, wall.h, wall.d), textures.wall, [1.05, 1.08, 1.16], [0,0,0], .02, viewProjection, [ux, 2], 0);
+    }
+    const corners = [[-17.4,-17.4,[1,.62,.08]],[17.4,-17.4,[1,.62,.08]],[-17.4,17.4,[0,.82,1]],[17.4,17.4,[0,.82,1]]];
+    for (const [cx, cz, col] of corners) {
+      drawCube(compose(cx, 2.9, cz, 1.2, 5.8, 1.2), textures.gun, [.55,.60,.72], [0,0,0], .04, viewProjection, [1, 3], .22);
+      drawCube(compose(cx * .96, 2.9, cz * .96, .14, 5.4, .14), null, col, [0,0,0], .95);
+    }
+
+    // 4. Textured tactical cover crates, bulkheads & armored pillars with neon edge trims
     for (const box of obstacles) {
-      const tint = box.kind === 'pillar' ? [.80,.83,.92] : box.kind === 'crate' ? [.96,.78,.48] : [.82,.84,.90];
-      drawCube(compose(box.x, box.h * .5, box.z, box.w, box.h, box.d), textures.wall, tint);
+      const tex = box.kind === 'crate' ? textures.crate : textures.wall;
+      const tint = box.kind === 'pillar' ? [.92,.96,1.08] : box.kind === 'crate' ? [1.05,1.0,1.0] : [.90,.95,1.05];
+      const u = Math.max(1, Math.round(Math.max(box.w, box.d) / 2.2));
+      const v = Math.max(1, Math.round(box.h / 1.8));
+      drawCube(compose(box.x, box.h * .5, box.z, box.w, box.h, box.d), tex, tint, [0,0,0], .02, viewProjection, [u, v], .12);
+      // Glowing recessed base trim & armored top bevel cap
+      const accent = box.z < 0 ? [1,.64,.08] : [0,.82,1];
+      drawCube(compose(box.x, .05, box.z, box.w + .08, .08, box.d + .08), null, accent, [0,0,0], .55);
+      drawCube(compose(box.x, box.h + .05, box.z, box.w + .08, .09, box.d + .08), textures.gun, [.42,.48,.58], [0,0,0], .03, viewProjection, [u, 1], .18);
       if (box.kind === 'pillar') {
-        drawCube(compose(box.x, box.h + .12, box.z, box.w * 1.16, .22, box.d * 1.16), null, [1,.56,.05], [0,0,0], .35);
+        drawCube(compose(box.x, box.h + .16, box.z, box.w * 1.12, .12, box.d * 1.12), null, accent, [0,0,0], .78);
+        drawCube(compose(box.x, (box.h + 5.8) * .5, box.z, .55, 5.8 - box.h, .55), textures.gun, [.38,.44,.56], [0,0,0], .02, viewProjection, [1, 2], .16);
       }
     }
 
-    // Architectural beams and luminous arena markers add depth with very few primitives.
-    for (let i = -12; i <= 12; i += 6) {
-      drawCube(compose(i, 4.8, -17.45, .18, .18, .6), null, [1,.56,.02], [0,0,0], .65);
-      drawCube(compose(i, 4.8, 17.45, .18, .18, .6), null, [0,.72,1], [0,0,0], .45);
+    // 5. Suspended rotating Cyber-Reactor Core above center arena
+    const spin = time * (run.bossWave ? 1.85 : .65);
+    const coreCol = run.bossWave ? [1, .24, .36] : [0, .86, 1];
+    const corePulse = .72 + .35 * (Math.sin(time * (run.bossWave ? 6 : 2.5)) * .5 + .5);
+    drawCube(compose(0, 5.25, 0, .95, 1.35, .95, spin * .4), textures.gun, [.42,.48,.60], [0,0,0], .06, viewProjection, [1, 1], .25);
+    drawCube(compose(0, 4.72, 0, .58, .58, .58, spin, spin * .6), null, coreCol, [0,0,0], corePulse * 1.4);
+    // Rotating outer stabilizer ring segments
+    for (let k = 0; k < 4; k++) {
+      const a = spin + k * Math.PI * .5;
+      drawCube(compose(Math.cos(a) * 1.9, 4.88, Math.sin(a) * 1.9, 1.45, .14, .22, -a), null, k % 2 ? [1,.64,.08] : coreCol, [0,0,0], .92);
     }
-    for (let z = -12; z <= 12; z += 6) {
-      drawCube(compose(-17.45, 4.8, z, .6, .18, .18), null, [1,.56,.02], [0,0,0], .65);
-      drawCube(compose(17.45, 4.8, z, .6, .18, .18), null, [0,.72,1], [0,0,0], .45);
-    }
-
-    const corePulse = .2 + .12 * (Math.sin(time * 2.1) * .5 + .5);
-    drawCube(compose(0, 5.15, 0, 8, .12, .18), null, [1,.56,.02], [0,0,0], corePulse);
-    drawCube(compose(0, 5.15, 0, .18, .12, 8), null, [0,.78,1], [0,0,0], corePulse);
   }
 
   function enemyTint(type) {
-    if (type === 'runner') return [1.0, .16, .26];
-    if (type === 'heavy') return [.05, .78, 1.0];
-    if (type === 'sniper') return [.95, .18, .78];
-    return [1.0, .57, .05];
+    if (type === 'runner') return [1.0, .20, .30];
+    if (type === 'heavy') return [.08, .82, 1.0];
+    if (type === 'sniper') return [.96, .20, .82];
+    return [1.0, .60, .08];
   }
 
-  function drawEnemyPart(base, offset, scale, rotX, texture, tint, flash, emissive = 0, rotZ = 0) {
+  function drawEnemyPart(base, offset, scale, rotX, texture, tint, flash, emissive = 0, rotZ = 0, rim = .28) {
     const m = Mat4.clone(base);
     Mat4.translate(m, m, offset);
     if (rotX) Mat4.rotateX(m, m, rotX);
     if (rotZ) Mat4.rotateZ(m, m, rotZ);
     Mat4.scale(m, m, scale);
-    drawCube(m, texture, tint, flash, emissive);
+    drawCube(m, texture, tint, flash, emissive, viewProjection, [1,1], rim);
   }
 
   function drawEnemies(time) {
     for (const e of enemyPool) {
       if (!e.active) continue;
       const tint = enemyTint(e.type);
-      const flash = e.flash > 0 ? [1.1,1.1,1.1] : [0,0,0];
+      const armorCol = e.type === 'boss' ? [.30,.24,.18] : e.type === 'heavy' ? [.20,.30,.40] : e.type === 'sniper' ? [.24,.18,.32] : [.26,.18,.22];
+      const flash = e.flash > 0 ? [1.15,1.15,1.15] : [0,0,0];
       const s = e.scale;
       const base = compose(e.x, 0, e.z, 1, 1, 1, e.yaw);
       const swing = Math.sin(e.walkPhase) * .56;
       const hitSquash = e.hitTimer > 0 ? .92 : 1;
-      const sniperGlow = e.type === 'sniper' ? clamp(e.charge / 1.8, 0, 1) * 1.4 : 0;
-      const bossGlow = e.type === 'boss' ? .25 + .2 * (Math.sin(time * 3) * .5 + .5) : 0;
+      const sniperGlow = e.type === 'sniper' ? clamp(e.charge / 1.8, 0, 1) * 1.6 : 0;
+      const bossGlow = e.type === 'boss' ? .35 + .25 * (Math.sin(time * 3.5) * .5 + .5) : 0;
 
-      drawEnemyPart(base, [0, 1.22*s, 0], [.78*s*hitSquash, 1.12*s, .45*s*hitSquash], 0, textures.drone, tint, flash, .04 + bossGlow);
-      drawEnemyPart(base, [0, 2.04*s, 0], [.48*s, .48*s, .48*s], 0, null, tint, flash, .18 + sniperGlow + bossGlow);
-      drawEnemyPart(base, [0, 2.06*s, -.27*s], [.25*s, .08*s, .08*s], 0, null, e.type === 'sniper' ? [1,.05,.25] : [1,.68,.05], flash, .85 + sniperGlow);
-      drawEnemyPart(base, [-.58*s, 1.31*s, 0], [.25*s, .82*s, .25*s], swing, textures.drone, tint, flash, .02);
-      drawEnemyPart(base, [.58*s, 1.31*s, 0], [.25*s, .82*s, .25*s], -swing, textures.drone, tint, flash, .02);
-      drawEnemyPart(base, [-.28*s, .48*s, 0], [.30*s, .92*s, .31*s], -swing, textures.drone, tint, flash, .02);
-      drawEnemyPart(base, [.28*s, .48*s, 0], [.30*s, .92*s, .31*s], swing, textures.drone, tint, flash, .02);
+      // Armored torso chassis + glowing central chest reactor core
+      drawEnemyPart(base, [0, 1.24*s, 0], [.76*s*hitSquash, 1.06*s, .46*s*hitSquash], 0, textures.drone, armorCol, flash, .05 + bossGlow, 0, .35);
+      drawEnemyPart(base, [0, 1.32*s, -.24*s], [.26*s, .28*s, .08*s], 0, null, tint, flash, 1.05 + bossGlow, 0, .4);
+      // Angled shoulder pauldrons
+      drawEnemyPart(base, [-.52*s, 1.66*s, 0], [.36*s, .22*s, .42*s], 0, textures.gun, tint, flash, .14, .22, .42);
+      drawEnemyPart(base, [ .52*s, 1.66*s, 0], [.36*s, .22*s, .42*s], 0, textures.gun, tint, flash, .14, -.22, .42);
+      // Sculpted helmet head + glowing visor optics
+      drawEnemyPart(base, [0, 2.04*s, 0], [.46*s, .44*s, .46*s], 0, textures.gun, armorCol, flash, .12 + sniperGlow * .4, 0, .48);
+      drawEnemyPart(base, [0, 2.06*s, -.25*s], [.34*s, .10*s, .08*s], 0, null, e.type === 'sniper' ? [1,.08,.32] : tint, flash, 1.35 + sniperGlow + bossGlow, 0, .2);
+      // Articulated limbs with metallic joints
+      drawEnemyPart(base, [-.58*s, 1.24*s, 0], [.22*s, .78*s, .22*s], swing, textures.gun, armorCol, flash, .04);
+      drawEnemyPart(base, [ .58*s, 1.24*s, 0], [.22*s, .78*s, .22*s], -swing, textures.gun, armorCol, flash, .04);
+      drawEnemyPart(base, [-.26*s, .46*s, 0], [.26*s, .90*s, .28*s], -swing, textures.drone, armorCol, flash, .03);
+      drawEnemyPart(base, [ .26*s, .46*s, 0], [.26*s, .90*s, .28*s], swing, textures.drone, armorCol, flash, .03);
 
-      if (e.type === 'heavy' || e.type === 'boss') {
-        drawEnemyPart(base, [0, 1.35*s, .33*s], [.92*s, .82*s, .14*s], 0, null, [.05,.35,.42], flash, .12);
+      // Class-signature gear!
+      if (e.type === 'runner') {
+        // Twin glowing crimson plasma wrist-blades
+        drawEnemyPart(base, [-.60*s, .92*s, -.28*s], [.06*s, .12*s, .58*s], swing, null, [1,.16,.28], flash, 1.25);
+        drawEnemyPart(base, [ .60*s, .92*s, -.28*s], [.06*s, .12*s, .58*s], -swing, null, [1,.16,.28], flash, 1.25);
+      } else if (e.type === 'sniper') {
+        // Long magenta rail-cannon extending from shoulder
+        drawEnemyPart(base, [.44*s, 1.56*s, -.62*s], [.10*s, .11*s, 1.28*s], 0, textures.gun, [.28,.22,.36], flash, .15);
+        drawEnemyPart(base, [.44*s, 1.56*s, -.95*s], [.06*s, .06*s, .62*s], 0, null, [1,.12,.68], flash, 1.1 + sniperGlow);
+      } else if (e.type === 'heavy') {
+        // Forearm ballistic riot shield + cyan dorsal reactor pack
+        drawEnemyPart(base, [-.64*s, 1.22*s, -.30*s], [.14*s, 1.05*s, .62*s], 0, textures.crate, [.18,.78,1.0], flash, .28, 0, .55);
+        drawEnemyPart(base, [0, 1.38*s, .34*s], [.66*s, .72*s, .24*s], 0, textures.gun, [.08,.56,.75], flash, .35);
+      } else if (e.type === 'boss') {
+        // Solar Warlord Dreadnought: dual shoulder cannons + orbiting golden shield satellites
+        drawEnemyPart(base, [-.72*s, 1.88*s, -.36*s], [.22*s, .22*s, .92*s], 0, textures.gun, [.95,.58,.12], flash, .32);
+        drawEnemyPart(base, [ .72*s, 1.88*s, -.36*s], [.22*s, .22*s, .92*s], 0, textures.gun, [.95,.58,.12], flash, .32);
+        for (let k = 0; k < 4; k++) {
+          const oa = time * 2.2 + k * Math.PI * .5;
+          drawEnemyPart(base, [Math.cos(oa) * 1.15 * s, 1.38 * s + Math.sin(time * 4 + k) * .12, Math.sin(oa) * 1.15 * s],
+            [.24*s, .36*s, .10*s], 0, null, [1,.74,.14], flash, 1.15, oa);
+        }
       }
+    }
+  }
+
+  function drawTracers() {
+    for (const tr of tracers) {
+      const dx = tr.to[0] - tr.from[0], dy = tr.to[1] - tr.from[1], dz = tr.to[2] - tr.from[2];
+      const len = Math.hypot(dx, dy, dz);
+      if (len < .05) continue;
+      const ratio = clamp(tr.life / tr.maxLife, 0, 1);
+      const midX = (tr.from[0] + tr.to[0]) * .5;
+      const midY = (tr.from[1] + tr.to[1]) * .5;
+      const midZ = (tr.from[2] + tr.to[2]) * .5;
+      const yaw = Math.atan2(dx, dz);
+      const horiz = Math.hypot(dx, dz) || .0001;
+      const pitch = -Math.atan2(dy, horiz);
+      const w = tr.width * (.45 + ratio * .85);
+      const m = compose(midX, midY, midZ, w, w, len, yaw, pitch, 0);
+      drawCube(m, null, tr.color, [ratio * .5, ratio * .5, ratio * .5], 1.85 * ratio);
     }
   }
 
@@ -2899,72 +3162,120 @@
     for (const p of particles) {
       if (!p.active) continue;
       const lifeScale = clamp(p.life / p.maxLife, .18, 1);
-      drawCube(compose(p.x, p.y, p.z, p.size * lifeScale, p.size * lifeScale, p.size * lifeScale), null, p.color, [0,0,0], 1.15);
+      drawCube(compose(p.x, p.y, p.z, p.size * lifeScale, p.size * lifeScale, p.size * lifeScale), null, p.color, [0,0,0], 1.45);
     }
   }
 
   function drawViewModel(time) {
     gl.clear(gl.DEPTH_BUFFER_BIT);
     const vmProjection = Mat4.create();
-    Mat4.perspective(vmProjection, Math.PI * 62 / 180, renderWidth / renderHeight, .01, 20);
+    Mat4.perspective(vmProjection, Math.PI * 58 / 180, renderWidth / renderHeight, .01, 20);
     const identityVP = vmProjection;
-    setCommonUniforms([0,0,0], 0, time, isTouchDevice ? .25 : 1);
-    gl.uniform3f(locations.uArenaLight, 1.5, 2.0, 1.0);
-    gl.uniform3f(locations.uPlayerLight, 0, .4, .3);
+    setCommonUniforms([0,0,0], 0, time, isTouchDevice ? .45 : 1);
+    gl.uniform3f(locations.uArenaLight, 1.2, 2.2, 1.4);
+    gl.uniform3f(locations.uPlayerLight, -.2, .5, .4);
 
     const motion = saveData.settings.fullMotion ? 1 : .18;
-    const bobX = Math.sin(player.walkTime) * .018 * player.movingAmount * motion;
-    const bobY = Math.abs(Math.cos(player.walkTime)) * .018 * player.movingAmount * motion;
-    const swayX = Math.sin(time * 1.4) * .005 * motion;
-    const adsX = lerp(.42, 0, run.adsBlend);
-    const adsY = lerp(-.36, -.245, run.adsBlend);
-    const adsZ = lerp(-.92, -.64, run.adsBlend);
+    const bobX = Math.sin(player.walkTime) * .016 * player.movingAmount * motion;
+    const bobY = Math.abs(Math.cos(player.walkTime)) * .016 * player.movingAmount * motion;
+    const swayX = Math.sin(time * 1.4) * .004 * motion;
+    const reloadT = run.reloadTimer > 0 ? Math.sin((1 - run.reloadTimer / Math.max(.1, run.reloadTotal)) * Math.PI) : 0;
+    const dropY = -reloadT * .16 - weaponSwapBlend * .22;
+    const tiltZ = reloadT * .42 + weaponSwapBlend * .25;
+    const adsX = lerp(.36, 0, run.adsBlend);
+    const adsY = lerp(-.31, -.225, run.adsBlend) + dropY;
+    const adsZ = lerp(-.84, -.60, run.adsBlend);
     const weapon = currentWeapon();
     const skinTexture = textures[saveData.equippedSkin] || textures.ochre;
-    const legendaryGlow = saveData.equippedSkin === 'legend' ? .24 + .25 * (Math.sin(time * 3) * .5 + .5) : saveData.equippedSkin === 'neon' ? .20 : .04;
+    const legendaryGlow = saveData.equippedSkin === 'legend' ? .22 + .24 * (Math.sin(time * 3) * .5 + .5) : saveData.equippedSkin === 'neon' ? .18 : .04;
     const base = compose(
       adsX + bobX + swayX,
       adsY + bobY,
       adsZ + run.recoilZ,
       1, 1, 1,
-      lerp(-.08, 0, run.adsBlend),
-      -.04 + run.recoilPitch,
-      lerp(-.02, 0, run.adsBlend)
+      lerp(-.06, 0, run.adsBlend),
+      -.03 + run.recoilPitch - reloadT * .18,
+      lerp(-.02, 0, run.adsBlend) + tiltZ
     );
 
-    const part = (offset, scale, texture, tint, emissive = 0, rx = 0, ry = 0, rz = 0) => {
+    const part = (offset, scale, texture, tint, emissive = 0, rx = 0, ry = 0, rz = 0, rim = .35) => {
       const m = Mat4.clone(base);
       Mat4.translate(m, m, offset);
       if (ry) Mat4.rotateY(m, m, ry);
       if (rx) Mat4.rotateX(m, m, rx);
       if (rz) Mat4.rotateZ(m, m, rz);
       Mat4.scale(m, m, scale);
-      drawCube(m, texture, tint, [0,0,0], emissive, identityVP);
+      drawCube(m, texture, tint, [0,0,0], emissive, identityVP, [1,1], rim);
     };
 
+    const ammoFrac = clamp(weapon.ammo / Math.max(1, weapon.mag), 0, 1);
+    const barCol = ammoFrac > .3 ? [0,.88,1] : [1,.24,.32];
+
     if (weapon.id === 'rifle') {
-      part([0,0,0], [.30,.20,.70], skinTexture, [1,1,1], legendaryGlow);
-      part([0,.06,-.62], [.10,.10,.70], null, [.33,.35,.40], .04);
-      part([0,-.22,.05], [.17,.34,.22], skinTexture, [.75,.75,.78], legendaryGlow);
-      part([0,.18,-.34], [.055,.10,.10], null, [1,.64,.04], .55);
+      // Sculpted Pulse Rifle: layered chassis, vented shroud, plasma fins, holographic reflex optic, curved mag
+      part([0, -.01, .02], [.18, .15, .64], skinTexture, [1,1,1], legendaryGlow);
+      part([0, .065, -.04], [.14, .055, .58], textures.gun, [.62,.68,.78], .03);
+      // Barrel & perforated heat shroud + glowing amber cooling vents
+      part([0, .035, -.58], [.11, .11, .52], textures.gun, [.45,.50,.60], .03);
+      part([0, .035, -.88], [.055, .055, .28], textures.gun, [.78,.82,.90], .05);
+      part([-.06, .04, -.56], [.02, .028, .34], null, [1,.66,.08], .95);
+      part([ .06, .04, -.56], [.02, .028, .34], null, [1,.66,.08], .95);
+      // Reciprocating side charging bolt
+      part([.10, .04, -.12 + run.recoilZ * .9], [.04, .03, .12], textures.gun, [.9,.92,.96], .08);
+      // Angled grip & extended tactical magazine
+      part([0, -.16, .16], [.09, .22, .13], textures.gun, [.34,.38,.46], .02, .22);
+      part([0, -.17, -.18], [.085, .24, .14], skinTexture, [.82,.84,.90], legendaryGlow, -.14);
+      // Framed Holographic Reflex Sight + glowing reticle dot!
+      part([-.055, .135, -.14], [.018, .085, .14], textures.gun, [.55,.60,.70], .04);
+      part([ .055, .135, -.14], [.018, .085, .14], textures.gun, [.55,.60,.70], .04);
+      part([0, .175, -.14], [.128, .016, .14], textures.gun, [.55,.60,.70], .04);
+      part([0, .135, -.14], [.018, .018, .012], null, [1,.76,.14], 1.9);
+      // Live glowing holographic ammo bar on rear receiver
+      part([0, .092, .26], [.095 * ammoFrac + .005, .014, .025], null, barCol, 1.35);
     } else if (weapon.id === 'scatter') {
-      part([0,0,0], [.34,.23,.58], skinTexture, [1,1,1], legendaryGlow);
-      part([-.12,.05,-.58], [.095,.095,.65], null, [.28,.30,.35], .04);
-      part([.12,.05,-.58], [.095,.095,.65], null, [.28,.30,.35], .04);
-      part([0,-.22,.03], [.19,.33,.24], skinTexture, [.72,.72,.75], legendaryGlow);
+      // Sculpted Arc Scattergun: heavy breech, twin parallel barrels, animated pump forend, cyan arc capacitors
+      part([0, -.01, .04], [.22, .17, .54], skinTexture, [1,1,1], legendaryGlow);
+      part([-.062, .045, -.52], [.068, .068, .68], textures.gun, [.74,.78,.86], .05);
+      part([ .062, .045, -.52], [.068, .068, .68], textures.gun, [.74,.78,.86], .05);
+      // Barrel clamp band & glowing cyan arc coils
+      part([0, .045, -.72], [.18, .09, .08], textures.gun, [.35,.40,.48], .04);
+      part([-.115, .02, -.34], [.028, .042, .36], null, [0,.85,1], 1.15);
+      part([ .115, .02, -.34], [.028, .042, .36], null, [0,.85,1], 1.15);
+      // Animated ribbed pump forend (slides back after shot!)
+      part([0, -.055, -.46 + scatterPump * .16], [.15, .09, .26], skinTexture, [.86,.86,.92], legendaryGlow);
+      // Fiber-optic iron sight + grip
+      part([0, .115, -.76], [.024, .032, .03], null, [1,.72,.12], 1.4);
+      part([0, -.16, .14], [.10, .23, .14], textures.gun, [.32,.36,.44], .02, .24);
+      part([0, .088, .24], [.11 * ammoFrac + .005, .015, .025], null, barCol, 1.35);
     } else {
-      part([0,0,0], [.26,.18,.72], skinTexture, [1,1,1], legendaryGlow);
-      part([0,.03,-.72], [.07,.07,.88], null, [.19,.42,.48], .25);
-      part([0,.16,-.18], [.12,.08,.42], null, [0,.75,1], .48);
-      part([0,-.20,.07], [.16,.31,.22], skinTexture, [.72,.72,.75], legendaryGlow);
+      // Sculpted Ion Rail: twin electromagnetic accelerator rails, 4 pulsing cyan coils, central plasma channel, holo scope
+      part([0, -.01, .08], [.17, .15, .58], skinTexture, [1,1,1], legendaryGlow);
+      // Twin magnetic rails with glowing gap
+      part([-.065, .03, -.66], [.042, .068, .92], textures.gun, [.62,.74,.86], .08);
+      part([ .065, .03, -.66], [.042, .068, .92], textures.gun, [.62,.74,.86], .08);
+      // Glowing inner plasma channel & 4 pulsing accelerator coils
+      const railGlow = .95 + .45 * (Math.sin(time * 7) * .5 + .5);
+      part([0, .03, -.62], [.032, .028, .82], null, [0,.92,1], railGlow * 1.4);
+      for (let c = 0; c < 4; c++) {
+        part([0, .03, -.32 - c * .22], [.165, .095, .042], null, [0,.82,1], .72 + (c === 3 ? .5 : 0));
+      }
+      // Dual-ring elevated holographic sniper optic
+      part([0, .145, -.08], [.085, .072, .28], textures.gun, [.36,.44,.56], .06);
+      part([0, .145, -.23], [.07, .056, .02], null, [0,.95,1], 1.5);
+      part([0, -.15, .18], [.09, .22, .13], textures.gun, [.30,.36,.46], .02, .20);
+      part([0, .085, .30], [.095 * ammoFrac + .005, .014, .025], null, barCol, 1.4);
     }
 
-    part([-.30,-.16,.18], [.19,.20,.40], null, [.18,.20,.25], .02, 0, 0, -.16);
-    part([.30,-.16,.18], [.19,.20,.40], null, [.18,.20,.25], .02, 0, 0, .16);
+    // Armored operator gauntlets gripping the weapon
+    part([-.24, -.16, .20], [.13, .13, .36], textures.gun, [.28,.33,.44], .03, 0, .14, -.18, .25);
+    part([ .22, -.16, .20], [.13, .13, .36], textures.gun, [.28,.33,.44], .03, 0, -.14, .18, .25);
 
     if (run.muzzleTimer > 0) {
-      const muzzleZ = weapon.id === 'rail' ? -1.62 : weapon.id === 'scatter' ? -1.24 : -1.30;
-      part([0,.04,muzzleZ], [.15,.15,.18], null, [1,.74,.16], 2.8);
+      const muzzleZ = weapon.id === 'rail' ? -1.16 : weapon.id === 'scatter' ? -.92 : -1.06;
+      const mfCol = weapon.id === 'rail' ? [.25,.95,1] : [1,.80,.24];
+      const sc = weapon.id === 'scatter' ? 1.35 : weapon.id === 'rail' ? 1.25 : 1.0;
+      part([0, .035, muzzleZ], [.22 * sc, .06 * sc, .24 * sc], null, mfCol, 2.8, 0, 0, time * 24);
+      part([0, .035, muzzleZ], [.06 * sc, .22 * sc, .24 * sc], null, [1,1,1], 3.0, 0, 0, time * 24);
     }
   }
 
@@ -2979,22 +3290,83 @@
     return { x: (x * .5 + .5) * cssWidth, y: (1 - (y * .5 + .5)) * cssHeight, z };
   }
 
+  function drawMinimap() {
+    if (cssWidth < 460 || cssHeight < 420) return;
+    const size = cssWidth < 760 ? 86 : 114;
+    const x0 = cssWidth - size - 16;
+    const y0 = 76;
+    const cx = x0 + size * .5;
+    const cy = y0 + size * .5;
+    const scale = (size * .45) / ARENA;
+
+    fx.save();
+    fx.fillStyle = 'rgba(10, 14, 24, .76)';
+    fx.strokeStyle = 'rgba(0, 217, 255, .42)';
+    fx.lineWidth = 1.4;
+    fx.beginPath();
+    fx.roundRect(x0, y0, size, size, 10);
+    fx.fill();
+    fx.stroke();
+
+    // Arena cover blocks
+    fx.fillStyle = 'rgba(130, 160, 200, .34)';
+    for (const box of obstacles) {
+      fx.fillRect(
+        cx + (box.x - box.w * .5) * scale,
+        cy + (box.z - box.d * .5) * scale,
+        Math.max(2, box.w * scale),
+        Math.max(2, box.d * scale)
+      );
+    }
+
+    // Enemy radar blips
+    for (const e of enemyPool) {
+      if (!e.active) continue;
+      const ex = cx + e.x * scale, ez = cy + e.z * scale;
+      fx.fillStyle = e.type === 'boss' ? '#ffb000' : e.type === 'heavy' ? '#00d9ff' : e.type === 'sniper' ? '#f438c8' : '#ff445c';
+      fx.beginPath();
+      fx.arc(ex, ez, e.type === 'boss' ? 4.2 : 2.8, 0, Math.PI * 2);
+      fx.fill();
+    }
+
+    // Player position & vision cone
+    const px = cx + player.x * scale, pz = cy + player.z * scale;
+    const fAng = Math.atan2(-Math.cos(player.yaw), -Math.sin(player.yaw));
+    fx.fillStyle = 'rgba(255, 176, 0, .20)';
+    fx.beginPath();
+    fx.moveTo(px, pz);
+    fx.arc(px, pz, 18, fAng - .46, fAng + .46);
+    fx.closePath();
+    fx.fill();
+    fx.fillStyle = '#ffffff';
+    fx.beginPath();
+    fx.arc(px, pz, 3.2, 0, Math.PI * 2);
+    fx.fill();
+
+    fx.fillStyle = 'rgba(180, 215, 255, .75)';
+    fx.font = '700 9px ui-monospace, monospace';
+    fx.textAlign = 'left';
+    fx.fillText('RADAR', x0 + 7, y0 + 12);
+    fx.restore();
+  }
+
   function drawFX() {
     fx.clearRect(0, 0, cssWidth, cssHeight);
     if (run.state !== 'playing') return;
 
+    // 1. Enemy health bars & Sniper laser targeting beams
     for (const e of enemyPool) {
       if (!e.active) continue;
       const s = e.scale;
-      const screen = projectWorld([e.x, 2.48 * s, e.z]);
+      const screen = projectWorld([e.x, 2.52 * s, e.z]);
       if (!screen) continue;
       const dist = Math.hypot(e.x - player.x, e.z - player.z);
-      if (dist > 31) continue;
+      if (dist > 34) continue;
 
       if (e.hitTimer > 0 || e.type === 'boss' || e.type === 'heavy') {
-        const width = clamp(52 * s / Math.max(.75, dist / 10), 26, 84);
+        const width = clamp(54 * s / Math.max(.75, dist / 10), 28, 88);
         const ratio = clamp(e.hp / e.maxHp, 0, 1);
-        fx.fillStyle = 'rgba(8,8,12,.78)';
+        fx.fillStyle = 'rgba(8,8,14,.82)';
         fx.fillRect(screen.x - width/2 - 1, screen.y - 1, width + 2, 6);
         fx.fillStyle = e.type === 'boss' ? '#ffb000' : e.type === 'heavy' ? '#00d9ff' : '#ff445c';
         fx.fillRect(screen.x - width/2, screen.y, width * ratio, 4);
@@ -3005,10 +3377,10 @@
         if (head) {
           const t = clamp(e.charge / 1.8, 0, 1);
           fx.save();
-          fx.strokeStyle = `rgba(255,45,75,${.18 + t * .68})`;
-          fx.lineWidth = 1 + t * 2;
-          fx.shadowColor = '#ff2345';
-          fx.shadowBlur = 5 + t * 9;
+          fx.strokeStyle = `rgba(255,45,105,${.22 + t * .72})`;
+          fx.lineWidth = 1.2 + t * 2.4;
+          fx.shadowColor = '#ff2365';
+          fx.shadowBlur = 6 + t * 12;
           fx.beginPath();
           fx.moveTo(head.x, head.y);
           fx.lineTo(cssWidth/2, cssHeight/2);
@@ -3018,17 +3390,51 @@
       }
     }
 
+    // 2. Floating 3D-projected Damage & CRIT numbers
+    fx.save();
+    fx.textAlign = 'center';
+    for (const dp of dmgPopups) {
+      const sp = projectWorld([dp.x, dp.y, dp.z]);
+      if (!sp) continue;
+      const a = clamp(dp.life / dp.maxLife, 0, 1);
+      fx.globalAlpha = a;
+      fx.font = dp.headshot ? '900 16px Inter, system-ui, sans-serif' : '800 13px ui-monospace, monospace';
+      fx.fillStyle = 'rgba(0,0,0,.7)';
+      fx.fillText(dp.text, sp.x + 1, sp.y + 1);
+      fx.fillStyle = dp.headshot ? '#ff4d6d' : '#ffd260';
+      fx.fillText(dp.text, sp.x, sp.y);
+    }
+    fx.restore();
+
+    // 3. Directional incoming-damage arc around reticle
+    if (hitDir.timer > 0) {
+      fx.save();
+      fx.translate(cssWidth / 2, cssHeight / 2);
+      fx.rotate(-hitDir.angle - Math.PI / 2);
+      fx.strokeStyle = `rgba(255, 58, 88, ${clamp(hitDir.timer * 1.6, 0, .85)})`;
+      fx.lineWidth = 5;
+      fx.lineCap = 'round';
+      fx.beginPath();
+      fx.arc(0, 0, 56, -.45, .45);
+      fx.stroke();
+      fx.restore();
+    }
+
+    // 4. Tactical Minimap Radar
+    drawMinimap();
+
+    // 5. Reload progress bar
     if (run.reloadTimer > 0) {
       const ratio = 1 - run.reloadTimer / run.reloadTotal;
       const w = Math.min(220, cssWidth * .34);
       const x = cssWidth / 2 - w / 2;
       const y = cssHeight * .68;
-      fx.fillStyle = 'rgba(8,8,12,.78)';
+      fx.fillStyle = 'rgba(8,10,16,.84)';
       fx.fillRect(x - 2, y - 2, w + 4, 10);
       fx.fillStyle = '#ffb000';
       fx.fillRect(x, y, w * ratio, 6);
       fx.fillStyle = '#f7f7fa';
-      fx.font = '700 10px ui-monospace, monospace';
+      fx.font = '800 10px ui-monospace, monospace';
       fx.textAlign = 'center';
       fx.fillText('RELOADING', cssWidth / 2, y - 8);
     }
@@ -3053,14 +3459,15 @@
     Mat4.lookAt(view, eye, center, [0,1,0]);
     Mat4.multiply(viewProjection, projection, view);
 
-    const bossTint = run.bossWave ? .018 : 0;
-    gl.clearColor(.035 + bossTint, .035, .052, 1);
+    const bossTint = run.bossWave ? .024 : 0;
+    gl.clearColor(.038 + bossTint, .048, .076, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.useProgram(program);
     bindCubeMesh();
-    setCommonUniforms(eye, .038, time, isTouchDevice ? .35 : 1);
+    setCommonUniforms(eye, .026, time, isTouchDevice ? .45 : 1);
     drawWorld(time);
     drawEnemies(time);
+    drawTracers();
     drawParticles();
     drawViewModel(time);
     drawFX();
@@ -3241,11 +3648,21 @@
     }
   });
 
+  let dragLookLast = null;
   document.addEventListener('mousemove', (event) => {
-    if (document.pointerLockElement === canvas && run.state === 'playing') {
-      const sensitivity = run.adsBlend > .5 ? .00155 : .00245;
+    if (run.state !== 'playing') { dragLookLast = null; return; }
+    const sensitivity = run.adsBlend > .5 ? .00155 : .00245;
+    if (document.pointerLockElement === canvas) {
       player.yaw -= event.movementX * sensitivity;
       player.pitch -= event.movementY * sensitivity;
+    } else if (event.buttons & 1) {
+      if (dragLookLast) {
+        player.yaw -= (event.clientX - dragLookLast.x) * sensitivity * 1.4;
+        player.pitch -= (event.clientY - dragLookLast.y) * sensitivity * 1.4;
+      }
+      dragLookLast = { x: event.clientX, y: event.clientY };
+    } else {
+      dragLookLast = null;
     }
   });
 

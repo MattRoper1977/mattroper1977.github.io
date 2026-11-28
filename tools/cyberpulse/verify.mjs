@@ -89,7 +89,11 @@ const RELEASE_VERSION = '6.0.2';
 // shadowBlur through glow(), which the software-rasterizer verdict zeroes
 // (SC1 finding: shadow blur under software raster blocked the main thread
 // 10.7 s then >60 s at 6x throttle; 52 fps with it zeroed; shadowColor made transparent as well, since the shadow pass still ran at blur 0). 164785 bytes.
-const AUTHORITY_SHA = '8b3f6b7731923a832488aaf5e18535c7997da48fc44ed6470007ec13df1b0fe9';
+// Re-pinned 2026-11-27 for AAA CC0 WebGL2/2D overhaul: embeds CC0 Poly Haven
+// WebP textures into WebGL2 FS_MESH and 2D fallback, removes desynchronized:true
+// 2D-over-WebGL compositor bug, and fixes top-left HUD clearance. Previous pin
+// 8b3f6b7731923a832488aaf5e18535c7997da48fc44ed6470007ec13df1b0fe9 (164785 bytes). 201277 bytes.
+const AUTHORITY_SHA = 'b7224efda9df10bddd17e7c7bae01a1fbcc2f6b5812ff257bcf57d483d916ffa';
 const FROZEN_SOURCE_BYTES = 208310;
 
 // ---------------------------------------------------------------------------
