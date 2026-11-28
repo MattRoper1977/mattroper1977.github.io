@@ -14,3 +14,207 @@ body[data-theme="dark"] .ad-main{--ad-ink:#e8e2d4;--ad-green:#b9e6cd}body[data-t
 .ad-main .mbm-reveal,.ad-main>.ad-section.mbm-reveal{opacity:1;transform:none;transition:none}
 @media(prefers-reduced-motion:reduce){.ad-main *{scroll-behavior:auto!important;transition:none!important}.ad-main .mbm-reveal{opacity:1!important;transform:none!important}}
 @media print{.ad-nav,.ad-search,.ad-buttons,.ad-adult-links,#audience-play-showcase{display:none}.ad-main{max-width:none;padding:0;font-size:11pt;color:#000}.ad-grid,.ad-steps{display:block}.ad-card,.ad-steps li,.ad-faq{break-inside:avoid;margin:10pt 0}.ad-card img{max-width:220px}.ad-section{break-inside:auto}.ad-section h2{break-after:avoid}.ad-main a{color:#000}.ad-faq:not([open])>div{display:block}}
+
+/* L2 Parents & carers calm ways in + plain three-levels guide (token-pure, >=16px, >=44px, print-open) */
+body.gv-page[data-mbm-audience-page="parents"] main {
+  font-size: 1rem;
+}
+body.gv-page[data-mbm-audience-page="parents"] main :is(.gv-eyebrow,.gv-glance li,.gv-intro-note,.gv-step,.gv-small,.gv-finder label,.gv-topic-pill,.gv-tag,.gv-card dl,.gv-card dt,.gv-card .gv-effective,.gv-hub-links,.gv-adult-links,.aud-kicker,.aud-way-tag,.aud-level-role) {
+  font-size: 1rem !important;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-ways-shell,
+body.gv-page[data-mbm-audience-page="parents"] .aud-levels-shell {
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 1.5px solid var(--gv-card-border);
+  border-left: 5px solid var(--gv-accent);
+  border-radius: var(--mbm-card-radius);
+  box-shadow: var(--mbm-card-shadow);
+  padding: 1.5rem;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-kicker {
+  margin: 0 0 0.35rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gv-accent);
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-ways-shell h2,
+body.gv-page[data-mbm-audience-page="parents"] .aud-levels-shell h2 {
+  margin: 0 0 0.45rem;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-ways-lead,
+body.gv-page[data-mbm-audience-page="parents"] .aud-levels-lead {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--edu-muted, var(--gv-muted));
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-ways-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-way-item {
+  border: 1.5px solid var(--gv-card-border);
+  border-radius: 10px;
+  background-color: var(--edu-bg);
+  overflow: hidden;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-way-item[open] {
+  background-color: var(--mbm-card);
+  border-color: var(--gv-accent);
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-way-item > summary {
+  list-style: none;
+  min-height: 48px;
+  min-width: var(--mbm-tap, 44px);
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--mbm-primary);
+  cursor: pointer;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-way-item > summary::-webkit-details-marker {
+  display: none;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-way-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background-color: var(--gv-open-bg);
+  color: var(--gv-open-ink);
+  border: 1px solid var(--gv-open-border);
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-way-body {
+  padding: 0 1rem 1rem;
+  color: var(--edu-muted, var(--gv-muted));
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-way-body p {
+  margin: 0;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-way-action {
+  margin-top: 0.75rem !important;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  min-height: var(--mbm-tap, 44px);
+  min-width: var(--mbm-tap, 44px);
+  padding: 0.55rem 0.95rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--gv-open-border);
+  background-color: var(--gv-open-bg);
+  color: var(--gv-open-ink) !important;
+  font-size: 1rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-levels-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-levels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+@media (max-width: 860px) {
+  body.gv-page[data-mbm-audience-page="parents"] .aud-levels-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-level-card {
+  background-color: var(--mbm-card);
+  color: var(--mbm-primary);
+  border: 1.5px solid var(--gv-card-border);
+  border-top: 5px solid var(--gv-accent);
+  border-radius: var(--mbm-card-radius);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-level-base {
+  border-top-color: var(--mbm-pathway-build-ink);
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-level-track {
+  border-top-color: var(--gv-accent);
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-level-summit {
+  border-top-color: var(--mbm-subject-humanities);
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-level-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-path-word {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.65rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-path-base {
+  background-color: var(--mbm-pathway-build-bg);
+  color: var(--mbm-pathway-build-ink);
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-path-track {
+  background-color: var(--mbm-pathway-grow-bg);
+  color: var(--mbm-pathway-grow-ink);
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-path-summit {
+  background-color: var(--mbm-pathway-launch-bg);
+  color: var(--mbm-pathway-launch-ink);
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-level-role {
+  font-weight: 750;
+  color: var(--edu-muted, var(--gv-muted));
+}
+body.gv-page[data-mbm-audience-page="parents"] .aud-level-card p {
+  margin: 0;
+  color: var(--edu-muted, var(--gv-muted));
+}
+@media (max-width: 620px) {
+  body.gv-page[data-mbm-audience-page="parents"] :is(.aud-ways-shell,.aud-levels-shell) {
+    padding: 1.1rem;
+  }
+  body.gv-page[data-mbm-audience-page="parents"] .gv-card dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.gv-page[data-mbm-audience-page="parents"] *,
+  body.gv-page[data-mbm-audience-page="parents"] *::before,
+  body.gv-page[data-mbm-audience-page="parents"] *::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+@media print {
+  body.gv-page[data-mbm-audience-page="parents"] details:not([open])::details-content {
+    display: block !important;
+    content-visibility: visible !important;
+  }
+  body.gv-page[data-mbm-audience-page="parents"] details:not([open]) > *:not(summary) {
+    display: block !important;
+  }
+}

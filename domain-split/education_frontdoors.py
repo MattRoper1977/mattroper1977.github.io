@@ -359,8 +359,9 @@ def render(kind, origin, bp):
     elif kind == 'teachers':
         teacher_picks = ''.join('<button type="button" class="fd-topic-btn" data-search-pick="' + esc(t) + '" aria-pressed="false">' + esc(PUBLIC_PATHWAY.get(t, t)) + '</button>'
                                 for t in ('Science', 'Humanities', 'Lifeskills', 'Art', 'BUILD', 'GROW', 'LAUNCH'))
-        body = ('<section class="fd-hero wrap"><div><p class="fd-eyebrow">TEACHERS</p><h1>Ready for your next lesson?</h1>'
+        body = ('<section class="fd-hero fd-door-hero fd-hero-teachers wrap"><div class="fd-hero-panel"><p class="fd-eyebrow">TEACHERS</p><h1>Ready for your next lesson?</h1>'
                 '<p class="fd-lead">Find a lesson, gather your resources and get ready to teach.</p>'
+                '<p class="fd-hero-sub">Built in an alternative provision classroom for class teachers, support staff, cover teachers and home tutors — open a lesson, check the plain-English adult notes, and run it calmly across <strong class="fd-path-word fd-path-base">BASE</strong>, <strong class="fd-path-word fd-path-track">TRACK</strong> and <strong class="fd-path-word fd-path-summit">SUMMIT</strong>.</p>'
                 + search(kind)
                 + '<div class="fd-topic-picks" role="group" aria-label="Quick search filters">' + teacher_picks + '</div>'
                 + '<div class="fd-actions">' + action('/Lessons/', 'Browse lessons →') + action('/resources/', 'Find unit packs', True) + '</div></div>'
@@ -368,24 +369,103 @@ def render(kind, origin, bp):
         body += ('<section class="fd-section wrap" id="teacher-recent" hidden aria-labelledby="teacher-recent-title">'
                  '<div class="fd-section-head"><h2 id="teacher-recent-title">Recently opened on this device</h2></div>'
                  '<div class="fd-recent-grid" id="teacher-recent-list"></div></section>')
+        fast_steps = [
+            ('Step 1', 'fd-bento-top-summit', 'Pick a subject and pathway',
+             'Choose BASE (supported), TRACK (guided) or SUMMIT (extended) in Lessons.'),
+            ('Step 2', 'fd-bento-top-track', 'Check the plain-English adult notes',
+             'Review the core learning point, worked answers, common slip-ups and calm classroom prompts on screen — no specialist subject background needed.'),
+            ('Step 3', 'fd-bento-top-base', 'Print one pathway or teach from the board',
+             'Tiered printable sheets, arrival and exit slips, and cover guidance sit alongside the lesson — print the pathway a learner needs or run paper-free.'),
+        ]
+        body += ('<section class="fd-section wrap" id="teacher-fast-start" aria-labelledby="teacher-fast-heading">'
+                 '<div class="fd-section-head fd-section-head-stack"><p class="fd-kicker">Walk in and teach</p>'
+                 '<h2 id="teacher-fast-heading">Cover, support staff &amp; tutor fast-start</h2></div>'
+                 '<div class="fd-bento-grid fd-bento-three">'
+                 + ''.join('<article class="fd-bento-card ' + cls + '"><div class="fd-bento-copy"><p class="fd-bento-kicker">' + esc(step) + '</p>'
+                           '<h3>' + esc(title) + '</h3><p>' + esc(copy) + '</p></div></article>' for step, cls, title, copy in fast_steps)
+                 + '</div></section>')
         shortcuts = [
-            ('/Lessons/?view=saved', 'Saved lessons', 'Return to lessons saved on this device.'),
-            ('/resources/', 'Planning and evidence', 'Find schemes of work and evidence packs.'),
-            ('/Matt-s-Apps-/', 'Classroom tools', 'Open tools for your lesson.'),
+            ('/Lessons/?view=saved', 'saved', 'Saved lessons', 'Return to lessons saved on this device.'),
+            ('/resources/', 'planning', 'Planning and evidence', 'Find schemes of work and evidence packs.'),
+            ('/Matt-s-Apps-/', 'ict', 'Classroom tools', 'Open tools for your lesson.'),
         ]
         if primary:
-            shortcuts.append(('/Lessons/primary/', 'Primary lessons', 'Explore lessons for primary pupils.'))
+            shortcuts.append(('/Lessons/primary/', 'primary', 'Primary lessons', 'Explore lessons for primary pupils.'))
         shortcuts.extend([
-            ('/teach/', 'Teaching workspace', 'Plan sequences, print packs and classroom routines.'),
-            ('/Lessons/?view=recommended', 'Recommended shelf', 'Open ready-to-teach lessons picked for this term.'),
+            ('/teach/', 'workspace', 'Teaching workspace', 'Plan sequences, print packs and classroom routines.'),
+            ('/Lessons/?view=recommended', 'recommended', 'Recommended shelf', 'Open ready-to-teach lessons picked for this term.'),
         ])
         body += ('<section class="fd-section wrap"><h2>Your teaching shortcuts</h2><div class="fd-shortcuts">'
-                 + ''.join('<a class="fd-shortcut" href="' + esc(r) + '"><h3>' + esc(t) + '</h3><p>' + esc(d) + '</p><span class="fd-shortcut-arrow" aria-hidden="true">→</span></a>' for r, t, d in shortcuts)
+                 + ''.join('<a class="fd-shortcut" href="' + esc(r) + '"><span class="fd-shortcut-icon" aria-hidden="true">' + line_icon(ic) + '</span>'
+                           '<h3>' + esc(t) + '</h3><p>' + esc(d) + '</p><span class="fd-shortcut-arrow" aria-hidden="true">→</span></a>' for r, ic, t, d in shortcuts)
                  + '</div></section>')
+        moves = [
+            ('1. Arrival on screen before pupils enter', 'Move 1',
+             'Dead time at the door builds friction. Have the opening arrival screen ready as pupils walk in so everyone has an immediate, low-pressure way to begin whether they were present last lesson or missed it.',
+             None),
+            ('2. Late arrival or return from absence — quiet catch-up', 'Move 2',
+             'Avoid spotlighting missed time across the room. Set the sheet down quietly and point to the short catch-up prompt so the learner can join the current task straight away.',
+             None),
+            ('3. Blank-page refusal — lower the starting barrier', 'Move 3',
+             'Refusal often masks worry about getting the first line wrong in front of peers. Offer response choice (point, speak, circle, or adult jots the opening line), step across to BASE, or open structured writing frames.',
+             ('/Matt-s-Apps-/Writing_Frames.html', 'Open writing frames')),
+            ('4. De-escalation — genuine pass and no cold-calling', 'Move 4',
+             'Putting an anxious learner on the spot in front of the group raises tension fast. Use wondering-aloud prompts, quiet pair checks and side-by-side margin check-ins while circulating.',
+             None),
+            ('5. Mid-lesson restlessness — visible stages and calm reset', 'Move 5',
+             'Clear lesson stages let pupils see how close the finish line is. When energy spikes, pause for a short calm reset or open the classroom timer and transition tools.',
+             ('/Matt-s-Apps-/Classroom_Toolkit.html', 'Open classroom timers & transitions')),
+            ('6. Individual tutoring and step-outs — share pace control', 'Move 6',
+             'In individual or small-group sessions, let the learner advance the stage buttons and mark their own confidence check — sharing pace control cuts down power struggles.',
+             None),
+        ]
+        moves_html = ''.join(
+            '<details class="fd-playbook-item" open>'
+            '<summary><span>' + esc(m_title) + '</span><span class="fd-playbook-badge">' + esc(m_tag) + '</span></summary>'
+            '<div class="fd-playbook-body"><p>' + esc(m_body) + '</p>'
+            + ('<div class="fd-playbook-actions"><a class="fd-action-link" href="' + esc(m_link[0]) + '"><span>' + esc(m_link[1]) + '</span><span aria-hidden="true">→</span></a></div>' if m_link else '')
+            + '</div></details>'
+            for m_title, m_tag, m_body, m_link in moves
+        )
+        body += ('<section class="fd-section wrap" id="teacher-playbook" aria-labelledby="teacher-playbook-heading">'
+                 '<div class="fd-playbook-shell"><p class="fd-kicker">Practical classroom playbook</p>'
+                 '<h2 id="teacher-playbook-heading">Getting reluctant or unsettled pupils working (6 classroom moves)</h2>'
+                 '<p class="fd-playbook-lead">Lessons are designed around low-pressure entry and predictable transitions. Lean on these six practical moves when engagement wobbles:</p>'
+                 '<div class="fd-playbook-list">' + moves_html + '</div></div></section>')
+        pack_links = [
+            ('/Lessons/', 'fd-action-solid', 'Open lessons by subject'),
+            ('/resources/', 'fd-action-accent', 'Browse unit packs & schemes'),
+            ('/Lessons/pathways.html', '', 'Pathways guide (BASE · TRACK · SUMMIT)'),
+        ]
+        tool_links = [
+            ('/tools/', 'fd-action-solid', 'Open all classroom tools'),
+            ('/Matt-s-Apps-/Classroom_Toolkit.html', '', 'Timers & classroom transitions'),
+            ('/Matt-s-Apps-/Evidence_Binder.html', '', 'Portfolio & evidence binder'),
+            ('/Matt-s-Apps-/Rubric_Studio.html', '', 'Rubric & feedback builder'),
+        ]
+        body += ('<section class="fd-section wrap" id="teacher-directory" aria-labelledby="teacher-directory-heading">'
+                 '<div class="fd-section-head fd-section-head-stack"><p class="fd-kicker">Packs &amp; local tools</p>'
+                 '<h2 id="teacher-directory-heading">Packs, preparation for adulthood &amp; classroom tools</h2></div>'
+                 '<div class="fd-bento-grid fd-bento-two">'
+                 '<article class="fd-bento-card fd-bento-top-track"><div class="fd-bento-copy">'
+                 '<h3>Curriculum, preparation for adulthood &amp; unit award evidence</h3>'
+                 '<p>Practical sequences and printable packs built to generate clear classroom portfolio evidence across independent living, employment, community and health topics. Independent teacher-created materials — not endorsed by any awarding body.</p></div>'
+                 '<ul class="fd-action-stack">'
+                 + ''.join('<li><a class="fd-action-link' + (' ' + c if c else '') + '" href="' + esc(h) + '"><span>' + esc(lbl) + '</span><span aria-hidden="true">→</span></a></li>' for h, c, lbl in pack_links)
+                 + '</ul></article>'
+                 '<article class="fd-bento-card fd-bento-top-summit"><div class="fd-bento-copy">'
+                 '<h3>No-pupil-account classroom &amp; portfolio tools</h3>'
+                 '<p>Browser studios and classroom trackers, with no pupil accounts needed:</p></div>'
+                 '<ul class="fd-action-stack">'
+                 + ''.join('<li><a class="fd-action-link' + (' ' + c if c else '') + '" href="' + esc(h) + '"><span>' + esc(lbl) + '</span><span aria-hidden="true">→</span></a></li>' for h, c, lbl in tool_links)
+                 + '</ul></article></div></section>')
         body += '<section class="fd-section wrap"><div class="fd-section-head"><h2>Browse by subject</h2><a href="/Lessons/">All subjects →</a></div>' + subjects + '</section>'
-        body += '<section class="fd-maker"><div class="wrap"><h2>Made by a teacher. For real classrooms.</h2><p>Questions, ideas or something your class needs?</p><a href="mailto:contactmadebymatt@gmail.com">Contact Matt →</a><p>' + mailing_link() + '</p></div></section>'
+        body += ('<section class="fd-maker"><div class="wrap"><div class="fd-maker-card">'
+                 '<h2>Made by a teacher. For real classrooms.</h2><p>Questions, ideas or something your class needs?</p>'
+                 '<div class="fd-maker-links"><a href="mailto:contactmadebymatt@gmail.com">Contact Matt →</a><p>' + mailing_link() + '</p></div>'
+                 '</div></div></section>')
         note = record['teachers']
-        body += '<section class="fd-section fd-safety wrap" id="teacher-note"><h2 id="teacher-note-title">' + esc(note['noteTitle']) + '</h2><p>' + esc(note['note']) + '</p></section>'
+        body += '<section class="fd-section fd-safety wrap" id="teacher-note"><div class="fd-safety-card"><h2 id="teacher-note-title">' + esc(note['noteTitle']) + '</h2><p>' + esc(note['note']) + '</p></div></section>'
     else:
         pupil_picks = ''.join('<button type="button" class="fd-topic-btn" data-search-pick="' + esc(t) + '" aria-pressed="false">' + esc(t) + '</button>'
                               for t in ('Forces', 'Plants', 'History', 'Drawing', 'Money'))
@@ -399,19 +479,57 @@ def render(kind, origin, bp):
                 ('launch', 'SUMMIT', 'Deeper challenges for independent study and planning what comes next.'),
             ]
         )
-        body = ('<section class="fd-hero wrap"><div><p class="fd-eyebrow">PUPILS</p><h1>What are you learning today?</h1>'
-                '<p class="fd-lead">Choose your subject. Your teacher will help you find your pathway and lesson.</p></div></section>'
-                '<section class="fd-section wrap" id="pupil-search"><h2>Find your activity</h2>' + search(kind)
+        pupil_ways = [
+            ('fd-bento-top-summit', 'Not sure of the first words?',
+             'Open structured writing frames — sentence starters and layout boxes are already set out on screen for you.',
+             '/Matt-s-Apps-/Writing_Frames.html', 'fd-action-solid', 'Open writing frames'),
+            ('fd-bento-top-track', 'Missed the last lesson?',
+             'Check the opening arrival screen of your lesson for a short catch-up summary before the main task begins.',
+             '/Lessons/', 'fd-action-accent', 'Open Lessons'),
+            ('fd-bento-top-base', 'Head busy or need a breather?',
+             'Take a quiet pause in the calm reset space, then come back when you are ready.',
+             '/Matt-s-Apps-/Regulation_Station.html', 'fd-action-warm', 'Open calm reset space'),
+        ]
+        pupil_ways_html = ''.join(
+            '<article class="fd-bento-card ' + cls + '"><div class="fd-bento-copy"><h3>' + esc(w_title) + '</h3><p>' + esc(w_copy) + '</p></div>'
+            '<a class="fd-action-link ' + btn_cls + '" href="' + esc(href) + '"><span>' + esc(btn_lbl) + '</span><span aria-hidden="true">→</span></a></article>'
+            for cls, w_title, w_copy, href, btn_cls, btn_lbl in pupil_ways
+        )
+        support_services = [
+            'Childline · Call free 0800 1111',
+            'Shout · Text SHOUT to 85258',
+            'Childnet · Help with online issues',
+        ]
+        support_cards_html = ''.join(
+            '<div class="fd-support-item"><span>' + esc(label) + '</span></div>'
+            for label in support_services
+        )
+        body = ('<section class="fd-hero fd-door-hero fd-hero-pupils wrap"><div class="fd-hero-panel"><p class="fd-eyebrow">PUPILS</p><h1>What are you learning today?</h1>'
+                '<p class="fd-lead">Choose your subject. Your teacher will help you find your pathway and lesson.</p>'
+                '<p class="fd-hero-sub">Lessons and studios on <strong>Made by Matt</strong> open straight away — no login needed and no pupil accounts. Clear steps show what you are doing now and when you are finished across <strong class="fd-path-word fd-path-base">BASE</strong>, <strong class="fd-path-word fd-path-track">TRACK</strong> and <strong class="fd-path-word fd-path-summit">SUMMIT</strong>.</p>'
+                '<ul class="fd-trust-pills" aria-label="How this page works"><li>No login needed</li><li>No pupil accounts</li></ul>'
+                '</div></section>'
+                '<section class="fd-section wrap" id="pupil-search"><div class="fd-search-card"><h2>Find your activity</h2>' + search(kind)
                 + '<div class="fd-topic-picks" role="group" aria-label="Try a topic">' + pupil_picks + '</div>'
-                + '<p class="fd-muted">Nothing to install. Ask your teacher if you are not sure where to start.</p></section>'
+                + '<p class="fd-muted">Nothing to install. Ask your teacher if you are not sure where to start.</p></div></section>'
                 '<section class="fd-section wrap" id="pupil-recent" hidden aria-labelledby="pupil-recent-title">'
                 '<div class="fd-section-head"><h2 id="pupil-recent-title">Continue your recent lesson</h2></div>'
                 '<div class="fd-recent-grid" id="pupil-recent-list"></div></section>'
-                '<section class="fd-section wrap"><h2>Choose your subject</h2>' + subjects + '</section>'
+                '<section class="fd-section wrap" id="pupil-ways-in" aria-labelledby="pupil-ways-heading">'
+                '<div class="fd-playbook-shell"><p class="fd-kicker">Low-pressure ways to start</p>'
+                '<h2 id="pupil-ways-heading">Stuck on a blank page? Try one of these three calm ways in</h2>'
+                '<div class="fd-bento-grid fd-bento-three">' + pupil_ways_html + '</div></div></section>'
+                '<section class="fd-section wrap"><div class="fd-section-head"><h2>Choose your subject</h2></div>' + subjects + '</section>'
                 '<section class="fd-section wrap" id="pupil-pathways" aria-labelledby="pupil-pathways-title">'
-                '<h2 id="pupil-pathways-title">Which pathway do I pick?</h2>'
-                '<p class="fd-muted">Your teacher will tell you whether to open BASE, TRACK or SUMMIT inside your subject.</p>'
-                '<div class="fd-pupil-pathway-grid">' + pupil_pathway_cards + '</div></section>')
+                '<div class="fd-section-head fd-section-head-stack"><h2 id="pupil-pathways-title">Which pathway do I pick?</h2>'
+                '<p class="fd-muted">Your teacher will tell you whether to open BASE, TRACK or SUMMIT inside your subject.</p></div>'
+                '<div class="fd-pupil-pathway-grid">' + pupil_pathway_cards + '</div></section>'
+                '<section class="fd-section wrap" id="pupil-support" aria-labelledby="pupil-support-heading">'
+                '<div class="fd-support-shell"><div class="fd-support-head"><div>'
+                '<h2 id="pupil-support-heading">Need someone to talk to or want to report a concern?</h2>'
+                '<p class="fd-muted"><strong>Made by Matt</strong> is a learning site and cannot take safeguarding reports, but real people can listen and help.</p>'
+                '</div><a class="fd-button" href="/Lessons/report-a-concern.html">Report a concern →</a></div>'
+                '<div class="fd-support-grid">' + support_cards_html + '</div></div></section>')
     route = '/' if kind == 'home' else record[kind]['route']
     title = {'home': 'Big on ideas. Light on prep.', 'teachers': 'Teachers', 'pupils': 'Pupils'}[kind]
     description = 'Interactive lessons, practical resources and useful teaching tools—all in one place, ready to help you bring learning to life.' if kind == 'home' else 'Practical lessons and teaching packs, ready to adapt.'
