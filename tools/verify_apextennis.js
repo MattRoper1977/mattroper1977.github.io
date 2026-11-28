@@ -12,7 +12,7 @@ const sha=crypto.createHash('sha256').update(html).digest('hex');
 // moves to the newly gated bytes in the same PR as the file). The only byte
 // change from the gated build is the head URLs restored to their source form.
 // Previous: 06791f86106d6ba79a9b697446511ddedf21a769c20db19dcb6400991e6f5f8f
-const EXPECTED_V6_SHA256='b50798dc901629f10041cc40398f2d6d0a0d8abc23b0d9a8d7c1d045436c3cac';
+const EXPECTED_V6_SHA256='294639279985308277ec34859407737deddb3741de2f78a0839c9390d5694a84';
 const results=[];
 function assert(x,m){if(!x)throw new Error(m)}
 function gate(id,name,fn){try{const d=fn()||'';results.push({id,name,status:'PASS',detail:d});console.log(`PASS ${id} ${name}${d?' — '+d:''}`)}catch(e){results.push({id,name,status:'FAIL',detail:e.message});console.error(`FAIL ${id} ${name} — ${e.message}`)}}
