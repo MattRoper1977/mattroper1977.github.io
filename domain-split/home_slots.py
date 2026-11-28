@@ -112,7 +112,8 @@ TEMPLATE = HERE / 'home' / 'home.html'
 # first door-byline pins move with it. The footer keeps the one Play link.
 # 24 Nov 2026, public pathway words (ruling thread; owner 22 and 23 Nov): the switch buttons, the chip and draft
 # card text and the three pack-list labels show the public display names; the data-pathway keys are unchanged.
-TEMPLATE_SHA256 = 'a24f765684d18213bcb7994fc17b446232dcbda29e0e3cd1437d4b0d74ce0de7'
+# 25 Nov 2026, homepage body refresh R1
+TEMPLATE_SHA256 = '336d81f1b5268e95c2dc29916c386d9e5225d60a25942f5a949b617cbf2aa998'
 NODE_SCRIPT = HERE / 'home_hub_counts.cjs'
 RECORD = 'data/audience-homepages.json'
 HEADER = 'tools/chrome/header.html'

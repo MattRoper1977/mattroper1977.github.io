@@ -240,7 +240,16 @@ jobs:
           # Lessons #901 on Lessons main. Every published path that moved between the two commits is already admitted by a row holding both
           # digests or by an ARRIVING row (the lesson swap admissions Site #692 and #693), so this move changes
           # no admission row. Derived with git rev-parse on the Lessons checkout, never typed.
-          ref: 09fcdbe027adb2a3462d5a40a396f89a35edaedf
+          # Moved again 2026-11-24 (sixth lesson swap carrier move, ruling thread 24 November) WITH the two other EQUAL pins (education-publication.yml,
+          # published-completion-verify.yml, domain-split-verify.yml) and WITH the Apps pin below, per L31: the Lessons pin 09fcdbe0 -> 1611f8f40521ad59b7638b49abf5c1744a77ac6d, the merge of
+          # Lessons #955 on Lessons main. Every published path that moved between the two commits is already admitted: Lessons main builds
+          # with pending 0 against this record (served-digest census on this branch), so this move changes no admission row.
+          # It retires the stale carrier whose catalogue evidence failed check_catalogue_static.py. Derived with git rev-parse on the Lessons checkout, never typed.
+          # Moved again 2026-11-24 (Apps BASE v4 Site-tree step, ruling thread) WITH the two other EQUAL pins (education-publication.yml,
+          # published-completion-verify.yml, domain-split-verify.yml) and WITH the Apps pin below, per L31: the Lessons pin 1611f8f4 -> e6fdd516d940db060bfadd7ce611fa3f3b201e8e, the merge of
+          # Lessons #958 on Lessons main (a publisher pin move only; no published Lessons path moved), so this move changes no admission row.
+          # Derived with git rev-parse on the Lessons checkout, never typed.
+          ref: e6fdd516d940db060bfadd7ce611fa3f3b201e8e
           path: .sources/Lessons
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -341,7 +350,15 @@ jobs:
           # Moved 2026-10-27 (M1, ruling wf-3) WITH the Lessons pin above, per STANDING RULE L31: the Apps pin 49708f6d -> dd908441664339a27dc59f5bd0364024c7a1c231,
           # the squash merge of Apps #223, M1's gate-copy companion, which moves no published path. Both gate copies byte-identical there.
           # Derived with git rev-parse on the Apps checkout, never typed.
-          ref: dd908441664339a27dc59f5bd0364024c7a1c231
+          # Moved 2026-11-24 (sixth lesson swap carrier move, ruling thread 24 November) WITH the Lessons pin above, per STANDING RULE L31: the Apps pin
+          # dd908441 -> f16d1bc1639171e1cd304afc7f8843f45afebb9f, the merge of Apps #248 on Apps main. The one published Apps path that moved
+          # (education-apps/index.html) is already admitted at both digests, so this move changes no admission row.
+          # Derived with git rev-parse on the Apps checkout, never typed.
+          # Moved 2026-11-24 (Apps BASE v4 Site-tree step, ruling thread) WITH the Lessons pin above, per STANDING RULE L31: the Apps pin
+          # f16d1bc1 -> b7f1a86d7d93a0b660e2535412a85d6d25194746, the merge of Apps #250 on Apps main (the BASE v4 card title). The Apps page, apps.json and the five Site
+          # files that carry the card title are admitted at their BASE v4 digests by Site #778, so this pin publishes them on the Site tree.
+          # Derived with git rev-parse on the Apps checkout, never typed.
+          ref: b7f1a86d7d93a0b660e2535412a85d6d25194746
           path: .sources/Apps
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -446,6 +463,18 @@ jobs:
           python3 tools/count_marker.py --describe /tmp/kofi-real.html /tmp/kofi-control.html
           echo "configured $url -> HTTP $real_code, handle '$handle' appears $real_hits time(s)"
           echo "control   -> HTTP $ctrl_code, handle appears $ctrl_hits time(s)"
+          # 25 Nov 2026, owner's decision (ruling thread decision card): the host puts
+          # a bot wall in front of this runner on some days. When BOTH the page and
+          # the control come back 403 carrying the wall's own title, nothing about
+          # the link was measured, so the step warns and passes. One walled answer
+          # on its own, any other status, or a real page without the handle still
+          # fails below exactly as before.
+          real_wall=$(python3 tools/count_marker.py "<title>Just a moment" /tmp/kofi-real.html)
+          ctrl_wall=$(python3 tools/count_marker.py "<title>Just a moment" /tmp/kofi-control.html)
+          if [ "$real_code" = "403" ] && [ "$ctrl_code" = "403" ] && [ "$real_wall" -ge 1 ] && [ "$ctrl_wall" -ge 1 ]; then
+            echo "::warning::NOT CHECKED TODAY: the donation host walled both the configured page and the control (HTTP 403, bot interstitial). The link was not measured on this run."
+            exit 0
+          fi
           if [ "$real_code" != "200" ] || [ "$real_hits" -lt 1 ]; then echo "::error::the configured Ko-fi URL did not resolve to a page carrying the account handle"; exit 1; fi
           if [ "$ctrl_hits" -ge 1 ]; then echo "::error::the control page carries the handle too - this measurement cannot tell the account page from any other"; exit 1; fi
       - name: Verify shared usage database and service controls without production traffic
