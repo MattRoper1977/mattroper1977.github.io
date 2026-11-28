@@ -1,6 +1,102 @@
 <!doctype html>
 <html lang="en">
 <head>
+<!-- MBM-R2-KIT:BEGIN v1.0.1 shared play options (graphics tier, one-hand touch, gamepad, daily streak) -->
+<script>/* MBM R2 KIT (head): graphics tier. Device-only, no network. Keys: mbm_gfx_tier (shared), read before the game boots. */
+(function(){"use strict";
+var pref="auto";try{var v=localStorage.getItem("mbm_gfx_tier");if(v==="high"||v==="low"||v==="auto")pref=v;}catch(_){}
+var n=navigator,weak=false;
+try{var coarse=matchMedia("(pointer:coarse)").matches,small=Math.min(screen.width,screen.height)<=820;
+weak=(coarse&&small)||(n.deviceMemory&&n.deviceMemory<=2);}catch(_){}
+var low=pref==="low"||(pref==="auto"&&weak);
+window.__MBM_R2={pref:pref,low:low,tier:low?"low":"high",auto:pref==="auto"};
+if(low){try{var real=window.devicePixelRatio||1;Object.defineProperty(window,"devicePixelRatio",{configurable:true,get:function(){return Math.min(real,1);}});}catch(_){}}
+})();</script>
+<script>/* MBM R2 KIT (body): options panel, one-hand touch, gamepad, daily streak. Device-only, no network.
+   New keys only: mbm_gfx_tier, mbm_r2_onehand, mbm_r2_streak_<game>. Existing game saves are never read or written. */
+(function(){"use strict";
+var CFG={"id":"titanforge","gear":{"left":222,"top":10,"small":{"right":4,"top":64}}};var R2=window.__MBM_R2||{pref:"auto",low:false,tier:"high",auto:true};
+var doc=document,LS={get:function(k){try{return localStorage.getItem(k);}catch(_){return null;}},set:function(k,v){try{localStorage.setItem(k,v);}catch(_){}}};
+var reduced=false;try{reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;}catch(_){}
+function key(type,code){try{var k=code==="Space"?" ":code.indexOf("Key")===0?code.slice(3).toLowerCase():code.indexOf("Arrow")===0?code:code.indexOf("Shift")===0?"Shift":code;window.dispatchEvent(new KeyboardEvent(type,{code:code,key:k,bubbles:true,cancelable:true}));}catch(_){}}
+var held={};function down(c){if(c&&!held[c]){held[c]=1;key("keydown",c);}}function up(c){if(c&&held[c]){delete held[c];key("keyup",c);}}
+function pulse(c,ms){if(!c)return;down(c);setTimeout(function(){up(c);},ms||350);}
+/* ---------- daily streak (one grace day) ---------- */
+var SK="mbm_r2_streak_"+CFG.id;
+function dayNum(d){return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000);}
+function readStreak(){var s={last:0,n:0,best:0,grace:0};try{var o=JSON.parse(LS.get(SK)||"null");if(o&&typeof o.last==="number"&&typeof o.n==="number"){s.last=o.last;s.n=o.n;s.best=o.best||o.n;s.grace=o.grace||0;}}catch(_){}return s;}
+function markPlayed(){var s=readStreak(),t=dayNum(new Date());if(s.last===t)return s;var gap=t-s.last;
+ if(s.last&&gap===1)s.n+=1;else if(s.last&&gap===2&&t-s.grace>=7){s.n+=1;s.grace=t;}else s.n=1;
+ s.last=t;if(s.n>s.best)s.best=s.n;LS.set(SK,JSON.stringify(s));return s;}
+function streakText(){var s=readStreak(),t=dayNum(new Date());var live=s.last&&t-s.last<=2?s.n:0;return "Daily streak: "+live+(live===1?" day":" days")+(s.best>1?" (best "+s.best+")":"")+(s.last===t?" ✓ played today":"");}
+var active=0,lastAct=0,marked=false;
+function act(){var now=Date.now();if(now-lastAct<5000)active+=now-lastAct;lastAct=now;if(!marked&&active>=45000){marked=true;markPlayed();refresh();}}
+["keydown","pointerdown","touchstart"].forEach(function(t){window.addEventListener(t,act,{capture:true,passive:true});});
+/* ---------- one-hand touch (opt-in) ---------- */
+var OH=CFG.oneHand||null,ohOn=LS.get("mbm_r2_onehand")==="1",touchDev=false;try{touchDev=("ontouchstart" in window)||matchMedia("(pointer:coarse)").matches;}catch(_){}
+var drag=null;
+function ohStart(e){if(!ohOn||!OH||panelOpen||e.pointerType==="mouse")return;if(e.target&&e.target.closest&&e.target.closest("button,a,input,select,textarea,[role=button],#mbmr2-gear,#mbmr2-panel"))return;if(e.clientY<innerHeight*0.35)return;
+ drag={id:e.pointerId,x:e.clientX,y:e.clientY,t:Date.now(),dir:"",v:"",boost:false};(OH.hold||[]).forEach(down);}
+function ohMove(e){if(!drag||e.pointerId!==drag.id)return;var dx=e.clientX-drag.x,dy=e.clientY-drag.y,dead=14;
+ var dir=dx>dead?"R":dx<-dead?"L":"";if(dir!==drag.dir){up(OH.left);up(OH.right);if(dir==="L")down(OH.left);if(dir==="R")down(OH.right);drag.dir=dir;}
+ if(OH.stick){var v=dy>dead?"D":dy<-dead?"U":"";if(v!==drag.v){up(OH.up);up(OH.down);if(v==="U")down(OH.up);if(v==="D")down(OH.down);drag.v=v;}}
+ else if(OH.swipeUp&&!drag.boost&&dy<-60){drag.boost=true;pulse(OH.swipeUp,700);}
+ if(Math.abs(dx)>90)drag.x=e.clientX-(dx>0?90:-90);}
+function ohEnd(e){if(!drag||e.pointerId!==drag.id)return;up(OH.left);up(OH.right);up(OH.up);up(OH.down);(OH.hold||[]).forEach(up);drag=null;}
+window.addEventListener("pointerdown",ohStart,{capture:true,passive:true});window.addEventListener("pointermove",ohMove,{capture:true,passive:true});
+window.addEventListener("pointerup",ohEnd,{capture:true,passive:true});window.addEventListener("pointercancel",ohEnd,{capture:true,passive:true});
+window.addEventListener("blur",function(){Object.keys(held).forEach(up);drag=null;});
+/* ---------- gamepad ---------- */
+var GP=CFG.pad||null,padSeen=false,padState={};
+function padSet(name,on,code){if(!code)return;if(on&&!padState[name]){padState[name]=1;down(code);}else if(!on&&padState[name]){delete padState[name];up(code);}}
+function padPoll(){var pads=[];try{pads=navigator.getGamepads?navigator.getGamepads():[];}catch(_){}var p=null;for(var i=0;i<pads.length;i++)if(pads[i]&&pads[i].connected){p=pads[i];break;}
+ if(p&&GP){if(!padSeen){padSeen=true;refresh();}var ax=p.axes||[],b=p.buttons||[],pr=function(i){return !!(b[i]&&(b[i].pressed||b[i].value>0.5));};
+  padSet("l",(ax[0]||0)<-0.35||pr(14),GP.left);padSet("r",(ax[0]||0)>0.35||pr(15),GP.right);padSet("u",(ax[1]||0)<-0.5||pr(12),GP.up);padSet("d",(ax[1]||0)>0.5||pr(13),GP.down);
+  padSet("a",pr(0),GP.a);padSet("b",pr(1)||pr(7),GP.b);padSet("x",pr(2),GP.x);padSet("y",pr(3),GP.y);padSet("s",pr(9),GP.start);if(pr(0)||pr(9)||Math.abs(ax[0]||0)>0.35)act();}
+ requestAnimationFrame(padPoll);}
+if(GP&&navigator.getGamepads){window.addEventListener("gamepadconnected",function(){if(!padPoll.on){padPoll.on=1;padPoll();}});try{var g0=navigator.getGamepads();for(var gi=0;gi<g0.length;gi++)if(g0[gi]&&!padPoll.on){padPoll.on=1;padPoll();}}catch(_){}}
+/* ---------- panel ---------- */
+var css="#mbmr2-gear{position:fixed;left:8px;top:64px;z-index:2147481000;width:44px;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.28);background:rgba(8,14,28,.62);color:#e8f6ff;font:700 18px/1 system-ui,sans-serif;cursor:pointer;opacity:.55;padding:0;touch-action:manipulation}#mbmr2-gear:hover,#mbmr2-gear:focus-visible{opacity:1;outline:2px solid #5fd3ff;outline-offset:2px}#mbmr2-gear[data-idle]{opacity:.18}"+
+"#mbmr2-panel{position:fixed;inset:0;z-index:2147481500;display:none;place-items:center;background:rgba(2,6,14,.72);font:500 15px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;color:#e8f2fa}#mbmr2-panel[data-open]{display:grid}"+
+"#mbmr2-card{width:min(92vw,400px);max-height:88vh;overflow:auto;background:#0b1424;border:1px solid rgba(132,224,192,.35);border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.6)}#mbmr2-card h2{margin:0 0 4px;font-size:19px;color:#84e0c0}#mbmr2-card p{margin:6px 0;color:#b4c5d4;font-size:13px}"+
+"#mbmr2-card .r2row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}#mbmr2-card button{min-height:44px;padding:8px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:#13233c;color:#e8f2fa;font:700 14px system-ui,sans-serif;cursor:pointer;touch-action:manipulation}#mbmr2-card button[aria-pressed=true]{background:#1d6e5a;border-color:#84e0c0}#mbmr2-card button[aria-pressed=true]::before{content:'\\2713 '}#mbmr2-card button:focus-visible{outline:2px solid #5fd3ff;outline-offset:2px}#mbmr2-card .r2lab{font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#5fd3ff;margin-top:10px}#mbmr2-streak{font-weight:700;color:#ffe08a}";
+var st=doc.createElement("style");st.id="mbmr2-css";st.textContent=css;doc.head.appendChild(st);
+var gear=doc.createElement("button");gear.id="mbmr2-gear";gear.type="button";gear.setAttribute("aria-label","Play options: graphics, controls and daily streak");gear.textContent="⚙";
+var panel=doc.createElement("div");panel.id="mbmr2-panel";panel.setAttribute("role","dialog");panel.setAttribute("aria-modal","true");panel.setAttribute("aria-label","Play options");
+var panelOpen=false,lastFocus=null;
+function btn(label,pressed,fn){var b=doc.createElement("button");b.type="button";b.textContent=label;if(pressed!==null)b.setAttribute("aria-pressed",pressed?"true":"false");b.addEventListener("click",fn);return b;}
+function refresh(){if(!panel.firstChild)return;build();}
+function build(){var c=doc.createElement("div");c.id="mbmr2-card";var h=doc.createElement("h2");h.textContent="Play options";c.appendChild(h);
+ var s=doc.createElement("p");s.id="mbmr2-streak";s.textContent=streakText();c.appendChild(s);
+ var sp=doc.createElement("p");sp.textContent="Play for a little each day to grow your streak. Miss one day a week and it still counts.";c.appendChild(sp);
+ var l1=doc.createElement("div");l1.className="r2lab";l1.textContent="Graphics";c.appendChild(l1);var r1=doc.createElement("div");r1.className="r2row";
+ [["auto","Auto"],["high","High"],["low","Low"]].forEach(function(o){r1.appendChild(btn(o[1],R2.pref===o[0],function(){LS.set("mbm_gfx_tier",o[0]);R2.pref=o[0];changed=true;build();}));});c.appendChild(r1);
+ var p1=doc.createElement("p");p1.textContent="Now running: "+(R2.low?"Low (smoother on older devices)":"High")+(R2.auto?", chosen automatically.":".")+(changed?" Your change applies when the game reloads.":"");c.appendChild(p1);
+ if(changed){var rr=doc.createElement("div");rr.className="r2row";rr.appendChild(btn("Reload now",null,function(){location.reload();}));c.appendChild(rr);}
+ if(OH&&touchDev){var l2=doc.createElement("div");l2.className="r2lab";l2.textContent="One-hand touch";c.appendChild(l2);var r2=doc.createElement("div");r2.className="r2row";
+  r2.appendChild(btn("On",ohOn,function(){ohOn=true;LS.set("mbm_r2_onehand","1");build();}));r2.appendChild(btn("Off",!ohOn,function(){ohOn=false;LS.set("mbm_r2_onehand","0");build();}));c.appendChild(r2);
+  var p2=doc.createElement("p");p2.textContent=OH.help;c.appendChild(p2);}
+ if(GP){var l3=doc.createElement("div");l3.className="r2lab";l3.textContent="Gamepad";c.appendChild(l3);var p3=doc.createElement("p");p3.textContent=(padSeen?"Connected. ":"Press any button on a gamepad to connect it. ")+GP.help;c.appendChild(p3);}
+ var r9=doc.createElement("div");r9.className="r2row";var cl=btn("Close",null,close);cl.id="mbmr2-close";r9.appendChild(cl);c.appendChild(r9);
+ var keep=doc.activeElement&&panel.contains(doc.activeElement)?doc.activeElement.textContent:null;panel.textContent="";panel.appendChild(c);
+ if(keep){var bs=c.querySelectorAll("button");for(var i=0;i<bs.length;i++)if(bs[i].textContent===keep){bs[i].focus();break;}}}
+var changed=false;
+function open(){lastFocus=doc.activeElement;panelOpen=true;build();panel.setAttribute("data-open","");var b=panel.querySelector("button");if(b)b.focus();}
+function close(){panelOpen=false;panel.removeAttribute("data-open");try{(lastFocus&&lastFocus.focus?lastFocus:gear).focus();}catch(_){}}
+gear.addEventListener("click",function(e){e.stopPropagation();panelOpen?close():open();});
+panel.addEventListener("click",function(e){if(e.target===panel)close();});
+panel.addEventListener("keydown",function(e){e.stopPropagation();if(e.key==="Escape"){e.preventDefault();close();}else if(e.key==="Tab"){var bs=panel.querySelectorAll("button");if(!bs.length)return;var f=bs[0],l=bs[bs.length-1];if(e.shiftKey&&doc.activeElement===f){e.preventDefault();l.focus();}else if(!e.shiftKey&&doc.activeElement===l){e.preventDefault();f.focus();}}},true);
+["keyup","pointerdown","pointerup","touchstart","touchend","mousedown","click"].forEach(function(t){panel.addEventListener(t,function(e){e.stopPropagation();});});
+/* fade the gear while playing so it never hides the game */
+var idleT=0;function wake(){gear.removeAttribute("data-idle");clearTimeout(idleT);idleT=setTimeout(function(){if(!panelOpen)gear.setAttribute("data-idle","");},4000);}
+["pointermove","pointerdown","keydown"].forEach(function(t){window.addEventListener(t,function(e){if(t==="keydown"&&!/Escape|KeyP|Tab/.test(e.code||""))return;wake();},{capture:true,passive:true});});
+function place(){var g=CFG.gear||{},s=(innerWidth<=500&&g.small)||g;gear.style.left=gear.style.right=gear.style.top=gear.style.bottom="auto";if(s.right!=null)gear.style.right=s.right+"px";else gear.style.left=(s.left!=null?s.left:8)+"px";if(s.bottom!=null)gear.style.bottom=s.bottom+"px";else gear.style.top=(s.top!=null?s.top:64)+"px";}
+window.addEventListener("resize",place);
+function mount(){place();(doc.body||doc.documentElement).appendChild(gear);(doc.body||doc.documentElement).appendChild(panel);wake();}
+if(doc.readyState==="loading")doc.addEventListener("DOMContentLoaded",mount,{once:true});else mount();
+window.__MBM_R2_KIT__={version:"1.0.1",game:CFG.id,tier:R2.tier,streak:readStreak,markPlayed:markPlayed,open:open,close:close,selfTest:function(){var t=dayNum(new Date());return{ok:typeof t==="number"&&!!doc.getElementById("mbmr2-gear"),tier:R2.tier};}};
+})();</script>
+<!-- MBM-R2-KIT:END -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#080b10">
@@ -1950,6 +2046,39 @@ lucide-react/dist/esm/lucide-react.mjs:
   G.daily={plan:plan,today:dailyToday,start:startDaily,finish:finishDaily,state:function(){return JSON.parse(JSON.stringify(daily));},attempt:function(){return attempt?{power:attempt.power,lifts:attempt.lifts,target:attempt.plan.target,mods:attempt.plan.mods.map(function(m){return m.id;})}:null;},saveKey:DAILY_KEY};
   G.save={exportCode:exportCode,importCode:importCode,keys:SAVE_KEYS.slice()};
   G.polish={resetAll:resetAll,coachVisible:function(){return !!refs.coach;},announcerCount:function(){return Array.prototype.filter.call(document.querySelectorAll("[aria-live]"),function(n){return n.getAttribute("aria-hidden")!=="true";}).length;}};
+})();
+(function installTitanR2(){'use strict';
+var KEY='mbm_r2_titanforge_meta',DAYS=14;
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function num(v){return typeof v==='number'&&isFinite(v)&&v>=0&&v<1e7?Math.floor(v):0}
+function read(){var m={v:1,gold:0,silver:0,bronze:0,daily:{}};try{var o=JSON.parse(localStorage.getItem(KEY)||'null');if(o&&typeof o==='object'&&!Array.isArray(o)){m.gold=num(o.gold);m.silver=num(o.silver);m.bronze=num(o.bronze);if(o.daily&&typeof o.daily==='object'&&!Array.isArray(o.daily))Object.keys(o.daily).forEach(function(k){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&num(o.daily[k])>0)m.daily[k]=num(o.daily[k])})}}catch(_){}return m}
+function trim(d){var ks=Object.keys(d).sort();while(ks.length>DAYS)delete d[ks.shift()];return d}
+function write(m){try{localStorage.setItem(KEY,JSON.stringify({v:1,gold:m.gold,silver:m.silver,bronze:m.bronze,daily:trim(m.daily)}))}catch(_){}}
+// Reads on-screen text only: ".trial-numbers" ("Your power N" / "Target N") while a trial runs,
+// then ".trial-result" with class "won" or "lost" when it ends. A lost trial earns nothing and writes nothing.
+function medalFor(power,target,won){if(!won||!(target>0)||!(power>=0))return null;var r=power/target;return r>=1.5?'gold':r>=1.2?'silver':'bronze'}
+var LABEL={gold:'Gold medal: 150% of target or more.',silver:'Silver medal: 120% of target or more.',bronze:'Bronze medal: trial won.'};
+var last=null,seen=null,queued=false;
+function int(t){return Number(String(t).replace(/[^\d]/g,''))}
+function scan(){queued=false;var nums=document.querySelector('.trial-numbers');if(nums){var t=nums.textContent,p=t.match(/Your power\s*([\d,.]+)/),g=t.match(/Target\s*([\d,.]+)/);if(p&&g)last={p:int(p[1]),g:int(g[1])}}
+ var res=document.querySelector('.trial-result');if(!res){seen=null;return}if(seen===res)return;seen=res;
+ var medal=last?medalFor(last.p,last.g,res.classList.contains('won')):null;last=null;if(!medal)return;
+ var m=read();m[medal]=num(m[medal])+1;var d=today();m.daily[d]=num(m.daily[d])+1;write(m);
+ var line=document.createElement('small');line.className='r2-tf-medal';line.setAttribute('role','status');
+ line.style.cssText='display:block;flex-basis:100%;margin-top:4px;font:700 11px/1.4 system-ui,sans-serif;color:#f3c449';
+ line.textContent=LABEL[medal]+' Today’s goal done. Trial medals: '+m.gold+' gold · '+m.silver+' silver · '+m.bronze+' bronze.';
+ res.appendChild(line)}
+function queue(){if(!queued){queued=true;setTimeout(scan,120)}}
+function keys(e){if(e.key!=='Escape'||e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey)return;var a=document.activeElement,tag=a&&a.tagName;if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+ if(document.querySelector('#mbmr2-panel[data-open],dialog[open]'))return;var b=document.querySelector('.trial-result button[aria-label="Dismiss trial result"]');if(b&&b.offsetParent!==null){e.preventDefault();b.click()}}
+// While the game's own modal sheet blocks the page (it sets body pointer-events to none) or the first-run coach card is up,
+// the shared gear cannot be pressed, so it is hidden rather than left showing as a dead control.
+var gq=false;function gearGate(){gq=false;var g=document.getElementById('mbmr2-gear');if(!g)return;var block=document.body.style.pointerEvents==='none'||!!document.querySelector('body>.mbm-v5-coach');g.style.visibility=block?'hidden':''}
+function gearQueue(){if(!gq){gq=true;requestAnimationFrame(gearGate)}}
+function boot(){var root=document.getElementById('game-root')||document.body;new MutationObserver(queue).observe(root,{childList:true,subtree:true});document.addEventListener('keydown',keys);
+ new MutationObserver(gearQueue).observe(document.body,{attributes:true,attributeFilter:['style'],childList:true});gearGate()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+window.__MBM_R2_TITANFORGE__={medalFor:medalFor,read:read,gearGate:gearGate};
 })();
 </script>
 <!-- MBM TITAN FORGE V5: END -->
