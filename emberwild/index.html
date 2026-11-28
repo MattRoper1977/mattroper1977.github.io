@@ -336,6 +336,8 @@
       #mbmSplash{transition:none}
       #start-screen::after{animation:none}
     }
+    .r2-ew-shared { flex-basis: 100%; color: #c9d8e2; }
+    #r2-ew-medals:empty { display: none; }
   </style>
 </head>
 <body>
@@ -425,7 +427,7 @@
            appeared contiguously in the source, only in the rendered DOM. GF1
            asserts on rendered text for that reason. -->
       <h1 class="brand" id="game-title" tabindex="-1">EMBER<span>WILD</span></h1>
-      <p class="edition-mark">Ascension · Wayfinder’s Reach 3.5.0 Systems Build</p>
+      <p class="edition-mark">Ascension · Wayfinder’s Reach</p>
       <p class="subtitle">Come home to a wounded Vale. Learn why frightened Emberkin are reclaiming the land, uncover the human choices that awakened the Reclamation Pulse, and decide what kind of world both sides will inherit.</p>
       <p class="original-note">All creatures, names, environments, sounds and artwork in this package are original. No third-party franchise assets or proprietary worldbuilding are included.</p>
       <div class="start-actions">
@@ -438,6 +440,8 @@
         <span>WASD / Arrows · Z/Enter confirm · X/Esc back · M field kit</span>
         <span class="dev-only">Developer tools · T encounter · P profiler · I map import</span>
         <span id="renderer-status">Cinematic 3D preparing</span>
+        <span id="r2-ew-medals" aria-live="polite"></span>
+        <span class="r2-ew-shared">Shared or school computer? Your journey is saved in this browser only. Open the Field Kit (M key or MENU button) and choose Export journey archive to keep a copy.</span>
       </div>
     </div>
   </section>
@@ -10350,6 +10354,31 @@
     store: EWStore,
     rendererFailure: EWRendererFailure
   });
+})();
+(function installEmberwildR2(){'use strict';
+var NAME='r2meta',DAYS=14;
+function store(){return window.EW&&window.EW.store}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function num(v){return typeof v==='number'&&isFinite(v)&&v>=0&&v<1e7?Math.floor(v):0}
+function read(){var m={v:1,gold:0,silver:0,bronze:0,daily:{}},s=store();try{var o=JSON.parse((s&&s.get(NAME))||'null');if(o&&typeof o==='object'&&!Array.isArray(o)){m.gold=num(o.gold);m.silver=num(o.silver);m.bronze=num(o.bronze);if(o.daily&&typeof o.daily==='object'&&!Array.isArray(o.daily))Object.keys(o.daily).forEach(function(k){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&num(o.daily[k])>0)m.daily[k]=num(o.daily[k])})}}catch(_){}return m}
+function trim(d){var ks=Object.keys(d).sort();while(ks.length>DAYS)delete d[ks.shift()];return d}
+function write(m){var s=store();if(s)s.set(NAME,JSON.stringify({v:1,gold:m.gold,silver:m.silver,bronze:m.bronze,daily:trim(m.daily)}))}
+// Gold: won or bonded with a Perfect Resonance finisher. Silver: bonded. Bronze: won.
+// Defeat, flee and anything else earn nothing and write nothing.
+function medalFor(result){var r=result||{},o=r.outcome||'WIN';if(o!=='WIN'&&o!=='BOND')return null;if(r.perfectFinisher===true)return 'gold';return o==='BOND'?'silver':'bronze'}
+var LABEL={gold:'Gold medal: Perfect Resonance finisher.',silver:'Silver medal: a bond made.',bronze:'Bronze medal: a battle won.'};
+function render(){var el=document.getElementById('r2-ew-medals');if(!el)return;var m=read(),done=num(m.daily[today()])>0;
+ el.textContent='Medals: '+m.gold+' gold · '+m.silver+' silver · '+m.bronze+' bronze · Today: '+(done?'medal earned':'earn one medal')}
+function award(result){var medal=medalFor(result);if(!medal)return;var m=read();m[medal]=num(m[medal])+1;var d=today();m.daily[d]=num(m.daily[d])+1;write(m);render();
+ var g=window.__EMBERWILD__;if(g&&typeof g.toastMessage==='function')try{g.toastMessage(LABEL[medal]+' Today’s goal done.','#f3c449')}catch(_){}}
+// Wrap the chain tracker's result method once, from outside: its own logic runs first and unchanged.
+var hooked=false;
+function hook(){if(hooked)return;var g=window.__EMBERWILD__,t=g&&g.chainTracker,p=t&&Object.getPrototypeOf(t);if(!p||typeof p.recordBattleResult!=='function')return;
+ var orig=p.recordBattleResult;p.recordBattleResult=function(result){var out=orig.apply(this,arguments);try{award(result)}catch(_){}return out};hooked=true;
+ document.removeEventListener('pointerdown',hook,true);document.removeEventListener('keydown',hook,true)}
+function boot(){render();hook();if(!hooked){document.addEventListener('pointerdown',hook,true);document.addEventListener('keydown',hook,true)}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+window.__EMBERWILD_R2__={medalFor:medalFor,read:read,hooked:function(){return hooked}};
 })();
 </script>
 <script>
